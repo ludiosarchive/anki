@@ -37,6 +37,7 @@ clean:
 	dh_testroot
 	rm -f build-stamp
 	rm -f Unihan.txt unihan.db
+	find -name \*.py[co] -exec rm {} \;
 	dh_clean
 
 .PHONY: build clean binary binary-arch binary-indep

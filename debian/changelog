@@ -1,3 +1,11 @@
+anki (0.9.5.2-1) unstable; urgency=low
+
+  * New upstream release fixes some serious bugs with card intervals
+  * debian/rules: clean target now also removes all .pyc and .pyo files
+    generated during a possible execution of the uninstalled anki
+
+ -- Andreas Bombe <aeb@debian.org>  Fri, 29 Feb 2008 01:07:37 +0100
+
 anki (0.9.5-2) unstable; urgency=low
 
   * debian/control: Forgot to add python-pysqlite2 to Depends, required for
