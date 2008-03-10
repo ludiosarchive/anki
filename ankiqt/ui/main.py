@@ -211,7 +211,6 @@ class AnkiQt(QMainWindow):
         next = self.deck.earliestTime()
         if next:
             delay = next - time.time()
-            delay = (delay+1)*1000
             if delay > 86400:
                 return
             if delay < 0:
@@ -220,7 +219,7 @@ class AnkiQt(QMainWindow):
             t = QTimer(self)
             t.setSingleShot(True)
             self.connect(t, SIGNAL("timeout()"), self.refreshStatus)
-            t.start((delay+1)*1000)
+            t.start((delay+5)*1000)
 
     def refreshStatus(self):
         "If triggered when the deck is finished, reset state."
@@ -556,7 +555,7 @@ class AnkiQt(QMainWindow):
         "(Auto)save and close. Prompt if necessary. True if okay to proceed."
         if self.deck is not None:
             # sync (saving automatically)
-            if self.config['syncOnClose']:
+            if self.config['syncOnClose'] and self.deck.syncName:
                 self.syncDeck(False, reload=False)
                 while self.deckPath:
                     self.app.processEvents()
@@ -985,11 +984,11 @@ class AnkiQt(QMainWindow):
 
     def selectSyncDeck(self, decks, create=True):
         name = ui.sync.DeckChooser(self, decks, create).getName()
+        self.syncName = name
         if name:
             if name == self.syncName:
                 self.syncDeck(create=True)
             else:
-                self.syncName = name
                 self.syncDeck()
         else:
             if not create:

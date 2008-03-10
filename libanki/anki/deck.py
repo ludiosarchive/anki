@@ -174,7 +174,12 @@ limit 1
             log += "from acq\n"
         else:
             log = ""
-            if not self.failedQueue:
+            if not self.failedCardsDueSoon():
+                # maybe rebuild queue
+                if (self.earliestTime() - time.time()) <= 0:
+                    self.rebuildQueue()
+                    return self.getCard()
+                # otherwise, stop
                 return
             # otherwise, go into final review mode.
             item = self.getOldestModifiedFailedCard()
@@ -197,8 +202,10 @@ limit 1
         return card
 
     def getOldestModifiedFailedCard(self):
-        # get the oldest modified
-        item = sorted(self.failedQueue, cmp=self.oldestModifiedCmp)[0]
+        # get the oldest modified within collapse.
+        cutoff = time.time() + max(self.delay0, self.delay1)
+        q = [i for i in self.failedQueue if i.due <= cutoff]
+        item = sorted(q, cmp=self.oldestModifiedCmp)[0]
         # remove it from the queue and rebuild
         self.failedQueue.remove(item)
         heapify(self.failedQueue)
@@ -307,8 +314,6 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
         for n in range(len(self.failedQueue)):
             if self.failedQueue[n].due <= cutoff:
                 count += 1
-            else:
-                break
         return count
 
     def oldestModifiedCmp(self, a, b):

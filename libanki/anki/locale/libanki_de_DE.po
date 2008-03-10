@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-03 22:44+0900\n"
+"POT-Creation-Date: 2008-03-09 01:21+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -183,7 +183,7 @@ msgstr ""
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
 msgstr ""
 
-#: exporting.py:207
+#: exporting.py:209
 msgid "Anki deck (*.anki)"
 msgstr ""
 
@@ -207,11 +207,11 @@ msgstr ""
 msgid "Basic"
 msgstr ""
 
-#: deck.py:1253
+#: deck.py:1262
 msgid "Can't read/write deck"
 msgstr ""
 
-#: deck.py:1258
+#: deck.py:1267
 msgid "Can't read/write directory"
 msgstr ""
 
@@ -227,7 +227,7 @@ msgstr ""
 msgid "Card tags"
 msgstr ""
 
-#: exporting.py:208
+#: exporting.py:210
 msgid "Cards in tab-separated text file (*.txt)"
 msgstr ""
 
@@ -268,11 +268,11 @@ msgstr ""
 msgid "Fact tags"
 msgstr ""
 
-#: exporting.py:209
+#: exporting.py:211
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr ""
 
-#: deck.py:1282
+#: deck.py:1291
 msgid "File is in use by another process"
 msgstr ""
 
@@ -417,7 +417,7 @@ msgstr ""
 msgid "Total time"
 msgstr ""
 
-#: deck.py:611
+#: deck.py:615
 msgid "Unknown"
 msgstr ""
 
@@ -457,7 +457,7 @@ msgstr ""
 msgid "[invalid format; see model properties]"
 msgstr ""
 
-#: deck.py:429
+#: deck.py:433
 msgid "a short time"
 msgstr ""
 
@@ -466,6 +466,6 @@ msgstr ""
 msgid "in %s"
 msgstr ""
 
-#: deck.py:420
+#: deck.py:424
 msgid "unknown"
 msgstr ""

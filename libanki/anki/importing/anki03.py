@@ -16,6 +16,7 @@ from anki.cards import cardsTable
 from anki.stats import *
 from anki.features import FeatureManager
 from anki.importing import Importer
+from anki.utils import genID
 
 def transformClasses(m, c):
     "Map objects into dummy classes"
@@ -178,6 +179,7 @@ class Anki03Importer(Importer):
         for oldFact in oldDeck.facts:
             for field in oldFact.model.fields:
                 toAdd.append({'factId': oldFact.id,
+                              'id': genID(),
                               'fieldModelId': fieldModels[id(field)].id,
                               'ordinal': fieldModels[id(field)].ordinal,
                               'value': uni(oldFact.get(field.name, u""))})

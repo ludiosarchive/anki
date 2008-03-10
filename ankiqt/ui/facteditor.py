@@ -471,10 +471,10 @@ class FactEdit(QTextEdit):
         self.parent = parent
 
     def insertFromMimeData(self, source):
-        if source.hasHtml():
-            self.insertHtml(self.tidyHTML(unicode(source.html())))
-        elif source.hasText():
+        if source.hasText():
             self.insertPlainText(source.text())
+        elif source.hasHtml():
+            self.insertHtml(self.tidyHTML(unicode(source.html())))
 
     def tidyHTML(self, html):
         # FIXME: support pre tags

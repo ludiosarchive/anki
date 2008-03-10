@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-03 22:45+0900\n"
+"POT-Creation-Date: 2008-03-09 01:22+0900\n"
 "PO-Revision-Date: 2008-03-01 23:47+0100\n"
 "Last-Translator: \n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -147,7 +147,7 @@ msgstr "%(del)d eliminadas."
 #: ui/deckproperties.py:72
 #, python-format
 msgid "%(name)s [%(facts)d facts]"
-msgstr "%(name)s [%(cards)d hechos]"
+msgstr "%(name)s [%(facts)d hechos]"
 
 #: ui/main.py:1089
 #, python-format

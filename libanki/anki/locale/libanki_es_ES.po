@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-03 22:44+0900\n"
+"POT-Creation-Date: 2008-03-09 01:21+0900\n"
 "PO-Revision-Date: 2008-03-01 19:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -211,7 +211,7 @@ msgstr "Añadido"
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
 msgstr "Añadidas: <b>%(a)d</b> por día, <b>%(b)d</b> por mes<br>"
 
-#: exporting.py:207
+#: exporting.py:209
 msgid "Anki deck (*.anki)"
 msgstr "Mazo Anki (*.anki)"
 
@@ -235,11 +235,11 @@ msgstr "Desde el reverso a la cara"
 msgid "Basic"
 msgstr "Básico"
 
-#: deck.py:1253
+#: deck.py:1262
 msgid "Can't read/write deck"
 msgstr "No se puede leer/escribir el mazo"
 
-#: deck.py:1258
+#: deck.py:1267
 msgid "Can't read/write directory"
 msgstr "No se puede leer/escribir el directorio"
 
@@ -255,7 +255,7 @@ msgstr "Etiquetas del modelo de tarjetas"
 msgid "Card tags"
 msgstr "Etiquetas de la tarjeta"
 
-#: exporting.py:208
+#: exporting.py:210
 msgid "Cards in tab-separated text file (*.txt)"
 msgstr "Tarjetas en un archivo de texto separado por tabulador (*.txt)"
 
@@ -296,11 +296,11 @@ msgstr "Inglés"
 msgid "Fact tags"
 msgstr "Etiquetas de hechos"
 
-#: exporting.py:209
+#: exporting.py:211
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr "Hechos en un archivo de texto separado por tabulador (*.txt)"
 
-#: deck.py:1282
+#: deck.py:1291
 msgid "File is in use by another process"
 msgstr "El archivo está en uso por otro proceso"
 
@@ -445,7 +445,7 @@ msgstr "Número total de tarjetas: <b>%d</b><br><br>"
 msgid "Total time"
 msgstr "Tiempo total"
 
-#: deck.py:611
+#: deck.py:615
 msgid "Unknown"
 msgstr "Desconocido"
 
@@ -485,7 +485,7 @@ msgstr "[vacío]"
 msgid "[invalid format; see model properties]"
 msgstr "[formato no válido; vea las propiedades del modelo]"
 
-#: deck.py:429
+#: deck.py:433
 msgid "a short time"
 msgstr "en poco tiempo"
 
@@ -494,7 +494,7 @@ msgstr "en poco tiempo"
 msgid "in %s"
 msgstr "en %s"
 
-#: deck.py:420
+#: deck.py:424
 msgid "unknown"
 msgstr "desconocido"
 
