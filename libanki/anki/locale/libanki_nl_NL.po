@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-29 00:02+0900\n"
+"POT-Creation-Date: 2008-03-03 22:44+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -195,7 +195,7 @@ msgstr "Toegevoegd"
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
 msgstr "Kaarten toegevoegd: <b>%(a)d</b> per dag, <b>%(b)d</b> per maand<br>"
 
-#: exporting.py:205
+#: exporting.py:207
 msgid "Anki deck (*.anki)"
 msgstr ""
 
@@ -219,11 +219,11 @@ msgstr "Achter naar voor"
 msgid "Basic"
 msgstr ""
 
-#: deck.py:1278
+#: deck.py:1253
 msgid "Can't read/write deck"
 msgstr ""
 
-#: deck.py:1283
+#: deck.py:1258
 msgid "Can't read/write directory"
 msgstr ""
 
@@ -239,7 +239,7 @@ msgstr "Kaartmodelkenmerken"
 msgid "Card tags"
 msgstr "Kaarttags"
 
-#: exporting.py:206
+#: exporting.py:208
 #, fuzzy
 msgid "Cards in tab-separated text file (*.txt)"
 msgstr "Dubbele punt/Puntkomma/Tabgescheiden tekstbestand (*.*)"
@@ -282,12 +282,12 @@ msgstr "Engels"
 msgid "Fact tags"
 msgstr ""
 
-#: exporting.py:207
+#: exporting.py:209
 #, fuzzy
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr "Dubbele punt/Puntkomma/Tabgescheiden tekstbestand (*.*)"
 
-#: deck.py:1306
+#: deck.py:1282
 msgid "File is in use by another process"
 msgstr ""
 
@@ -434,7 +434,7 @@ msgstr "Totaal aantal kaarten: <b>%d</b><br>"
 msgid "Total time"
 msgstr "Totale tijd"
 
-#: deck.py:636
+#: deck.py:611
 msgid "Unknown"
 msgstr "Onbekend"
 
@@ -474,7 +474,7 @@ msgstr "[leeg]"
 msgid "[invalid format; see model properties]"
 msgstr "[ongeldig formaat; zie modeleigenschappen]"
 
-#: deck.py:454
+#: deck.py:429
 #, fuzzy
 msgid "a short time"
 msgstr "Eerste keer"
@@ -484,7 +484,7 @@ msgstr "Eerste keer"
 msgid "in %s"
 msgstr ""
 
-#: deck.py:445
+#: deck.py:420
 #, fuzzy
 msgid "unknown"
 msgstr "Onbekend"

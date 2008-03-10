@@ -67,14 +67,15 @@ class DeckProperties(QDialog):
 
     def updateModelsList(self):
         self.dialog.modelsList.clear()
-        self.models = {}
+        self.models = []
         for model in self.d.models:
             name = _("%(name)s [%(facts)d facts]") % {
                 'name': model.name,
                 'facts': self.d.modelUseCount(model),
                 }
-            self.models[name] = model
-        for (name, model) in sorted(self.models.items()):
+            self.models.append((name, model))
+        self.models.sort()
+        for (name, model) in self.models:
             item = QListWidgetItem(name)
             self.dialog.modelsList.addItem(item)
             if model == self.d.currentModel:
@@ -118,7 +119,7 @@ class DeckProperties(QDialog):
         row = self.dialog.modelsList.currentRow()
         if row == -1:
             return None
-        return sorted(self.models.items())[self.dialog.modelsList.currentRow()][1]
+        return self.models[self.dialog.modelsList.currentRow()][1]
 
     def updateField(self, obj, field, value):
         if getattr(obj, field) != value:

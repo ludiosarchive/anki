@@ -104,8 +104,8 @@ class Deck(object):
     initialFactor = 2.5
     maxScheduleTime = 1825
 
-    _itemColumns = ("due, id, priority, reps, successive, interval, factId, "
-                    "ordinal, created")
+    _queue = ("select type, due, id, modified, priority, reps, successive, interval, "
+              "factId, ordinal, created from typedCards")
 
     _earliest = """
 select (case
@@ -132,58 +132,19 @@ limit 1
         # ensure all card objects are written to db first
         self.s.flush()
         self.factSpacing = {}
-        self.cardCache = {}
-        now = time.time()
-        cols = self._itemColumns
-        def ilist(itemClass, sql):
-            return [itemClass(*x) for x in self.s.all(sql % self._itemColumns)]
         if self.newCardOrder == 0: acq = AcqRandomItem
         else: acq = AcqOrderedItem
-        self.acqQueue = ilist(acq, "select %s from acqCards")
-        self.futureQueue = ilist(FutureItem, "select %s from futureCards")
-        self.failedQueue = ilist(FailedItem, "select %s from failedCards")
-        self.revQueue = ilist(RevItem, "select %s from revCards")
-        heapify(self.acqQueue)
-        heapify(self.futureQueue)
+        queue = self.s.all(self._queue)
+        def ilist(type, itemClass, q):
+            return [itemClass(*x[1:]) for x in q if x[0]==type]
+        self.failedQueue = ilist(0, FailedItem, queue)
+        self.revQueue = ilist(1, RevItem, queue)
+        self.acqQueue = ilist(2, acq, queue)
+        self.futureQueue = ilist(3, FutureItem, queue)
         heapify(self.failedQueue)
         heapify(self.revQueue)
-        if not ((self.totalCardCount()-self.suspendedCardCount()) ==
-                len(self.failedQueue)+
-                len(self.revQueue)+
-                len(self.acqQueue)+
-                len(self.futureQueue)):
-            sys.stderr.write("total count %d\n" % (self.totalCardCount() - self.suspendedCardCount()))
-            sys.stderr.write("fail %d rev %d acq %d future %d total %d\n" % (
-                len(self.failedQueue),
-                len(self.revQueue),
-                len(self.acqQueue),
-                len(self.futureQueue),
-                len(self.failedQueue)+
-                len(self.revQueue)+
-                len(self.acqQueue)+
-                len(self.futureQueue)))
-            sys.stderr.write("missing from queue: %s\n" %
-                             self.s.all(
-                "select * from cards where id not in (%s) and priority != 0" %
-                ",".join([str(i.id) for i in (self.failedQueue+
-                                              self.futureQueue+
-                                              self.revQueue+
-                                              self.acqQueue)])))
-            seen = {}
-            for i in (self.failedQueue+ self.futureQueue+
-                      self.revQueue+ self.acqQueue):
-                if i.id in seen:
-                    sys.stderr.write(
-                        "duplicate item id=%d due in=%f reps=%d suc=%d\n" % (
-                        i.id, i.due - time.time(), i.reps, i.successive))
-                    for q in ((self.failedQueue, "fail"),
-                              (self.futureQueue, "future"),
-                              (self.revQueue, "rev"),
-                              (self.acqQueue, "acq")):
-                        for i2 in q[0]:
-                            if i.id == i2.id:
-                                print "found in ", q[1]
-                seen[i.id] = True
+        heapify(self.acqQueue)
+        heapify(self.futureQueue)
 
     def getCard(self):
         "Return the next due card, or None"
@@ -194,12 +155,15 @@ limit 1
             newItem = heappop(self.futureQueue)
             self.addExpiredItem(newItem)
             log += "add exp\n"
-        # failed card due or queue too big?
-        if ((self.failedQueue and self.failedQueue[0].due <= now) or
-            (self.failedCardMax and
-             len(self.failedQueue) >= self.failedCardMax)):
+        # failed card due?
+        if (self.failedQueue and self.failedQueue[0].due <= now):
             log += "from failed\n"
             item = heappop(self.failedQueue)
+        # failed card queue too big?
+        elif (self.failedCardMax and
+            self.failedCardsDueSoon() >= self.failedCardMax):
+            log += "from failedmax"
+            item = self.getOldestModifiedFailedCard()
         # card due for revision
         elif self.revQueue:
             item = heappop(self.revQueue)
@@ -212,27 +176,33 @@ limit 1
             log = ""
             if not self.failedQueue:
                 return
-            # otherwise, go into final review mode
-            item = heappop(self.failedQueue)
+            # otherwise, go into final review mode.
+            item = self.getOldestModifiedFailedCard()
             if item.due - time.time() > self.collapseTime:
                 return
-        # check if it's spaced
-        space = self.itemSpacing(item)
-        if space > now:
-            # update due time and put it back in future queue
-            item.due = max(item.due, space)
-            heappush(self.futureQueue, item)
-            return self.getCard()
-        if item.id in self.cardCache:
-            card = self.cardCache[item.id]
-        else:
-            card = self.s.query(anki.cards.Card).get(item.id)
+        # if it's not failed, check if it's spaced
+        if item.successive or item.reps == 0:
+            space = self.itemSpacing(item)
+            if space > now:
+                # update due time and put it back in future queue
+                item.due = max(item.due, space)
+                heappush(self.futureQueue, item)
+                return self.getCard()
+        card = self.s.query(anki.cards.Card).get(item.id)
         if (card.due - time.time()) > max(self.delay0, self.delay1):
             if log:
                 sys.stderr.write(log)
         card.genFuzz()
         card.startTimer()
         return card
+
+    def getOldestModifiedFailedCard(self):
+        # get the oldest modified
+        item = sorted(self.failedQueue, cmp=self.oldestModifiedCmp)[0]
+        # remove it from the queue and rebuild
+        self.failedQueue.remove(item)
+        heapify(self.failedQueue)
+        return item
 
     def answerCard(self, card, ease):
         "Reschedule CARD based on EASE. Changes are not flushed to DB."
@@ -275,7 +245,7 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
         # add back to queue
         self.addCardToQueue(card)
         self.setModified()
-        self.cardCache[card.id] = card
+        self.s.flush()
 
     def addCardToQueue(self, card):
         "Add CARD to the scheduling queue."
@@ -287,28 +257,22 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
             else: acq = AcqOrderedItem
             item = self.itemFromItem(acq, card)
             heappush(self.acqQueue, item)
-        elif (card.successive == 0 and
-              card.due <= (time.time()+max(self.delay0, self.delay1))):
+        elif card.successive == 0:
             # failed
             item = self.itemFromItem(FailedItem, card)
-            if card.id != card.fact.lastCardId:
-                item.due = max(card.due, card.fact.spaceUntil)
             heappush(self.failedQueue, item)
         else:
-            # put it in the future queue for later processing
+            # future
             item = self.itemFromItem(FutureItem, card)
             if card.id != card.fact.lastCardId:
                 item.due = max(card.due, card.fact.spaceUntil)
-            # if it's failed, factor in delay0/delay1 lookahead
-            if card.reps != 0 and card.successive == 0:
-                item.due -= max(self.delay0, self.delay1)
             heappush(self.futureQueue, item)
 
     def itemFromItem(self, itemClass, item):
         "Create a scheduling item of ITEMCLASS based on ITEM/CARD."
-        return itemClass(item.due, item.id, item.priority, item.reps,
-                         item.successive, item.interval, item.factId,
-                         item.ordinal, item.created)
+        return itemClass(item.due, item.id, item.modified, item.priority,
+                         item.reps, item.successive, item.interval,
+                         item.factId, item.ordinal, item.created)
 
     def addExpiredItem(self, item):
         "Place ITEM on the revision/failed queue."
@@ -335,6 +299,20 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
             # same card has no spacing
             return 0
         return self.factSpacing[item.factId][1]
+
+    def failedCardsDueSoon(self):
+        "Return number of failed cards due within delay0/1."
+        count = 0
+        cutoff = time.time() + max(self.delay0, self.delay1)
+        for n in range(len(self.failedQueue)):
+            if self.failedQueue[n].due <= cutoff:
+                count += 1
+            else:
+                break
+        return count
+
+    def oldestModifiedCmp(self, a, b):
+        return cmp(a.modified, b.modified)
 
     # Interval management
     ##########################################################################
@@ -556,16 +534,16 @@ update cards set priority = :pri, modified = %f where cards.id = :id""" %
     def pendingFailedCount(self):
         "Number of pending failed cards. Use when queue not rebuilt."
         return self.s.scalar(
-            "select count(id) from failedCards where due <= :now",
+            "select count(id) from typedCards where due <= :now and type = 0",
             now=time.time()+self.collapseTime)
 
     def pendingSuccessiveCount(self):
         "Number of pending review cards. Use when queue not rebuilt."
-        return self.s.scalar("select count(id) from revCards")
+        return self.s.scalar("select count(id) from typedCards where type = 1")
 
     def pendingNewCount(self):
         "Number of pending new cards. Use when queue not rebuilt."
-        return self.s.scalar("select count(id) from acqCards")
+        return self.s.scalar("select count(id) from typedCards where type = 2")
 
     def spacedCardCount(self):
         return self.s.scalar("""
@@ -618,7 +596,7 @@ facts.spaceUntil > :now""", now=time.time())
         stats = anki.stats.getStats(self.s)
         # add scheduling related stats
         stats['new'] = len(self.acqQueue)
-        stats['failed'] = len(self.failedQueue)
+        stats['failed'] = self.failedCardsDueSoon()
         stats['successive'] = len(self.revQueue)
         stats['old'] = stats['failed'] + stats['successive']
         if currentCard:
@@ -1137,12 +1115,13 @@ mapper(Deck, decksTable, properties={
 
 # item in failed queue
 class FailedItem(object):
-    __slots__ = ['due', 'id', 'priority', 'reps', 'successive', 'interval',
+    __slots__ = ['due', 'id', 'modified', 'priority', 'reps', 'successive', 'interval',
                  'factId', 'ordinal', 'created']
-    def __init__(self, due, id, priority, reps, successive, interval,
+    def __init__(self, due, id, modified, priority, reps, successive, interval,
                  factId, ordinal, created):
         self.due = due
         self.id = id
+        self.modified = modified
         self.priority = priority
         self.reps = reps
         self.successive = successive
@@ -1155,12 +1134,13 @@ class FailedItem(object):
 
 # item in revision queue
 class RevItem(object):
-    __slots__ = ['due', 'id', 'priority', 'reps', 'successive', 'interval',
+    __slots__ = ['due', 'id', 'modified', 'priority', 'reps', 'successive', 'interval',
                  'factId', 'ordinal', 'created']
-    def __init__(self, due, id, priority, reps, successive, interval,
+    def __init__(self, due, id, modified, priority, reps, successive, interval,
                  factId, ordinal, created):
         self.due = due
         self.id = id
+        self.modified = modified
         self.priority = priority
         self.reps = reps
         self.successive = successive
@@ -1178,12 +1158,13 @@ class RevItem(object):
 
 # item in random acquisition queue
 class AcqRandomItem(object):
-    __slots__ = ['due', 'id', 'priority', 'reps', 'successive', 'interval',
+    __slots__ = ['due', 'id', 'modified', 'priority', 'reps', 'successive', 'interval',
                  'factId', 'ordinal', 'created']
-    def __init__(self, due, id, priority, reps, successive, interval,
+    def __init__(self, due, id, modified, priority, reps, successive, interval,
                  factId, ordinal, created):
         self.due = due
         self.id = id
+        self.modified = modified
         self.priority = priority
         self.reps = reps
         self.successive = successive
@@ -1203,12 +1184,13 @@ class AcqRandomItem(object):
 
 # item in ordered acquisition queue
 class AcqOrderedItem(object):
-    __slots__ = ['due', 'id', 'priority', 'reps', 'successive', 'interval',
+    __slots__ = ['due', 'id', 'modified', 'priority', 'reps', 'successive', 'interval',
                  'factId', 'ordinal', 'created']
-    def __init__(self, due, id, priority, reps, successive, interval,
+    def __init__(self, due, id, modified, priority, reps, successive, interval,
                  factId, ordinal, created):
         self.due = due
         self.id = id
+        self.modified = modified
         self.priority = priority
         self.reps = reps
         self.successive = successive
@@ -1228,12 +1210,13 @@ class AcqOrderedItem(object):
 
 # item in future queue
 class FutureItem(object):
-    __slots__ = ['due', 'id', 'priority', 'reps', 'successive', 'interval',
+    __slots__ = ['due', 'id', 'modified', 'priority', 'reps', 'successive', 'interval',
                  'factId', 'ordinal', 'created']
-    def __init__(self, due, id, priority, reps, successive, interval,
+    def __init__(self, due, id, modified, priority, reps, successive, interval,
                  factId, ordinal, created):
         self.due = due
         self.id = id
+        self.modified = modified
         self.priority = priority
         self.reps = reps
         self.successive = successive
@@ -1291,21 +1274,24 @@ class DeckStorage(object):
         # sqlite needs utf8
         (engine, session) = DeckStorage._attach(path.encode("utf-8"))
         s = session()
-        if create:
-            deck = DeckStorage._init(s)
-        else:
-            deck = s.query(Deck).get(1)
-        # attach db vars
-        deck.path = path
-        deck.engine = engine
-        deck.Session = session
-        deck.needLock = lock
         try:
+            if create:
+                deck = DeckStorage._init(s)
+            else:
+                deck = s.query(Deck).get(1)
+            # attach db vars
+            deck.path = path
+            deck.engine = engine
+            deck.Session = session
+            deck.needLock = lock
             deck.s = SessionHelper(s, lock=lock)
             DeckStorage._addViews(deck.s, create)
         except OperationalError, e:
-            raise DeckAccessError(_("File is in use by another process"),
-                                  type="inuse")
+            if str(e.orig).startswith("database table is locked"):
+                raise DeckAccessError(_("File is in use by another process"),
+                                      type="inuse")
+            else:
+                raise e
         # rebuild?
         if rebuild:
             deck.rebuildQueue()
@@ -1346,81 +1332,50 @@ class DeckStorage(object):
     _init = staticmethod(_init)
 
     def _addViews(s, create):
-        # failed cards
-        if not create: s.statement("drop view failedCards")
+        # old tables
+        s.statement("drop view if exists failedCards")
+        s.statement("drop view if exists acqCards")
+        s.statement("drop view if exists revCards")
+        s.statement("drop view if exists futureCards")
+        # types:
+        # 0 - failed
+        # 1 - rev
+        # 2 - acq
+        # 3 - future
+        s.statement("drop view if exists typedCards")
         s.statement("""
-create view failedCards as
-select * from cards, facts where
-cards.factId = facts.id
-and priority != 0
-and reps != 0
-and successive = 0
-and due <= (strftime('%s', 'now') +
-(select max(delay0, delay1) from decks where id = 1))
-""")
-        # cards due for revision
-        if not create: s.statement("drop view revCards")
-        s.statement("""
-create view revCards as
-select cards.* from cards, facts
-where
-facts.id = cards.factId
-and priority != 0
--- due and not spaced
-and due < strftime('%s', 'now')
+create view typedCards as
+select
+(case
+-- failed cards
+when reps != 0 and successive = 0
+then 0
+-- due
+when
+due < strftime('%s', 'now')
 and (lastCardId is null or
      lastCardId = cards.id or
-      spaceUntil < strftime('%s', 'now'))
--- seen before & not failed, or high priority and new or not failed
-and ((reps > 0 and successive != 0) or
-(priority = 4 and (reps = 0 or successive != 0)))
--- no cards with low priority (treated as new)
-and priority != 1
-""")
-        # cards awaiting acquisition
-        if not create: s.statement("drop view acqCards")
-        s.statement("""
-create view acqCards as
-select cards.* from cards, facts
-where
-cards.factId = facts.id
-and priority != 0
--- new or low priority+due+not failed
-and (reps = 0 or
-(priority = 1 and successive != 0 and due < strftime('%s', 'now')))
--- and not high priority (treated as old)
-and priority != 4
--- not spaced
-and (lastCardId is null or
-     lastCardId = cards.id or
-     spaceUntil < (strftime('%s', 'now')))
-""")
-        # cards scheduled for the future
-        if not create: s.statement("drop view futureCards")
-        s.statement("""
-create view futureCards as
-select (case
--- for failed cards, set due minus delay0/1
-when cards.reps != 0 and cards.successive = 0
-then cards.due - (select max(delay0, delay1) from decks where id = 1)
--- when same card as last time, due
-when cards.id = facts.lastCardId then cards.due
--- otherwise, max(due, spaceUntil)
-else max(cards.due, facts.spaceUntil) end) as due, cards.*
+     spaceUntil < strftime('%s', 'now'))
+then
+case
+-- revision
+when priority != 1 and
+(priority = 4 or (reps != 0 and successive != 0))
+then 1
+-- acquisition
+when priority != 4 and
+(reps = 0 or priority = 1)
+then 2
+end
+else 3
+end) as type,
+(case
+when (reps != 0 and successive = 0) or cards.id = facts.lastCardId
+then cards.due
+else max(cards.due, facts.spaceUntil) end) as due, *
 from cards, facts where
 cards.factId = facts.id
-and cards.priority != 0
-and
--- not failed, and not due or spaced
-(((cards.successive or cards.reps = 0) and
-((cards.due > (1+strftime('%s', 'now'))) or
-((cards.id != facts.lastCardId) and
- (facts.spaceUntil > (1+strftime('%s', 'now'))))))
-or
--- failed, and due > delay0/1
-cards.due > (strftime('%s', 'now') +
-(select max(delay0, delay1) from decks where id = 1)))
-""")
+and cards.priority != 0""")
     _addViews = staticmethod(_addViews)
 
     def backup(modified, path):

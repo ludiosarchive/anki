@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-29 00:36+0900\n"
+"POT-Creation-Date: 2008-03-03 22:45+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Damien Elmes <anki@ichi2.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1557,7 +1557,7 @@ msgstr "まずもう少し復習してください。"
 msgid "Please add a new field first."
 msgstr "まずもう少し復習してください。"
 
-#: ui/deckproperties.py:102
+#: ui/deckproperties.py:103
 #, fuzzy
 msgid "Please add another model first."
 msgstr "現在のファイルを先に保存してください。"
@@ -1861,7 +1861,7 @@ msgstr ""
 "\n"
 "本当にモデルとカードを削除しますか？"
 
-#: ui/deckproperties.py:108
+#: ui/deckproperties.py:109
 #, python-format
 msgid ""
 "This model is used by %d facts.\n"
