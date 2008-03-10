@@ -176,11 +176,13 @@ class TextFactExporter(Exporter):
         self.includeTags = False
 
     def doExport(self, file):
+        cardIds = self.cardIds()
         facts = self.deck.s.all("""
 select distinct facts.id, fields.value from cards, facts, fields
 where cards.factId = facts.id and
-facts.id = fields.factId
-order by facts.id, fields.fieldModelId""")
+facts.id = fields.factId and
+cards.id in (%s)
+order by facts.id, fields.fieldModelId""" % ",".join([str(s) for s in cardIds]))
         txt = ""
         if self.includeTags:
             self.factTags = dict(self.deck.s.all(

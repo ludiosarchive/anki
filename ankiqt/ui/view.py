@@ -185,7 +185,7 @@ class View(object):
     ##########################################################################
 
     def drawNoDeckMessage(self):
-        self.write("""<h1>Welcome to Anki!</h1>
+        self.write(_("""<h1>Welcome to Anki!</h1>
 <p>
 <table width=90%>
 <tr>
@@ -249,7 +249,7 @@ save by not forgetting.
 </td>
 </tr>
 </table>
-""")
+"""))
 
     def drawDeckEmptyMessage(self):
         "Tell the user the deck is empty."
