@@ -1,3 +1,17 @@
+anki (0.9.5-1) unstable; urgency=low
+
+  * New upstream release
+  * Remove shell bangs from all Python modules that had them for aesthetic
+    reasons, no lintian warnings anymore
+  * debian/rules: remove execute permissions from ankiqt/__init__.py for the
+    same reason
+  * ankiqt/ui/main.py: make setupAutoUpdate() return without doing anything to
+    avoid bugging the user about new upstream versions on every start
+  * debian/control: move all build depends except debhelper to
+    Build-Depends-Indep
+
+ -- Andreas Bombe <aeb@debian.org>  Thu, 28 Feb 2008 02:31:56 +0100
+
 anki (0.9.4-1) unstable; urgency=low
 
   * Initial release. (closes: #452067)
