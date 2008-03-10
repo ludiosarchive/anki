@@ -1,38 +1,26 @@
 Source: anki
+Maintainer: Andreas Bombe <aeb@debian.org>
 Section: misc
 Priority: optional
-Maintainer: Damien Elmes <resolve@ichi2.net>
-Build-Depends: debhelper (>= 5), python-dev (>= 2.4-1), python-central, python-qt4 (>= 4.2), python-sip4 (>= 4.6), python-setuptools (>= 0.6c5)
-Standards-Version: 3.7.2
-XS-Python-Version: >= 2.4
-XS-Vcs-hg: http://repose.ath.cx/hg/
-XS-Vcs-browser: http://repose.ath.cx/hg/
+Build-Depends: debhelper (>= 6), unicode-data, bzip2, python-support (>= 0.6)
+Standards-Version: 3.7.3
+Homepage: http://ichi2.net/anki
 
 Package: anki
 Architecture: all
-Depends: ${python:Depends}, python-qt4 (>= 4.2), python-sip4 (>= 4.6), python-sqlalchemy (>= 0.4.1), python-pysqlite2 (>= 2.3.0), python-simplejson (>= 1.7.3)
-Suggests: python-numpy, python-matplotlib, kakasi
-XB-Python-Version: ${python:Versions}
-Description: An intelligent flashcard program for language learning
+Section: misc
+Depends: ${python:Depends}, python-qt4 (>= 4.2), python-simplejson (>= 1.7.3), python-sqlalchemy (>= 0.4.1)
+Recommends: python-matplotlib, kakasi
+Description: flashcard learning program with special support for Japanese
  Anki is a program designed to help you remember facts (such as words and
  phrases in a foreign language) as easily, quickly and efficiently as possible.
  To do this, it tracks how well you remember each fact, and uses that
- information to optimally schedule review times. With a minimal amount of
- effort, you can greatly increase the amount of material you remember, making
- study more productive, and more fun.
+ information to optimally schedule review times.
  .
- Anki is based on a theory called spaced repetition. In simple terms, it means
- that each time you review some material, you should wait longer than last time
- before reviewing it again. This maximizes the time spent studying difficult
- material and minimizes the time spent reviewing things you already know. The
- concept is simple, but the vast majority of memory trainers and flashcard
- programs out there either avoid the concept all together, or implement
- inflexible and suboptimal methods that were originally designed for pen and
- paper.
+ While Anki can be used for studying anything, it also ships with special
+ features designed to make studying Japanese and English easier: integrated
+ dictionary lookups, missing kanji reports, and more.
  .
- Anki's primary target is people studying Japanese, and Japanese native
- speakers studying English. However, it can be used to remember anything at
- all, and there are some users who are studying Chinese and possibly other
- languages with it. 
- .
- Home page: <http://ichi2.net/anki/index.html>
+ Besides text, it supports sounds, images and rendering TeX snippets in the
+ cards.  Sample card decks are included for a subset of the Japanese Language
+ Proficiency Test vocabulary and for some Russian vocabulary.

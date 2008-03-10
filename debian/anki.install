@@ -1,0 +1,13 @@
+ankiqt/*.py					usr/share/anki/ankiqt
+ankiqt/forms/*.py				usr/share/anki/ankiqt/forms
+ankiqt/ui/*.py					usr/share/anki/ankiqt/ui
+libanki/anki/*.py				usr/share/anki/anki
+libanki/anki/features/*.py			usr/share/anki/anki/features
+libanki/anki/features/chinese/__init__.py	usr/share/anki/anki/features/chinese
+unihan.db					usr/share/anki/anki/features/chinese
+libanki/anki/importing/*.py			usr/share/anki/anki/importing
+
+ankiqt/locale/*/				usr/share/locale
+libanki/anki/locale/*/				usr/share/locale
+debian/anki.xpm					usr/share/pixmaps
+anki.desktop					usr/share/applications

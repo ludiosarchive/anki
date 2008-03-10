@@ -1,0 +1,8 @@
+#!/usr/bin/python
+# Simplified launcher for anki as installed in the Debian system
+
+import sys
+sys.path[0:0] = ['/usr/share/anki']
+
+import ankiqt
+ankiqt.run()
