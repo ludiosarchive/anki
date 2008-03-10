@@ -110,7 +110,8 @@ class Deck(object):
 select (case
 -- failed cards minus delay0/1 lookahead
 when cards.reps != 0 and cards.successive = 0 then
-cards.due - (select max(delay0, delay1) from decks where id = 1)
+cards.due - (select min(max(delay0, delay1), collapseTime)
+from decks where id = 1)
 -- 'due' if same card as last time
 when cards.id = facts.lastCardId
 then cards.due
@@ -130,6 +131,7 @@ limit 1
         # ensure all card objects are written to db first
         self.s.flush()
         self.factSpacing = {}
+        self.cardCache = {}
         now = time.time()
         cols = self._itemColumns
         def ilist(itemClass, sql):
@@ -187,12 +189,12 @@ limit 1
         now = time.time()
         log = ""
         # any expired cards?
-        while self.futureQueue and self.futureQueue[0].due < now:
+        while self.futureQueue and self.futureQueue[0].due <= now:
             newItem = heappop(self.futureQueue)
             self.addExpiredItem(newItem)
             log += "add exp\n"
         # failed card due or queue too big?
-        if ((self.failedQueue and self.failedQueue[0].due < now) or
+        if ((self.failedQueue and self.failedQueue[0].due <= now) or
             (self.failedCardMax and
              len(self.failedQueue) >= self.failedCardMax)):
             log += "from failed\n"
@@ -220,7 +222,10 @@ limit 1
             item.due = max(item.due, space)
             heappush(self.futureQueue, item)
             return self.getCard()
-        card = self.s.query(anki.cards.Card).get(item.id)
+        if item.id in self.cardCache:
+            card = self.cardCache[item.id]
+        else:
+            card = self.s.query(anki.cards.Card).get(item.id)
         if (card.due - time.time()) > max(self.delay0, self.delay1):
             if log:
                 sys.stderr.write(log)
@@ -240,6 +245,7 @@ limit 1
         self.updateFactor(card, ease)
         # update fact
         card.fact.lastCard = card
+        card.fact.lastCardId = card.id
         # spacing - first, we get the times of all other cards with the same
         # fact
         (smin, ssum, scnt) = self.s.all("""
@@ -268,6 +274,7 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
         # add back to queue
         self.addCardToQueue(card)
         self.setModified()
+        self.cardCache[card.id] = card
 
     def addCardToQueue(self, card):
         "Add CARD to the scheduling queue."
@@ -280,7 +287,7 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
             item = self.itemFromItem(acq, card)
             heappush(self.acqQueue, item)
         elif (card.successive == 0 and
-              card.due < (time.time()+max(self.delay0, self.delay1))):
+              card.due <= (time.time()+max(self.delay0, self.delay1))):
             # failed
             item = self.itemFromItem(FailedItem, card)
             if card.id != card.fact.lastCardId:
