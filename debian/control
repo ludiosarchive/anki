@@ -3,7 +3,8 @@ Maintainer: Andreas Bombe <aeb@debian.org>
 Section: misc
 Priority: optional
 Build-Depends: debhelper (>= 6)
-Build-Depends-Indep: unicode-data, bzip2, python-support (>= 0.6)
+Build-Depends-Indep: unicode-data, bzip2, python-support (>= 0.6),
+	python-sqlalchemy (>= 0.4.1)
 Standards-Version: 3.7.3
 Homepage: http://ichi2.net/anki
 
@@ -13,6 +14,7 @@ Section: misc
 Depends: ${python:Depends}, python-qt4 (>= 4.2), python-simplejson (>= 1.7.3),
 	python-sqlalchemy (>= 0.4.1), python-pysqlite2 (>= 2.3.0)
 Recommends: python-matplotlib, kakasi
+Suggests: dvipng
 Description: flashcard learning program with special support for Japanese
  Anki is a program designed to help you remember facts (such as words and
  phrases in a foreign language) as easily, quickly and efficiently as possible.

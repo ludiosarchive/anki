@@ -1,3 +1,13 @@
+anki (0.9.5.4-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/control: add Suggests dvipng, it's used for rendering LaTeX
+    snippets
+  * debian/control: add python-sqlalchemy to Build-Depends-Indep, fixes FTBFS
+    (closes: #470334)
+
+ -- Andreas Bombe <aeb@debian.org>  Mon, 10 Mar 2008 22:52:15 +0100
+
 anki (0.9.5.2-1) unstable; urgency=low
 
   * New upstream release fixes some serious bugs with card intervals
