@@ -23,7 +23,7 @@ def ngettext(single, plural, n):
 
 def setLang(lang):
     base = os.path.dirname(os.path.abspath(__file__))
-    localeDir = os.path.join(base, "locale")
+    localeDir = "/usr/share/locale"
     if not os.path.exists(localeDir):
         localeDir = os.path.join(
             os.path.dirname(sys.argv[0]), "locale")

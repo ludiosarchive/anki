@@ -481,26 +481,10 @@ class AnkiQt(QMainWindow):
         return defaultDir
 
     def getSamplesDir(self):
-        path = os.path.join(ankiqt.runningDir, "libanki")
+        path = "/usr/share/doc/anki/examples"
         if not os.path.exists(path):
-            path = os.path.join(
-                os.path.join(ankiqt.runningDir, ".."), "libanki")
-            if not os.path.exists(path):
-                path = ankiqt.runningDir
-        if sys.platform.startswith("win32"):
-            path = os.path.split(
-                os.path.split(ankiqt.runningDir)[0])[0]
-        elif sys.platform.startswith("darwin"):
-            path = ankiqt.runningDir + "/../../.."
-        else:
-            path = os.path.join(path, "anki")
-        path = os.path.join(path, "samples")
-        path = os.path.normpath(path)
-        if os.path.exists(path):
-            if sys.platform.startswith("darwin"):
-                return self.openMacSamplesDir(path)
-            return path
-        return ""
+            return ""
+        return path
 
     def openMacSamplesDir(self, path):
         # some versions of macosx don't allow the open dialog to point inside
@@ -883,7 +867,7 @@ class AnkiQt(QMainWindow):
 
     def setLang(self):
         "Set the user interface language."
-        languageDir=os.path.join(ankiqt.modDir, "locale")
+        languageDir="/usr/share/locale"
         self.languageTrans = gettext.translation('ankiqt', languageDir,
                                             languages=[self.config["interfaceLang"]],
                                             fallback=True)
