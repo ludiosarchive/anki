@@ -24,7 +24,6 @@ class Preferences(QDialog):
         self.supportedLanguages = [
             (_("English"), "en_US"),
             (_("Czech"), "cs_CZ"),
-            (_("Dutch (the Netherlands)"), "nl_NL"),
             (_("French"), "fr_FR"),
             (_("German"), "de_DE"),
             (_("Japanese"), "ja_JP"),

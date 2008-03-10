@@ -47,12 +47,13 @@ def imgLink(deck, latex):
     latex = re.sub("<br( /)?>", "\n", latex)
     name = os.path.join(tmpdir, "%d.png" % hash(latex))
     log = os.path.join(tmpdir, "latex_log.txt")
-    texfile = file("tmp.tex", "w")
+    texpath = os.path.join(tmpdir, "tmp.tex")
+    texfile = file(texpath, "w")
     texfile.write(latexPreamble + "\n")
     texfile.write(latex + "\n")
     texfile.write(latexPostamble + "\n")
     texfile.close()
     if not os.path.exists(name):
-        os.system("latex -interaction=nonstopmode tmp.tex >> %s 2>&1" % log)
+        os.system("latex -interaction=nonstopmode %s >> %s 2>&1" % (texpath, log))
         os.system(latexDviPngCmd + " tmp.dvi -o %s >> %s" % (name, log))
     return '<img src="%s">' % name

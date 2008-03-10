@@ -135,6 +135,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
             data = [{'factId': factIds[m],
                      'fieldModelId': fm.id,
                      'ordinal': fm.ordinal,
+                     'id': genID(),
                      'value': (index is not None and
                                cards[m].fields[index] or u"")}
                     for m in range(len(cards))]

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-29 00:02+0900\n"
+"POT-Creation-Date: 2008-03-09 01:21+0900\n"
 "PO-Revision-Date: 2008-01-01 19:00+0100\n"
 "Last-Translator: Michal Čadil <mcadil@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -213,7 +213,7 @@ msgstr "Přidáno"
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
 msgstr "Přidané karty: <b>%(a)d</b> denně, <b>%(b)d</b> měsíčně<br>"
 
-#: exporting.py:205
+#: exporting.py:209
 msgid "Anki deck (*.anki)"
 msgstr "Balík anki"
 
@@ -237,11 +237,11 @@ msgstr "Ze zadní strany na přední"
 msgid "Basic"
 msgstr ""
 
-#: deck.py:1278
+#: deck.py:1262
 msgid "Can't read/write deck"
 msgstr ""
 
-#: deck.py:1283
+#: deck.py:1267
 msgid "Can't read/write directory"
 msgstr ""
 
@@ -257,7 +257,7 @@ msgstr "Štítky modelů kartiček"
 msgid "Card tags"
 msgstr "Štítky kartiček"
 
-#: exporting.py:206
+#: exporting.py:210
 msgid "Cards in tab-separated text file (*.txt)"
 msgstr "Kartičky v textovém souboru odděleném tabulátorem (*.txt)"
 
@@ -299,11 +299,11 @@ msgstr "angličtina"
 msgid "Fact tags"
 msgstr "Štítky výrazů"
 
-#: exporting.py:207
+#: exporting.py:211
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr "výrazy oddělené tabulátory (*.txt)"
 
-#: deck.py:1306
+#: deck.py:1291
 msgid "File is in use by another process"
 msgstr ""
 
@@ -450,7 +450,7 @@ msgstr "Celkový pošet kartiček: <b>%d</b><br>"
 msgid "Total time"
 msgstr "Celkový čas"
 
-#: deck.py:636
+#: deck.py:615
 msgid "Unknown"
 msgstr "Neznámý"
 
@@ -490,7 +490,7 @@ msgstr "[prázdné]"
 msgid "[invalid format; see model properties]"
 msgstr "[neplatný formát; viz vlastnosti modelu]"
 
-#: deck.py:454
+#: deck.py:433
 msgid "a short time"
 msgstr "krátký čas"
 
@@ -499,7 +499,7 @@ msgstr "krátký čas"
 msgid "in %s"
 msgstr "za %s"
 
-#: deck.py:445
+#: deck.py:424
 msgid "unknown"
 msgstr "neznámý"
 

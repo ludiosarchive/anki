@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Anki 0.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-29 00:36+0900\n"
+"POT-Creation-Date: 2008-03-09 01:22+0900\n"
 "PO-Revision-Date: 2008-02-24 10:45+1100\n"
 "Last-Translator: Laurent Steffan <devel@laurentsteffan.com>\n"
 "Language-Team: LMS <anki_tradu@laurentsteffan.com>\n"
@@ -1585,7 +1585,7 @@ msgstr "Veuillez d'abord ajouter une autre carte."
 msgid "Please add a new field first."
 msgstr "Veuillez d'abord ajouter un autre champ."
 
-#: ui/deckproperties.py:102
+#: ui/deckproperties.py:103
 msgid "Please add another model first."
 msgstr "Veuillez d'abord ajouter un autre modèle."
 
@@ -1894,7 +1894,7 @@ msgstr ""
 "\n"
 "Faut-il vraiment effacer ces cartes ?"
 
-#: ui/deckproperties.py:108
+#: ui/deckproperties.py:109
 #, fuzzy, python-format
 msgid ""
 "This model is used by %d facts.\n"

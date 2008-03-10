@@ -36,7 +36,9 @@ class Anki10Importer(Importer):
         payload['added-models'] = []
         payload['added-cards'] = []
         payload['added-facts'] = {'facts': [], 'fields': []}
-        assert not payload['deleted-facts']
+        payload['deleted-facts'] = []
+        payload['deleted-cards'] = []
+        payload['deleted-models'] = []
         res = server.applyPayload(payload)
         client.applyPayloadReply(res)
         # add tags

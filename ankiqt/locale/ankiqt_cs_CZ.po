@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-29 00:36+0900\n"
+"POT-Creation-Date: 2008-03-09 01:22+0900\n"
 "PO-Revision-Date: 2008-01-01 HO:MI+ZONE\n"
 "Last-Translator: Michal Čadil <mcadil@gmail.comm>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1614,7 +1614,7 @@ msgstr "Prosím zodpovězte ještě několik kartiček."
 msgid "Please add a new field first."
 msgstr "Prosím zodpovězte ještě několik kartiček."
 
-#: ui/deckproperties.py:102
+#: ui/deckproperties.py:103
 #, fuzzy
 msgid "Please add another model first."
 msgstr ""
@@ -1929,7 +1929,7 @@ msgstr ""
 "\n"
 "Opravdu chcete smazat tyto kartičky?"
 
-#: ui/deckproperties.py:108
+#: ui/deckproperties.py:109
 #, fuzzy, python-format
 msgid ""
 "This model is used by %d facts.\n"

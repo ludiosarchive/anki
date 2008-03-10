@@ -177,11 +177,13 @@ class TextFactExporter(Exporter):
     def doExport(self, file):
         cardIds = self.cardIds()
         facts = self.deck.s.all("""
-select distinct facts.id, fields.value from cards, facts, fields
-where cards.factId = facts.id and
-facts.id = fields.factId and
-cards.id in (%s)
-order by facts.id, fields.fieldModelId""" % ",".join([str(s) for s in cardIds]))
+select factId, value from fields
+where
+factId in
+(select distinct facts.id from facts, cards
+where facts.id = cards.factId
+and cards.id in (%s))
+order by factId, ordinal""" % ",".join([str(s) for s in cardIds]))
         txt = ""
         if self.includeTags:
             self.factTags = dict(self.deck.s.all(

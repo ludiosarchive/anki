@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-29 00:02+0900\n"
+"POT-Creation-Date: 2008-03-09 01:21+0900\n"
 "PO-Revision-Date: 2008-02-27 20:45+1100\n"
 "Last-Translator: Laurent Steffan <devel@laurentsteffan.com>\n"
 "Language-Team: LMS <anki_tradu@laurentsteffan.com>\n"
@@ -211,7 +211,7 @@ msgstr "Ajoutée"
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
 msgstr "Ajouts : <b>%(a)d</b> par jour, <b>%(b)d</b> par mois<br>"
 
-#: exporting.py:205
+#: exporting.py:209
 msgid "Anki deck (*.anki)"
 msgstr "Paquet Anki (*.anki)"
 
@@ -235,11 +235,11 @@ msgstr "D'arrière en avant"
 msgid "Basic"
 msgstr "Simple"
 
-#: deck.py:1278
+#: deck.py:1262
 msgid "Can't read/write deck"
 msgstr "Impossible de lire/écrire le paquet"
 
-#: deck.py:1283
+#: deck.py:1267
 msgid "Can't read/write directory"
 msgstr "Impossible de lire/écrire le répertoire"
 
@@ -255,7 +255,7 @@ msgstr "Marqueurs de modèles de cartes"
 msgid "Card tags"
 msgstr "Marqueurs de cartes"
 
-#: exporting.py:206
+#: exporting.py:210
 msgid "Cards in tab-separated text file (*.txt)"
 msgstr "Cartes dans un fichier texte à séparateur tabulation (*.txt)"
 
@@ -296,11 +296,11 @@ msgstr "anglais"
 msgid "Fact tags"
 msgstr "Marqueurs de fait"
 
-#: exporting.py:207
+#: exporting.py:211
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr "Faits dans un fichier texte à séparateur tabulation (*.txt)"
 
-#: deck.py:1306
+#: deck.py:1291
 msgid "File is in use by another process"
 msgstr "Un autre processus utilise ce fichier"
 
@@ -446,7 +446,7 @@ msgstr "Nombre total de cartes : <b>%d</b><br><br>"
 msgid "Total time"
 msgstr "Temps total"
 
-#: deck.py:636
+#: deck.py:615
 msgid "Unknown"
 msgstr "Inconnu"
 
@@ -486,7 +486,7 @@ msgstr "[vide]"
 msgid "[invalid format; see model properties]"
 msgstr "[format invalide ; voir les propriétés du modèle]"
 
-#: deck.py:454
+#: deck.py:433
 msgid "a short time"
 msgstr "un temps court"
 
@@ -495,7 +495,7 @@ msgstr "un temps court"
 msgid "in %s"
 msgstr "dans %s"
 
-#: deck.py:445
+#: deck.py:424
 msgid "unknown"
 msgstr "inconnu"
 
