@@ -1139,6 +1139,7 @@ class AnkiQt(QMainWindow):
     ##########################################################################
 
     def setupAutoUpdate(self):
+        return  # do not lookup latest upstream version in Debian packaged anki
         self.autoUpdate = ui.update.LatestVersionFinder(self)
         self.connect(self.autoUpdate, SIGNAL("newVerAvail"), self.newVerAvail)
         self.autoUpdate.start()
