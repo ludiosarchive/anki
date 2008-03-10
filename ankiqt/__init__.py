@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
 
