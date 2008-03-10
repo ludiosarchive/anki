@@ -113,7 +113,7 @@
        <item>
         <widget class="QLabel" name="label_21" >
          <property name="text" >
-          <string>&lt;h1>Very high priority&lt;/h1>A comma-separated list of tags to prioritize. Any matching cards will be displayed before anything else, regardless of whether they have been seen before.</string>
+          <string>&lt;h1>Very high priority&lt;/h1>A comma-separated list of tags to prioritize. Matching cards are placed at the top of the revision queue.</string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>
@@ -126,7 +126,7 @@
        <item>
         <widget class="QLabel" name="label_17" >
          <property name="text" >
-          <string>&lt;h1>High priority&lt;/h1>Matching previously seen cards will be shown before other previously seen cards. Matching new cards will be displayed before other new cards.</string>
+          <string>&lt;h1>High priority&lt;/h1>Matching cards are placed at the top of the revision queue or new card queue, depending on if they have been seen before.</string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>
@@ -139,7 +139,7 @@
        <item>
         <widget class="QLabel" name="label_24" >
          <property name="text" >
-          <string>&lt;h1>Low priority&lt;/h1>A comma-separated list of tags to deprioritize. Matching cards will be shown after all other cards have been seen.</string>
+          <string>&lt;h1>Low priority&lt;/h1>Matching cards are placed at the bottom of the new card queue.</string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>

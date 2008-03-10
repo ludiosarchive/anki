@@ -10,12 +10,13 @@ The Deck
 __docformat__ = 'restructuredtext'
 
 try:
-    import sqlite3
+    from sqlite3 import dbapi2 as sqlite
 except ImportError:
     try:
-        import pysqlite2
+        from pysqlite2 import dbapi2 as sqlite
     except:
         raise "Please install pysqlite2 or python2.5"
+sqlite.enable_shared_cache(True)
 
 import tempfile, time, os, random, sys, re, stat, shutil, types
 from heapq import heapify, heappush, heappop
@@ -26,6 +27,7 @@ from anki.errors import DeckAccessError, DeckWrongFormatError
 from anki.stdmodels import BasicModel
 from anki.utils import parseTags
 from anki.history import CardHistoryEntry
+from anki.models import Model
 
 # ensure all the metadata in other files is loaded before proceeding
 import anki.models, anki.facts, anki.cards, anki.stats, anki.history
@@ -106,10 +108,20 @@ class Deck(object):
                     "ordinal, created")
 
     _earliest = """
-select max(cards.due, facts.spaceUntil) as c from cards, facts where
+select (case
+-- failed cards minus delay0/1 lookahead
+when cards.reps != 0 and cards.successive = 0 then
+cards.due - (select max(delay0, delay1) from decks where id = 1)
+-- 'due' if same card as last time
+when cards.id = facts.lastCardId
+then cards.due
+-- otherwise max(due, spaceUntil)
+else max(cards.due, facts.spaceUntil) end) as due2, cards.question
+from cards, facts where
 cards.factId = facts.id and cards.priority != 0
-order by c
-limit 1"""
+order by due2
+limit 1
+"""
 
     # Scheduling: queue management
     ##########################################################################
@@ -155,6 +167,21 @@ limit 1"""
                                               self.futureQueue+
                                               self.revQueue+
                                               self.acqQueue)])))
+            seen = {}
+            for i in (self.failedQueue+ self.futureQueue+
+                      self.revQueue+ self.acqQueue):
+                if i.id in seen:
+                    sys.stderr.write(
+                        "duplicate item id=%d due in=%f reps=%d suc=%d\n" % (
+                        i.id, i.due - time.time(), i.reps, i.successive))
+                    for q in ((self.failedQueue, "fail"),
+                              (self.futureQueue, "future"),
+                              (self.revQueue, "rev"),
+                              (self.acqQueue, "acq")):
+                        for i2 in q[0]:
+                            if i.id == i2.id:
+                                print "found in ", q[1]
+                seen[i.id] = True
 
     def getCard(self):
         "Return the next due card, or None"
@@ -226,8 +253,10 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
             card.fact.spaceUntil = (time.time() +
                                     card.fact.model.initialSpacing)
         else:
-            card.fact.spaceUntil = (time.time() + (
-                space * card.fact.model.spacing * 86400.0))
+            card.fact.spaceUntil = max(time.time() + (
+                space * card.fact.model.spacing * 86400.0),
+                                       self.delay0+1,
+                                       self.delay1+1)
         # update cache
         self.factSpacing[card.factId] = (card.id, card.fact.spaceUntil)
         card.fact.setModified(textChanged=False)
@@ -263,6 +292,9 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
             item = self.itemFromItem(FutureItem, card)
             if card.id != card.fact.lastCardId:
                 item.due = max(card.due, card.fact.spaceUntil)
+            # if it's failed, factor in delay0/delay1 lookahead
+            if card.reps != 0 and card.successive == 0:
+                item.due -= max(self.delay0, self.delay1)
             heappush(self.futureQueue, item)
 
     def itemFromItem(self, itemClass, item):
@@ -276,6 +308,11 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
         if item.successive:
             item = self.itemFromItem(RevItem, item)
             heappush(self.revQueue, item)
+        elif item.reps == 0:
+            if self.newCardOrder == 0: acq = AcqRandomItem
+            else: acq = AcqOrderedItem
+            item = self.itemFromItem(acq, item)
+            heappush(self.acqQueue, item)
         else:
             item = self.itemFromItem(FailedItem, item)
             heappush(self.failedQueue, item)
@@ -363,6 +400,26 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
         if self.cardIsNew(card):
             return 0
         return max(0, (time.time() - card.due) / 86400.0)
+
+    def resetCards(self, ids):
+        "Reset progress on cards in IDS."
+        strids = ",".join([str(id) for id in ids])
+        self.s.statement("""
+update cards set interval = 0, lastInterval = 0, lastDue = 0,
+factor = 2.5, reps = 0, successive = 0, averageTime = 0, reviewTime = 0,
+youngEase0 = 0, youngEase1 = 0, youngEase2 = 0, youngEase3 = 0,
+youngEase4 = 0, matureEase0 = 0, matureEase1 = 0, matureEase2 = 0,
+matureEase3 = 0,matureEase4 = 0, yesCount = 0, noCount = 0,
+modified = :now, due = :now
+where id in (%s)""" % strids, now=time.time())
+        # undo any spacing
+        factIds = self.s.column0(
+            "select distinct factId from cards where id in (%s)" %
+            strids)
+        self.s.statement("""
+update facts set spaceUntil = 0, lastCardId = null, modified = :now
+where id in (%s)""" % ",".join([str(id) for id in factIds]), now=time.time())
+        self.flushMod()
 
     # Times
     ##########################################################################
@@ -558,20 +615,35 @@ facts.spaceUntil > :now""", now=time.time())
         stats['successive'] = len(self.revQueue)
         stats['old'] = stats['failed'] + stats['successive']
         if currentCard:
-            if self.cardIsNew(currentCard):
+            q = self.queueForCard(currentCard)
+            if q == "rev":
+                stats['successive'] += 1
+            elif q == "new":
                 stats['new'] += 1
             else:
-                if currentCard.successive:
-                    stats['successive'] += 1
-                else:
-                    stats['failed'] += 1
+                stats['failed'] += 1
         if stats['dAverageTime']:
             stats['timeLeft'] = anki.utils.fmtTimeSpan(
-                stats['dAverageTime'] * (stats['old'] or stats['new']),
+                stats['dAverageTime'] * (stats['successive'] or stats['new']),
                 pad=0, point=1)
         else:
             stats['timeLeft'] = _("Unknown")
         return stats
+
+    def queueForCard(self, card):
+        "Return the queue the current card is in."
+        if self.cardIsNew(card):
+            if card.priority == 4:
+                return "rev"
+            else:
+                return "new"
+        elif card.successive == 0:
+            return "failed"
+        elif card.reps:
+            return "rev"
+        else:
+            sys.stderr.write("couldn't determine queue for %s" %
+                             `card.__dict__`)
 
     # Facts
     ##########################################################################
@@ -584,6 +656,8 @@ facts.spaceUntil > :now""", now=time.time())
         "Add a fact to the deck. Return list of new cards."
         if not fact.model:
             fact.model = self.currentModel
+        # the session may have been cleared, so refresh model
+        fact.model = self.s.query(Model).get(fact.model.id)
         # validate
         fact.assertValid()
         fact.assertUnique(self.s)
@@ -732,6 +806,11 @@ facts.id = cards.factId""", id=model.id))
                              "where facts.modelId = :id",
                              id=model.id)
 
+    def deleteEmptyModels(self):
+        for model in self.models:
+            if not self.modelUseCount(model):
+                self.deleteModel(model)
+
     # Fields
     ##########################################################################
 
@@ -812,7 +891,7 @@ select cards.id, cards.factId from cards, facts, cardmodels
 where
 cards.factId = facts.id and
 facts.modelId = cardModels.modelId and
-cardModels.id = :id""", id=cardModel.id)
+cards.cardModelId = :id""", id=cardModel.id)
         if not ids:
             return
         pend = [{'q': cardModel.renderQASQL('q', fid),
@@ -993,6 +1072,42 @@ Rename for uniqueness if not the same. Return the new name."""
         "Mark modified and flush to DB."
         self.setModified()
         self.s.flush()
+
+    def saveAs(self, newPath):
+        # flush old deck
+        self.s.flush()
+        # remove new deck if it exists
+        try:
+            os.unlink(newPath)
+        except OSError:
+            pass
+        # create new deck
+        newDeck = DeckStorage.Deck(newPath)
+        # attach current db to new
+        s = newDeck.s.statement
+        s("pragma read_uncommitted = 1")
+        s("attach database :path as old", path=self.path)
+        # copy all data
+        s("delete from decks")
+        s("insert into decks select * from old.decks")
+        s("insert into fieldModels select * from old.fieldModels")
+        s("insert into modelsDeleted select * from old.modelsDeleted")
+        s("insert into cardModels select * from old.cardModels")
+        s("insert into facts select * from old.facts")
+        s("insert into fields select * from old.fields")
+        s("insert into cards select * from old.cards")
+        s("insert into factsDeleted select * from old.factsDeleted")
+        s("insert into reviewHistory select * from old.reviewHistory")
+        s("insert into cardsDeleted select * from old.cardsDeleted")
+        s("insert into models select * from old.models")
+        s("insert into stats select * from old.stats")
+        # detach old db and commit
+        s("detach database old")
+        newDeck.s.commit()
+        # close ourself, rebuild queue and return the new deck object
+        self.s.close()
+        newDeck.rebuildQueue()
+        return newDeck
 
 mapper(Deck, decksTable, properties={
     'currentModel': relation(anki.models.Model, primaryjoin=
@@ -1249,10 +1364,9 @@ and due < strftime('%s', 'now')
 and (lastCardId is null or
      lastCardId = cards.id or
       spaceUntil < strftime('%s', 'now'))
--- seen before, or high priority
-and (reps > 0 or priority = 4)
--- not failed
-and successive != 0
+-- seen before & not failed, or high priority and new or not failed
+and ((reps > 0 and successive != 0) or
+(priority = 4 and (reps = 0 or successive != 0)))
 -- no cards with low priority (treated as new)
 and priority != 1
 """)
@@ -1264,8 +1378,9 @@ select cards.* from cards, facts
 where
 cards.factId = facts.id
 and priority != 0
--- new or low priority
-and (reps = 0 or priority = 1)
+-- new or low priority+due+not failed
+and (reps = 0 or
+(priority = 1 and successive != 0 and due < strftime('%s', 'now')))
 -- and not high priority (treated as old)
 and priority != 4
 -- not spaced
@@ -1278,7 +1393,12 @@ and (lastCardId is null or
         s.statement("""
 create view futureCards as
 select (case
+-- for failed cards, set due minus delay0/1
+when cards.reps != 0 and cards.successive = 0
+then cards.due - (select max(delay0, delay1) from decks where id = 1)
+-- when same card as last time, due
 when cards.id = facts.lastCardId then cards.due
+-- otherwise, max(due, spaceUntil)
 else max(cards.due, facts.spaceUntil) end) as due, cards.*
 from cards, facts where
 cards.factId = facts.id
@@ -1286,8 +1406,9 @@ and cards.priority != 0
 and
 -- not failed, and not due or spaced
 (((cards.successive or cards.reps = 0) and
-((cards.due > strftime('%s', 'now')) or
-((cards.id != facts.lastCardId) and (facts.spaceUntil > strftime('%s', 'now')))))
+((cards.due > (1+strftime('%s', 'now'))) or
+((cards.id != facts.lastCardId) and
+ (facts.spaceUntil > (1+strftime('%s', 'now'))))))
 or
 -- failed, and due > delay0/1
 cards.due > (strftime('%s', 'now') +
@@ -1298,7 +1419,7 @@ cards.due > (strftime('%s', 'now') +
     def backup(modified, path):
         # need a non-unicode path
         path = path.encode(sys.getfilesystemencoding())
-        backupDir = DeckStorage.backupDir
+        backupDir = DeckStorage.backupDir.encode(sys.getfilesystemencoding())
         numBackups = DeckStorage.numBackups
         def backupName(path, num):
             path = os.path.abspath(path)

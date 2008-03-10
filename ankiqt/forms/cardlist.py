@@ -179,6 +179,12 @@ class Ui_EditDeck(object):
         self.actionDelete_Fact.setIcon(QtGui.QIcon(":/icons/editdelete.png"))
         self.actionDelete_Fact.setObjectName("actionDelete_Fact")
 
+        self.actionResetCardProgress = QtGui.QAction(EditDeck)
+        self.actionResetCardProgress.setObjectName("actionResetCardProgress")
+
+        self.actionResetFactProgress = QtGui.QAction(EditDeck)
+        self.actionResetFactProgress.setObjectName("actionResetFactProgress")
+
         self.retranslateUi(EditDeck)
         QtCore.QMetaObject.connectSlotsByName(EditDeck)
 
@@ -198,5 +204,7 @@ class Ui_EditDeck(object):
         self.actionDelete_card_tag.setText(_("Delete Tag.."))
         self.actionAdd_Missing_Cards.setText(_("Add Missing Active Cards"))
         self.actionDelete_Fact.setText(_("Toggle Delete"))
+        self.actionResetCardProgress.setText(_("Reset Progress"))
+        self.actionResetFactProgress.setText(_("Reset Progress"))
 
 import icons_rc

@@ -12,11 +12,9 @@ from PyQt4 import QtCore, QtGui
 class Ui_ImportDialog(object):
     def setupUi(self, ImportDialog):
         ImportDialog.setObjectName("ImportDialog")
-        ImportDialog.resize(QtCore.QSize(QtCore.QRect(0,0,501,490).size()).expandedTo(ImportDialog.minimumSizeHint()))
+        ImportDialog.resize(QtCore.QSize(QtCore.QRect(0,0,477,484).size()).expandedTo(ImportDialog.minimumSizeHint()))
 
         self.vboxlayout = QtGui.QVBoxLayout(ImportDialog)
-        self.vboxlayout.setSpacing(6)
-        self.vboxlayout.setMargin(9)
         self.vboxlayout.setObjectName("vboxlayout")
 
         self.groupBox = QtGui.QGroupBox(ImportDialog)
@@ -37,6 +35,7 @@ class Ui_ImportDialog(object):
         self.gridlayout.addWidget(self.label_2,1,0,1,1)
 
         self.file = QtGui.QPushButton(self.groupBox)
+        self.file.setDefault(True)
         self.file.setObjectName("file")
         self.gridlayout.addWidget(self.file,1,1,1,1)
 
@@ -53,7 +52,19 @@ class Ui_ImportDialog(object):
         self.type.setSizePolicy(sizePolicy)
         self.type.setObjectName("type")
         self.gridlayout.addWidget(self.type,0,1,1,1)
+
+        self.label_4 = QtGui.QLabel(self.groupBox)
+        self.label_4.setObjectName("label_4")
+        self.gridlayout.addWidget(self.label_4,2,0,1,1)
+
+        self.tags = QtGui.QLineEdit(self.groupBox)
+        self.tags.setObjectName("tags")
+        self.gridlayout.addWidget(self.tags,2,1,1,1)
         self.vboxlayout1.addLayout(self.gridlayout)
+
+        self.tagDuplicates = QtGui.QCheckBox(self.groupBox)
+        self.tagDuplicates.setObjectName("tagDuplicates")
+        self.vboxlayout1.addWidget(self.tagDuplicates)
 
         self.modelArea = QtGui.QWidget(self.groupBox)
         self.modelArea.setObjectName("modelArea")
@@ -122,7 +133,9 @@ class Ui_ImportDialog(object):
         QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("rejected()"),ImportDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(ImportDialog)
         ImportDialog.setTabOrder(self.type,self.file)
-        ImportDialog.setTabOrder(self.file,self.importButton)
+        ImportDialog.setTabOrder(self.file,self.tags)
+        ImportDialog.setTabOrder(self.tags,self.tagDuplicates)
+        ImportDialog.setTabOrder(self.tagDuplicates,self.importButton)
         ImportDialog.setTabOrder(self.importButton,self.status)
         ImportDialog.setTabOrder(self.status,self.buttonBox)
 
@@ -130,9 +143,11 @@ class Ui_ImportDialog(object):
         ImportDialog.setWindowTitle(_("Import"))
         self.groupBox.setTitle(_("Import options"))
         self.label_2.setText(_("<b>File to import</b>:"))
-        self.file.setText(_("Choose file..."))
+        self.file.setText(_("Choose &file..."))
         self.label.setText(_("<b>Type of file</b>:"))
+        self.label_4.setText(_("Tags to append:"))
+        self.tagDuplicates.setText(_("Tag facts with duplicate fields instead of deleting"))
         self.mappingGroup.setTitle(_("Field mapping"))
-        self.importButton.setText(_("Import"))
+        self.importButton.setText(_("&Import"))
         self.groupBox_2.setTitle(_("Status"))
 

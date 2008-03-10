@@ -85,7 +85,11 @@
          <number>3</number>
         </property>
         <item>
-         <widget class="QLineEdit" name="filterEdit" />
+         <widget class="QLineEdit" name="filterEdit" >
+          <property name="text" >
+           <string/>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QComboBox" name="tagList" >
@@ -358,6 +362,16 @@
    </property>
    <property name="text" >
     <string>Toggle Delete</string>
+   </property>
+  </action>
+  <action name="actionResetCardProgress" >
+   <property name="text" >
+    <string>Reset Progress</string>
+   </property>
+  </action>
+  <action name="actionResetFactProgress" >
+   <property name="text" >
+    <string>Reset Progress</string>
    </property>
   </action>
  </widget>

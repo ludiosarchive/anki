@@ -431,6 +431,7 @@
     <addaction name="actionImport" />
     <addaction name="separator" />
     <addaction name="actionSave" />
+    <addaction name="actionSaveAs" />
     <addaction name="actionSyncdeck" />
     <addaction name="actionExport" />
     <addaction name="separator" />
@@ -816,6 +817,14 @@
   <action name="actionForum" >
    <property name="text" >
     <string>&amp;Forum...</string>
+   </property>
+  </action>
+  <action name="actionSaveAs" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >:/icons/filesave.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Save &amp;As</string>
    </property>
   </action>
  </widget>
