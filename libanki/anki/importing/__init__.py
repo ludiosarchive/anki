@@ -43,6 +43,7 @@ class Importer(object):
         self.log = []
         self.deck = deck
         self.total = 0
+        self.tagsToAdd = u""
 
     def doImport(self):
         "Import."
@@ -121,6 +122,7 @@ all but one card model."""))
         factIds = [genID() for n in range(len(cards))]
         self.deck.s.execute(factsTable.insert(),
             [{'modelId': self.model.id,
+              'tags': self.tagsToAdd,
               'id': factIds[n]} for n in range(len(cards))])
         self.deck.s.execute("""
 delete from factsDeleted

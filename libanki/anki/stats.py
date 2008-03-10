@@ -164,6 +164,8 @@ class CardStats(object):
         c = self.card
         self.txt = "<table width=250>"
         self.addLine(_("Added"), self.strTime(c.created))
+        if c.firstAnswered:
+            self.addLine(_("First review"), self.strTime(c.firstAnswered))
         self.addLine(_("Changed"), self.strTime(c.modified))
         next = time.time() - c.due
         if next > 0:

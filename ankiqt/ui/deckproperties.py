@@ -105,7 +105,7 @@ class DeckProperties(QDialog):
         count = self.d.modelUseCount(model)
         if count:
             if not ui.utils.askUser(
-                _("This model is used by %d cards.\n"
+                _("This model is used by %d facts.\n"
                   "Are you sure you want to delete it?\n"
                   "If you delete it, these cards will be lost.")
                 % count, parent=self):

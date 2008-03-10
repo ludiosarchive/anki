@@ -9,7 +9,6 @@ from anki.importing import *
 from anki.errors import *
 import ankiqt.forms
 from ankiqt import ui
-from anki.utils import addTags
 
 class ChangeMap(QDialog):
     def __init__(self, parent, model, current):
@@ -75,8 +74,10 @@ class ImportDialog(QDialog):
         self.importerFunc = zip(*Importers)[1][idx]
         if self.importerFunc.needMapper:
             self.modelChooser.show()
+            self.dialog.tagDuplicates.show()
         else:
             self.modelChooser.hide()
+            self.dialog.tagDuplicates.hide()
         self.dialog.file.setText(_("Choose file..."))
         self.file = None
         self.maybePreview()
@@ -110,6 +111,8 @@ class ImportDialog(QDialog):
                 # windows sometimes has pending events permanently?
                 break
         self.importer.mapping = self.mapping
+        self.importer.tagsToAdd = unicode(self.dialog.tags.text())
+        self.importer.tagDuplicates = self.dialog.tagDuplicates.isChecked()
         try:
             self.importer.doImport()
         except ImportFormatError, e:

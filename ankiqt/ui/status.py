@@ -136,13 +136,18 @@ class StatusView(object):
                 self.mode.setStyleSheet("background: #ffffaa;")
             # remaining string, bolded depending on current card
             if not self.main.currentCard:
-                remStr += "%(failed)s + %(successive)s + %(new)s"
-            elif not self.main.currentCard.reps:
-                remStr += "%(failed)s + %(successive)s + <b>%(new)s</b>"
-            elif not self.main.currentCard.successive:
-                remStr += "<b>%(failed)s</b> + %(successive)s + %(new)s"
+                remStr += "%(failed1)s + %(successive1)s + %(new1)s"
             else:
-                remStr += "%(failed)s + <b>%(successive)s</b> + %(new)s"
+                q = self.main.deck.queueForCard(self.main.currentCard)
+                if q == "failed":
+                    remStr += "<u>%(failed1)s</u>&nbsp;&nbsp;%(successive1)s&nbsp;&nbsp;%(new1)s"
+                elif q == "rev":
+                    remStr += "%(failed1)s&nbsp;&nbsp;<u>%(successive1)s</u>&nbsp;&nbsp;%(new1)s"
+                else:
+                    remStr += "%(failed1)s&nbsp;&nbsp;%(successive1)s&nbsp;&nbsp;<u>%(new1)s</u>"
+        stats['failed1'] = '<font color=#990000>%s</font>' % stats['failed']
+        stats['successive1'] = '<font color=#000000>%s</font>' % stats['successive']
+        stats['new1'] = '<font color=#0000ff>%s</font>' % stats['new']
         self.remText.setText(remStr % stats)
         stats['suspended'] = self.main.deck.suspendedCardCount()
         stats['spaced'] = self.main.deck.spacedCardCount()

@@ -345,6 +345,10 @@ class Ui_MainWindow(object):
 
         self.actionForum = QtGui.QAction(MainWindow)
         self.actionForum.setObjectName("actionForum")
+
+        self.actionSaveAs = QtGui.QAction(MainWindow)
+        self.actionSaveAs.setIcon(QtGui.QIcon(":/icons/filesave.png"))
+        self.actionSaveAs.setObjectName("actionSaveAs")
         self.menuHelp.addAction(self.actionStarthere)
         self.menuHelp.addSeparator()
         self.menuHelp.addAction(self.actionReportbug)
@@ -369,6 +373,7 @@ class Ui_MainWindow(object):
         self.menuDeck.addAction(self.actionImport)
         self.menuDeck.addSeparator()
         self.menuDeck.addAction(self.actionSave)
+        self.menuDeck.addAction(self.actionSaveAs)
         self.menuDeck.addAction(self.actionSyncdeck)
         self.menuDeck.addAction(self.actionExport)
         self.menuDeck.addSeparator()
@@ -482,5 +487,6 @@ class Ui_MainWindow(object):
         self.actionRepeatAudio.setText(_("Repeat las&t audio"))
         self.actionUndoAnswer.setText(_("&Undo last answer"))
         self.actionForum.setText(_("&Forum..."))
+        self.actionSaveAs.setText(_("Save &As"))
 
 import icons_rc

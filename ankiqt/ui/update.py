@@ -87,13 +87,14 @@ class Updater(QThread):
         self.emit(SIGNAL("statusChanged"), msg, timeout)
 
     def run(self):
+        filename = os.path.abspath(filename)
         try:
             f = urllib2.urlopen(baseUrl + "getQt")
         except urllib2.URLError:
             self.setStatus(_("Unable to reach server"))
             return
         try:
-            newfile = open(self.filename, "wb")
+            newfile = open(filename, "wb")
         except:
             self.setStatus(_("Unable to open file"))
             return
@@ -110,9 +111,9 @@ class Updater(QThread):
                 perc = 99
         newfile.close()
         self.setStatus(_("Updating.."))
-        os.system(self.filename)
+        os.system(filename)
         self.setStatus(_("Update complete. Please restart Anki."))
-        os.unlink(self.filename)
+        os.unlink(filename)
 
 def askAndUpdate(parent, version=None):
     if not version:

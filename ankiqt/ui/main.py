@@ -214,6 +214,9 @@ class AnkiQt(QMainWindow):
             delay = (delay+1)*1000
             if delay > 86400:
                 return
+            if delay < 0:
+                sys.stderr.write("earliest time returned negative value\n")
+                return
             t = QTimer(self)
             t.setSingleShot(True)
             self.connect(t, SIGNAL("timeout()"), self.refreshStatus)
@@ -634,6 +637,29 @@ class AnkiQt(QMainWindow):
 
             self.updateTitleBar()
 
+    def onSaveAs(self):
+        "Prompt for a file name, then save."
+        title = _("Save deck")
+        dir = os.path.dirname(self.deck.path)
+        file = QFileDialog.getSaveFileName(self, title,
+                                           dir,
+                                           _("Deck files (*.anki)"),
+                                           None,
+                                           QFileDialog.DontConfirmOverwrite)
+        file = unicode(file)
+        if not file:
+            return
+        if not file.lower().endswith(".anki"):
+            file += ".anki"
+        if os.path.exists(file):
+            # check for existence after extension
+            if not ui.utils.askUser(
+                "This file exists. Are you sure you want to overwrite it?"):
+                return
+        self.deck = self.deck.saveAs(file)
+        self.updateTitleBar()
+        self.moveToState("initial")
+
     def saveDeck(self):
         self.setStatus(_("Saving.."))
         self.deck.save()
@@ -1010,6 +1036,7 @@ class AnkiQt(QMainWindow):
         self.connect(self.mainWin.actionOpen, SIGNAL("triggered()"), self.onOpen)
         self.connect(self.mainWin.actionOpenSamples, SIGNAL("triggered()"), self.onOpenSamples)
         self.connect(self.mainWin.actionSave, SIGNAL("triggered()"), self.onSave)
+        self.connect(self.mainWin.actionSaveAs, SIGNAL("triggered()"), self.onSaveAs)
         self.connect(self.mainWin.actionClose, SIGNAL("triggered()"), self.saveAndClose)
         self.connect(self.mainWin.actionExit, SIGNAL("triggered()"), self, SLOT("close()"))
         self.connect(self.mainWin.actionSyncdeck, SIGNAL("triggered()"), self.syncDeck)

@@ -9,7 +9,7 @@ Exporting support
 """
 __docformat__ = 'restructuredtext'
 
-import itertools
+import itertools, time
 from operator import itemgetter
 from anki import DeckStorage
 from anki.cards import Card
@@ -80,7 +80,7 @@ interval = 0,
 lastInterval = 0,
 due = 0,
 lastDue = 0,
-factor = 0,
+factor = 2.5,
 firstAnswered = 0,
 reps = 0,
 successive = 0,
@@ -97,8 +97,15 @@ matureEase2 = 0,
 matureEase3 = 0,
 matureEase4 = 0,
 yesCount = 0,
-noCount = 0
-""")
+noCount = 0,
+modified = :now
+""", now=time.time())
+            # update spacing
+            self.newDeck.s.statement("""
+update facts set
+lastCardId = null,
+spaceUntil = 0,
+modified = :now""", now=time.time())
         self.newDeck.save()
         self.newDeck.close()
 

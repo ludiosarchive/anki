@@ -40,5 +40,9 @@ class Anki10Importer(Importer):
         assert not payload['deleted-facts']
         res = server.applyPayload(payload)
         client.applyPayloadReply(res)
+        # add tags
+        fids = [f[0] for f in res['added-facts']['facts']]
+        self.deck.addFactTags(fids, self.tagsToAdd)
         self.total = len(res['added-facts']['facts'])
         src.s.rollback()
+        self.deck.flushMod()
