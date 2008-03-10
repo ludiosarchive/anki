@@ -190,12 +190,12 @@ limit 1
         now = time.time()
         log = ""
         # any expired cards?
-        while self.futureQueue and self.futureQueue[0].due < now:
+        while self.futureQueue and self.futureQueue[0].due <= now:
             newItem = heappop(self.futureQueue)
             self.addExpiredItem(newItem)
             log += "add exp\n"
         # failed card due or queue too big?
-        if ((self.failedQueue and self.failedQueue[0].due < now) or
+        if ((self.failedQueue and self.failedQueue[0].due <= now) or
             (self.failedCardMax and
              len(self.failedQueue) >= self.failedCardMax)):
             log += "from failed\n"
@@ -288,7 +288,7 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
             item = self.itemFromItem(acq, card)
             heappush(self.acqQueue, item)
         elif (card.successive == 0 and
-              card.due < (time.time()+max(self.delay0, self.delay1))):
+              card.due <= (time.time()+max(self.delay0, self.delay1))):
             # failed
             item = self.itemFromItem(FailedItem, card)
             if card.id != card.fact.lastCardId:
