@@ -1,7 +1,5 @@
 # read unihan.txt and save it as a db
 
-import psyco; psyco.full()
-
 from sqlalchemy import (Table, Integer, Float, Unicode, Column, MetaData,
                         ForeignKey, Boolean, String, Date, UniqueConstraint,
                         UnicodeText)
