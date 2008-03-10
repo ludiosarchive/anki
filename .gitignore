@@ -1,0 +1,6 @@
+*.pyc
+.*.sw[po]
+
+ankiqt.egg-info
+build
+dist
