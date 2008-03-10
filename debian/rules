@@ -1,0 +1,51 @@
+#!/usr/bin/make -f
+
+#export DH_VERBOSE=1
+
+build: build-stamp
+
+build-stamp:
+	dh_testdir
+	python setup.py build
+	( cd libanki ;\
+	python setup.py build )
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	rm -rf build libanki/build
+	find $(CURDIR) -name '*\.py[co]' -exec rm {} \;
+	dh_clean 
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+	python setup.py install --root=$(CURDIR)/debian/anki --prefix=/usr
+	( cd libanki ;\
+	python setup.py install --root=$(CURDIR)/debian/anki --prefix=/usr )
+	install -o root -g root -m 644 $(CURDIR)/debian/anki.xpm $(CURDIR)/debian/anki/usr/share/pixmaps/anki.xpm
+	install -o root -g root -m 644 $(CURDIR)/anki.desktop $(CURDIR)/debian/anki/usr/share/applications/anki.desktop
+
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+#	dh_install
+	dh_installmenu
+	dh_desktop
+	dh_pycentral
+	dh_installman $(CURDIR)/debian/anki.1
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep
+.PHONY: build clean binary-indep binary-arch binary install

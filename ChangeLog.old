@@ -1,0 +1,337 @@
+------------------------------------------------------------
+revno: 6
+committer: Damien Elmes <bzr@ichi2.net>
+branch nick: fcwx
+timestamp: Thu 2007-03-22 11:07:17 -0700
+message:
+  fix preferences preview, look for samples in win32 install dir
+------------------------------------------------------------
+revno: 5
+committer: Damien Elmes <bzr@ichi2.net>
+branch nick: fcwx
+timestamp: Thu 2007-03-22 10:32:43 -0700
+message:
+  translation updates
+------------------------------------------------------------
+revno: 4
+committer: Damien Elmes <bzr@ichi2.net>
+branch nick: fcwx
+timestamp: Thu 2007-03-22 09:25:39 -0700
+message:
+  open in examples dir by default, report a failed save, add indents
+------------------------------------------------------------
+revno: 3
+committer: Damien Elmes <bzr@ichi2.net>
+branch nick: fcwx
+timestamp: Thu 2007-03-22 08:33:36 -0700
+message:
+  syncing, title bar, misc
+  - update sync code to support new protocol
+  - update title bar on failed deck load
+  - remove import support
+  - notify the user when a new version has been released
+  - reorder close and save
+  - hide python shell by default
+  - disable tools menu on no deck
+  - convert deck path to unicode before displaying the title
+------------------------------------------------------------
+revno: 2
+committer: Damien Elmes <bzr@ichi2.net>
+branch nick: fcwx
+timestamp: Tue 2007-03-20 12:33:15 -0700
+message:
+  merge patches from LaC, fix bug triggered on linux
+  - add kanji count statistics
+  - fix textctrl on mac
+  - rewritten grid code to provide table data on demand (much more efficient)
+  - columns are now automatically resized
+  - fixed some bugs in the process; for example, the filter is no longer ignored
+    when changing the sort order
+  - SetScrollLineX(0) on linux causes a hard crash. use a border of 1 instead
+------------------------------------------------------------
+revno: 1
+committer: Damien Elmes <bzr@ichi2.net>
+branch nick: fcwx
+timestamp: Tue 2007-03-20 11:53:07 -0700
+message:
+  initial import from darcs (see ChangeLog.old for old changes)
+------------------------------------------------------------
+Tue Mar 20 11:19:53 PDT 2007  fc@ichi2.net
+  * move to a new scheduling algorithm, fix various things
+  - update user interface to use the new scheduler (see fc changelog for more)
+  - reduce ease choices to 5 (0-4)
+  - show next time at ease 4, 3, 2
+  - clear status area after 3 seconds
+  - add menu items to lookup question/answer/selection in alc/edict
+  - add an interactive python shell menu item (hidden by default in future)
+  - update about dialog (fc's not only for Japanese learners)
+  - call fc to set the output lang for time differences
+  - remove ()s around furigana in output
+  - show furigana under kanji
+  - add a 1-space margin to text in the main window (excluding ques&ans)
+  - add average retention ratio (correct% over life of deck) to top section
+  - add GPL boilerplate
+
+Mon Mar 12 01:48:38 PDT 2007  fc@ichi2.net
+  * on preferences, don't assume an open deck (add "initial" state)
+
+Sun Mar 11 23:01:09 PDT 2007  fc@ichi2.net
+  * remove 'please restart' warning (not necessary), update translations
+
+Sun Mar 11 22:53:37 PDT 2007  fc@ichi2.net
+  * redraw menu on interface lang change
+
+Sun Mar 11 05:56:18 PDT 2007  fc@ichi2.net
+  * release 0.12
+
+Sun Mar 11 05:49:28 PDT 2007  fc@ichi2.net
+  * fix mac pref reference, remove useless enable/disableBody routines
+
+Sat Mar 10 05:34:14 PST 2007  fc@ichi2.net
+  * lang bugs, edit only on mac, last card, translations, etc
+  - moveToState openDeck with no deck is safe now
+  - don't exit if there's an unsaved file
+  - correctly initialise the interface language based on locale
+  - only display cut/copy/paste on mac (where it's necessary)
+  - honour lastCard{colour,font}
+  - update empty deck message
+  - hide furigana font, not interface font for english tgt. lang.
+  - change default colours to something a bit more conservation
+  - add jp translations for most of the changes
+
+Fri Mar  9 22:57:52 PST 2007  fc@ichi2.net
+  * even separation between top&question, answer&prompt
+
+Fri Mar  9 21:54:56 PST 2007  fc@ichi2.net
+  * ensure > 2.8 not =, maximize edit card window, make columns larger
+
+Fri Mar  9 20:46:14 PST 2007  fc@ichi2.net
+  * import sys before checking for wx
+
+Fri Mar  9 20:37:24 PST 2007  fc@ichi2.net
+  * fix lastCard bug, require wx2.8
+
+Fri Mar  9 18:25:01 PST 2007  fc@ichi2.net
+  * fix update on close of addCardDialog
+
+Fri Mar  9 05:49:13 PST 2007  fc@ichi2.net
+  * clear main window on deck close
+
+Fri Mar  9 05:30:00 PST 2007  fc@ichi2.net
+  * update main window when changing interface lang, display a better last card
+
+Fri Mar  9 05:19:04 PST 2007  fc@ichi2.net
+  * refactor display into controller/view
+
+Mon Mar  5 12:14:00 PST 2007  LaC
+  * miscellaneous fixes
+  - display fix in OLDSTYLE mode
+  - status bar displays error message if saving fails
+  - usable default fonts on Windows
+  - simplified edit dialog code, fixed issue with marked rows not being redrawn
+  - added some default colors; larger default kanji font
+  - incremented version number
+
+Thu Jan 25 07:39:14 PST 2007  LaC
+  * clear if same question exists
+  - also adds additional check for bundled kakasi in mac build
+
+Thu Feb  1 12:21:46 PST 2007  LaC
+  * little card stuff
+  - If a card's question is changed by the card generator (because of a
+    conflict with an existing card) give an explicit warning in the status
+    field. This was in a previous patch, but it was buggy. It's useful for
+    when your dictionary has ententries such as "<ban>: evening, night" and
+    "<yoru>: evening, night" and you don't realize until you are asked
+    "evening, night (1)" and have no idea which one it wants.
+  - If you change a card, the filter in the card editor applies to the newly
+    entered text (eg if you add a "(vt)" marker and search for "(vt)", it
+    shows up).
+  - Removed begin/end batch call in mark functions, since the operation is now
+    done with a single call.
+
+Wed Jan 31 22:42:27 PST 2007  fc@ichi2.net
+  UNDO: split main window into 3
+
+Wed Jan 31 22:42:27 PST 2007  fc@ichi2.net
+  * split main window into 3
+
+Wed Jan 31 22:24:33 PST 2007  fc@ichi2.net
+  * fix conflicts in merge with lac, kill some trailing whitespace
+
+Wed Jan 31 15:50:05 PST 2007  LaC
+  * fix stale colors
+  Since the existing table rows are no longer deleted (see earlier patch),
+  their background color needs to be cleared separately. After considering
+  several methods, profiling showed this to be the fastest.
+
+Thu Jan 25 08:06:58 PST 2007  LaC
+  * fixed marking rows
+  - fixed marking deleted and changed rows in deck editor (broken by faster
+    filter patch)
+
+Wed Jan 24 11:47:57 PST 2007  LaC
+  * LaC changed mac bundle identifier
+
+Wed Jan 24 10:53:26 PST 2007  LaC
+  * LaC setup.py version
+  - setup.py now gets the version number from fcwx.py
+
+Wed Jan 24 10:40:19 PST 2007  LaC
+  * LaC faster filter
+  - changed the implementation of EditDeckDialog.show(); the new version is
+    about twice as fast (measured), which is noticeable on my system.
+
+Wed Jan 24 10:37:24 PST 2007  LaC
+  * LaC help menu
+  - added a bare-bones help menu. Apps always have a help menu on OS X, and it
+    looks silly if it's empty. They also require an about command (which gets
+    moved to the application menu by wxMac).
+
+Wed Jan 24 09:42:03 PST 2007  LaC
+  * LaC bundled kakasi for Mac build
+
+Tue Jan 23 15:19:24 PST 2007  LaC
+  * LaC mac binary build
+  - added script to produce a binary build for OS X. The build is an universal
+    binary (not yet tested on Intel, though) and includes all dependencies
+    (Python, wxPython etc.). This simplifies installation and makes it
+    possible to include a specially patched version of wxPython that fixes
+    some bugs with Japanese text input (the patches have been submitted to wx,
+    but have not been committed yet). Note that this patch only includes the
+    script; if anyone else wants to make a Mac build, they need to have their
+    own copy of wxPython.
+  - added icon for Mac binary build.
+
+Tue Jan 23 15:14:09 PST 2007  LaC
+  * LaC deck editor
+  - renamed the wxglade file with the correct extension
+  - fixed a broken call to updateTitleBar
+  - interface changes, mainly to the Edit Deck dialog. In particular, instead
+    of having a Search button which pops up a modal dialog, the window now has
+    a search box where the user can type a query directly and see the results
+    in real time (actually with a small delay to ensure that a quick series of
+    keystrokes is coalesced into a single search). The search box uses the
+    dedicated wx.SearchCtrl, which uses the native search box widget on
+    platforms that have one (eg OS X), and falls back on a TextCtrl on those
+    that don't.
+
+Tue Jan 23 15:01:44 PST 2007  LaC
+  * LaC menus
+  - Added keyboard equivalents for several menu commands on Mac.
+  - Reorganized menus. The new layout fits much better on OS X, where
+    applications are not required to have a File menu: now there is a Deck
+    menu containing all commands which operate on the deck as a whole (this
+    also avoids having to repeat the word "deck" in every single command,
+    which cluttered the menu), while commands such as Quit are in the
+    application menu. Other systems don't have an application menu, however,
+    so it might be necessary to conditionalize these changes depending on the
+    platform.
+  - Defined several command IDs in terms of the equivalent standard wx IDs.
+    This is supposed to allow such things as displaying the standard command
+    icons on GTK.
+
+Tue Jan 23 13:51:59 PST 2007  LaC
+  * LaC 0.12 misc
+  - support for old/new style display
+  - fixed mac menu support
+  - better implementation of deck restart
+  - edit menu
+  - better information dislay in title bar
+  - fixed bug with font defaults on mac
+
+Thu Jan 11 20:35:12 PST 2007  fc@ichi2.net
+  * don't check for kakasi unless we're in japanese mode
+
+Thu Jan 11 20:33:08 PST 2007  fc@ichi2.net
+  * add labels to cut/copy/paste etc
+
+Thu Jan 11 20:22:00 PST 2007  fc@ichi2.net
+  * patch from teh_lac (fixes font bug, mac bug, timer)
+
+Mon Dec 25 08:19:16 PST 2006  fc@ichi2.net
+  * refactor display code, select current card in editor
+  - use regexps to match optional furigana (should be less prone to breaking)
+  - display furigana on separate line
+  - make question and answer centered
+  - remove separator line
+  - in the editor, select the currently displayed card
+
+Mon Dec 25 06:07:21 PST 2006  fc@ichi2.net
+  * honour last card colour, drop multiple colour type support as we pickle
+
+Sun Dec 24 03:07:40 PST 2006  fc@ichi2.net
+  * numerous changes (mac/timer/etc)
+  - add card timer to show cards after finished screen
+  - set mac preferences properly
+  - display file name in title bar
+  - show last card up top
+  - display message if incorrect cards are pending
+  - only undo RET on windows
+  - display approx next time for quality 4/5
+  - allow customization of last card colour/font
+  - update japanese translations
+  - use kakasi in $INSTDIR/kakasi, not c:\kakasi
+  - show 'undecided language' last, so that when
+    it's hidden it doesn't effect the order on win32/mac
+  - accept a deck as a command line argument
+
+Sat Dec 23 05:53:13 PST 2006  fc@ichi2.net
+  * don't delete temp control until end, force bg colour to default to white
+
+Tue Dec 12 06:26:25 PST 2006  fc@ichi2.net
+  * merge imei's latest patch with some modifications
+
+Mon Dec 11 05:37:31 PST 2006  fc@ichi2.net
+  * patch from teh_lac - use native font desc, not user desc, due to macosx bug
+
+Sun Dec 10 03:10:25 PST 2006  fc@ichi2.net
+  * scroll add cards automatically, add auto kakasi win32 support, check open deck
+
+Thu Dec  7 06:33:35 PST 2006  fc@ichi2.net
+  * scroll the add card status
+
+Thu Dec  7 06:08:49 PST 2006  fc@ichi2.net
+  * add backup support on load/save/exit
+
+Thu Dec  7 05:18:23 PST 2006  fc@ichi2.net
+  * auto-fill furigana, improve deck editor (thanks imei)
+
+Thu Dec  7 01:20:50 PST 2006  fc@ichi2.net
+  * possible fix for osx menu problem
+
+Thu Nov 30 05:21:03 PST 2006  fc@ichi2.net
+  * don't destroy dialogs, they destroy themselves
+
+Wed Nov 29 20:28:43 PST 2006  fc@ichi2.net
+  * polish off the edit deck functionality a little
+
+Tue Nov 28 09:54:50 PST 2006  fc@ichi2.net
+  * beginnings of the edit dialog (but forgets changes when searching atm)
+
+Tue Nov 28 07:37:33 PST 2006  fc@ichi2.net
+  * big refactor, sync in a different thread
+
+Mon Nov 27 02:50:32 PST 2006  fc@ichi2.net
+  * set japanese locale by default
+
+Fri Nov 24 11:21:14 PST 2006  fc@ichi2.net
+  * added japanese translation
+
+Fri Nov 24 07:26:21 PST 2006  fc@ichi2.net
+  * font customisation, etc
+
+Thu Nov 23 04:37:19 PST 2006  fc@ichi2.net
+  * add sync support, prefs
+
+Wed Nov 22 09:28:39 PST 2006  fc@ichi2.net
+  * move lang config into preferences
+
+Wed Nov 22 07:51:27 PST 2006  fc@ichi2.net
+  * misc changes
+
+Wed Nov 22 03:24:12 PST 2006  fc@ichi2.net
+  * add glade files
+
+Mon Nov 20 10:01:37 PST 2006  fc@ichi2.net
+  * initial import

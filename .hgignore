@@ -1,0 +1,11 @@
+syntax: glob
+*.elc
+*.pyc
+*~
+.*.swp
+*.mo
+*\#
+*_rc.py
+ankiqt.egg-info
+build
+dist
