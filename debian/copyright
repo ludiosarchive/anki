@@ -7,10 +7,10 @@ Upstream author:  Damien Elmes, with contributions by "Lac", "Iroiro" and
 
 License:
  # Copyright: Damien Elmes <anki@ichi2.net>
- # License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+ # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
-On Debian systems, the complete text of the GNU General Public License version 2
-can be found in /usr/share/common-licenses/GPL-2.
+On Debian systems, the complete text of the GNU General Public License version 3
+can be found in /usr/share/common-licenses/GPL-3.
 
 The .orig.tar.gz was repackaged from the original .tgz to remove the sample
 deck 'RTK1+3.anki'.  This deck has an unclear licensing status as it is a
