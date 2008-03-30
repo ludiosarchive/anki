@@ -7,10 +7,20 @@ build-stamp:
 	python libanki/anki/features/chinese/save_unihan.py
 	touch build-stamp
 
+movedebfiles:
+	dh_testdir
+	-tar -cf upstreamdebfiles.tar debian/dirs debian/docs debian/pycompat
+	rm -f debian/dirs debian/docs debian/pycompat
+
+unmovedebfiles:
+	dh_testdir
+	if [ -f upstreamdebfiles.tar ]; then tar -xf upstreamdebfiles.tar; fi
+	rm -f upstreamdebfiles.tar
+
 binary: binary-arch binary-indep
 binary-arch: build
 
-binary-indep: build
+binary-indep: build movedebfiles
 	dh_testdir
 	dh_testroot
 	dh_clean
@@ -32,7 +42,7 @@ binary-indep: build
 	dh_md5sums
 	dh_builddeb
 
-clean:
+clean: unmovedebfiles
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
@@ -40,4 +50,4 @@ clean:
 	find -name \*.py[co] -exec rm {} \;
 	dh_clean
 
-.PHONY: build clean binary binary-arch binary-indep
+.PHONY: build clean binary binary-arch binary-indep movedebfiles unmovedebfiles
