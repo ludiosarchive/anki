@@ -1,3 +1,13 @@
+anki (0.9.5.5-1) unstable; urgency=low
+
+  * New upstream release now licensed under GPL 3 or later
+  * debian/copyright: adapt to upstream relicense
+  * debian/rules: install CREDITS as documentation
+  * debian/rules: move upstream debian/ files out of the way on build and
+    restore in clean, file removals aren't recorded in Debian diffs
+
+ -- Andreas Bombe <aeb@debian.org>  Mon, 31 Mar 2008 00:29:22 +0200
+
 anki (0.9.5.4-2) unstable; urgency=low
 
   * Add python-sqlite2 to Build-Depends-Indep, now it really builds in a clean
