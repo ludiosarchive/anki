@@ -1,12 +1,12 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import os, sys, optparse, re
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.5.4"
+appVersion="0.9.5.5"
 appWebsite="http://ichi2.net/anki/download/"
 appHelpSite="http://ichi2.net/anki/wiki/Documentation"
 appIssueTracker="http://repose.ath.cx/tracker/anki/"

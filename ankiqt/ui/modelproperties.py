@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -145,6 +145,8 @@ class ModelProperties(QDialog):
         self.deck.deleteFieldModel(self.m, field)
         self.currentField = None
         self.updateFields()
+        # need to update q/a format
+        self.readCurrentCard()
 
     # Cards
     ##########################################################################

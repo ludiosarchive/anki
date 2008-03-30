@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Importing Anki v0.3 decks
@@ -280,6 +280,5 @@ class Anki03Importer(Importer):
         # save without updating mod time
         deck.modified = oldDeck.modified
         deck.lastLoaded = deck.modified
-        deck.s.flush()
         deck.s.commit()
         deck.save()

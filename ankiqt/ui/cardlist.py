@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -125,9 +125,10 @@ class DeckModel(QAbstractTableModel):
                 sort = ("order by cards.reps = 0, "
                         "cards.noCount / (cards.reps + 0.001) desc, "
                         "cards.reps")
-            #else:
-            #    sort = "order by cards.reps = 0, cards." + self.sortKey
-            sort = "order by cards." + self.sortKey
+            else:
+                sort = "order by cards." + self.sortKey
+                if self.sortKey in ("question", "answer"):
+                    sort += " collate nocase"
             query = ("select id, priority, question, answer, due, "
                      "reps, factId from cards ")
             if ads:
