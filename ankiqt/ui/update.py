@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *

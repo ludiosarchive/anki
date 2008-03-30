@@ -1,6 +1,6 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
 # -*- coding: utf-8 -*-
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -86,7 +86,6 @@ class AnkiQt(QMainWindow):
 
     def reset(self):
         if self.deck:
-            self.deck.s.flush()
             self.deck.refresh()
             self.deck.updateAllPriorities()
             self.rebuildQueue()
@@ -127,8 +126,12 @@ class AnkiQt(QMainWindow):
         self.updateTitleBar()
         if state == "noDeck":
             self.help.hide()
+            self.currentCard = None
+            self.lastCard = None
             self.disableDeckMenuItems()
             self.resetButtons()
+            # hide all deck-associated dialogs
+            ui.dialogs.closeAll()
         elif state == "getQuestion":
             if self.deck.totalCardCount() == 0:
                 return self.moveToState("deckEmpty")
@@ -224,10 +227,11 @@ class AnkiQt(QMainWindow):
     def refreshStatus(self):
         "If triggered when the deck is finished, reset state."
         if self.state == "deckFinished":
-            self.moveToState("initial")
+            self.moveToState("getQuestion")
         if self.state != "deckFinished":
-            self.refreshTimer.stop()
-            self.refreshTimer = None
+            if self.refreshTimer:
+                self.refreshTimer.stop()
+                self.refreshTimer = None
 
     # Buttons
     ##########################################################################
@@ -1114,8 +1118,7 @@ class AnkiQt(QMainWindow):
         self.mainWin.actionMarkCard.blockSignals(False)
 
     def disableCardMenuItems(self):
-        if not self.lastCard:
-            self.mainWin.actionUndoAnswer.setEnabled(False)
+        self.mainWin.actionUndoAnswer.setEnabled(not not self.lastCard)
         self.mainWin.actionMarkCard.setEnabled(False)
         self.mainWin.actionSuspendCard.setEnabled(False)
         self.mainWin.actionRepeatQuestionAudio.setEnabled(False)

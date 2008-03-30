@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Exporting support
@@ -106,7 +106,8 @@ update facts set
 lastCardId = null,
 spaceUntil = 0,
 modified = :now""", now=time.time())
-        self.newDeck.save()
+        # need to save manually
+        self.newDeck.s.commit()
         self.newDeck.close()
 
     def localSummary(self):

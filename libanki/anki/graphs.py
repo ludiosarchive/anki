@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Graphs of deck statistics
@@ -20,6 +20,12 @@ if getattr(sys, "frozen", None):
 
 try:
     from matplotlib.figure import Figure
+except UnicodeEncodeError:
+    # haven't tracked down the cause of this yet, but reloading fixes it
+    try:
+        from matplotlib.figure import Figure
+    except ImportError:
+        pass
 except ImportError:
     pass
 

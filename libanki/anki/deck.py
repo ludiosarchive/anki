@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 The Deck
@@ -149,37 +149,26 @@ limit 1
     def getCard(self):
         "Return the next due card, or None"
         now = time.time()
-        log = ""
         # any expired cards?
         while self.futureQueue and self.futureQueue[0].due <= now:
             newItem = heappop(self.futureQueue)
             self.addExpiredItem(newItem)
-            log += "add exp\n"
         # failed card due?
         if (self.failedQueue and self.failedQueue[0].due <= now):
-            log += "from failed\n"
             item = heappop(self.failedQueue)
         # failed card queue too big?
         elif (self.failedCardMax and
             self.failedCardsDueSoon() >= self.failedCardMax):
-            log += "from failedmax"
             item = self.getOldestModifiedFailedCard()
         # card due for revision
         elif self.revQueue:
             item = heappop(self.revQueue)
-            log += "from rev\n"
         # card due for acquisition
         elif self.acqQueue:
             item = heappop(self.acqQueue)
-            log += "from acq\n"
         else:
-            log = ""
             if not self.failedCardsDueSoon():
-                # maybe rebuild queue
-                if (self.earliestTime() - time.time()) <= 0:
-                    self.rebuildQueue()
-                    return self.getCard()
-                # otherwise, stop
+                # stop
                 return
             # otherwise, go into final review mode.
             item = self.getOldestModifiedFailedCard()
@@ -194,9 +183,6 @@ limit 1
                 heappush(self.futureQueue, item)
                 return self.getCard()
         card = self.s.query(anki.cards.Card).get(item.id)
-        if (card.due - time.time()) > max(self.delay0, self.delay1):
-            if log:
-                sys.stderr.write(log)
         card.genFuzz()
         card.startTimer()
         return card
@@ -212,7 +198,7 @@ limit 1
         return item
 
     def answerCard(self, card, ease):
-        "Reschedule CARD based on EASE. Changes are not flushed to DB."
+        "Reschedule CARD based on EASE."
         oldState = self.cardState(card)
         lastDelay = max(0, (time.time() - card.due) / 86400.0)
         # update card details
@@ -233,13 +219,16 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
         ssum = ssum or 0
         space = min(smin, card.interval)
         if not space:
-            card.fact.spaceUntil = (time.time() +
-                                    card.fact.model.initialSpacing)
+            newSpace = (time.time() +
+                        card.fact.model.initialSpacing)
         else:
-            card.fact.spaceUntil = max(time.time() + (
+            newSpace = max(time.time() + (
                 space * card.fact.model.spacing * 86400.0),
-                                       self.delay0+1,
-                                       self.delay1+1)
+                           self.delay0+1,
+                           self.delay1+1)
+        # only update spacing if it's greater than before
+        if newSpace > card.fact.spaceUntil:
+            card.fact.spaceUntil = newSpace
         # update cache
         self.factSpacing[card.factId] = (card.id, card.fact.spaceUntil)
         card.fact.setModified(textChanged=False)
@@ -462,27 +451,9 @@ where id in (%s)""" % ",".join([str(id) for id in factIds]), now=time.time())
         now = time.time()
         newPriorities = []
         tagsList = self.tagsList()
-        suspended = parseTags(self.suspended.lower())
-        high = parseTags(self.highPriority.lower())
-        med = parseTags(self.medPriority.lower())
-        low = parseTags(self.lowPriority.lower())
+        tagCache = self.genTagCache()
         for (cardId, tags, oldPriority) in tagsList:
-            tags = parseTags(tags)
-            newPriority = PRIORITY_NORM
-            for tag in tags:
-                tag = tag.lower()
-                if tag in suspended:
-                    newPriority = PRIORITY_NONE
-                    break
-                if tag in high:
-                    newPriority = PRIORITY_HIGH
-                    break
-                if tag in med:
-                    newPriority = PRIORITY_MED
-                    break
-                if tag in low:
-                    newPriority = PRIORITY_LOW
-                    break
+            newPriority = self.priorityFromTagString(tags, tagCache)
             if newPriority != oldPriority:
                 newPriorities.append({"id": cardId, "pri": newPriority})
         # update db
@@ -493,25 +464,42 @@ update cards set priority = :pri, modified = %f where cards.id = :id""" %
 
     def updatePriority(self, card):
         "Update priority on a single card."
-        tags = parseTags((card.tags + "," + card.fact.tags + "," +
-                         card.fact.model.tags + "," + card.cardModel.name).lower())
-        p = PRIORITY_NORM
-        for tag in tags:
-            if tag in parseTags(self.suspended.lower()):
-                p = PRIORITY_NONE
-                break
-            if tag in parseTags(self.highPriority.lower()):
-                p = PRIORITY_HIGH
-                break
-            if tag in parseTags(self.medPriority.lower()):
-                p = PRIORITY_MED
-                break
-            if tag in parseTags(self.lowPriority.lower()):
-                p = PRIORITY_NONE
-                break
+        tagCache = self.genTagCache()
+        tags = (card.tags + "," + card.fact.tags + "," +
+                card.fact.model.tags + "," + card.cardModel.name)
+        p = self.priorityFromTagString(tags, tagCache)
         if p != card.priority:
             card.priority = p
             self.flushMod()
+
+    def priorityFromTagString(self, tagString, tagCache):
+        tags = parseTags(tagString.lower())
+        for tag in tags:
+            if tag in tagCache['suspended']:
+                return PRIORITY_NONE
+        for tag in tags:
+            if tag in tagCache['high']:
+                return PRIORITY_HIGH
+        for tag in tags:
+            if tag in tagCache['med']:
+                return PRIORITY_MED
+        for tag in tags:
+            if tag in tagCache['low']:
+                return PRIORITY_LOW
+        return PRIORITY_NORM
+
+    def genTagCache(self):
+        "Cache tags for quick lookup. Return dict."
+        d = {}
+        t = parseTags(self.suspended.lower())
+        d['suspended'] = dict([(k, 1) for k in t])
+        t = parseTags(self.highPriority.lower())
+        d['high'] = dict([(k, 1) for k in t])
+        t = parseTags(self.medPriority.lower())
+        d['med'] = dict([(k, 1) for k in t])
+        t = parseTags(self.lowPriority.lower())
+        d['low'] = dict([(k, 1) for k in t])
+        return d
 
     # Card/fact counts
     ##########################################################################
@@ -1011,9 +999,9 @@ Rename for uniqueness if not the same. Return the new name."""
     def renameMediaDir(self, oldPath):
         "Copy oldPath to our current media dir. "
         assert os.path.exists(oldPath)
-        newPath = self.mediaDir(create=False)
-        if os.path.exists(newPath):
-            return
+        newPath = self.mediaDir(create=True)
+        # copytree doesn't want the dir to exist
+        os.rmdir(newPath)
         shutil.copytree(oldPath, newPath)
 
     # DB helpers
@@ -1024,7 +1012,6 @@ Rename for uniqueness if not the same. Return the new name."""
         if self.lastLoaded == self.modified:
             return
         self.lastLoaded = self.modified
-        self.s.flush()
         self.s.commit()
 
     def close(self):
@@ -1038,9 +1025,11 @@ Rename for uniqueness if not the same. Return the new name."""
         self.refresh()
 
     def refresh(self):
-        "Invalidate all objects from cache."
+        "Flush, invalidate all objects from cache and reload."
+        self.s.flush()
         self.s.clear()
         self.s.update(self)
+        self.s.refresh(self)
 
     def openSession(self):
         "Open a new session. Assumes old session is already closed."
@@ -1064,6 +1053,7 @@ Rename for uniqueness if not the same. Return the new name."""
         self.s.flush()
 
     def saveAs(self, newPath):
+        oldMediaDir = self.mediaDir()
         # flush old deck
         self.s.flush()
         # remove new deck if it exists
@@ -1094,9 +1084,14 @@ Rename for uniqueness if not the same. Return the new name."""
         # detach old db and commit
         s("detach database old")
         newDeck.s.commit()
-        # close ourself, rebuild queue and return the new deck object
+        # close ourself, rebuild queue
         self.s.close()
+        newDeck.refresh()
         newDeck.rebuildQueue()
+        # move media
+        if oldMediaDir:
+            newDeck.renameMediaDir(oldMediaDir)
+        # and return the new deck object
         return newDeck
 
 mapper(Deck, decksTable, properties={
@@ -1292,7 +1287,8 @@ class DeckStorage(object):
             deck.s = SessionHelper(s, lock=lock)
             DeckStorage._addViews(deck.s, create)
         except OperationalError, e:
-            if str(e.orig).startswith("database table is locked"):
+            if (str(e.orig).startswith("database table is locked") or
+                str(e.orig).startswith("database is locked")):
                 raise DeckAccessError(_("File is in use by another process"),
                                       type="inuse")
             else:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Latex support
@@ -9,7 +9,7 @@ Latex support
 """
 __docformat__ = 'restructuredtext'
 
-import re, tempfile, os
+import re, tempfile, os, sys
 
 latexPreamble = ("\\documentclass[12pt]{article}\n"
                  "\\pagestyle{empty}\n"
@@ -23,8 +23,11 @@ regexps = {
     "math": re.compile(r"\[\$\$\](.+?)\[/\$\$\]", re.DOTALL | re.IGNORECASE),
     }
 
-# FIXME: cleanup
 tmpdir = tempfile.mkdtemp(prefix="anki-latex")
+
+# add standard tex install location to osx
+if sys.platform == "darwin":
+    os.environ['PATH'] += ";/usr/texbin"
 
 def renderLatex(deck, text):
     "Convert TEXT with embedded latex tags to image links."
