@@ -171,7 +171,7 @@ limit 1
         else:
             if self.collapsedFailedCards():
                 # final review
-                item = self.getOldestModifiedFailedCard()
+                item = self.getOldestModifiedFailedCard(collapse=True)
             else:
                 return
         # if it's not failed, check if it's spaced
@@ -188,9 +188,12 @@ limit 1
         card.startTimer()
         return card
 
-    def getOldestModifiedFailedCard(self):
+    def getOldestModifiedFailedCard(self, collapse=False):
         # get the oldest modified within collapse.
-        cutoff = time.time() + max(self.delay0, self.delay1)
+        if collapse:
+            cutoff = time.time() + self.collapseTime
+        else:
+            cutoff = time.time() + max(self.delay0, self.delay1)
         q = [i for i in self.failedQueue if i.due <= cutoff]
         item = sorted(q, cmp=self.oldestModifiedCmp)[0]
         # remove it from the queue and rebuild
