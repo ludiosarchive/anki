@@ -38,6 +38,8 @@ PRIORITY_NORM = 2
 PRIORITY_LOW = 1
 PRIORITY_NONE = 0
 
+MATURE_THRESHOLD = 21
+
 NewCardOrder = {
     0: _("Show new cards in random order"),
     1: _("Show new cards in order they were added"),
@@ -167,12 +169,10 @@ limit 1
         elif self.acqQueue:
             item = heappop(self.acqQueue)
         else:
-            if not self.failedCardsDueSoon():
-                # stop
-                return
-            # otherwise, go into final review mode.
-            item = self.getOldestModifiedFailedCard()
-            if item.due - time.time() > self.collapseTime:
+            if self.collapsedFailedCards():
+                # final review
+                item = self.getOldestModifiedFailedCard()
+            else:
                 return
         # if it's not failed, check if it's spaced
         if item.successive or item.reps == 0:
@@ -180,6 +180,7 @@ limit 1
             if space > now:
                 # update due time and put it back in future queue
                 item.due = max(item.due, space)
+                item = self.itemFromItem(FutureItem, item)
                 heappush(self.futureQueue, item)
                 return self.getCard()
         card = self.s.query(anki.cards.Card).get(item.id)
@@ -296,14 +297,19 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id)[0]
             return 0
         return self.factSpacing[item.factId][1]
 
-    def failedCardsDueSoon(self):
-        "Return number of failed cards due within delay0/1."
+    def failedCardsDueSoon(self, cutoff=None):
+        "Number of failed cards due within delay0/1."
         count = 0
-        cutoff = time.time() + max(self.delay0, self.delay1)
+        if not cutoff:
+            cutoff = time.time() + max(self.delay0, self.delay1)
         for n in range(len(self.failedQueue)):
             if self.failedQueue[n].due <= cutoff:
                 count += 1
         return count
+
+    def collapsedFailedCards(self):
+        "Number of cards due within collapse time."
+        return self.failedCardsDueSoon(time.time() + self.collapseTime)
 
     def oldestModifiedCmp(self, a, b):
         return cmp(a.modified, b.modified)
@@ -551,13 +557,13 @@ facts.spaceUntil > :now""", now=time.time())
 
     def matureCardCount(self):
         return self.s.scalar(
-            "select count(id) from cards where interval > :t",
-            t=self.easyIntervalMax)
+            "select count(id) from cards where interval >= :t "
+            "and reps > 0", t=MATURE_THRESHOLD)
 
     def youngCardCount(self):
         return self.s.scalar(
-            "select count(id) from cards where interval <= :t "
-            "and reps > 0", t=self.easyIntervalMax)
+            "select count(id) from cards where interval < :t "
+            "and reps > 0", t=MATURE_THRESHOLD)
 
     # Card predicates
     ##########################################################################
@@ -565,21 +571,25 @@ facts.spaceUntil > :now""", now=time.time())
     def cardState(self, card):
         if self.cardIsNew(card):
             return "new"
-        elif self.cardIsBeingLearnt(card):
-            return "young"
-        return "mature"
+        elif card.interval > MATURE_THRESHOLD:
+            return "mature"
+        return "young"
 
     def cardIsNew(self, card):
         "True if a card has never been seen before."
         return card.reps == 0
 
     def cardIsBeingLearnt(self, card):
-        "True if card hasn't been scheduled for easyInterval yet."
+        "True if card should use present intervals."
         return card.interval < self.easyIntervalMin
 
     def cardIsYoung(self, card):
-        "True if card hasn't been remembered for easyInterval."
-        return card.interval <= self.easyIntervalMax
+        "True if card is not new and not mature."
+        return (not self.cardIsNew(card) and
+                not self.cardIsMature(card))
+
+    def cardIsMature(self, card):
+        return card.interval >= MATURE_THRESHOLD
 
     # Stats
     ##########################################################################
