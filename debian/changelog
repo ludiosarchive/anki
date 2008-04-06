@@ -1,8 +1,8 @@
-anki (0.9.5.6-1) unstable; urgency=low
+anki (0.9.5.7-1) unstable; urgency=low
 
-  * New release
+  * New upstream release
 
- -- Damien Elmes <resolve@repose.cx>  Wed, 02 Apr 2008 23:14:18 +0900
+ -- Andreas Bombe <aeb@debian.org>  Sun, 06 Apr 2008 17:05:49 +0200
 
 anki (0.9.5.5-1) unstable; urgency=low
 
