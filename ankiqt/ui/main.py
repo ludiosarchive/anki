@@ -222,7 +222,7 @@ class AnkiQt(QMainWindow):
             t = QTimer(self)
             t.setSingleShot(True)
             self.connect(t, SIGNAL("timeout()"), self.refreshStatus)
-            t.start((delay+5)*1000)
+            t.start((delay+1)*1000)
 
     def refreshStatus(self):
         "If triggered when the deck is finished, reset state."

@@ -26,7 +26,7 @@ tmpdir = tempfile.mkdtemp(prefix="anki-latex")
 
 # add standard tex install location to osx
 if sys.platform == "darwin":
-    os.environ['PATH'] += ";/usr/texbin"
+    os.environ['PATH'] += ":/usr/texbin"
 
 def renderLatex(deck, text):
     "Convert TEXT with embedded latex tags to image links."
@@ -57,6 +57,11 @@ def imgLink(deck, latex):
     texfile.write(latexPostamble + "\n")
     texfile.close()
     if not os.path.exists(name):
-        os.system("latex -interaction=nonstopmode %s >> %s 2>&1" % (texpath, log))
-        os.system(latexDviPngCmd + " tmp.dvi -o %s >> %s" % (name, log))
+        oldcwd = os.getcwd()
+        try:
+            os.chdir(tmpdir)
+            os.system("latex -interaction=nonstopmode %s >> %s 2>&1" % (texpath, log))
+            os.system(latexDviPngCmd + " tmp.dvi -o %s >> %s" % (name, log))
+        finally:
+            os.chdir(oldcwd)
     return '<img src="%s">' % name
