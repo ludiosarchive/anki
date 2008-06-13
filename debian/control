@@ -5,7 +5,7 @@ Priority: optional
 Build-Depends: debhelper (>= 6)
 Build-Depends-Indep: unicode-data, bzip2, python-support (>= 0.6),
 	python-sqlalchemy (>= 0.4.1), python-pysqlite2
-Standards-Version: 3.7.3
+Standards-Version: 3.8.0
 Homepage: http://ichi2.net/anki
 
 Package: anki
