@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
@@ -12,6 +11,8 @@ __docformat__ = 'restructuredtext'
 import re, tempfile, os, sys
 
 latexPreamble = ("\\documentclass[12pt]{article}\n"
+                 "\\special{papersize=3in,5in}"
+                 "\\usepackage[utf8]{inputenc}"
                  "\\pagestyle{empty}\n"
                  "\\begin{document}")
 latexPostamble = "\\end{document}"
@@ -40,6 +41,15 @@ def renderLatex(deck, text):
         text = text.replace(match.group(), imgLink(
             deck,
             "\\begin{displaymath}" + match.group(1) + "\\end{displaymath}"))
+    return text
+
+def stripLatex(text):
+    for match in regexps['standard'].finditer(text):
+        text = text.replace(match.group(), "")
+    for match in regexps['expression'].finditer(text):
+        text = text.replace(match.group(), "")
+    for match in regexps['math'].finditer(text):
+        text = text.replace(match.group(), "")
     return text
 
 def imgLink(deck, latex):

@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/preferences.ui'
 #
 
-#      by: PyQt4 UI code generator 4.3
+#      by: PyQt4 UI code generator 4.3.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -21,6 +21,7 @@ class Ui_Preferences(object):
         self.tabWidget.setObjectName("tabWidget")
 
         self.tab_1 = QtGui.QWidget()
+        self.tab_1.setGeometry(QtCore.QRect(0,0,453,426))
         self.tab_1.setObjectName("tab_1")
 
         self.hboxlayout = QtGui.QHBoxLayout(self.tab_1)
@@ -147,6 +148,7 @@ class Ui_Preferences(object):
         self.tabWidget.addTab(self.tab_1,"")
 
         self.tab_2 = QtGui.QWidget()
+        self.tab_2.setGeometry(QtCore.QRect(0,0,453,426))
         self.tab_2.setObjectName("tab_2")
 
         self.vboxlayout2 = QtGui.QVBoxLayout(self.tab_2)
@@ -251,6 +253,7 @@ class Ui_Preferences(object):
         self.tabWidget.addTab(self.tab_2,"")
 
         self.tab_3 = QtGui.QWidget()
+        self.tab_3.setGeometry(QtCore.QRect(0,0,453,426))
         self.tab_3.setObjectName("tab_3")
 
         self.vboxlayout4 = QtGui.QVBoxLayout(self.tab_3)
@@ -274,6 +277,31 @@ class Ui_Preferences(object):
         self.tallButtons = QtGui.QCheckBox(self.tab_3)
         self.tallButtons.setObjectName("tallButtons")
         self.gridlayout4.addWidget(self.tallButtons,3,0,1,1)
+
+        self.suppressUpdate = QtGui.QCheckBox(self.tab_3)
+        self.suppressUpdate.setObjectName("suppressUpdate")
+        self.gridlayout4.addWidget(self.suppressUpdate,4,0,1,1)
+
+        self.editCurrentOnly = QtGui.QCheckBox(self.tab_3)
+        self.editCurrentOnly.setChecked(True)
+        self.editCurrentOnly.setObjectName("editCurrentOnly")
+        self.gridlayout4.addWidget(self.editCurrentOnly,5,0,1,1)
+
+        self.suppressEstimates = QtGui.QCheckBox(self.tab_3)
+        self.suppressEstimates.setObjectName("suppressEstimates")
+        self.gridlayout4.addWidget(self.suppressEstimates,6,0,1,1)
+
+        self.suppressLastCardInterval = QtGui.QCheckBox(self.tab_3)
+        self.suppressLastCardInterval.setObjectName("suppressLastCardInterval")
+        self.gridlayout4.addWidget(self.suppressLastCardInterval,7,0,1,1)
+
+        self.suppressLastCardContent = QtGui.QCheckBox(self.tab_3)
+        self.suppressLastCardContent.setObjectName("suppressLastCardContent")
+        self.gridlayout4.addWidget(self.suppressLastCardContent,8,0,1,1)
+
+        self.showTray = QtGui.QCheckBox(self.tab_3)
+        self.showTray.setObjectName("showTray")
+        self.gridlayout4.addWidget(self.showTray,9,0,1,1)
         self.vboxlayout4.addLayout(self.gridlayout4)
 
         spacerItem1 = QtGui.QSpacerItem(20,40,QtGui.QSizePolicy.Minimum,QtGui.QSizePolicy.Expanding)
@@ -283,7 +311,7 @@ class Ui_Preferences(object):
 
         self.buttonBox = QtGui.QDialogButtonBox(Preferences)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.NoButton|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.vboxlayout.addWidget(self.buttonBox)
 
@@ -343,5 +371,11 @@ class Ui_Preferences(object):
         self.compactEaseButtons.setText(_("Use compact answer button style"))
         self.label_6.setText(_("<h1>Advanced settings</h1>"))
         self.tallButtons.setText(_("Tall buttons (for touchscreen)"))
+        self.suppressUpdate.setText(_("Suppress update dialog (display in status bar instead)"))
+        self.editCurrentOnly.setText(_("Start Edit Deck with only current card selected"))
+        self.suppressEstimates.setText(_("Hide next interval when showing answer buttons"))
+        self.suppressLastCardInterval.setText(_("Hide interval of last card"))
+        self.suppressLastCardContent.setText(_("Hide question/answer of last card"))
+        self.showTray.setText(_("Show tray icon"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _("Advanced Settings"))
 

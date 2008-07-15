@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
@@ -27,7 +26,7 @@ def fmtTimeSpan(time, pad=0, point=0):
     "Return a string representing a time span (eg '2 days')."
     (type, point) = optimalPeriod(time, point)
     time = convertSecondsTo(time, type)
-    fmt = timeTable[type](_pluralCount(time))
+    fmt = timeTable[type](_pluralCount(round(time)))
     timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
     return ("%" + (fmt % timestr)) % time
 

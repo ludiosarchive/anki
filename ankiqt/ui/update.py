@@ -3,9 +3,10 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-import urllib, urllib2, os, sys, time
+import urllib, urllib2, os, sys, time, httplib
 import anki, anki.utils, anki.lang, anki.stats
 import ankiqt
+import simplejson
 
 baseUrl = "http://anki.ichi2.net/update/"
 
@@ -62,16 +63,21 @@ class LatestVersionFinder(QThread):
         if not self.config['checkForUpdates']:
             return
         d = self.stats
+        d['proto'] = 2
         d = urllib.urlencode(d)
         try:
             f = urllib2.urlopen(baseUrl + "getQtVersion", d)
-        except urllib2.URLError:
+        except (urllib2.URLError, httplib.BadStatusLine):
             return
         resp = f.read()
         if not resp:
             return
-        if resp > ankiqt.appVersion:
+        resp = simplejson.loads(resp)
+        if resp['latestVersion'] > ankiqt.appVersion:
             self.emit(SIGNAL("newVerAvail"), resp)
+        diff = resp['currentTime'] - time.time()
+        if abs(diff) > 300:
+            self.emit(SIGNAL("clockIsOff"), diff)
 
 class Updater(QThread):
 

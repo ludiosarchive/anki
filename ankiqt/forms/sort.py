@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/sort.ui'
 #
 
-#      by: PyQt4 UI code generator 4.3
+#      by: PyQt4 UI code generator 4.3.3
 #
 # WARNING! All changes made in this file will be lost!
 

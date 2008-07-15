@@ -11,7 +11,7 @@ from ankiqt import ui
 
 class ModelProperties(QDialog):
 
-    def __init__(self, parent, model, main=None):
+    def __init__(self, parent, model, main=None, onFinish=None):
         QDialog.__init__(self, parent, Qt.Window)
         if not main:
             main = parent
@@ -19,7 +19,7 @@ class ModelProperties(QDialog):
         self.deck = main.deck
         self.origModTime = self.deck.modified
         self.m = model
-        self.alreadyClosed = False
+        self.onFinish = onFinish
         self.dialog = ankiqt.forms.modelproperties.Ui_ModelProperties()
         self.dialog.setupUi(self)
         self.setupFields()
@@ -312,8 +312,6 @@ class ModelProperties(QDialog):
 
     def reject(self):
         "Save user settings on close."
-        if self.alreadyClosed:
-            return
         # update properties
         mname = unicode(self.dialog.name.text())
         if not mname:
@@ -332,10 +330,11 @@ class ModelProperties(QDialog):
                              int(self.dialog.initialSpacing.text()))
         except ValueError:
             pass
-        # before field, or it's overwritte
+        # before field, or it's overwritten
         self.saveCurrentCard()
         self.saveCurrentField()
-        self.alreadyClosed = True
-        self.close()
         if self.origModTime != self.deck.modified:
             self.parent.reset()
+        if self.onFinish:
+            self.onFinish()
+        QDialog.reject(self)

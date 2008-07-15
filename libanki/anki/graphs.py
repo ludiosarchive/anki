@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
@@ -47,7 +46,7 @@ class DeckGraphs(object):
             months = {}
             next = {}
             lowestInDay = 0
-            now = list(time.localtime(time.time()))
+            now = list(time.gmtime(time.time()))
             now[3] = 0; now[4] = 0
             self.startOfDay = time.mktime(now)
             all = self.deck.s.all("""

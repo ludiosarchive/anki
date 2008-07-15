@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
@@ -287,11 +286,13 @@ class SyncTools(object):
             self.mergeFieldModels(local, fms)
             self.mergeCardModels(local, cms)
 
-    def getModel(self, id):
+    def getModel(self, id, create=True):
         "Return a local model with same ID, or create."
         for l in self.deck.models:
             if l.id == id:
                 return l
+        if not create:
+            return
         m = Model()
         self.deck.models.append(m)
         return m
@@ -334,8 +335,9 @@ class SyncTools(object):
 
     def deleteModels(self, ids):
         for id in ids:
-            model = self.getModel(id)
-            self.deck.deleteModel(model)
+            model = self.getModel(id, create=False)
+            if model:
+                self.deck.deleteModel(model)
 
     # Facts
     ##########################################################################

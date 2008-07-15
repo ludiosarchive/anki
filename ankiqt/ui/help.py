@@ -133,10 +133,7 @@ class HelpData(dict):
 
     def __init__(self):
         self['learn'] = _("""
-<h1>Learning new cards</h1>Anki is currently in 'learning mode'. Cards with a
-recall interval of less than a week will remain in this mode until you choose
-'Remembered easily', so you can repeat a question at 1-5 day intervals as many
-times as you want before moving on.
+<h1>Learning new cards</h1>Anki is currently in 'learning mode'.
 <p>
 As an alternative to using the mouse, spacebar and the number keys are
 available.

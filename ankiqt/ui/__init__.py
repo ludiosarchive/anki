@@ -24,6 +24,7 @@ def importAll():
     import utils
     import facteditor
     import tagedit
+    import tray
 
 class DialogManager(object):
 

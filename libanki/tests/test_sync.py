@@ -13,7 +13,7 @@ from anki.facts import Fact
 from anki.cards import Card
 from anki.models import FieldModel
 
-import psyco; psyco.full()
+#import psyco; psyco.profile()
 
 # Local tests
 ##########################################################################

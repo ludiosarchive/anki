@@ -304,6 +304,7 @@ class FactEditor(object):
         problems = []
         for field in self.fact.fields:
             p = QPalette()
+            p.setColor(QPalette.Text, QColor("#000000"))
             if not self.fact.fieldValid(field):
                 empty.append(field)
                 p.setColor(QPalette.Base, QColor("#ffffcc"))
@@ -438,7 +439,7 @@ class FactEditor(object):
             return
         # get this before we open the dialog
         w = self.focusedEdit()
-        key = _("Images (*.jpg *.png)")
+        key = _("Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)")
         file = ui.utils.getFile(self.parent, _("Add an image"), "picture", key)
         if not file:
             return
@@ -492,6 +493,42 @@ class FactEdit(QTextEdit):
         self.parent.lastFocusedEdit = self
         self.parent.resetFormatButtons()
         self.parent.disableButtons()
+
+    # this shouldn't be necessary if/when we move away from kakasi
+    def mouseDoubleClickEvent(self, evt):
+        r = QRegExp("\\{(.*\\|.*)\\}")
+        r.setMinimal(True)
+
+        mouseposition = self.textCursor().position()
+
+        blockoffset = 0
+        result = r.indexIn(self.toPlainText(), 0)
+
+        found = ""
+
+        while result != -1:
+            if mouseposition > result and mouseposition < result + r.matchedLength():
+                mouseposition -= result + 1
+                frompos = 0
+                topos = 0
+
+                string = r.cap(1)
+                offset = 0
+                bits = string.split("|")
+                for index in range(0, len(bits)):
+                    offset += len(bits[index]) + 1
+                    if mouseposition < offset:
+                        found = bits[index]
+                        break
+                break
+
+            blockoffset= result + r.matchedLength()
+            result = r.indexIn(self.toPlainText(), blockoffset)
+
+        if found == "":
+            QTextEdit.mouseDoubleClickEvent(self,evt)
+            return
+        self.setPlainText(self.toPlainText().replace(result, r.matchedLength(), found))
 
     def focusInEvent(self, evt):
         if (self.parent.lastFocusedEdit and

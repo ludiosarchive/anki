@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
@@ -54,6 +53,6 @@ try:
 except ImportError:
     pass
 
-version = "0.9.5.7"
+version = "0.9.6"
 
 from anki.deck import DeckStorage

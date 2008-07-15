@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/main.ui'
 #
 
-#      by: PyQt4 UI code generator 4.3
+#      by: PyQt4 UI code generator 4.3.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -215,7 +215,7 @@ class Ui_MainWindow(object):
         self.toolBar.setEnabled(True)
         self.toolBar.setOrientation(QtCore.Qt.Horizontal)
         self.toolBar.setObjectName("toolBar")
-        MainWindow.addToolBar(self.toolBar)
+        MainWindow.addToolBar(QtCore.Qt.TopToolBarArea,self.toolBar)
 
         self.actionExit = QtGui.QAction(MainWindow)
         self.actionExit.setIcon(QtGui.QIcon(":/icons/exit.png"))
