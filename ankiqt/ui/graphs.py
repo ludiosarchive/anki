@@ -70,7 +70,7 @@ class AdjustableFigure(QWidget):
         self.setUpdatesEnabled(False)
         idx = self.vbox.indexOf(self.figureCanvas)
         self.vbox.removeWidget(self.figureCanvas)
-        self.figureCanvas.setParent(None)
+        self.figureCanvas.deleteLater()
         self.figureCanvas = AnkiFigureCanvas(self.figureFunc(self.range))
         self.vbox.insertWidget(idx, self.figureCanvas)
         self.setUpdatesEnabled(True)
@@ -124,7 +124,7 @@ class IntervalGraph(QDialog):
 
     def reject(self):
         ui.dialogs.close("Graphs")
-        self.close()
+        QDialog.reject(self)
 
 def intervalGraph(parent, deck):
     dg = anki.graphs.DeckGraphs(deck)

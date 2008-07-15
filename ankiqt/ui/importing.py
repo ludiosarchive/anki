@@ -39,7 +39,7 @@ class ChangeMap(QDialog):
             self.field = self.model.fieldModels[row]
         else:
             self.field = None
-        self.close()
+        QDialog.accept(self)
 
 class ImportDialog(QDialog):
 
@@ -133,6 +133,7 @@ class ImportDialog(QDialog):
         self.dialog.status.setText(txt)
         self.file = None
         self.maybePreview()
+        self.parent.deck.updateAllPriorities()
         self.parent.rebuildQueue()
 
     def setupMappingFrame(self):
@@ -168,7 +169,7 @@ class ImportDialog(QDialog):
         # set up the mapping grid
         if self.mapwidget:
             self.mapbox.removeWidget(self.mapwidget)
-            self.mapwidget.setParent(None)
+            self.mapwidget.deleteLater()
         self.mapwidget = QWidget()
         self.mapbox.addWidget(self.mapwidget)
         self.grid = QGridLayout(self.mapwidget)

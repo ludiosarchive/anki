@@ -60,4 +60,4 @@ class ExportDialog(QDialog):
             self.exporter.limitTags = parseTags(unicode(self.tags.text()))
             self.exporter.exportInto(file)
             self.parent.setStatus(_("%d exported.") % self.exporter.count)
-        self.close()
+        QDialog.accept(self)

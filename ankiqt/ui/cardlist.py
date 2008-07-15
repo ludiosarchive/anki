@@ -251,12 +251,29 @@ class EditDeck(QDialog):
         self.show()
         self.selectLastCard()
 
+    def findCardInDeckModel( self, model, card ):
+        for i, thisCard in enumerate( model.cards ):
+            if thisCard.id == card.id:
+                return i
+        return -1
+
     def selectLastCard(self):
         "Show the row corresponding to the current card."
-        if self.parent.currentCard:
-            self.dialog.filterEdit.setText("<current>")
-            self.dialog.filterEdit.selectAll()
+        if self.parent.config['editCurrentOnly']:
+            if self.parent.currentCard:
+                self.dialog.filterEdit.setText("<current>")
+                self.dialog.filterEdit.selectAll()
         self.updateSearch()
+        if not self.parent.config['editCurrentOnly']:
+            if self.parent.currentCard:
+                currentCardIndex = self.findCardInDeckModel(
+                                     self.model, self.parent.currentCard )
+                if currentCardIndex >= 0:
+                    self.dialog.tableView.selectRow( currentCardIndex )
+                    self.dialog.tableView.scrollTo(
+                                  self.model.index(currentCardIndex,0),
+                                  self.dialog.tableView.PositionAtTop )
+
 
     def setupFilter(self):
         self.filterTimer = None
@@ -547,7 +564,7 @@ where id in (%s)""" % ",".join([
               "Average: %(a)s<br>"
               "Total: %(t)s<br>"
               "Reviews: %(cor)d/%(tot)d<br>"
-              "Succesive: %(suc)d")% {
+              "Successive: %(suc)d")% {
             "c": fmtTimeSpan(time.time() - card.created),
             "n": next,
             "i": card.interval,
@@ -611,10 +628,6 @@ where id in (%s)""" % ",".join([
         self.updateAfterCardChange(reset=True)
 
     def accept(self):
-        self.hide()
-        if getattr(self, "alreadyClosed", None):
-            return
-        self.alreadyClosed = True
         self.deck.deleteCards(self.model.deleted.keys())
         if len(self.model.deleted):
             self.parent.setStatus(
@@ -623,7 +636,7 @@ where id in (%s)""" % ",".join([
         if self.origModTime != self.deck.modified:
             self.parent.reset()
         ui.dialogs.close("CardList")
-        self.close()
+        QDialog.accept(self)
 
     def reject(self):
         self.accept()

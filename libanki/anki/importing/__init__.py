@@ -221,9 +221,11 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
 from anki.importing.csv import TextImporter
 from anki.importing.anki10 import Anki10Importer
 from anki.importing.mnemosyne10 import Mnemosyne10Importer
+from anki.importing.wcu import WCUImporter
 
 Importers = (
     (_("TAB/semicolon-separated file (*.*)"), TextImporter),
     (_("Anki 1.0 deck (*.anki)"), Anki10Importer),
     (_("Mnemosyne 1.0 deck (*.mem)"), Mnemosyne10Importer),
+    (_("CueCard deck (*.wcu)"), WCUImporter),
     )

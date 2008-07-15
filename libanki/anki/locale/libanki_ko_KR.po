@@ -1,18 +1,18 @@
-# Japanese translations for libanki
-# Copyright (C) 2007 Damien Elmes
-# This file is distributed under the same license as the libanki package.
-# Damien Elmes <anki@ichi2.net>, 2007.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-07-07 23:29+0900\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Damien Elmes <anki@ichi2.net>\n"
+"PO-Revision-Date: 2008-05-24 09:18+0900\n"
+"Last-Translator: Jin Eun-Deok <jin.eundeok@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: stdmodels.py:121
@@ -27,6 +27,14 @@ msgid ""
 "The link in the question will list user-contributed\n"
 "stories. A free login is required."
 msgstr ""
+"\n"
+"Heisig의 일본어 한자 교재 \"Remembering the Kanji\"에 적합한 모델.\n"
+"뜻을 보고 해당 한자를 맞춥니다.\n"
+"\n"
+"질문 형식은 http://kanji.koohii.com/을 바탕으로 했습니다.\n"
+"\n"
+"질문에 표시되는 링크는 회원들이 제공한 해설 페이지로 연결됩니다.\n"
+"해당 사이트로 로그인을 해야 합니다."
 
 #: stdmodels.py:101
 msgid ""
@@ -34,6 +42,9 @@ msgid ""
 "Enter the English expression you want to learn in the 'Expression' field.\n"
 "Enter a description in Japanese or English in the 'Meaning' field."
 msgstr ""
+"\n"
+"공부하고 싶은 영어 표현을 'Expression' 필드에 입력합니다.\n"
+"영어 표현의 뜻을 한국어나 영어로 'Meaning' 필드에 입력합니다."
 
 #: stdmodels.py:52
 msgid ""
@@ -49,90 +60,100 @@ msgid ""
 "Note that the automatic generation of meaning is not\n"
 "perfect, and should be checked before adding cards."
 msgstr ""
+"\n"
+"reading(독음) 필드는 기본적으로 자동 입력되어\n"
+"expression(표현) 필드의 일본어를 읽는 법을 보여줍니다.\n"
+"히라카나와 카타카나로 이루어진 표현은 따로 독음이 필요없습니다.\n"
+"따라서 expression 필드만 입력하고 reading 필드는 비워 둬도 됩니다.\n"
+"히라카나와 카타카나로만 구성된 표현에 대해서는\n"
+"자동으로 독음을 만들지 않습니다.\n"
+"\n"
+"자동 생성된 독음은 틀릴 수 있습니다.\n"
+"카드를 추가하기 전에 다시 확인해 주세요."
 
 #: stats.py:355
 #, python-format
 msgid "%(count)s %(gradename)s kanji."
-msgstr ""
+msgstr "%(count)s %(gradename)s kanji."
 
 #: stats.py:353
 #, python-format
 msgid "%(gradename)s: %(count)s of %(total)s (%(percent)0.1f%%)."
-msgstr ""
+msgstr "%(gradename)s: %(total)s자 중에 %(count)s자 (%(percent)0.1f%%)."
 
 #: stats.py:186 stats.py:188
 #, python-format
 msgid "%0.1f seconds"
-msgstr ""
+msgstr "%0.1f초"
 
 #: stats.py:171 stats.py:212
 #, python-format
 msgid "%s ago"
-msgstr "%s前"
+msgstr "%s전"
 
 #: utils.py:19
 #, python-format
 msgid "%s day"
 msgid_plural "%s days"
-msgstr[0] "%s日"
-msgstr[1] "%s日"
+msgstr[0] "%s일"
+msgstr[1] "%s일"
 
 #: utils.py:20
 #, python-format
 msgid "%s hour"
 msgid_plural "%s hours"
-msgstr[0] "%s時間"
-msgstr[1] "%s時間"
+msgstr[0] "%s시간"
+msgstr[1] "%s시간"
 
 #: utils.py:21
 #, python-format
 msgid "%s minute"
 msgid_plural "%s minutes"
-msgstr[0] "%s分"
-msgstr[1] "%s分"
+msgstr[0] "%s분"
+msgstr[1] "%s분"
 
 #: utils.py:18
 #, python-format
 msgid "%s month"
 msgid_plural "%s months"
-msgstr[0] "%sヶ月"
-msgstr[1] "%sヶ月"
+msgstr[0] "%s개월"
+msgstr[1] "%s개월"
 
 #: utils.py:22
 #, python-format
 msgid "%s second"
 msgid_plural "%s seconds"
-msgstr[0] "%s秒"
-msgstr[1] "%s秒"
+msgstr[0] "%s초"
+msgstr[1] "%s초"
 
 #: utils.py:17
 #, python-format
 msgid "%s year"
 msgid_plural "%s years"
-msgstr[0] "%s年"
-msgstr[1] "%s年"
+msgstr[0] "%s년"
+msgstr[1] "%s년"
 
 #: stats.py:261
 msgid "<b>Averages</b><br>"
-msgstr ""
+msgstr "<b>평균</b><br>"
 
 #: stats.py:242
 msgid "<b>Card counts</b><br>"
-msgstr ""
+msgstr "<b>카드 개수</b><br>"
 
 #: stats.py:250
 msgid "<b>Correct answers</b><br>"
-msgstr ""
+msgstr "<b>정답률</b><br>"
 
 #: stats.py:377
 #, python-format
 msgid "<h1>Kanji statistics</h1>The %d seen cards in this deck contain:"
-msgstr ""
+msgstr "<h1>일본 한자 통계</h1>현재 묶음에서 지금까지 본 %d개의 카드 중:"
 
 #: stats.py:381
 #, python-format
 msgid "<li>%d total unique kanji.</li>"
-msgstr ""
+msgstr "<li>전체 한자 %d자</li>"
 
 #: stdmodels.py:32
 msgid ""
@@ -144,327 +165,334 @@ msgid ""
 "clearer than \"front\" and \"back\", and will ensure\n"
 "that your entries are consistent."
 msgstr ""
+"앞면과 뒷면으로 이루어진 단순한 플래시 카드\n"
+"기본적으로 앞면을 질문합니다.\n"
+"\n"
+"이 모델을 그대로 쓰기보다는 상황에 맞게\n"
+"수정해서 사용하세요. 예를 들어 \"expression(표현)\"이라는 필드 이름이\n"
+"\"front(앞면)\"이나 \"back(뒷면)\"보다 필드에 들어갈 내용을\n"
+"분명하게 알려 줍니다."
 
 #: stdmodels.py:164
 msgid "A description in your native language, or Cantonese"
-msgstr ""
+msgstr "한국어나 광동어 해설"
 
 #: stdmodels.py:75
 msgid "A description in your native language, or Japanese"
-msgstr ""
+msgstr "한국어나 일본어 해설"
 
 #: stdmodels.py:192
 msgid "A description in your native language, or Mandarin"
-msgstr ""
+msgstr "한국어나 북경어 해설"
 
 #: stdmodels.py:38
 msgid "A question."
-msgstr ""
+msgstr "질문."
 
 #: stdmodels.py:159 stdmodels.py:186
 msgid "A word or expression written in Hanzi."
-msgstr ""
+msgstr "중국 한자로 쓴 단어나 표현"
 
 #: stdmodels.py:65
 msgid "A word or expression written in Kanji."
-msgstr ""
+msgstr "일본 한자로 쓴 단어나 표현"
 
 #: stdmodels.py:84 stdmodels.py:170 stdmodels.py:199
 msgid "Actively test your recall by producing the target expression"
-msgstr ""
+msgstr "해당 표현을 만들어 보면서 능동적으로 기억 해보세요"
 
 #: stats.py:165
 msgid "Added"
-msgstr ""
+msgstr "추가한 날"
 
 #: stats.py:265
 #, python-format
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
-msgstr ""
+msgstr "카드 추가: 하루에 <b>%(a)d</b>개, 한달에 <b>%(b)d</b>개<br>"
 
 #: exporting.py:209
 msgid "Anki deck (*.anki)"
-msgstr ""
+msgstr "앙키 묶음 (*.anki)"
 
 #: exporting.py:55
 msgid "Anki decks (*.anki)"
-msgstr ""
+msgstr "앙키 묶음 (*.anki)"
 
 #: stdmodels.py:78 stdmodels.py:166 stdmodels.py:194
 msgid "Automatically generated by default."
-msgstr ""
+msgstr "자동으로 생성됨"
 
 #: stats.py:186
 msgid "Average time"
-msgstr ""
+msgstr "평균 시간"
 
 #: stdmodels.py:42
 msgid "Back to front"
-msgstr "裏側から表側"
+msgstr "뒷면에서 앞면으로"
 
 #: stdmodels.py:31
 msgid "Basic"
-msgstr ""
+msgstr "기본"
 
 #: deck.py:1274
 msgid "Can't read/write deck"
-msgstr ""
+msgstr "묶음을 읽고 쓸 수 없음"
 
 #: deck.py:1279
 msgid "Can't read/write directory"
-msgstr ""
+msgstr "디렉토리를 읽고 쓸 수 없음"
 
 #: stdmodels.py:156
 msgid "Cantonese"
-msgstr ""
+msgstr "광동어"
 
 #: stats.py:199
 msgid "Card model tags"
-msgstr ""
+msgstr "카드 모델 꼬리표"
 
 #: stats.py:198
 msgid "Card tags"
-msgstr ""
+msgstr "카드 꼬리표"
 
 #: exporting.py:210
 msgid "Cards in tab-separated text file (*.txt)"
-msgstr ""
+msgstr "탭으로 구분한 카드 텍스트 파일 (*.txt)"
 
 #: models.py:24
 msgid "Center"
-msgstr ""
+msgstr "가운데"
 
 #: stats.py:168
 msgid "Changed"
-msgstr ""
+msgstr "변경"
 
 #: stats.py:183
 msgid "Correct count"
-msgstr ""
+msgstr "맞춘 횟수"
 
 #: stats.py:179
 msgid "Current factor"
-msgstr ""
+msgstr "현재 인수"
 
 #: stats.py:175
 msgid "Current interval"
-msgstr ""
+msgstr "현재 복습 간격"
 
 #: stats.py:227
 msgid "Deck Statistics"
-msgstr ""
+msgstr "묶음 통계"
 
 #: stats.py:228
 #, python-format
 msgid "Deck created: <b>%s</b> ago<br>"
-msgstr ""
+msgstr "묶음 생성: <b>%s</b> 전<br>"
 
 #: stdmodels.py:100
 msgid "English"
-msgstr ""
+msgstr "영어"
 
 #: stats.py:203
 msgid "Fact tags"
-msgstr ""
+msgstr "지식 꼬리표"
 
 #: exporting.py:211
 msgid "Facts in tab-separated text file (*.txt)"
-msgstr ""
+msgstr "탭으로 구분한 지식 텍스트 파일 (*.txt)"
 
 #: deck.py:1305
 msgid "File is in use by another process"
-msgstr ""
+msgstr "다른 프로세스가 파일을 사용하고 있습니다."
 
 #: stats.py:167
 msgid "First review"
-msgstr ""
+msgstr "최초 복습"
 
 #: stats.py:191
 msgid "First time"
-msgstr ""
+msgstr "처음"
 
 #: stats.py:255
 #, python-format
 msgid "First-seen cards: <b>%(gNewYes%)0.1f%%</b> (<b>%(gNewYes)d</b> of <b>%(gNewTotal)d</b>)<br><br>"
-msgstr ""
+msgstr "처음 본 카드: <b>%(gNewYes%)0.1f%%</b> (<b>%(gNewYes)d</b>개 중에 <b>%(gNewTotal)d</b>개)<br><br>"
 
 #: stdmodels.py:110
 msgid "From the English expression to the meaning."
-msgstr ""
+msgstr "영어 표현에서 뜻으로"
 
 #: stdmodels.py:142
 msgid "From the keyword to the Kanji."
-msgstr ""
+msgstr "중심 의미에서 한자로"
 
 #: stdmodels.py:107
 msgid "From the meaning to the English expression."
-msgstr ""
+msgstr "뜻에서 영어 표현으로"
 
 #: stdmodels.py:40
 msgid "Front to back"
-msgstr "表側から裏側"
+msgstr "앞면에서 뒷면으로"
 
 #: stdmodels.py:120
 msgid "Heisig"
-msgstr ""
+msgstr "Heisig"
 
 #: stats.py:262
 #, python-format
 msgid "Interval: <b>%0.0f</b> days<br/>"
-msgstr ""
+msgstr "복습 간격: <b>%0.0f</b>일<br/>"
 
 #: stdmodels.py:51
 msgid "Japanese"
-msgstr ""
+msgstr "일본어"
 
 #: stats.py:392
 msgid "Jouyou levels:"
-msgstr ""
+msgstr "상용한자 수준"
 
 #: stats.py:180
 msgid "Last factor"
-msgstr ""
+msgstr "지난 인수"
 
 #: stats.py:178
 msgid "Last interval"
-msgstr ""
+msgstr "지난 복습 간격"
 
 #: models.py:25
 msgid "Left"
-msgstr ""
+msgstr "왼쪽"
 
 #: stdmodels.py:183
 msgid "Mandarin"
-msgstr ""
+msgstr "북경어"
 
 #: stats.py:195
 msgid "Mature"
-msgstr ""
+msgstr "성숙한 카드"
 
 #: graphs.py:214
 msgid "Mature cards"
-msgstr ""
+msgstr "성숙한 카드"
 
 #: stats.py:251
 #, python-format
 msgid "Mature cards: <b>%(gMatureYes%)0.1f%%</b> (<b>%(gMatureYes)d</b> of <b>%(gMatureTotal)d</b>)<br>"
-msgstr ""
+msgstr "성숙한 카드: <b>%(gMatureYes%)0.1f%%</b> (<b>%(gMatureTotal)d</b>개 중에 <b>%(gMatureYes)d</b>개)<br>"
 
 #: stats.py:243
 #, python-format
 msgid "Mature cards: <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
-msgstr ""
+msgstr "성숙한 카드: <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
 
 #: stats.py:201
 msgid "Model tags"
-msgstr ""
+msgstr "모델 꼬리표"
 
 #: graphs.py:212
 msgid "New cards"
-msgstr ""
+msgstr "새 카드"
 
 #: stats.py:174
 msgid "Next due"
-msgstr ""
+msgstr "복습 예정"
 
 #: stats.py:225
 msgid "Please add some cards first.<p/>"
-msgstr ""
+msgstr "카드를 먼저 추가해 주세요.<p/>"
 
 #: stats.py:185
 msgid "Repeatedly correct"
-msgstr ""
+msgstr "연속 정답"
 
 #: stats.py:181
 msgid "Review count"
-msgstr ""
+msgstr "복습 횟수"
 
 #: models.py:26
 msgid "Right"
-msgstr ""
+msgstr "오른쪽"
 
 #: deck.py:44
 msgid "Show new cards in order they were added"
-msgstr ""
+msgstr "추가된 순서대로 보여주기"
 
 #: deck.py:43
 msgid "Show new cards in random order"
-msgstr ""
+msgstr "무작위로 보여주기"
 
 #: stats.py:196
 msgid "State"
-msgstr ""
+msgstr "상태"
 
 #: stdmodels.py:88 stdmodels.py:174 stdmodels.py:203
 msgid "Test your ability to recognize the target expression"
-msgstr ""
+msgstr "해당 표현을 이해할 수 있는지 시험해 보세요."
 
 #: exporting.py:139 exporting.py:171
 msgid "Text files (*.txt)"
-msgstr ""
+msgstr "텍스트 파일 (*.txt)"
 
 #: stdmodels.py:39
 msgid "The answer."
-msgstr ""
+msgstr "답."
 
 #: stats.py:240
 #, python-format
 msgid "Total number of cards: <b>%d</b><br><br>"
-msgstr ""
+msgstr "전체 카드 개수: <b>%d</b><br><br>"
 
 #: stats.py:188
 msgid "Total time"
-msgstr ""
+msgstr "전체 시간"
 
 #: deck.py:618
 msgid "Unknown"
-msgstr ""
+msgstr "알 수 없음"
 
 #: stats.py:247
 #, python-format
 msgid "Unseen cards: <b>%(new)d</b> (<b>%(newP)0.2f%%</b>)<br><br>"
-msgstr ""
+msgstr "시작하지 않은 카드: <b>%(new)d</b> (<b>%(newP)0.2f%%</b>)<br><br>"
 
 #: stats.py:263
 #, python-format
 msgid "Workload: <b>%0.1f</b> cards/day<br/>"
-msgstr ""
+msgstr "학습량: <b>%0.1f</b> 카드/일<br/>"
 
 #: stats.py:193
 msgid "Young"
-msgstr ""
+msgstr "어린 카드"
 
 #: graphs.py:213
 msgid "Young cards"
-msgstr ""
+msgstr "어린 카드"
 
 #: stats.py:253
 #, python-format
 msgid "Young cards: <b>%(gYoungYes%)0.1f%%</b> (<b>%(gYoungYes)d</b> of <b>%(gYoungTotal)d</b>)<br>"
-msgstr ""
+msgstr "어린 카드: <b>%(gYoungYes%)0.1f%%</b> (<b>%(gYoungTotal)d</b>개 중에 <b>%(gYoungYes)d</b>개)<br>"
 
 #: stats.py:245
 #, python-format
 msgid "Young cards: <b>%(young)d</b> (<b>%(youngP)0.2f%%</b>)<br>"
-msgstr ""
+msgstr "어린 카드: <b>%(young)d</b> (<b>%(youngP)0.2f%%</b>)<br>"
 
 #: models.py:149 models.py:150 models.py:181
 msgid "[empty]"
-msgstr ""
+msgstr "[자료 없음]"
 
 #: models.py:147
 msgid "[invalid format; see model properties]"
-msgstr ""
+msgstr "[잘못된 형식: 모델 속성 참조]"
 
 #: deck.py:433
 msgid "a short time"
-msgstr "何分"
+msgstr "짧은 시간"
 
 #: stats.py:173
 #, python-format
 msgid "in %s"
-msgstr ""
+msgstr "%s 안에"
 
 #: deck.py:424
 msgid "unknown"
-msgstr ""
+msgstr "알 수 없음"

@@ -69,9 +69,13 @@ class ModelChooser(QHBoxLayout):
     def onEdit(self):
         idx = self.models.currentIndex()
         model = self.deck.models[idx]
-        ui.modelproperties.ModelProperties(self.parent, model, self.main)
+        ui.modelproperties.ModelProperties(self.parent, model, self.main,
+                                           onFinish=self.onModelEdited)
         self.drawModels()
         self.changed(model)
+
+    def onModelEdited(self):
+        self.drawModels()
 
     def onAdd(self):
         model = AddModel(self.parent, self.main).getModel()
@@ -181,5 +185,5 @@ class AddModel(QDialog):
             self.model = stdmodels.byName("Basic")
         else:
             self.model = "online"
-        self.close()
+        QDialog.accept(self)
 

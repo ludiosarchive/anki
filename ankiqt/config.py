@@ -43,6 +43,12 @@ class Config(dict):
             'mainWindowGeometry': (100, 100, 550, 625),
             'easeButtonStyle': 'standard',
             'easeButtonHeight': 'standard',
+            'suppressUpdate': False,
+            'suppressEstimates': False,
+            'suppressLastCardInterval': False,
+            'suppressLastCardContent': False,
+            'showTray': False,
+            'editCurrentOnly': True,
             'showSuspendedCards': True,
             }
         for (k,v) in fields.items():
@@ -123,7 +129,8 @@ class Config(dict):
         try:
             f = open(db)
             self.update(cPickle.load(f))
-        except IOError:
+        except (IOError, EOFError):
+            # config file was corrupted previously
             pass
         self.defaults()
         # fix old recent deck path list

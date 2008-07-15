@@ -39,6 +39,7 @@ class AnkiQt(QMainWindow):
         self.mainWin.setupUi(self)
         self.alterShortcuts()
         self.help = ui.help.HelpArea(self.mainWin.helpFrame, self.config, self)
+	self.trayIcon = ui.tray.AnkiTrayIcon( self )
         self.connectMenuActions()
         if sys.platform.startswith("darwin"):
             # window creeps on osx, just resize
@@ -227,7 +228,9 @@ class AnkiQt(QMainWindow):
     def refreshStatus(self):
         "If triggered when the deck is finished, reset state."
         if self.state == "deckFinished":
-            self.moveToState("getQuestion")
+            if self.deck:
+                # don't try refresh if the deck is closed during a sync
+                self.moveToState("getQuestion")
         if self.state != "deckFinished":
             if self.refreshTimer:
                 self.refreshTimer.stop()
@@ -248,7 +251,7 @@ class AnkiQt(QMainWindow):
             return
         if self.innerButtonWidget:
             self.outerButtonBox.removeWidget(self.innerButtonWidget)
-            self.innerButtonWidget.setParent(None)
+            self.innerButtonWidget.deleteLater()
         self.innerButtonWidget = QWidget()
         self.outerButtonBox.addWidget(self.innerButtonWidget)
         self.buttonBox = QVBoxLayout(self.innerButtonWidget)
@@ -328,8 +331,9 @@ class AnkiQt(QMainWindow):
             grid.addItem(self.getSpacer(), i, 2)
             grid.addWidget(QLabel(self.withInterfaceFont(text[i][0])), i, 3)
             grid.addItem(self.getSpacer(), i, 4)
-            grid.addWidget(QLabel(self.withInterfaceFont(
-                text[i][1] % nextInts)), i, 5)
+            if not self.config['suppressEstimates']:
+                grid.addWidget(QLabel(self.withInterfaceFont(
+                    text[i][1] % nextInts)), i, 5)
             grid.addItem(self.getSpacer(QSizePolicy.Expanding), i, 6)
             self.connect(button, SIGNAL("clicked()"),
                          lambda i=i: self.cardAnswered(i))
@@ -350,9 +354,10 @@ class AnkiQt(QMainWindow):
             if i == 3:
                 button3 = button
             grid.addWidget(button, 0, (i*2)+1)
-            label = QLabel(self.withInterfaceFont(text[i] % nextInts))
-            label.setAlignment(Qt.AlignHCenter)
-            grid.addWidget(label, 1, (i*2)+1)
+            if not self.config['suppressEstimates']:
+                label = QLabel(self.withInterfaceFont(text[i] % nextInts))
+                label.setAlignment(Qt.AlignHCenter)
+                grid.addWidget(label, 1, (i*2)+1)
             self.connect(button, SIGNAL("clicked()"),
                 lambda i=i: self.cardAnswered(i))
         return button3
@@ -526,7 +531,8 @@ class AnkiQt(QMainWindow):
         n = 1
         for file in self.config['recentDeckPaths']:
             a = QAction(self)
-            a.setShortcut(_("Alt+%d" % n))
+            if not sys.platform.startswith("darwin"):
+                a.setShortcut(_("Alt+%d" % n))
             a.setText(os.path.basename(file))
             self.connect(a, SIGNAL("triggered()"),
                          lambda n=n: self.loadRecent(n-1))
@@ -659,13 +665,14 @@ class AnkiQt(QMainWindow):
 
     def prepareForExit(self):
         "Save config and window geometry."
+        self.runHook('quit')
         g = self.geometry()
         self.help.hide()
         self.config['mainWindowGeometry'] = (g.left(),
                                              g.top(),
                                              self.width(),
                                              self.height())
-        # save config and kill main window
+        # save config
         try:
             self.config.save()
         except (IOError, OSError), e:
@@ -942,7 +949,8 @@ class AnkiQt(QMainWindow):
         # bug triggered by preferences dialog - underlying c++ widgets are not
         # garbage collected until the middle of the child thread
         import gc; gc.collect()
-        self.mainWin.mainText.clear()
+        self.bodyView.clearWindow()
+        self.bodyView.flush()
         self.syncThread = ui.sync.Sync(self, u, p, interactive, create, onlyMerge)
         self.connect(self.syncThread, SIGNAL("setStatus"), self.setSyncStatus)
         self.connect(self.syncThread, SIGNAL("showWarning"), ui.utils.showWarning)
@@ -1128,10 +1136,31 @@ class AnkiQt(QMainWindow):
         return  # do not lookup latest upstream version in Debian packaged anki
         self.autoUpdate = ui.update.LatestVersionFinder(self)
         self.connect(self.autoUpdate, SIGNAL("newVerAvail"), self.newVerAvail)
+        self.connect(self.autoUpdate, SIGNAL("clockIsOff"), self.clockIsOff)
         self.autoUpdate.start()
 
+    def newVerInStatusBar(self, version):
+        self.statusView.statusbar.showMessage(
+	            _("Anki Update Available: ") + version, 5000)
+
     def newVerAvail(self, version):
-        ui.update.askAndUpdate(self, version)
+        if self.config['suppressUpdate']:
+            self.newVerInStatusBar(version)
+        else:
+            ui.update.askAndUpdate(self, version)
+
+    def clockIsOff(self, diff):
+        if diff < 0:
+            ret = _("late")
+        else:
+            ret = _("early")
+        ui.utils.showWarning(
+            _("Your computer clock is not set to the correct time.\n"
+              "It is %(sec)d seconds %(type)s.\n"
+              " Please ensure it is set correctly and then restart Anki.")
+            % { "sec": abs(diff),
+                "type": ret }
+         )
 
     # User customisations
     ##########################################################################
@@ -1185,10 +1214,6 @@ class AnkiQt(QMainWindow):
         playFromText(self.currentCard.answer)
 
     def onRepeatAudio(self):
-        if self.state == "showQuestion":
-            playFromText(self.currentCard.question)
-        else:
-            if hasSound(self.currentCard.answer):
-                playFromText(self.currentCard.answer)
-            else:
-                playFromText(self.currentCard.question)
+        playFromText(self.currentCard.question)
+        if self.state != "showQuestion":
+            playFromText(self.currentCard.answer)

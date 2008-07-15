@@ -23,16 +23,16 @@ class UnihanController(object):
         self.session = sessionmaker(bind=self.engine,
                                     autoflush=False,
                                     transactional=True)
-        self.s = SessionHelper(self.session())
         self.type = target
 
     def reading(self, text):
         text = stripHTML(text)
         result = []
+        s = SessionHelper(self.session())
         for c in text:
             n = ord(c)
-            ret = self.s.column0("select %s from unihan where id = :id"
-                                 % self.type, id=n)
+            ret = s.column0("select %s from unihan where id = :id"
+                            % self.type, id=n)
             if ret:
                 result.append(self.formatMatch(ret[0]))
         return u" ".join(result)

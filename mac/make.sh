@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/anki
+cd /Volumes/Two/anki
 echo "syncing updates..."
 rsync -av reflex:Lib/code/libanki --exclude .hg --exclude build --exclude dist --delete .
 rsync -av reflex:Lib/code/ankiqt --exclude .hg --exclude build --exclude dist  --delete .

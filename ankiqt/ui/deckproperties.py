@@ -23,7 +23,6 @@ class DeckProperties(QDialog):
         self.parent = parent
         self.d = parent.deck
         self.origMod = self.d.modified
-        self.alreadyClosed = False
         self.dialog = ankiqt.forms.deckproperties.Ui_DeckProperties()
         self.dialog.setupUi(self)
         self.dialog.newCardOrder.insertItems(
@@ -127,8 +126,6 @@ class DeckProperties(QDialog):
             self.d.setModified()
 
     def reject(self):
-        if self.alreadyClosed:
-            return
         # description
         self.updateField(self.d, 'description',
                          unicode(self.dialog.deckDescription.toPlainText()))
@@ -182,7 +179,6 @@ class DeckProperties(QDialog):
         self.updateField(self.d, "newCardOrder",
                          self.dialog.newCardOrder.currentIndex())
         # mark deck dirty and close
-        self.alreadyClosed = True
-        self.close()
         if self.origMod != self.d.modified:
             self.parent.reset()
+        QDialog.reject(self)

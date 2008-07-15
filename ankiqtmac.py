@@ -3,6 +3,8 @@
 # hack because py2app barfs on a try block
 #
 
+import pkg_resources
+
 import os, sys
 
 modDir=os.path.dirname(os.path.abspath(__file__))

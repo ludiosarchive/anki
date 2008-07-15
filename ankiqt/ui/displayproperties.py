@@ -284,4 +284,4 @@ class DisplayProperties(QDialog):
 
     def reject(self):
         ui.dialogs.close("DisplayProperties")
-        self.close()
+        QDialog.reject(self)

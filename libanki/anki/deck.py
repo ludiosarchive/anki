@@ -9,10 +9,10 @@ The Deck
 __docformat__ = 'restructuredtext'
 
 try:
-    from sqlite3 import dbapi2 as sqlite
+    from pysqlite2 import dbapi2 as sqlite
 except ImportError:
     try:
-        from pysqlite2 import dbapi2 as sqlite
+        from sqlite3 import dbapi2 as sqlite
     except:
         raise "Please install pysqlite2 or python2.5"
 sqlite.enable_shared_cache(True)
@@ -173,15 +173,13 @@ limit 1
                 item = self.getOldestModifiedFailedCard(collapse=True)
             else:
                 return
-        # if it's not failed, check if it's spaced
-        if item.successive or item.reps == 0:
-            space = self.itemSpacing(item)
-            if space > now:
-                # update due time and put it back in future queue
-                item.due = max(item.due, space)
-                item = self.itemFromItem(FutureItem, item)
-                heappush(self.futureQueue, item)
-                return self.getCard()
+        space = self.itemSpacing(item)
+        if space > now:
+            # update due time and put it back in future queue
+            item.due = max(item.due, space)
+            item = self.itemFromItem(FutureItem, item)
+            heappush(self.futureQueue, item)
+            return self.getCard()
         card = self.s.query(anki.cards.Card).get(item.id)
         card.genFuzz()
         card.startTimer()
@@ -976,7 +974,9 @@ where id = :id""" % table, pending)
     ##########################################################################
 
     def name(self):
-        return os.path.splitext(os.path.basename(self.path))[0]
+        n = os.path.splitext(os.path.basename(self.path))[0]
+        n = re.sub("[^-A-Za-z0-9_+<>[]() ]", "", n)
+        return n
 
     # Media
     ##########################################################################
@@ -1298,6 +1298,7 @@ class DeckStorage(object):
             deck.needLock = lock
             deck.s = SessionHelper(s, lock=lock)
             DeckStorage._addViews(deck.s, create)
+            deck.s.statement("analyze")
         except OperationalError, e:
             if (str(e.orig).startswith("database table is locked") or
                 str(e.orig).startswith("database is locked")):

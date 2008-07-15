@@ -6,7 +6,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki, anki.utils
 from anki.sound import playFromText, stripSounds
-from anki.latex import renderLatex
+from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
 import types, time
 from ankiqt import ui
@@ -49,11 +49,12 @@ class View(object):
         self.setBackgroundColour()
         self.maybeHelp()
         if self.main.deck.totalCardCount():
-            self.addStyles()
-            if self.main.lastCard:
-                self.drawTopSection()
-            else:
+            if not self.main.lastCard or (
+                self.main.config['suppressLastCardContent'] and
+                self.main.config['suppressLastCardInterval']):
                 self.buffer += "<br>"
+            else: #if self.main.lastCard:
+                self.drawTopSection()
         if self.state == "showQuestion":
             self.drawQuestion()
         elif self.state == "showAnswer":
@@ -68,18 +69,19 @@ class View(object):
 
     def addStyles(self):
         # card styles
-        self.buffer += "<style>\n"
+        s = "<style>\n"
         if self.main.currentCard:
-            self.buffer += self.main.currentCard.css()
+            s += self.main.currentCard.css()
         # last card
         for base in ("lastCard", "interface"):
             family = self.main.config[base + "FontFamily"]
             size = self.main.config[base + "FontSize"]
             color = ("; color: " + self.main.config[base + "Colour"])
-            self.buffer += ('.%s {font-family: "%s"; font-size: %spx%s}\n' %
+            s += ('.%s {font-family: "%s"; font-size: %spx%s}\n' %
                             (base, family, size, color))
         # standard margins
-        self.buffer += "</style>"
+        s += "</style>"
+        return s
 
     def clearWindow(self):
         self.body.setHtml("")
@@ -90,7 +92,7 @@ class View(object):
 
     def flush(self):
         "Write the current HTML buffer to the screen."
-        self.body.setHtml(self.buffer)
+        self.body.setHtml(self.addStyles() + '<div class="interface">' + self.buffer + "</div>")
 
     def write(self, text):
         if type(text) != types.UnicodeType:
@@ -138,25 +140,28 @@ class View(object):
         if self.main.lastCard and (
             self.state == "deckFinished" or
             self.main.lastCard != self.main.currentCard):
-            q = self.main.lastCard.question.replace("<br>", "  ")
-            q = stripHTML(q)
-            if len(q) > 50:
-                q = q[:50] + "..."
-            a = self.main.lastCard.answer.replace("<br>", "  ")
-            a = stripHTML(a)
-            if len(a) > 50:
-                a = a[:50] + "..."
-            s = "%s<br>%s" % (q, a)
-            self.write('<span class="lastCard">%s</span><br>' % s)
-            if self.main.lastQuality > 1:
-                msg = _("Well done! This card will appear again in "
-                        "<b>%(next)s</b>.") % \
-                        {"next":self.main.lastScheduledTime}
-            else:
-                msg = _("This card will appear again in "
-                        "<b>%(next)s</b>.") % \
-                        {"next":self.main.lastScheduledTime}
-            self.write('<span class="interface">' + msg + "</span><br>")
+            if not self.main.config['suppressLastCardContent']:
+                q = self.main.lastCard.question.replace("<br>", "  ")
+                q = stripHTML(q)
+                if len(q) > 50:
+                    q = q[:50] + "..."
+                a = self.main.lastCard.answer.replace("<br>", "  ")
+                a = stripHTML(a)
+                if len(a) > 50:
+                    a = a[:50] + "..."
+                s = "%s<br>%s" % (q, a)
+                s = stripLatex(s)
+                self.write('<span class="lastCard">%s</span><br>' % s)
+            if not self.main.config['suppressLastCardInterval']:
+                if self.main.lastQuality > 1:
+                    msg = _("Well done! This card will appear again in "
+                            "<b>%(next)s</b>.") % \
+                            {"next":self.main.lastScheduledTime}
+                else:
+                    msg = _("This card will appear again in "
+                            "<b>%(next)s</b>.") % \
+                            {"next":self.main.lastScheduledTime}
+                self.write(msg)
 
     # Help
     ##########################################################################
