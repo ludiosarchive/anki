@@ -1,3 +1,19 @@
+anki (0.9.6-1) unstable; urgency=low
+
+  * New upstream release
+  * Event handler treatment of objects fixed in upstream release (closes:
+    #486295)
+  * Uncloseable dialogs fixed in upstream release (closes: #483315)
+  * debian/control: update python-qt4 dependency for anki from >= 4.2 to >=
+    4.4
+  * debian/control: Standards-Version bumped to 3.8.0, no changes necessary
+  * anki.desktop: Upstream removed obsolete encoding field, patching no longer
+    necessary
+  * Upstream removed shell bangs from all Python modules except
+    ankiqt/__init__.py so only that one still needs patching
+
+ -- Andreas Bombe <aeb@debian.org>  Fri, 18 Jul 2008 03:42:08 +0200
+
 anki (0.9.5.7-1) unstable; urgency=low
 
   * New upstream release
