@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-22 03:37+0900\n"
+"POT-Creation-Date: 2008-08-31 22:50+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: deck.py:387
+#: deck.py:403
 #, python-format
 msgid ""
 "\n"
@@ -206,7 +206,7 @@ msgstr ""
 msgid "Anki decks (*.anki)"
 msgstr ""
 
-#: deck.py:335
+#: deck.py:349
 #, python-format
 msgid "At the same time tomorrow, there will be <b>%d</b> cards waiting"
 msgstr ""
@@ -227,12 +227,8 @@ msgstr ""
 msgid "Basic"
 msgstr ""
 
-#: deck.py:1134
+#: deck.py:1342 deck.py:1405
 msgid "Can't read/write deck"
-msgstr ""
-
-#: deck.py:1139
-msgid "Can't read/write directory"
 msgstr ""
 
 #: stdmodels.py:156
@@ -271,6 +267,10 @@ msgstr ""
 msgid "Current interval"
 msgstr ""
 
+#: deck.py:1227
+msgid "Database file damaged. Restore from backup."
+msgstr ""
+
 #: stats.py:322
 msgid "Deck Statistics"
 msgstr ""
@@ -280,16 +280,41 @@ msgstr ""
 msgid "Deck created: <b>%s</b> ago<br>"
 msgstr ""
 
+#: deck.py:1232
+msgid "Deck was missing a model"
+msgstr ""
+
+#: deck.py:1253
+#, python-format
+msgid "Deleted %d cards with missing fact"
+msgstr ""
+
+#: deck.py:1261
+#, python-format
+msgid "Deleted %d cards with no card model"
+msgstr ""
+
+#: deck.py:1275
+#, python-format
+msgid "Deleted %d dangling fields"
+msgstr ""
+
+#: deck.py:1246
+#, python-format
+msgid "Deleted %d facts with missing fields"
+msgstr ""
+
+#: deck.py:1266
+#, python-format
+msgid "Deleted %d facts with no cards"
+msgstr ""
+
 #: stdmodels.py:100
 msgid "English"
 msgstr ""
 
-#: latex.py:86
-msgid "Error executing 'dvipng' - is it installed?"
-msgstr ""
-
-#: latex.py:82
-msgid "Error executing 'latex' - is it installed?"
+#: latex.py:104
+msgid "Error executing 'latex' or 'dvipng' - are they installed?"
 msgstr ""
 
 #: stats.py:298
@@ -300,7 +325,7 @@ msgstr ""
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr ""
 
-#: deck.py:1173
+#: deck.py:1376
 msgid "File is in use by another process"
 msgstr ""
 
@@ -370,7 +395,7 @@ msgstr ""
 msgid "Mature"
 msgstr ""
 
-#: graphs.py:214
+#: graphs.py:210
 msgid "Mature cards"
 msgstr ""
 
@@ -384,11 +409,21 @@ msgstr ""
 msgid "Mature cards: <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
 msgstr ""
 
+#: deck.py:815
+#, python-format
+msgid "Model '%s' has wrong card model count"
+msgstr ""
+
+#: deck.py:819
+#, python-format
+msgid "Model '%s' has wrong field model count"
+msgstr ""
+
 #: stats.py:296
 msgid "Model tags"
 msgstr ""
 
-#: graphs.py:212
+#: graphs.py:208
 msgid "New cards"
 msgstr ""
 
@@ -412,11 +447,11 @@ msgstr ""
 msgid "Right"
 msgstr ""
 
-#: deck.py:45
+#: deck.py:48
 msgid "Show new cards in order they were added"
 msgstr ""
 
-#: deck.py:44
+#: deck.py:47
 msgid "Show new cards in random order"
 msgstr ""
 
@@ -436,7 +471,15 @@ msgstr ""
 msgid "The answer."
 msgstr ""
 
-#: deck.py:332
+#: deck.py:1238
+msgid "The current model didn't exist"
+msgstr ""
+
+#: deck.py:353
+msgid "The deck is empty. Please add some cards."
+msgstr ""
+
+#: deck.py:346
 #, python-format
 msgid "The next card will be shown in <b>%s</b>"
 msgstr ""
@@ -450,7 +493,7 @@ msgstr ""
 msgid "Total time"
 msgstr ""
 
-#: deck.py:579
+#: deck.py:599
 msgid "Unknown"
 msgstr ""
 
@@ -468,7 +511,7 @@ msgstr ""
 msgid "Young"
 msgstr ""
 
-#: graphs.py:213
+#: graphs.py:209
 msgid "Young cards"
 msgstr ""
 
@@ -490,7 +533,7 @@ msgstr ""
 msgid "[invalid format; see model properties]"
 msgstr ""
 
-#: deck.py:367
+#: deck.py:383
 msgid "a short time"
 msgstr ""
 
@@ -499,6 +542,6 @@ msgstr ""
 msgid "in %s"
 msgstr ""
 
-#: deck.py:352
+#: deck.py:368
 msgid "unknown"
 msgstr ""

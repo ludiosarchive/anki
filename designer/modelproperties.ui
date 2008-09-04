@@ -9,7 +9,7 @@
     <x>0</x>
     <y>0</y>
     <width>544</width>
-    <height>566</height>
+    <height>589</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -27,7 +27,7 @@
         <x>0</x>
         <y>0</y>
         <width>522</width>
-        <height>484</height>
+        <height>515</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -183,7 +183,7 @@
         <x>0</x>
         <y>0</y>
         <width>522</width>
-        <height>484</height>
+        <height>515</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -256,6 +256,32 @@
             <widget class="QPushButton" name="fieldDelete" >
              <property name="text" >
               <string>&amp;Delete</string>
+             </property>
+             <property name="autoDefault" >
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="fieldUp" >
+             <property name="toolTip" >
+              <string>Move selected field up</string>
+             </property>
+             <property name="text" >
+              <string>Move &amp;Up</string>
+             </property>
+             <property name="autoDefault" >
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="fieldDown" >
+             <property name="toolTip" >
+              <string>Move selected field down</string>
+             </property>
+             <property name="text" >
+              <string>Move Dow&amp;n</string>
              </property>
              <property name="autoDefault" >
               <bool>false</bool>
@@ -397,7 +423,7 @@
         <x>0</x>
         <y>0</y>
         <width>522</width>
-        <height>484</height>
+        <height>515</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -483,6 +509,26 @@
             <widget class="QPushButton" name="cardDelete" >
              <property name="text" >
               <string>&amp;Delete</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="cardUp" >
+             <property name="toolTip" >
+              <string>Move selected card model up</string>
+             </property>
+             <property name="text" >
+              <string>Move &amp;Up</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="cardDown" >
+             <property name="toolTip" >
+              <string>Move selected card model down</string>
+             </property>
+             <property name="text" >
+              <string>Move Dow&amp;n</string>
              </property>
             </widget>
            </item>
@@ -673,18 +719,24 @@
   <tabstop>description</tabstop>
   <tabstop>initialSpacing</tabstop>
   <tabstop>spacing</tabstop>
+  <tabstop>decorators</tabstop>
   <tabstop>fieldList</tabstop>
   <tabstop>fieldAdd</tabstop>
   <tabstop>fieldDelete</tabstop>
+  <tabstop>fieldUp</tabstop>
+  <tabstop>fieldDown</tabstop>
   <tabstop>fieldName</tabstop>
   <tabstop>fieldDescription</tabstop>
   <tabstop>fieldUnique</tabstop>
   <tabstop>fieldRequired</tabstop>
   <tabstop>numeric</tabstop>
+  <tabstop>fieldFeatures</tabstop>
   <tabstop>cardList</tabstop>
   <tabstop>cardAdd</tabstop>
   <tabstop>cardToggle</tabstop>
   <tabstop>cardDelete</tabstop>
+  <tabstop>cardUp</tabstop>
+  <tabstop>cardDown</tabstop>
   <tabstop>cardName</tabstop>
   <tabstop>cardDescription</tabstop>
   <tabstop>cardQuestion</tabstop>

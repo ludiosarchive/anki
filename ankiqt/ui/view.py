@@ -53,7 +53,7 @@ class View(object):
                 self.main.config['suppressLastCardContent'] and
                 self.main.config['suppressLastCardInterval']):
                 self.buffer += "<br>"
-            else: #if self.main.lastCard:
+            else:
                 self.drawTopSection()
         if self.state == "showQuestion":
             self.drawQuestion()
@@ -137,21 +137,21 @@ class View(object):
 
     def drawLastCard(self):
         "Show the last card if not the current one, and next time."
-        if self.main.lastCard and (
-            self.state == "deckFinished" or
-            self.main.lastCard != self.main.currentCard):
+        if self.main.lastCard:
             if not self.main.config['suppressLastCardContent']:
-                q = self.main.lastCard.question.replace("<br>", "  ")
-                q = stripHTML(q)
-                if len(q) > 50:
-                    q = q[:50] + "..."
-                a = self.main.lastCard.answer.replace("<br>", "  ")
-                a = stripHTML(a)
-                if len(a) > 50:
-                    a = a[:50] + "..."
-                s = "%s<br>%s" % (q, a)
-                s = stripLatex(s)
-                self.write('<span class="lastCard">%s</span><br>' % s)
+                if (self.state == "deckFinished" or
+                    self.main.currentCard.id != self.main.lastCard.id):
+                    q = self.main.lastCard.question.replace("<br>", "  ")
+                    q = stripHTML(q)
+                    if len(q) > 50:
+                        q = q[:50] + "..."
+                    a = self.main.lastCard.answer.replace("<br>", "  ")
+                    a = stripHTML(a)
+                    if len(a) > 50:
+                        a = a[:50] + "..."
+                    s = "%s<br>%s" % (q, a)
+                    s = stripLatex(s)
+                    self.write('<span class="lastCard">%s</span><br>' % s)
             if not self.main.config['suppressLastCardInterval']:
                 if self.main.lastQuality > 1:
                     msg = _("Well done! This card will appear again in "
@@ -264,5 +264,6 @@ card' from the Edit menu."""))
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."
-        self.clearWindow()
-        self.write(self.main.deck.deckFinishedMsg())
+        self.write("<center>" +
+                   self.main.deck.deckFinishedMsg() +
+                   "</center>")

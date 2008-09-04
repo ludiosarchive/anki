@@ -40,6 +40,9 @@ PRIORITY_NONE = 0
 
 MATURE_THRESHOLD = 21
 
+# need interval > 0 to ensure relative delay is ordered properly
+NEW_INTERVAL = 0.001
+
 NewCardOrder = {
     0: _("Show new cards in random order"),
     1: _("Show new cards in order they were added"),
@@ -173,7 +176,7 @@ limit is above 1."""
         card.interval = self.nextInterval(card, ease)
         card.lastDue = card.due
         card.due = self.nextDue(card, ease, oldState)
-        card.isDue = card.due <= (time.time() + max(self.delay0, self.delay1))
+        card.isDue = 0
         card.lastFactor = card.factor
         self.updateFactor(card, ease)
         # spacing - first, we get the times of all other cards with the same
@@ -227,14 +230,21 @@ else 2 -- new
 end)""" + where)
 
     def markExpiredCardsDue(self):
-        "Tag expired cards as due."
+        "Mark expired cards due, and update their relativeDelay."
         self.s.statement("""update cards
 set isDue = 1, relativeDelay = interval / (strftime("%s", "now") - due + 1)
 where isDue = 0 and priority in (1,2,3,4) and combinedDue < :now""",
                          now=time.time())
 
+    def updateRelativeDelays(self):
+        "Update relative delays for expired cards."
+        self.s.statement("""update cards
+set relativeDelay = interval / (strftime("%s", "now") - due + 1)
+where isDue = 1""")
+
     def rebuildQueue(self):
         "Update relative delays based on current time."
+        self.updateRelativeDelays()
         self.markExpiredCardsDue()
         # cache global/daily stats
         self._globalStats = globalStats(self.s)
@@ -251,7 +261,7 @@ where isDue = 0 and priority in (1,2,3,4) and combinedDue < :now""",
         # if interval is less than mid interval, use presets
         if (card.interval + delay) < self.midIntervalMin:
             if ease < 2:
-                interval = 1
+                interval = NEW_INTERVAL
             elif ease == 2:
                 interval = random.uniform(self.hardIntervalMin,
                                           self.hardIntervalMax)
@@ -316,14 +326,14 @@ where isDue = 0 and priority in (1,2,3,4) and combinedDue < :now""",
         "Reset progress on cards in IDS."
         strids = ",".join([str(id) for id in ids])
         self.s.statement("""
-update cards set interval = 1, lastInterval = 0, lastDue = 0,
+update cards set interval = :new, lastInterval = 0, lastDue = 0,
 factor = 2.5, reps = 0, successive = 0, averageTime = 0, reviewTime = 0,
 youngEase0 = 0, youngEase1 = 0, youngEase2 = 0, youngEase3 = 0,
 youngEase4 = 0, matureEase0 = 0, matureEase1 = 0, matureEase2 = 0,
 matureEase3 = 0,matureEase4 = 0, yesCount = 0, noCount = 0,
 spaceUntil = 0, relativeDelay = 0, isDue = 0, type = 2,
 combinedDue = created, modified = :now, due = created
-where id in (%s)""" % strids, now=time.time())
+where id in (%s)""" % strids, now=time.time(), new=NEW_INTERVAL)
         self.flushMod()
 
     # Times
@@ -435,6 +445,8 @@ suspended</a> cards.''') % {
         p = self.priorityFromTagString(tags, tagCache)
         if p != card.priority:
             card.priority = p
+            if p == 0:
+                card.isDue = 0
             self.s.flush()
             self.rebuildTypes(" where id = %d" % card.id)
 
@@ -776,7 +788,7 @@ facts.id = cards.factId""", id=model.id))
 
     def modelsGroupedByName(self):
         "Return hash of name -> [id, cardModelIds, fieldIds]"
-        l = self.s.all("select name, id from models")
+        l = self.s.all("select name, id from models order by created")
         models = {}
         for m in l:
             cms = self.s.column0("""
@@ -901,6 +913,22 @@ select count(id) from fields where
 fieldModelId = :id and value != ""
 """, id=fieldModel.id)
 
+    def rebuildFieldOrdinals(self, modelId, ids):
+        """Update field ordinal for all fields given field model IDS.
+Caller must update model modtime."""
+        self.s.flush()
+        strids = ",".join([str(id) for id in ids])
+        self.s.statement("""
+update fields
+set ordinal = (select ordinal from fieldModels where id = fieldModelId)
+where fields.fieldModelId in (%s)""" % strids)
+        # dirty associated facts
+        self.s.statement("""
+update facts
+set modified = strftime("%s", "now")
+where modelId = :id""", id=modelId)
+        self.flushMod()
+
     # Card models
     ##########################################################################
 
@@ -941,6 +969,17 @@ question = :q,
 answer = :a,
 modified = %f
 where id = :id""" % time.time(), pend)
+
+    def rebuildCardOrdinals(self, ids):
+        "Update all card models in IDS. Caller must update model modtime."
+        self.s.flush()
+        strids = ",".join([str(id) for id in ids])
+        self.s.statement("""
+update cards set
+ordinal = (select ordinal from cardModels where id = cardModelId),
+modified = :now
+where cardModelId in (%s)""" % strids, now=time.time())
+        self.flushMod()
 
     # Tags
     ##########################################################################

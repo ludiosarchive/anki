@@ -628,6 +628,7 @@ where id in (%s)""" % ",".join([
         self.updateAfterCardChange(reset=True)
 
     def accept(self):
+        self.hide()
         self.deck.deleteCards(self.model.deleted.keys())
         if len(self.model.deleted):
             self.parent.setStatus(

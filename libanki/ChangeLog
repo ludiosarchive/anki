@@ -1,5 +1,93 @@
-changeset:   714:d10138a2f9f5
+changeset:   729:294cc15863b6
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:56:06 2008 +0900
+summary:     update spanish translations
+
+changeset:   728:487e131cb90e
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:50:02 2008 +0900
+summary:     bump version number
+
+changeset:   727:309a3b96f57f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:42:40 2008 +0900
+summary:     update graphs code to use new db layout
+
+changeset:   726:6ae2b8dfa397
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:37:33 2008 +0900
+summary:     set cards to not due when answering - they'll be updated later
+
+changeset:   725:aa2188746766
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 21:27:24 2008 +0900
+summary:     update relativeDelay for all cards, not just recently expired ones
+
+changeset:   724:02fea17b9d22
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 17:33:09 2008 +0900
+summary:     if card is suspended, set isDue = 0
+
+changeset:   723:5410d31cfadc
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 17:23:10 2008 +0900
+summary:     add support for changing order of card models and field models
+
+changeset:   722:a8b75ac64b1e
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:27:03 2008 +0900
+summary:     set new interval to 0.001, not 1
+
+changeset:   721:fe91fa7e876e
+parent:      717:9748f6c99a40
+parent:      720:c3c16d61c5fd
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:15:32 2008 +0900
+summary:     merge
+
+changeset:   720:c3c16d61c5fd
+parent:      719:a0178186c744
+parent:      654:c55cd3992387
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:08:33 2008 +0900
+summary:     merge
+
+changeset:   719:a0178186c744
+parent:      718:a83de27a1d93
+parent:      716:87f9ae70fea1
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:08:22 2008 +0900
+summary:     merge
+
+changeset:   718:a83de27a1d93
+parent:      714:d10138a2f9f5
+parent:      653:4a530339560c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:07:53 2008 +0900
+summary:     merge
+
+changeset:   717:9748f6c99a40
+parent:      715:ebb00029c503
+parent:      716:87f9ae70fea1
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:15:20 2008 +0900
+summary:     merge
+
+changeset:   716:87f9ae70fea1
+parent:      711:c9c5e73e233f
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 19:39:00 2008 +0900
+summary:     always choose oldest model when merging
+
+changeset:   715:ebb00029c503
+parent:      714:d10138a2f9f5
+parent:      654:c55cd3992387
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:14:33 2008 +0900
+summary:     merge
+
+changeset:   714:d10138a2f9f5
 user:        Damien Elmes <hg@repose.cx>
 date:        Fri Aug 29 21:09:41 2008 +0900
 summary:     bump version number

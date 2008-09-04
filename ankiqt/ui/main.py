@@ -120,7 +120,7 @@ class AnkiQt(QMainWindow):
             else:
                 return self.moveToState("noDeck")
         elif state == "auto":
-            # load again without resetting current card
+            self.currentCard = None
             if self.deck:
                 return self.moveToState("getQuestion")
             else:
@@ -144,7 +144,13 @@ class AnkiQt(QMainWindow):
             else:
                 if not self.currentCard:
                     self.currentCard = self.deck.getCard()
-                if self.currentCard and self.currentCard != self.lastCard:
+                if self.currentCard:
+                    if self.lastCard:
+                        if self.lastCard.id == self.currentCard.id:
+                            if self.currentCard.combinedDue > time.time():
+                                # if the same card is being shown and it's not
+                                # due yet, give up
+                                return self.moveToState("deckFinished")
                     self.enableCardMenuItems()
                     return self.moveToState("showQuestion")
                 else:
@@ -193,6 +199,8 @@ class AnkiQt(QMainWindow):
         "Reschedule current card and move back to getQuestion state."
         # copy card for undo
         self.lastCardBackup = copy.copy(self.currentCard)
+        # remove card from session before updating it
+        self.deck.s.expunge(self.currentCard)
         self.deck.answerCard(self.currentCard, quality)
         self.lastScheduledTime = anki.utils.fmtTimeSpan(
             self.currentCard.due - time.time())
@@ -564,6 +572,7 @@ class AnkiQt(QMainWindow):
             if not sys.platform.startswith("darwin"):
                 a.setShortcut(_("Alt+%d" % n))
             a.setText(os.path.basename(file))
+            a.setStatusTip(os.path.abspath(file))
             self.connect(a, SIGNAL("triggered()"),
                          lambda n=n: self.loadRecent(n-1))
             self.mainWin.menuOpenRecent.addAction(a)
