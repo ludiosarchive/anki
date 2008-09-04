@@ -1,5 +1,40 @@
-changeset:   732:e577dce1ca01
+changeset:   739:55ee54b34790
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 04:35:18 2008 +0900
+summary:     bump version number
+
+changeset:   738:a07944b55ff5
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 04:04:32 2008 +0900
+summary:     checkdb: regenerate question/answer cache, and mark all cards/facts/models mod
+
+changeset:   737:c6fbfb44d925
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:47:15 2008 +0900
+summary:     don't forget deletions when checking db
+
+changeset:   736:fba4ad426675
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:17:34 2008 +0900
+summary:     add german updates from [Bananeweizen at gmx dot de]
+
+changeset:   735:14b62b62df80
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:14:00 2008 +0900
+summary:     fix some problems with the exporting code
+
+changeset:   734:00a0a191a2a0
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 01:07:10 2008 +0900
+summary:     ignore deleted objects on import, fix html & forget deletions on checkdb
+
+changeset:   733:56fc2a350a49
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 02 16:15:07 2008 +0900
+summary:     add tidyHTML to utils, start work on additions to checkDB
+
+changeset:   732:e577dce1ca01
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Sep 01 20:06:43 2008 +0900
 summary:     limit combinedDue to 1

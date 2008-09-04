@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Anki 0.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-01 23:39+0900\n"
+"POT-Creation-Date: 2008-09-03 03:38+0900\n"
 "PO-Revision-Date: 2008-02-24 10:45+1100\n"
 "Last-Translator: Laurent Steffan <devel@laurentsteffan.com>\n"
 "Language-Team: LMS <anki_tradu@laurentsteffan.com>\n"
@@ -820,11 +820,11 @@ msgstr "Ajouter un nouveau modèle"
 msgid "Add a picture"
 msgstr "Ajouter une image"
 
-#: ui/facteditor.py:474
+#: ui/facteditor.py:456
 msgid "Add an image"
 msgstr "Ajouter une image"
 
-#: ui/facteditor.py:133 ui/facteditor.py:486
+#: ui/facteditor.py:133 ui/facteditor.py:468
 msgid "Add audio"
 msgstr "Ajouter un son"
 
@@ -837,7 +837,7 @@ msgstr "Ajouté %(num)d carte(s) pour '%(str)s'."
 msgid "Advanced Settings"
 msgstr "Préférences avancées"
 
-#: ui/facteditor.py:354
+#: ui/facteditor.py:336
 msgid "All fields valid"
 msgstr ""
 
@@ -1407,7 +1407,7 @@ msgstr "Cacher la question en montrant la réponse"
 msgid "Ignore this update"
 msgstr ""
 
-#: ui/facteditor.py:473
+#: ui/facteditor.py:455
 msgid "Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)"
 msgstr ""
 
@@ -1843,7 +1843,7 @@ msgstr "Montrer la barre d'outils au démarrage"
 msgid "Show tray icon"
 msgstr ""
 
-#: ui/facteditor.py:347
+#: ui/facteditor.py:329
 msgid "Some fields are <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a> or not <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."
 msgstr ""
 
@@ -1851,7 +1851,7 @@ msgstr ""
 msgid "Sort this field using numeric order instead of string order"
 msgstr "Trier ce champ dans l'ordre numérique au lieu de alphabétique"
 
-#: ui/facteditor.py:485
+#: ui/facteditor.py:467
 msgid "Sounds (*.mp3 *.ogg *.wav)"
 msgstr "Sons (*.mp3 *.ogg *.wav)"
 

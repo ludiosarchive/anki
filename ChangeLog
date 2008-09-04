@@ -1,5 +1,25 @@
-changeset:   767:847d8f4cf083
+changeset:   771:cb95843ba6ec
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 05:23:55 2008 +0900
+summary:     remove debian dir
+
+changeset:   770:35a2f14d440d
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 04:35:41 2008 +0900
+summary:     bump version number
+
+changeset:   769:efa4c5a348dc
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:38:51 2008 +0900
+summary:     updated german translations from [Bananeweizen at gmx dot de]
+
+changeset:   768:9075d5825e29
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 02 16:14:09 2008 +0900
+summary:     factor pruneHTML into libanki
+
+changeset:   767:847d8f4cf083
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Sep 01 23:40:03 2008 +0900
 summary:     update translations

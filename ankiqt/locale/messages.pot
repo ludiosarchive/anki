@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-01 23:39+0900\n"
+"POT-Creation-Date: 2008-09-03 03:38+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -741,11 +741,11 @@ msgstr ""
 msgid "Add a picture"
 msgstr ""
 
-#: ui/facteditor.py:474
+#: ui/facteditor.py:456
 msgid "Add an image"
 msgstr ""
 
-#: ui/facteditor.py:133 ui/facteditor.py:486
+#: ui/facteditor.py:133 ui/facteditor.py:468
 msgid "Add audio"
 msgstr ""
 
@@ -758,7 +758,7 @@ msgstr ""
 msgid "Advanced Settings"
 msgstr ""
 
-#: ui/facteditor.py:354
+#: ui/facteditor.py:336
 msgid "All fields valid"
 msgstr ""
 
@@ -1317,7 +1317,7 @@ msgstr ""
 msgid "Ignore this update"
 msgstr ""
 
-#: ui/facteditor.py:473
+#: ui/facteditor.py:455
 msgid "Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)"
 msgstr ""
 
@@ -1746,7 +1746,7 @@ msgstr ""
 msgid "Show tray icon"
 msgstr ""
 
-#: ui/facteditor.py:347
+#: ui/facteditor.py:329
 msgid "Some fields are <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a> or not <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."
 msgstr ""
 
@@ -1754,7 +1754,7 @@ msgstr ""
 msgid "Sort this field using numeric order instead of string order"
 msgstr ""
 
-#: ui/facteditor.py:485
+#: ui/facteditor.py:467
 msgid "Sounds (*.mp3 *.ogg *.wav)"
 msgstr ""
 

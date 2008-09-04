@@ -24,10 +24,11 @@ from anki.db import *
 from anki.lang import _
 from anki.errors import DeckAccessError, DeckWrongFormatError
 from anki.stdmodels import BasicModel
-from anki.utils import parseTags
+from anki.utils import parseTags, tidyHTML
 from anki.history import CardHistoryEntry
 from anki.models import Model
 from anki.stats import dailyStats, globalStats
+from anki.models import CardModel
 
 # ensure all the metadata in other files is loaded before proceeding
 import anki.models, anki.facts, anki.cards, anki.stats, anki.history
@@ -1278,15 +1279,37 @@ select id from fields where factId not in (select id from facts)""")
                 "delete from fields where id in (%s)",
                 ",".join([str(id) for id in ids]))
             problems.append(_("Deleted %d dangling fields") % len(ids))
-        # preventative measures
         self.s.flush()
+        # fix problems with cards being scheduled when not due
         self.s.statement("update cards set isDue = 0")
+        # fix problems with conflicts on merge
         self.s.statement("update fields set id = random()")
+        # fix any priorities
         self.updateAllPriorities()
+        # fix problems with stripping html
+        fields = self.s.all("select id, value from fields")
+        newFields = []
+        for (id, value) in fields:
+            newFields.append({'id': id, 'value': tidyHTML(value)})
+        self.s.statements(
+            "update fields set value=:value where id=:id",
+            newFields)
+        # regenerate question/answer cache
+        cms = self.s.query(CardModel).all()
+        for cm in cms:
+            self.updateCardsFromModel(cm)
+            self.s.expunge(cm)
+        # mark everything changed to force sync
+        self.s.flush()
+        self.s.statement("update cards set modified = :t", t=time.time())
+        self.s.statement("update facts set modified = :t", t=time.time())
+        self.s.statement("update models set modified = :t", t=time.time())
+        # update deck and save
+        self.flushMod()
+        self.save()
+        self.refresh()
         self.rebuildQueue()
         if problems:
-            self.flushMod()
-            self.refresh()
             return "\n".join(problems)
         return "ok"
 

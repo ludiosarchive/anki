@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-01 23:39+0900\n"
+"POT-Creation-Date: 2008-09-03 03:38+0900\n"
 "PO-Revision-Date: 2008-03-28 17:07+0900\n"
 "Last-Translator: Andrew Wright <guswright80@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -787,11 +787,11 @@ msgstr "モデルを追加..."
 msgid "Add a picture"
 msgstr "絵を追加する"
 
-#: ui/facteditor.py:474
+#: ui/facteditor.py:456
 msgid "Add an image"
 msgstr "画像を追加する"
 
-#: ui/facteditor.py:133 ui/facteditor.py:486
+#: ui/facteditor.py:133 ui/facteditor.py:468
 msgid "Add audio"
 msgstr "音声を追加する"
 
@@ -804,7 +804,7 @@ msgstr "'%(str)sのカードを%(num)d個追加しました。"
 msgid "Advanced Settings"
 msgstr "上級の設定"
 
-#: ui/facteditor.py:354
+#: ui/facteditor.py:336
 msgid "All fields valid"
 msgstr ""
 
@@ -1366,7 +1366,7 @@ msgstr "解答を表示する時に、質問を隠す"
 msgid "Ignore this update"
 msgstr ""
 
-#: ui/facteditor.py:473
+#: ui/facteditor.py:455
 msgid "Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)"
 msgstr ""
 
@@ -1802,7 +1802,7 @@ msgstr "起動する時にツールバーを表示する"
 msgid "Show tray icon"
 msgstr ""
 
-#: ui/facteditor.py:347
+#: ui/facteditor.py:329
 msgid "Some fields are <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a> or not <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."
 msgstr ""
 
@@ -1810,7 +1810,7 @@ msgstr ""
 msgid "Sort this field using numeric order instead of string order"
 msgstr "このフィールドは数字です。数の順番に整理します。"
 
-#: ui/facteditor.py:485
+#: ui/facteditor.py:467
 msgid "Sounds (*.mp3 *.ogg *.wav)"
 msgstr "音 (*.mp3 *.ogg *.wav)"
 

@@ -5,7 +5,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import re, os, sys
-from anki.utils import parseTags, stripHTML
+from anki.utils import parseTags, stripHTML, tidyHTML
 import anki.sound
 from ankiqt import ui
 
@@ -240,7 +240,7 @@ class FactEditor(object):
         # text
         for (name, (field, w)) in self.fields.items():
             new = self.fact[name]
-            old = self.pruneHTML(unicode(w.toHtml()))
+            old = tidyHTML(unicode(w.toHtml()))
             # only update if something has changed, to preserve the cursor
             if new != old:
                 w.setHtml(new)
@@ -268,7 +268,7 @@ class FactEditor(object):
     def fieldChanged(self, field, widget):
         if self.updatingFields:
             return
-        value = self.pruneHTML(unicode(widget.toHtml()))
+        value = tidyHTML(unicode(widget.toHtml()))
         if value and not value.strip():
             widget.setText("")
             value = u""
@@ -282,24 +282,6 @@ class FactEditor(object):
             self.onChange(field)
         self.scheduleCheck()
         self.formatChanged(None)
-
-    def pruneHTML(self, html):
-        "Remove cruft like body tags and return just the important part."
-        html = re.sub(".*<body.*?>(.*)</body></html>",
-                      "\\1", html.replace("\n", u""))
-        html = re.sub("margin-top:\d+px; margin-bottom:\d+px; margin-left:\d+px; "
-                      "margin-right:\d+px; -qt-block-indent:0; "
-                      "text-indent:0px;", "", html)
-        html = re.sub("-qt-paragraph-type:empty;", "", html)
-        html = re.sub("  +", " ", html)
-        html = re.sub('style=" ', 'style="', html)
-        html = re.sub(' style=""', "", html)
-        html = re.sub('<p( style=.+?)>(.*?)</p>', u'<span\\1>\\2</span><br>', html)
-        html = re.sub('<p>(.*?)</p>', u'\\1<br>', html)
-        html = re.sub('<br>$', u'', html)
-        html = re.sub('^ +', u'', html)
-        html = re.sub(' +$', u'', html)
-        return html
 
     def scheduleCheck(self):
         if not self.deck:
@@ -460,7 +442,7 @@ class FactEditor(object):
 
     def fieldsAreBlank(self):
         for (field, widget) in self.fields.values():
-            value = self.pruneHTML(unicode(widget.toHtml()))
+            value = tidyHTML(unicode(widget.toHtml()))
             if value:
                 return False
         return True
@@ -506,10 +488,10 @@ class FactEdit(QTextEdit):
         if source.hasText():
             self.insertPlainText(source.text())
         elif source.hasHtml():
-            self.insertHtml(self.tidyHTML(unicode(source.html())))
+            self.insertHtml(self.simplyHTML(unicode(source.html())))
 
-    def tidyHTML(self, html):
-        # FIXME: support pre tags
+    def simplifyHTML(self, html):
+        "Remove all style information and P tags."
         html = re.sub("\n", " ", html)
         html = re.sub("<br ?/?>", "\n", html)
         html = re.sub("<p ?/?>", "\n\n", html)

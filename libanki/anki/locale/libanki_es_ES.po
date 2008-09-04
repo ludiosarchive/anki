@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-31 22:50+0900\n"
+"POT-Creation-Date: 2008-09-03 03:16+0900\n"
 "PO-Revision-Date: 2008-08-26 03:44+0100\n"
 "Last-Translator: \n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: deck.py:403
+#: deck.py:408
 #, python-format
 msgid ""
 "\n"
@@ -236,7 +236,7 @@ msgstr "Añadido"
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
 msgstr "Añadidas: <b>%(a)d</b> por día, <b>%(b)d</b> por mes<br>"
 
-#: exporting.py:209
+#: exporting.py:208
 msgid "Anki deck (*.anki)"
 msgstr "Mazo Anki (*.anki)"
 
@@ -244,7 +244,7 @@ msgstr "Mazo Anki (*.anki)"
 msgid "Anki decks (*.anki)"
 msgstr "Mazos Anki (*.anki)"
 
-#: deck.py:349
+#: deck.py:353
 #, python-format
 msgid "At the same time tomorrow, there will be <b>%d</b> cards waiting"
 msgstr "A la misma hora mañana, habrá <b>%d</b> tarjetas que responder"
@@ -265,7 +265,7 @@ msgstr "Desde el reverso a la cara"
 msgid "Basic"
 msgstr "Básico"
 
-#: deck.py:1342 deck.py:1405
+#: deck.py:1362 deck.py:1425
 msgid "Can't read/write deck"
 msgstr "No se puede leer/escribir el mazo"
 
@@ -281,7 +281,7 @@ msgstr "Etiquetas del modelo de tarjetas"
 msgid "Card tags"
 msgstr "Etiquetas de la tarjeta"
 
-#: exporting.py:210
+#: exporting.py:209
 msgid "Cards in tab-separated text file (*.txt)"
 msgstr "Tarjetas en un archivo de texto separado por tabulador (*.txt)"
 
@@ -305,7 +305,7 @@ msgstr "Factor actual"
 msgid "Current interval"
 msgstr "Intervalo actual"
 
-#: deck.py:1227
+#: deck.py:1232
 msgid "Database file damaged. Restore from backup."
 msgstr ""
 
@@ -318,31 +318,31 @@ msgstr "Estadísticas del Mazo"
 msgid "Deck created: <b>%s</b> ago<br>"
 msgstr "Mazo creado: Hace <b>%s</b><br>"
 
-#: deck.py:1232
+#: deck.py:1237
 msgid "Deck was missing a model"
 msgstr ""
 
-#: deck.py:1253
+#: deck.py:1258
 #, python-format
 msgid "Deleted %d cards with missing fact"
 msgstr ""
 
-#: deck.py:1261
+#: deck.py:1266
 #, python-format
 msgid "Deleted %d cards with no card model"
 msgstr ""
 
-#: deck.py:1275
+#: deck.py:1280
 #, python-format
 msgid "Deleted %d dangling fields"
 msgstr ""
 
-#: deck.py:1246
+#: deck.py:1251
 #, python-format
 msgid "Deleted %d facts with missing fields"
 msgstr ""
 
-#: deck.py:1266
+#: deck.py:1271
 #, python-format
 msgid "Deleted %d facts with no cards"
 msgstr ""
@@ -360,11 +360,11 @@ msgstr "Error ejecutando 'dvipng' -¿Está instalado?"
 msgid "Fact tags"
 msgstr "Etiquetas de hechos"
 
-#: exporting.py:211
+#: exporting.py:210
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr "Hechos en un archivo de texto separado por tabulador (*.txt)"
 
-#: deck.py:1376
+#: deck.py:1396
 msgid "File is in use by another process"
 msgstr "El archivo está en uso por otro proceso"
 
@@ -448,12 +448,12 @@ msgstr "Tarjetas maduras: <b>%(gMatureYes%)0.1f%%</b> (<b>%(gMatureYes)d</b> de 
 msgid "Mature cards: <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
 msgstr "Tarjetas maduras: <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
 
-#: deck.py:815
+#: deck.py:820
 #, python-format
 msgid "Model '%s' has wrong card model count"
 msgstr ""
 
-#: deck.py:819
+#: deck.py:824
 #, python-format
 msgid "Model '%s' has wrong field model count"
 msgstr ""
@@ -502,7 +502,7 @@ msgstr "Estado"
 msgid "Test your ability to recognize the target expression"
 msgstr "Compruebe su habilidad para reconocer la expresión de destino"
 
-#: exporting.py:139 exporting.py:171
+#: exporting.py:138 exporting.py:170
 msgid "Text files (*.txt)"
 msgstr "Archivos de texto (*.txt)"
 
@@ -510,16 +510,16 @@ msgstr "Archivos de texto (*.txt)"
 msgid "The answer."
 msgstr "La respuesta."
 
-#: deck.py:1238
+#: deck.py:1243
 msgid "The current model didn't exist"
 msgstr ""
 
-#: deck.py:353
+#: deck.py:357
 #, fuzzy
 msgid "The deck is empty. Please add some cards."
 msgstr "Por favor, añada algunas tarjetas antes.<p/>"
 
-#: deck.py:346
+#: deck.py:350
 #, python-format
 msgid "The next card will be shown in <b>%s</b>"
 msgstr "La siguiente tarjeta se mostrará en <b>%s</b>"
@@ -533,7 +533,7 @@ msgstr "Número total de tarjetas: <b>%d</b><br><br>"
 msgid "Total time"
 msgstr "Tiempo total"
 
-#: deck.py:599
+#: deck.py:604
 msgid "Unknown"
 msgstr "Desconocido"
 
@@ -573,7 +573,7 @@ msgstr "[vacío]"
 msgid "[invalid format; see model properties]"
 msgstr "[formato no válido; vea las propiedades del modelo]"
 
-#: deck.py:383
+#: deck.py:388
 msgid "a short time"
 msgstr "en poco tiempo"
 
@@ -582,7 +582,7 @@ msgstr "en poco tiempo"
 msgid "in %s"
 msgstr "en %s"
 
-#: deck.py:368
+#: deck.py:373
 msgid "unknown"
 msgstr "desconocido"
 

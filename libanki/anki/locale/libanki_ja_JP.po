@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-31 22:50+0900\n"
+"POT-Creation-Date: 2008-09-03 03:16+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Damien Elmes <anki@ichi2.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: deck.py:403
+#: deck.py:408
 #, python-format
 msgid ""
 "\n"
@@ -197,7 +197,7 @@ msgstr ""
 msgid "Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>"
 msgstr ""
 
-#: exporting.py:209
+#: exporting.py:208
 msgid "Anki deck (*.anki)"
 msgstr ""
 
@@ -205,7 +205,7 @@ msgstr ""
 msgid "Anki decks (*.anki)"
 msgstr ""
 
-#: deck.py:349
+#: deck.py:353
 #, python-format
 msgid "At the same time tomorrow, there will be <b>%d</b> cards waiting"
 msgstr ""
@@ -226,7 +226,7 @@ msgstr "裏側から表側"
 msgid "Basic"
 msgstr ""
 
-#: deck.py:1342 deck.py:1405
+#: deck.py:1362 deck.py:1425
 msgid "Can't read/write deck"
 msgstr ""
 
@@ -242,7 +242,7 @@ msgstr ""
 msgid "Card tags"
 msgstr ""
 
-#: exporting.py:210
+#: exporting.py:209
 msgid "Cards in tab-separated text file (*.txt)"
 msgstr ""
 
@@ -266,7 +266,7 @@ msgstr ""
 msgid "Current interval"
 msgstr ""
 
-#: deck.py:1227
+#: deck.py:1232
 msgid "Database file damaged. Restore from backup."
 msgstr ""
 
@@ -279,31 +279,31 @@ msgstr ""
 msgid "Deck created: <b>%s</b> ago<br>"
 msgstr ""
 
-#: deck.py:1232
+#: deck.py:1237
 msgid "Deck was missing a model"
 msgstr ""
 
-#: deck.py:1253
+#: deck.py:1258
 #, python-format
 msgid "Deleted %d cards with missing fact"
 msgstr ""
 
-#: deck.py:1261
+#: deck.py:1266
 #, python-format
 msgid "Deleted %d cards with no card model"
 msgstr ""
 
-#: deck.py:1275
+#: deck.py:1280
 #, python-format
 msgid "Deleted %d dangling fields"
 msgstr ""
 
-#: deck.py:1246
+#: deck.py:1251
 #, python-format
 msgid "Deleted %d facts with missing fields"
 msgstr ""
 
-#: deck.py:1266
+#: deck.py:1271
 #, python-format
 msgid "Deleted %d facts with no cards"
 msgstr ""
@@ -320,11 +320,11 @@ msgstr ""
 msgid "Fact tags"
 msgstr ""
 
-#: exporting.py:211
+#: exporting.py:210
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr ""
 
-#: deck.py:1376
+#: deck.py:1396
 msgid "File is in use by another process"
 msgstr ""
 
@@ -408,12 +408,12 @@ msgstr ""
 msgid "Mature cards: <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
 msgstr ""
 
-#: deck.py:815
+#: deck.py:820
 #, python-format
 msgid "Model '%s' has wrong card model count"
 msgstr ""
 
-#: deck.py:819
+#: deck.py:824
 #, python-format
 msgid "Model '%s' has wrong field model count"
 msgstr ""
@@ -462,7 +462,7 @@ msgstr ""
 msgid "Test your ability to recognize the target expression"
 msgstr ""
 
-#: exporting.py:139 exporting.py:171
+#: exporting.py:138 exporting.py:170
 msgid "Text files (*.txt)"
 msgstr ""
 
@@ -470,15 +470,15 @@ msgstr ""
 msgid "The answer."
 msgstr ""
 
-#: deck.py:1238
+#: deck.py:1243
 msgid "The current model didn't exist"
 msgstr ""
 
-#: deck.py:353
+#: deck.py:357
 msgid "The deck is empty. Please add some cards."
 msgstr ""
 
-#: deck.py:346
+#: deck.py:350
 #, python-format
 msgid "The next card will be shown in <b>%s</b>"
 msgstr ""
@@ -492,7 +492,7 @@ msgstr ""
 msgid "Total time"
 msgstr ""
 
-#: deck.py:599
+#: deck.py:604
 msgid "Unknown"
 msgstr ""
 
@@ -532,7 +532,7 @@ msgstr ""
 msgid "[invalid format; see model properties]"
 msgstr ""
 
-#: deck.py:383
+#: deck.py:388
 msgid "a short time"
 msgstr "何分"
 
@@ -541,6 +541,6 @@ msgstr "何分"
 msgid "in %s"
 msgstr ""
 
-#: deck.py:368
+#: deck.py:373
 msgid "unknown"
 msgstr ""

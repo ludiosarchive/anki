@@ -118,6 +118,30 @@ def stripHTML(s):
     s = s.replace("&gt;", ">")
     return s
 
+def tidyHTML(html):
+    "Remove cruft like body tags and return just the important part."
+    # contents of body - no head or html tags
+    html = re.sub(".*<body.*?>(.*)</body></html>",
+                  "\\1", html.replace("\n", u""))
+    # strip superfluous Qt formatting
+    html = re.sub("margin-top:\d+px; margin-bottom:\d+px; margin-left:\d+px; "
+                  "margin-right:\d+px; -qt-block-indent:0; "
+                  "text-indent:0px;", "", html)
+    html = re.sub("-qt-paragraph-type:empty;", "", html)
+    # collapse multiple spaces into one
+    html = re.sub("  +", " ", html)
+    # strip leading space in style statements, and remove if no contents
+    html = re.sub('style=" ', 'style="', html)
+    html = re.sub(' style=""', "", html)
+    # convert P tags into SPAN and/or BR
+    html = re.sub('<p( style=.+?)>(.*?)</p>', u'<span\\1>\\2</span><br>', html)
+    html = re.sub('<p>(.*?)</p>', u'\\1<br>', html)
+    html = re.sub('<br>$', u'', html)
+    # remove leading or trailing whitespace
+    html = re.sub('^ +', u'', html)
+    html = re.sub(' +$', u'', html)
+    return html
+
 def genID(static=[]):
     "Generate a random, unique 64bit ID."
     # 23 bits of randomness, 41 bits of current time
