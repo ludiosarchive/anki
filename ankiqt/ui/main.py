@@ -24,6 +24,8 @@ config = ankiqt.config
 class AnkiQt(QMainWindow):
     def __init__(self, app, config, args):
         QMainWindow.__init__(self)
+        if sys.platform.startswith("darwin"):
+            qt_mac_set_menubar_icons(False)
         ankiqt.mw = self
         self.app = app
         self.config = config
@@ -120,7 +122,6 @@ class AnkiQt(QMainWindow):
         elif state == "auto":
             # load again without resetting current card
             if self.deck:
-                self.deck._countsDirty = True
                 return self.moveToState("getQuestion")
             else:
                 return self.moveToState("noDeck")
@@ -137,6 +138,7 @@ class AnkiQt(QMainWindow):
             # hide all deck-associated dialogs
             ui.dialogs.closeAll()
         elif state == "getQuestion":
+            self.deck._countsDirty = True
             if self.deck.cardCount() == 0:
                 return self.moveToState("deckEmpty")
             else:

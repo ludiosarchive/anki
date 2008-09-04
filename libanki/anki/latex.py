@@ -80,6 +80,7 @@ def imgLink(deck, latex):
         if match.group(1) in entitydefs:
             latex = latex.replace(match.group(), entitydefs[match.group(1)])
     latex = re.sub("<br( /)?>", "\n", latex)
+    latex = latex.encode("utf-8")
     imageFile = "latex-%s.png" % md5(latex).hexdigest()
     imagePath = os.path.join(deck.mediaDir(create=True), imageFile)
     imagePath = imagePath.encode(sys.getfilesystemencoding())

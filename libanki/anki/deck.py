@@ -429,7 +429,7 @@ suspended</a> cards.''') % {
         p = self.priorityFromTagString(tags, tagCache)
         if p != card.priority:
             card.priority = p
-            self.flush()
+            self.s.flush()
             self.rebuildTypes(" where id = %d" % card.id)
 
     def priorityFromTagString(self, tagString, tagCache):
@@ -1132,7 +1132,8 @@ select id from cards where factId not in (select id from facts)""")
             problems.append(_("Deleted %d cards with missing fact") %
                             len(ids))
         # preventative measures
-        self.s.execute("update cards set isDue = 0")
+        self.s.statement("update cards set isDue = 0")
+        self.s.statement("update fields set id = random()")
         self.updateAllPriorities()
         self.rebuildQueue()
         if problems:

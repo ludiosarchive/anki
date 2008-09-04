@@ -1,5 +1,25 @@
-changeset:   699:26c2fd9803b3
+changeset:   703:027099bf01ef
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 19:06:28 2008 +0900
+summary:     encode string as utf-8 before sending to latex (fix win32)
+
+changeset:   702:222fee895606
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 17:52:49 2008 +0900
+summary:     bump version
+
+changeset:   701:beae5d21dcff
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 15:03:45 2008 +0900
+summary:     since we're randomizing field ids, delete local fields before syncing
+
+changeset:   700:9be61e41abc6
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 14:15:26 2008 +0900
+summary:     fix bug adding cards with priorities
+
+changeset:   699:26c2fd9803b3
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Aug 25 01:52:10 2008 +0900
 summary:     catch interrupted system calls on osx (fix latex)

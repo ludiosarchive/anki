@@ -392,6 +392,11 @@ values
             'ordinal': f[3],
             'value': f[4]
             } for f in fields]
+        # delete local fields since ids may have changed
+        self.deck.s.execute(
+            "delete from fields where factId in (%s)" %
+            ",".join([str(f[0]) for f in facts]))
+        # then update
         self.deck.s.execute("""
 insert or replace into fields
 (id, factId, fieldModelId, ordinal, value)
