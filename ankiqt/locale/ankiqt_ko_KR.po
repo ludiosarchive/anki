@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-31 22:55+0900\n"
+"POT-Creation-Date: 2008-09-01 23:39+0900\n"
 "PO-Revision-Date: 2008-05-24 09:54+0900\n"
 "Last-Translator: Jin Eun-Deok <jin.eundeok@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -134,12 +134,12 @@ msgstr " <b>질문/추가/편집 할때</b>"
 msgid "%(del)d deleted."
 msgstr "%(del)d 삭제 됨."
 
-#: ui/deckproperties.py:72
+#: ui/deckproperties.py:66
 #, python-format
 msgid "%(name)s [%(facts)d facts]"
 msgstr "%(name)s [%(facts)d지식]"
 
-#: ui/main.py:1118
+#: ui/main.py:1124
 #, python-format
 msgid "%(path)s (%(facts)d facts, %(cards)d cards) - %(title)s"
 msgstr "%(path)s (%(facts)d지식, %(cards)d카드) - %(title)s"
@@ -154,7 +154,7 @@ msgstr "%d 내보내기 완료."
 msgid "%s ago"
 msgstr "%s 전"
 
-#: ui/main.py:1274
+#: ui/main.py:1280
 #, python-format
 msgid ""
 "%s.\n"
@@ -163,7 +163,8 @@ msgid ""
 msgstr ""
 
 #: forms/main.py:472
-msgid "&About..."
+#, fuzzy
+msgid "&About.."
 msgstr "소개(&A)..."
 
 #: forms/deckproperties.py:345 forms/modelproperties.py:382
@@ -172,8 +173,9 @@ msgid "&Add"
 msgstr "추가(&A)"
 
 #: forms/main.py:449
-msgid "&Add Cards..."
-msgstr "카드 추가(&A)..."
+#, fuzzy
+msgid "&Add Facts.."
+msgstr "지식..."
 
 #: ui/addcards.py:52
 msgid "&Add cards"
@@ -198,7 +200,8 @@ msgid "&Deck"
 msgstr "묶음(&D)"
 
 #: forms/main.py:474
-msgid "&Deck Properties..."
+#, fuzzy
+msgid "&Deck Properties.."
 msgstr "묶음 속성(&D)..."
 
 #: forms/main.py:468
@@ -216,15 +219,18 @@ msgid "&Edit"
 msgstr "편집(&E)"
 
 #: forms/main.py:452
-msgid "&Edit Deck..."
-msgstr "묶음 편집(&E)..."
+#, fuzzy
+msgid "&Edit Facts.."
+msgstr "지식..."
 
 #: forms/main.py:491
-msgid "&Forum..."
+#, fuzzy
+msgid "&Forum.."
 msgstr "게시판(&F)..."
 
 #: forms/main.py:477
-msgid "&Graphs"
+#, fuzzy
+msgid "&Graphs.."
 msgstr "그래프(&G)"
 
 #: forms/main.py:430
@@ -236,7 +242,8 @@ msgid "&Import"
 msgstr "가져오기(&I)"
 
 #: forms/main.py:476
-msgid "&Import..."
+#, fuzzy
+msgid "&Import.."
 msgstr "가져오기(&I)..."
 
 #: forms/main.py:467
@@ -253,23 +260,28 @@ msgid "&Mark Card"
 msgstr "카드 구별(&M)"
 
 #: forms/main.py:485
-msgid "&Model Properties..."
+#, fuzzy
+msgid "&Model Properties.."
 msgstr "모델 속성(&M)..."
 
 #: forms/main.py:439
-msgid "&New"
+#, fuzzy
+msgid "&New.."
 msgstr "새 묶음(&N)"
 
 #: forms/main.py:441
-msgid "&Open..."
+#, fuzzy
+msgid "&Open.."
 msgstr "열기(&O)..."
 
 #: forms/main.py:454
-msgid "&Preferences..."
+#, fuzzy
+msgid "&Preferences.."
 msgstr "설정(&P)..."
 
 #: forms/main.py:470
-msgid "&Report bug..."
+#, fuzzy
+msgid "&Report Bug.."
 msgstr "버그 신고(&R)..."
 
 #: forms/main.py:445
@@ -281,7 +293,8 @@ msgid "&Search"
 msgstr "검색(&S)"
 
 #: forms/main.py:469
-msgid "&Start here..."
+#, fuzzy
+msgid "&Start Here.."
 msgstr "여기서 시작(&S)..."
 
 #: forms/main.py:483
@@ -324,31 +337,31 @@ msgstr "선택한 단어로 Edict 검색(&W)..."
 msgid "; disabled"
 msgstr "; 꺼짐"
 
-#: ui/main.py:792
+#: ui/main.py:798
 msgid "<a href=py:miss>Missing Kanji</a><br>"
 msgstr "<a href=py:miss>없는 한자</a><br>"
 
-#: ui/main.py:349
+#: ui/main.py:355
 #, python-format
 msgid "<b>%(ease0)s</b>"
 msgstr "<b>%(ease0)s</b>"
 
-#: ui/main.py:350
+#: ui/main.py:356
 #, python-format
 msgid "<b>%(ease1)s</b>"
 msgstr "<b>%(ease1)s</b>"
 
-#: ui/main.py:351
+#: ui/main.py:357
 #, python-format
 msgid "<b>%(ease2)s</b>"
 msgstr "<b>%(ease2)s</b>"
 
-#: ui/main.py:352
+#: ui/main.py:358
 #, python-format
 msgid "<b>%(ease3)s</b>"
 msgstr "<b>%(ease3)s</b>"
 
-#: ui/main.py:353
+#: ui/main.py:359
 #, python-format
 msgid "<b>%(ease4)s</b>"
 msgstr "<b>%(ease4)s</b>"
@@ -398,7 +411,7 @@ msgstr "<b>가져올 파일</b>:"
 msgid "<b>Hard</b>"
 msgstr "<b>어려움</b>"
 
-#: ui/main.py:322
+#: ui/main.py:328
 msgid "<b>How well did you remember?</b>"
 msgstr "<b>얼마나 잘 기억하셨나요?</b>"
 
@@ -513,7 +526,7 @@ msgstr "<h1>카드 모델</h1>"
 msgid "<h1>Cumulative view of due cards</h1>"
 msgstr "<h1>카드 누적 개수</h1>"
 
-#: ui/main.py:809
+#: ui/main.py:815
 msgid "<h1>Current card</h1>"
 msgstr "<h1>현재 카드</h1>"
 
@@ -585,7 +598,7 @@ msgstr "<h1>처음 공부할 때 맞춘 카드/h1>"
 msgid "<h1>Interface language</h1>The language for the user interface: dialogs, menus, etc."
 msgstr "<h1>화면 언어</h1>대화 상자와 메뉴 등을 표시할 언어."
 
-#: ui/main.py:812
+#: ui/main.py:818
 msgid "<h1>Last card</h1>"
 msgstr "<h1>지난 카드</h1>"
 
@@ -837,7 +850,7 @@ msgstr "앞면/뒷면"
 msgid "About Anki"
 msgstr "앙키 소개"
 
-#: ui/main.py:303
+#: ui/main.py:309
 msgid "About right"
 msgstr "알맞음"
 
@@ -865,11 +878,11 @@ msgstr "새 모델 추가"
 msgid "Add a picture"
 msgstr "그림 넣기"
 
-#: ui/facteditor.py:464
+#: ui/facteditor.py:474
 msgid "Add an image"
 msgstr "이미지 넣기"
 
-#: ui/facteditor.py:133 ui/facteditor.py:476
+#: ui/facteditor.py:133 ui/facteditor.py:486
 msgid "Add audio"
 msgstr "소리 넣기"
 
@@ -882,11 +895,11 @@ msgstr "'%(str)s'으로 카드 %(num)d개 추가"
 msgid "Advanced Settings"
 msgstr "고급 설정"
 
-#: ui/facteditor.py:344
+#: ui/facteditor.py:354
 msgid "All fields valid"
 msgstr ""
 
-#: ui/main.py:567
+#: ui/main.py:573
 #, python-format
 msgid "Alt+%d"
 msgstr "Alt+%d"
@@ -907,7 +920,7 @@ msgstr "Alt+E"
 msgid "Alt+M"
 msgstr "Alt+M"
 
-#: ui/main.py:463
+#: ui/main.py:469
 #, python-format
 msgid ""
 "An error occurred while upgrading:\n"
@@ -938,7 +951,7 @@ msgstr "앙키 - 묶음 편집"
 msgid "Anki - Edit Deck (%(cur)d of %(tot)d cards shown)"
 msgstr "앙키 - 묶음 편집 (%(tot)d개 중에 %(cur)d개)"
 
-#: ui/main.py:712
+#: ui/main.py:718
 #, python-format
 msgid ""
 "Anki was unable to save your configuration file:\n"
@@ -1034,7 +1047,7 @@ msgid "Change field mapping"
 msgstr "필드 설정 변경"
 
 #: forms/main.py:493
-msgid "Check Database Integrity..."
+msgid "Check Database Integrity"
 msgstr ""
 
 #: forms/importing.py:122
@@ -1065,7 +1078,7 @@ msgstr "닫기"
 msgid "Close and lose current input?"
 msgstr "현재 카드를 지우고 닫습니까?"
 
-#: ui/main.py:299
+#: ui/main.py:305
 msgid "Completely forgot"
 msgstr "전혀 기억 안 남"
 
@@ -1073,7 +1086,7 @@ msgstr "전혀 기억 안 남"
 msgid "Connecting.."
 msgstr "연결 중..."
 
-#: ui/main.py:443
+#: ui/main.py:449
 msgid "Couldn't find the problem. Please open an issue on the issue tracker."
 msgstr ""
 
@@ -1115,7 +1128,7 @@ msgstr "Ctrl+5"
 msgid "Ctrl+A"
 msgstr "Ctrl+A"
 
-#: ui/main.py:1136
+#: ui/main.py:1142
 msgid "Ctrl+D"
 msgstr "Ctrl+D"
 
@@ -1219,7 +1232,7 @@ msgstr "동기화, 복습 일정, 우선순위, 모델 수정"
 msgid "Czech"
 msgstr "체코어"
 
-#: ui/main.py:632 ui/main.py:672
+#: ui/main.py:638 ui/main.py:678
 msgid "Deck files (*.anki)"
 msgstr "묶음 파일 (*.anki)"
 
@@ -1227,7 +1240,7 @@ msgstr "묶음 파일 (*.anki)"
 msgid "Deck graphs"
 msgstr "묶음 그래프"
 
-#: ui/main.py:662
+#: ui/main.py:668
 msgid "Deck is not modified."
 msgstr "변경된 사항이 없습니다."
 
@@ -1247,7 +1260,7 @@ msgstr "묶음 비교하는 중.."
 msgid "Dialog"
 msgstr "대화상자"
 
-#: ui/main.py:301
+#: ui/main.py:307
 msgid "Difficult"
 msgstr "어려움"
 
@@ -1264,7 +1277,8 @@ msgid "Discard field"
 msgstr "필드 제거"
 
 #: forms/main.py:479
-msgid "Disp&lay Properties..."
+#, fuzzy
+msgid "Disp&lay Properties.."
 msgstr "표시 속성(&L)..."
 
 #: ui/help.py:104
@@ -1289,7 +1303,7 @@ msgstr "종료(&X)"
 msgid "ETA: <b>%(timeLeft)s</b>"
 msgstr "예상 시간: <b>%(timeLeft)s</b>"
 
-#: ui/main.py:305
+#: ui/main.py:311
 msgid "Easy"
 msgstr "쉬움"
 
@@ -1337,7 +1351,7 @@ msgstr "각 카드에서 삭제할 태그(들)을 입력하세요:"
 msgid "Enter tag(s) to delete from each fact:"
 msgstr "각 지식에서 삭제할 태그(들)을 입력하세요:"
 
-#: ui/main.py:440
+#: ui/main.py:446
 msgid "Error building queue. Attempting recovery.."
 msgstr ""
 
@@ -1419,7 +1433,7 @@ msgstr "글자색"
 msgid "French"
 msgstr "프랑스어"
 
-#: ui/main.py:844
+#: ui/main.py:850
 msgid "Generating report (may take time).."
 msgstr "보고서 작성 중 (시간이 걸릴 수 있음)..."
 
@@ -1447,7 +1461,7 @@ msgstr "답을 보여줄 때, 질문을 감춤"
 msgid "Ignore this update"
 msgstr ""
 
-#: ui/facteditor.py:463
+#: ui/facteditor.py:473
 msgid "Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)"
 msgstr "이미지 (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)"
 
@@ -1541,7 +1555,7 @@ msgstr "Latex 수식 환경"
 msgid "Learning"
 msgstr "카드 익히기"
 
-#: ui/main.py:824
+#: ui/main.py:830
 msgid "Loading graphs (may take time).."
 msgstr "그래프 불러오는 중 (시간이 걸릴 수 있음)..."
 
@@ -1559,7 +1573,7 @@ msgstr "%s로 ALC 검색.."
 msgid "Looking %s up on edict.."
 msgstr "%s로 edict에서 검색.."
 
-#: ui/main.py:300
+#: ui/main.py:306
 msgid "Made a mistake"
 msgstr "실수로 틀림"
 
@@ -1573,12 +1587,13 @@ msgstr "%s로 할당하기"
 msgid "Max"
 msgstr "최대"
 
-#: ui/main.py:1272
-msgid "Merge complete."
-msgstr ""
-
 #: forms/main.py:495
-msgid "Merge models..."
+#, fuzzy
+msgid "Merge Models.."
+msgstr "모델"
+
+#: ui/main.py:1278
+msgid "Merge complete."
 msgstr ""
 
 #: ui/sync.py:157
@@ -1643,44 +1658,44 @@ msgstr ""
 msgid "Move selected field up"
 msgstr ""
 
-#: ui/main.py:302
+#: ui/main.py:308
 #, python-format
 msgid "Next in <b>%(ease2)s</b>"
 msgstr "<b>%(ease2)s</b> 안에"
 
-#: ui/main.py:304
+#: ui/main.py:310
 #, python-format
 msgid "Next in <b>%(ease3)s</b>"
 msgstr "<b>%(ease3)s</b> 안에"
 
-#: ui/main.py:306
+#: ui/main.py:312
 #, python-format
 msgid "Next in <b>%(ease4)s</b>"
 msgstr "<b>%(ease4)s</b> 안에"
 
-#: ui/main.py:815
+#: ui/main.py:821
 msgid "No current card or last card."
 msgstr "아무 카드도 없음"
 
-#: ui/main.py:766
+#: ui/main.py:772
 msgid "No expression in current card."
 msgstr "현재 카드의 expression(표현) 필드를 입력하지 않음"
 
-#: ui/main.py:773
+#: ui/main.py:779
 msgid "No meaning in current card."
 msgstr "현재 카드의 meaning(의미) 필드를 입력하지 않음."
 
-#: ui/main.py:1266
+#: ui/main.py:1272
 msgid ""
 "No models found to merge. If you want to merge models,\n"
 "all models must have the same name."
 msgstr ""
 
-#: ui/main.py:1247
+#: ui/main.py:1253
 msgid "No problems found"
 msgstr ""
 
-#: ui/main.py:963
+#: ui/main.py:969
 msgid "Not syncing, username or password unset."
 msgstr "동기시킬 수 없습니다. 아이디 또는 비밀번호를 지정하지 않았습니다."
 
@@ -1696,7 +1711,7 @@ msgstr "최근에 공부한 묶음(&R)"
 msgid "Open Sa&mple..."
 msgstr "예제 열기(&M)..."
 
-#: ui/main.py:635
+#: ui/main.py:641
 msgid "Open deck"
 msgstr "묶음 열기"
 
@@ -1705,7 +1720,7 @@ msgid "Open the bug tracker."
 msgstr "오류 신고 게시판 열기"
 
 #: forms/main.py:494
-msgid "Optimize Database..."
+msgid "Optimize Database"
 msgstr ""
 
 #: forms/preferences.py:297
@@ -1720,7 +1735,7 @@ msgstr "먼저 새 카드를 추가해 주세요."
 msgid "Please add a new field first."
 msgstr "먼저 새 필드를 추가해 주세요."
 
-#: ui/deckproperties.py:103
+#: ui/deckproperties.py:97
 msgid "Please add another model first."
 msgstr "먼저 새 모델을 추가해 주세요."
 
@@ -1736,7 +1751,7 @@ msgstr "아이디와 비밀번호를 다시 확인해 주세요."
 msgid "Please enable a different model first."
 msgstr "먼저 다른 모델을 켜주세요."
 
-#: ui/main.py:841
+#: ui/main.py:847
 msgid "Please install python-matplotlib to access graphs."
 msgstr "그래프를 보려면 python-matplotlib를 설치해 주세요."
 
@@ -1761,7 +1776,7 @@ msgstr "미리보기"
 msgid "Priorities && Suspending"
 msgstr "우선 순위 및 보류"
 
-#: ui/main.py:1251
+#: ui/main.py:1257
 #, python-format
 msgid ""
 "Problems found:\n"
@@ -1819,7 +1834,8 @@ msgid "S&ort"
 msgstr "정렬(&O)"
 
 #: forms/main.py:492
-msgid "Save &As"
+#, fuzzy
+msgid "Save &As.."
 msgstr "다른 이름으로 저장(&A)"
 
 #: forms/preferences.py:294
@@ -1834,7 +1850,7 @@ msgstr "공부한 카드 개수에 따라"
 msgid "Save and S&ync"
 msgstr "저장 및 동기화"
 
-#: ui/main.py:668
+#: ui/main.py:674
 msgid "Save deck"
 msgstr "묶음 저장"
 
@@ -1842,11 +1858,11 @@ msgstr "묶음 저장"
 msgid "Save when closing"
 msgstr "종료할 때 저장"
 
-#: ui/main.py:690
+#: ui/main.py:696
 msgid "Saving.."
 msgstr "저장 중..."
 
-#: ui/main.py:694
+#: ui/main.py:700
 msgid "Saving..done"
 msgstr "저장 중... 완료"
 
@@ -1863,7 +1879,7 @@ msgstr "자료 전송 중 (내 컴퓨터 +%(a)d/-%(b)d, 웹 서버 +%(c)d/-%(d)d
 msgid "Server is down or operation failed."
 msgstr "서버가 다운됐거나 작업 실패입니다."
 
-#: ui/main.py:276
+#: ui/main.py:282
 msgid "Show answer"
 msgstr "정답 보기"
 
@@ -1879,7 +1895,7 @@ msgstr "도구막대 보기(재시작 필요)"
 msgid "Show tray icon"
 msgstr ""
 
-#: ui/facteditor.py:337
+#: ui/facteditor.py:347
 msgid "Some fields are <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a> or not <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."
 msgstr ""
 
@@ -1887,7 +1903,7 @@ msgstr ""
 msgid "Sort this field using numeric order instead of string order"
 msgstr "현재 필드를 문자가 아닌 숫자 기준으로 정렬"
 
-#: ui/facteditor.py:475
+#: ui/facteditor.py:485
 msgid "Sounds (*.mp3 *.ogg *.wav)"
 msgstr "소리 (*.mp3 *.ogg *.wav)"
 
@@ -2032,7 +2048,7 @@ msgstr ""
 "\n"
 "카드도 같이 삭제할까요?"
 
-#: ui/deckproperties.py:109
+#: ui/deckproperties.py:103
 #, python-format
 msgid ""
 "This model is used by %d facts.\n"
@@ -2043,7 +2059,7 @@ msgstr ""
 "삭제할까요?\n"
 "삭제하면 카드도 사라지게 됩니다."
 
-#: ui/main.py:833
+#: ui/main.py:839
 msgid ""
 "To display graphs, Anki needs a .dll file which\n"
 "you don't have. Please install:\n"
@@ -2055,11 +2071,11 @@ msgstr ""
 msgid "Toggle Delete"
 msgstr "삭제 전환"
 
-#: ui/main.py:648
+#: ui/main.py:654
 msgid "Unable to load file."
 msgstr "파일을 불러올 수 없습니다."
 
-#: ui/main.py:429
+#: ui/main.py:435
 msgid "Unable to load the same deck twice."
 msgstr "같은 묶음을 동시에 두번 불러 올 수 없습니다."
 
@@ -2128,11 +2144,11 @@ msgstr "잘 했습니다! 이 카드는 앞으로 <b>%(next)s</b> 안에 등장�
 msgid "Would you like to download it now?"
 msgstr "지금 다운로드하시겠습니까?"
 
-#: ui/main.py:1270
+#: ui/main.py:1276
 msgid "Would you like to merge models that have the same name?"
 msgstr ""
 
-#: ui/main.py:1185
+#: ui/main.py:1191
 #, fuzzy, python-format
 msgid ""
 "Your computer clock is not set to the correct time.\n"
@@ -2140,7 +2156,7 @@ msgid ""
 " Please ensure it is set correctly and then restart Anki."
 msgstr "현재 컴퓨터의 시계가 1분 이상 느리거나 빠릅니다. 정확하게 맞춰 주세요."
 
-#: ui/main.py:838
+#: ui/main.py:844
 msgid ""
 "Your version of Matplotlib is broken.\n"
 "Please see http://repose.ath.cx/tracker/anki/issue102"
@@ -2152,7 +2168,7 @@ msgstr ""
 msgid "cards"
 msgstr "카드"
 
-#: ui/main.py:1183
+#: ui/main.py:1189
 msgid "early"
 msgstr ""
 
@@ -2165,7 +2181,7 @@ msgstr "지식"
 msgid "in %s"
 msgstr "%s 안에"
 
-#: ui/main.py:1181
+#: ui/main.py:1187
 #, fuzzy
 msgid "late"
 msgstr "Latex"
@@ -2194,6 +2210,12 @@ msgstr "<b>%s</b>로 할당 됨"
 #~ "연기된 카드는 예정보다 일정 시간이 더 지난 뒤에 등장하는 카드입니다.<br>\n"
 #~ "연결된 카드를 복습한지 얼마 되지 않았기 때문입니다.<br>\n"
 #~ "보류된 카드는 보류를 직접 해재하기 전까지는 등장하지 않습니다."
+
+#~ msgid "&Add Cards..."
+#~ msgstr "카드 추가(&A)..."
+
+#~ msgid "&Edit Deck..."
+#~ msgstr "묶음 편집(&E)..."
 
 #~ msgid "<b>Answer format</b>"
 #~ msgstr "<b>답 형식</b>"

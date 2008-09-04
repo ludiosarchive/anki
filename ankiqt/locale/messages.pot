@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-31 22:55+0900\n"
+"POT-Creation-Date: 2008-09-01 23:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,12 +96,12 @@ msgstr ""
 msgid "%(del)d deleted."
 msgstr ""
 
-#: ui/deckproperties.py:72
+#: ui/deckproperties.py:66
 #, python-format
 msgid "%(name)s [%(facts)d facts]"
 msgstr ""
 
-#: ui/main.py:1118
+#: ui/main.py:1124
 #, python-format
 msgid "%(path)s (%(facts)d facts, %(cards)d cards) - %(title)s"
 msgstr ""
@@ -116,7 +116,7 @@ msgstr ""
 msgid "%s ago"
 msgstr ""
 
-#: ui/main.py:1274
+#: ui/main.py:1280
 #, python-format
 msgid ""
 "%s.\n"
@@ -125,7 +125,7 @@ msgid ""
 msgstr ""
 
 #: forms/main.py:472
-msgid "&About..."
+msgid "&About.."
 msgstr ""
 
 #: forms/deckproperties.py:345 forms/modelproperties.py:382
@@ -134,7 +134,7 @@ msgid "&Add"
 msgstr ""
 
 #: forms/main.py:449
-msgid "&Add Cards..."
+msgid "&Add Facts.."
 msgstr ""
 
 #: ui/addcards.py:52
@@ -158,7 +158,7 @@ msgid "&Deck"
 msgstr ""
 
 #: forms/main.py:474
-msgid "&Deck Properties..."
+msgid "&Deck Properties.."
 msgstr ""
 
 #: forms/main.py:468
@@ -175,15 +175,15 @@ msgid "&Edit"
 msgstr ""
 
 #: forms/main.py:452
-msgid "&Edit Deck..."
+msgid "&Edit Facts.."
 msgstr ""
 
 #: forms/main.py:491
-msgid "&Forum..."
+msgid "&Forum.."
 msgstr ""
 
 #: forms/main.py:477
-msgid "&Graphs"
+msgid "&Graphs.."
 msgstr ""
 
 #: forms/main.py:430
@@ -195,7 +195,7 @@ msgid "&Import"
 msgstr ""
 
 #: forms/main.py:476
-msgid "&Import..."
+msgid "&Import.."
 msgstr ""
 
 #: forms/main.py:467
@@ -211,23 +211,23 @@ msgid "&Mark Card"
 msgstr ""
 
 #: forms/main.py:485
-msgid "&Model Properties..."
+msgid "&Model Properties.."
 msgstr ""
 
 #: forms/main.py:439
-msgid "&New"
+msgid "&New.."
 msgstr ""
 
 #: forms/main.py:441
-msgid "&Open..."
+msgid "&Open.."
 msgstr ""
 
 #: forms/main.py:454
-msgid "&Preferences..."
+msgid "&Preferences.."
 msgstr ""
 
 #: forms/main.py:470
-msgid "&Report bug..."
+msgid "&Report Bug.."
 msgstr ""
 
 #: forms/main.py:445
@@ -239,7 +239,7 @@ msgid "&Search"
 msgstr ""
 
 #: forms/main.py:469
-msgid "&Start here..."
+msgid "&Start Here.."
 msgstr ""
 
 #: forms/main.py:483
@@ -282,31 +282,31 @@ msgstr ""
 msgid "; disabled"
 msgstr ""
 
-#: ui/main.py:792
+#: ui/main.py:798
 msgid "<a href=py:miss>Missing Kanji</a><br>"
 msgstr ""
 
-#: ui/main.py:349
+#: ui/main.py:355
 #, python-format
 msgid "<b>%(ease0)s</b>"
 msgstr ""
 
-#: ui/main.py:350
+#: ui/main.py:356
 #, python-format
 msgid "<b>%(ease1)s</b>"
 msgstr ""
 
-#: ui/main.py:351
+#: ui/main.py:357
 #, python-format
 msgid "<b>%(ease2)s</b>"
 msgstr ""
 
-#: ui/main.py:352
+#: ui/main.py:358
 #, python-format
 msgid "<b>%(ease3)s</b>"
 msgstr ""
 
-#: ui/main.py:353
+#: ui/main.py:359
 #, python-format
 msgid "<b>%(ease4)s</b>"
 msgstr ""
@@ -356,7 +356,7 @@ msgstr ""
 msgid "<b>Hard</b>"
 msgstr ""
 
-#: ui/main.py:322
+#: ui/main.py:328
 msgid "<b>How well did you remember?</b>"
 msgstr ""
 
@@ -469,7 +469,7 @@ msgstr ""
 msgid "<h1>Cumulative view of due cards</h1>"
 msgstr ""
 
-#: ui/main.py:809
+#: ui/main.py:815
 msgid "<h1>Current card</h1>"
 msgstr ""
 
@@ -531,7 +531,7 @@ msgstr ""
 msgid "<h1>Interface language</h1>The language for the user interface: dialogs, menus, etc."
 msgstr ""
 
-#: ui/main.py:812
+#: ui/main.py:818
 msgid "<h1>Last card</h1>"
 msgstr ""
 
@@ -713,7 +713,7 @@ msgstr ""
 msgid "About Anki"
 msgstr ""
 
-#: ui/main.py:303
+#: ui/main.py:309
 msgid "About right"
 msgstr ""
 
@@ -741,11 +741,11 @@ msgstr ""
 msgid "Add a picture"
 msgstr ""
 
-#: ui/facteditor.py:464
+#: ui/facteditor.py:474
 msgid "Add an image"
 msgstr ""
 
-#: ui/facteditor.py:133 ui/facteditor.py:476
+#: ui/facteditor.py:133 ui/facteditor.py:486
 msgid "Add audio"
 msgstr ""
 
@@ -758,11 +758,11 @@ msgstr ""
 msgid "Advanced Settings"
 msgstr ""
 
-#: ui/facteditor.py:344
+#: ui/facteditor.py:354
 msgid "All fields valid"
 msgstr ""
 
-#: ui/main.py:567
+#: ui/main.py:573
 #, python-format
 msgid "Alt+%d"
 msgstr ""
@@ -783,7 +783,7 @@ msgstr ""
 msgid "Alt+M"
 msgstr ""
 
-#: ui/main.py:463
+#: ui/main.py:469
 #, python-format
 msgid ""
 "An error occurred while upgrading:\n"
@@ -812,7 +812,7 @@ msgstr ""
 msgid "Anki - Edit Deck (%(cur)d of %(tot)d cards shown)"
 msgstr ""
 
-#: ui/main.py:712
+#: ui/main.py:718
 #, python-format
 msgid ""
 "Anki was unable to save your configuration file:\n"
@@ -906,7 +906,7 @@ msgid "Change field mapping"
 msgstr ""
 
 #: forms/main.py:493
-msgid "Check Database Integrity..."
+msgid "Check Database Integrity"
 msgstr ""
 
 #: forms/importing.py:122
@@ -935,7 +935,7 @@ msgstr ""
 msgid "Close and lose current input?"
 msgstr ""
 
-#: ui/main.py:299
+#: ui/main.py:305
 msgid "Completely forgot"
 msgstr ""
 
@@ -943,7 +943,7 @@ msgstr ""
 msgid "Connecting.."
 msgstr ""
 
-#: ui/main.py:443
+#: ui/main.py:449
 msgid "Couldn't find the problem. Please open an issue on the issue tracker."
 msgstr ""
 
@@ -985,7 +985,7 @@ msgstr ""
 msgid "Ctrl+A"
 msgstr ""
 
-#: ui/main.py:1136
+#: ui/main.py:1142
 msgid "Ctrl+D"
 msgstr ""
 
@@ -1089,7 +1089,7 @@ msgstr ""
 msgid "Czech"
 msgstr ""
 
-#: ui/main.py:632 ui/main.py:672
+#: ui/main.py:638 ui/main.py:678
 msgid "Deck files (*.anki)"
 msgstr ""
 
@@ -1097,7 +1097,7 @@ msgstr ""
 msgid "Deck graphs"
 msgstr ""
 
-#: ui/main.py:662
+#: ui/main.py:668
 msgid "Deck is not modified."
 msgstr ""
 
@@ -1117,7 +1117,7 @@ msgstr ""
 msgid "Dialog"
 msgstr ""
 
-#: ui/main.py:301
+#: ui/main.py:307
 msgid "Difficult"
 msgstr ""
 
@@ -1134,7 +1134,7 @@ msgid "Discard field"
 msgstr ""
 
 #: forms/main.py:479
-msgid "Disp&lay Properties..."
+msgid "Disp&lay Properties.."
 msgstr ""
 
 #: ui/help.py:104
@@ -1159,7 +1159,7 @@ msgstr ""
 msgid "ETA: <b>%(timeLeft)s</b>"
 msgstr ""
 
-#: ui/main.py:305
+#: ui/main.py:311
 msgid "Easy"
 msgstr ""
 
@@ -1207,7 +1207,7 @@ msgstr ""
 msgid "Enter tag(s) to delete from each fact:"
 msgstr ""
 
-#: ui/main.py:440
+#: ui/main.py:446
 msgid "Error building queue. Attempting recovery.."
 msgstr ""
 
@@ -1289,7 +1289,7 @@ msgstr ""
 msgid "French"
 msgstr ""
 
-#: ui/main.py:844
+#: ui/main.py:850
 msgid "Generating report (may take time).."
 msgstr ""
 
@@ -1317,7 +1317,7 @@ msgstr ""
 msgid "Ignore this update"
 msgstr ""
 
-#: ui/facteditor.py:463
+#: ui/facteditor.py:473
 msgid "Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)"
 msgstr ""
 
@@ -1411,7 +1411,7 @@ msgstr ""
 msgid "Learning"
 msgstr ""
 
-#: ui/main.py:824
+#: ui/main.py:830
 msgid "Loading graphs (may take time).."
 msgstr ""
 
@@ -1429,7 +1429,7 @@ msgstr ""
 msgid "Looking %s up on edict.."
 msgstr ""
 
-#: ui/main.py:300
+#: ui/main.py:306
 msgid "Made a mistake"
 msgstr ""
 
@@ -1443,12 +1443,12 @@ msgstr ""
 msgid "Max"
 msgstr ""
 
-#: ui/main.py:1272
-msgid "Merge complete."
+#: forms/main.py:495
+msgid "Merge Models.."
 msgstr ""
 
-#: forms/main.py:495
-msgid "Merge models..."
+#: ui/main.py:1278
+msgid "Merge complete."
 msgstr ""
 
 #: ui/sync.py:157
@@ -1513,44 +1513,44 @@ msgstr ""
 msgid "Move selected field up"
 msgstr ""
 
-#: ui/main.py:302
+#: ui/main.py:308
 #, python-format
 msgid "Next in <b>%(ease2)s</b>"
 msgstr ""
 
-#: ui/main.py:304
+#: ui/main.py:310
 #, python-format
 msgid "Next in <b>%(ease3)s</b>"
 msgstr ""
 
-#: ui/main.py:306
+#: ui/main.py:312
 #, python-format
 msgid "Next in <b>%(ease4)s</b>"
 msgstr ""
 
-#: ui/main.py:815
+#: ui/main.py:821
 msgid "No current card or last card."
 msgstr ""
 
-#: ui/main.py:766
+#: ui/main.py:772
 msgid "No expression in current card."
 msgstr ""
 
-#: ui/main.py:773
+#: ui/main.py:779
 msgid "No meaning in current card."
 msgstr ""
 
-#: ui/main.py:1266
+#: ui/main.py:1272
 msgid ""
 "No models found to merge. If you want to merge models,\n"
 "all models must have the same name."
 msgstr ""
 
-#: ui/main.py:1247
+#: ui/main.py:1253
 msgid "No problems found"
 msgstr ""
 
-#: ui/main.py:963
+#: ui/main.py:969
 msgid "Not syncing, username or password unset."
 msgstr ""
 
@@ -1566,7 +1566,7 @@ msgstr ""
 msgid "Open Sa&mple..."
 msgstr ""
 
-#: ui/main.py:635
+#: ui/main.py:641
 msgid "Open deck"
 msgstr ""
 
@@ -1575,7 +1575,7 @@ msgid "Open the bug tracker."
 msgstr ""
 
 #: forms/main.py:494
-msgid "Optimize Database..."
+msgid "Optimize Database"
 msgstr ""
 
 #: forms/preferences.py:297
@@ -1590,7 +1590,7 @@ msgstr ""
 msgid "Please add a new field first."
 msgstr ""
 
-#: ui/deckproperties.py:103
+#: ui/deckproperties.py:97
 msgid "Please add another model first."
 msgstr ""
 
@@ -1606,7 +1606,7 @@ msgstr ""
 msgid "Please enable a different model first."
 msgstr ""
 
-#: ui/main.py:841
+#: ui/main.py:847
 msgid "Please install python-matplotlib to access graphs."
 msgstr ""
 
@@ -1630,7 +1630,7 @@ msgstr ""
 msgid "Priorities && Suspending"
 msgstr ""
 
-#: ui/main.py:1251
+#: ui/main.py:1257
 #, python-format
 msgid ""
 "Problems found:\n"
@@ -1686,7 +1686,7 @@ msgid "S&ort"
 msgstr ""
 
 #: forms/main.py:492
-msgid "Save &As"
+msgid "Save &As.."
 msgstr ""
 
 #: forms/preferences.py:294
@@ -1701,7 +1701,7 @@ msgstr ""
 msgid "Save and S&ync"
 msgstr ""
 
-#: ui/main.py:668
+#: ui/main.py:674
 msgid "Save deck"
 msgstr ""
 
@@ -1709,11 +1709,11 @@ msgstr ""
 msgid "Save when closing"
 msgstr ""
 
-#: ui/main.py:690
+#: ui/main.py:696
 msgid "Saving.."
 msgstr ""
 
-#: ui/main.py:694
+#: ui/main.py:700
 msgid "Saving..done"
 msgstr ""
 
@@ -1730,7 +1730,7 @@ msgstr ""
 msgid "Server is down or operation failed."
 msgstr ""
 
-#: ui/main.py:276
+#: ui/main.py:282
 msgid "Show answer"
 msgstr ""
 
@@ -1746,7 +1746,7 @@ msgstr ""
 msgid "Show tray icon"
 msgstr ""
 
-#: ui/facteditor.py:337
+#: ui/facteditor.py:347
 msgid "Some fields are <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a> or not <a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."
 msgstr ""
 
@@ -1754,7 +1754,7 @@ msgstr ""
 msgid "Sort this field using numeric order instead of string order"
 msgstr ""
 
-#: ui/facteditor.py:475
+#: ui/facteditor.py:485
 msgid "Sounds (*.mp3 *.ogg *.wav)"
 msgstr ""
 
@@ -1883,7 +1883,7 @@ msgid ""
 "Really delete these cards?"
 msgstr ""
 
-#: ui/deckproperties.py:109
+#: ui/deckproperties.py:103
 #, python-format
 msgid ""
 "This model is used by %d facts.\n"
@@ -1891,7 +1891,7 @@ msgid ""
 "If you delete it, these cards will be lost."
 msgstr ""
 
-#: ui/main.py:833
+#: ui/main.py:839
 msgid ""
 "To display graphs, Anki needs a .dll file which\n"
 "you don't have. Please install:\n"
@@ -1901,11 +1901,11 @@ msgstr ""
 msgid "Toggle Delete"
 msgstr ""
 
-#: ui/main.py:648
+#: ui/main.py:654
 msgid "Unable to load file."
 msgstr ""
 
-#: ui/main.py:429
+#: ui/main.py:435
 msgid "Unable to load the same deck twice."
 msgstr ""
 
@@ -1971,11 +1971,11 @@ msgstr ""
 msgid "Would you like to download it now?"
 msgstr ""
 
-#: ui/main.py:1270
+#: ui/main.py:1276
 msgid "Would you like to merge models that have the same name?"
 msgstr ""
 
-#: ui/main.py:1185
+#: ui/main.py:1191
 #, python-format
 msgid ""
 "Your computer clock is not set to the correct time.\n"
@@ -1983,7 +1983,7 @@ msgid ""
 " Please ensure it is set correctly and then restart Anki."
 msgstr ""
 
-#: ui/main.py:838
+#: ui/main.py:844
 msgid ""
 "Your version of Matplotlib is broken.\n"
 "Please see http://repose.ath.cx/tracker/anki/issue102"
@@ -1993,7 +1993,7 @@ msgstr ""
 msgid "cards"
 msgstr ""
 
-#: ui/main.py:1183
+#: ui/main.py:1189
 msgid "early"
 msgstr ""
 
@@ -2006,7 +2006,7 @@ msgstr ""
 msgid "in %s"
 msgstr ""
 
-#: ui/main.py:1181
+#: ui/main.py:1187
 msgid "late"
 msgstr ""
 

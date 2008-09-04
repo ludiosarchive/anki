@@ -26,9 +26,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>53</y>
+     <y>55</y>
      <width>555</width>
-     <height>220</height>
+     <height>216</height>
     </rect>
    </property>
    <property name="sizePolicy" >
@@ -358,7 +358,7 @@
      <x>0</x>
      <y>0</y>
      <width>555</width>
-     <height>19</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp" >
@@ -461,9 +461,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>273</y>
+     <y>271</y>
      <width>555</width>
-     <height>19</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
@@ -474,7 +474,7 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>19</y>
+     <y>21</y>
      <width>555</width>
      <height>34</height>
     </rect>
@@ -522,7 +522,7 @@
      <normaloff>:/icons/document-new.png</normaloff>:/icons/document-new.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;New</string>
+    <string>&amp;New..</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+N</string>
@@ -534,7 +534,7 @@
      <normaloff>:/icons/document-open.png</normaloff>:/icons/document-open.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Open...</string>
+    <string>&amp;Open..</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+O</string>
@@ -582,7 +582,7 @@
      <normaloff>:/icons/list-add.png</normaloff>:/icons/list-add.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Add Cards...</string>
+    <string>&amp;Add Facts..</string>
    </property>
    <property name="toolTip" >
     <string>Add Cards</string>
@@ -597,7 +597,7 @@
      <normaloff>:/icons/view_text.png</normaloff>:/icons/view_text.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Edit Deck...</string>
+    <string>&amp;Edit Facts..</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+E</string>
@@ -609,7 +609,7 @@
      <normaloff>:/icons/configure.png</normaloff>:/icons/configure.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Preferences...</string>
+    <string>&amp;Preferences..</string>
    </property>
    <property name="statusTip" >
     <string>Application-wide preferences.</string>
@@ -682,7 +682,7 @@
      <normaloff>:/icons/go-home.png</normaloff>:/icons/go-home.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Start here...</string>
+    <string>&amp;Start Here..</string>
    </property>
   </action>
   <action name="actionReportbug" >
@@ -691,7 +691,7 @@
      <normaloff>:/icons/kbugbuster.png</normaloff>:/icons/kbugbuster.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Report bug...</string>
+    <string>&amp;Report Bug..</string>
    </property>
    <property name="whatsThis" >
     <string>Open the bug tracker.</string>
@@ -703,7 +703,7 @@
      <normaloff>:/icons/anki.png</normaloff>:/icons/anki.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;About...</string>
+    <string>&amp;About..</string>
    </property>
   </action>
   <action name="actionCstats" >
@@ -721,7 +721,7 @@
      <normaloff>:/icons/contents.png</normaloff>:/icons/contents.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Deck Properties...</string>
+    <string>&amp;Deck Properties..</string>
    </property>
    <property name="statusTip" >
     <string>Customize syncing, scheduling, priorities and models.</string>
@@ -733,7 +733,7 @@
      <normaloff>:/icons/document-import.png</normaloff>:/icons/document-import.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Import...</string>
+    <string>&amp;Import..</string>
    </property>
   </action>
   <action name="actionGraphs" >
@@ -742,7 +742,7 @@
      <normaloff>:/icons/colorscm.png</normaloff>:/icons/colorscm.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Graphs</string>
+    <string>&amp;Graphs..</string>
    </property>
   </action>
   <action name="actionExport" >
@@ -760,7 +760,7 @@
      <normaloff>:/icons/preferences-desktop-font.png</normaloff>:/icons/preferences-desktop-font.png</iconset>
    </property>
    <property name="text" >
-    <string>Disp&amp;lay Properties...</string>
+    <string>Disp&amp;lay Properties..</string>
    </property>
    <property name="statusTip" >
     <string>Customize fonts, colours and alignment.</string>
@@ -801,7 +801,7 @@
      <normaloff>:/icons/kpersonalizer.png</normaloff>:/icons/kpersonalizer.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Model Properties...</string>
+    <string>&amp;Model Properties..</string>
    </property>
    <property name="statusTip" >
     <string>Customize card layout, fields, etc.</string>
@@ -847,7 +847,7 @@
      <normaloff>:/icons/view-pim-news.png</normaloff>:/icons/view-pim-news.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Forum...</string>
+    <string>&amp;Forum..</string>
    </property>
   </action>
   <action name="actionSaveAs" >
@@ -856,7 +856,7 @@
      <normaloff>:/icons/document-save-as.png</normaloff>:/icons/document-save-as.png</iconset>
    </property>
    <property name="text" >
-    <string>Save &amp;As</string>
+    <string>Save &amp;As..</string>
    </property>
   </action>
   <action name="actionCheckDatabaseIntegrity" >
@@ -865,7 +865,7 @@
      <normaloff>:/icons/sqlitebrowser.png</normaloff>:/icons/sqlitebrowser.png</iconset>
    </property>
    <property name="text" >
-    <string>Check Database Integrity...</string>
+    <string>Check Database Integrity</string>
    </property>
   </action>
   <action name="actionOptimizeDatabase" >
@@ -874,12 +874,12 @@
      <normaloff>:/icons/games-solve.png</normaloff>:/icons/games-solve.png</iconset>
    </property>
    <property name="text" >
-    <string>Optimize Database...</string>
+    <string>Optimize Database</string>
    </property>
   </action>
   <action name="actionMergeModels" >
    <property name="text" >
-    <string>Merge models...</string>
+    <string>Merge Models..</string>
    </property>
   </action>
  </widget>

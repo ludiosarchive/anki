@@ -1,5 +1,20 @@
-changeset:   729:294cc15863b6
+changeset:   732:e577dce1ca01
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 20:06:43 2008 +0900
+summary:     limit combinedDue to 1
+
+changeset:   731:00be0271bfa5
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 19:41:41 2008 +0900
+summary:     bump version number
+
+changeset:   730:ab282e5bfee0
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 17:34:26 2008 +0900
+summary:     fix initial spacing setting high spacing values
+
+changeset:   729:294cc15863b6
 user:        Damien Elmes <hg@repose.cx>
 date:        Sun Aug 31 22:56:06 2008 +0900
 summary:     update spanish translations

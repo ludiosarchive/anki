@@ -10,12 +10,6 @@ from ankiqt import ui
 from anki.utils import parseTags
 from anki.deck import NewCardOrder
 
-#         self.dialog.cardPos.clear()
-#         self.dialog.cardPos.insertItems(
-#             0, QStringList(Positions.values()))
-#         self.dialog.cardPos.setCurrentIndex(self.m.position)
-
-
 class DeckProperties(QDialog):
 
     def __init__(self, parent):

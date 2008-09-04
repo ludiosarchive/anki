@@ -451,7 +451,7 @@ class ModelProperties(QDialog):
             self.updateField(self.m, 'spacing',
                              float(self.dialog.spacing.text()))
             self.updateField(self.m, 'initialSpacing',
-                             int(self.dialog.initialSpacing.text())*60)
+                             float(self.dialog.initialSpacing.text())*60)
         except ValueError:
             pass
         # before field, or it's overwritten

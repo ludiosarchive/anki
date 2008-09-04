@@ -1,5 +1,40 @@
-changeset:   760:937d1e207f64
+changeset:   767:847d8f4cf083
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 23:40:03 2008 +0900
+summary:     update translations
+
+changeset:   766:dbf82a0cb361
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 23:39:46 2008 +0900
+summary:     fix menus
+
+changeset:   765:554a0025ef38
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 19:41:26 2008 +0900
+summary:     bump version number
+
+changeset:   764:c409cc86cd13
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 19:40:58 2008 +0900
+summary:     strip leading/trailing whitespace
+
+changeset:   763:0bddf38529bd
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 18:32:52 2008 +0900
+summary:     fix problems escaping html (causing extra spaces to be inserted)
+
+changeset:   762:0920d0d6c6b4
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 17:50:26 2008 +0900
+summary:     fix problem recording minimum spacing with periods
+
+changeset:   761:44c72b39eeee
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 12:23:15 2008 +0900
+summary:     fix capitalization in menus
+
+changeset:   760:937d1e207f64
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Sep 01 00:32:55 2008 +0900
 summary:     don't hide last card msg on fin, center msg, only stop double card if not due

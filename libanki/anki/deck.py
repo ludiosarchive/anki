@@ -181,14 +181,18 @@ limit is above 1."""
         self.updateFactor(card, ease)
         # spacing - first, we get the times of all other cards with the same
         # fact
-        (initialSpacing, spacing) = self.s.first("""
+        (minSpacing, spaceFactor) = self.s.first("""
 select models.initialSpacing, models.spacing from
 facts, models where facts.modelId = models.id and facts.id = :id""", id=card.factId)
-        minInt = self.s.scalar("""
+        minOfOtherCards = self.s.scalar("""
 select min(interval) from cards
 where factId = :fid and id != :id""", fid=card.factId, id=card.id) or 0
-        space = min(minInt, card.interval) * spacing * 86400.0
-        space = max(initialSpacing, space)
+        if minOfOtherCards:
+            space = min(minOfOtherCards, card.interval)
+        else:
+            space = 0
+        space = space * spaceFactor * 86400.0
+        space = max(minSpacing, space)
         space += time.time()
         self.s.statement("""
 update cards set
@@ -358,7 +362,8 @@ where id in (%s)""" % strids, now=time.time(), new=NEW_INTERVAL)
         This may be in the past if the deck is not finished.
         If the deck has no (enabled) cards, return None."""
         return self.s.scalar("""
-select combinedDue from cards where priority != 0 order by combinedDue""")
+select combinedDue from cards where priority != 0
+order by combinedDue limit 1""")
 
     def earliestTimeStr(self, next=None):
         """Return the relative time to the earliest card as a string."""
