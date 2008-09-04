@@ -1,5 +1,30 @@
-changeset:   743:725e383f8f41
+changeset:   748:0a43022bc866
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 21:21:10 2008 +0900
+summary:     add comment about having same name
+
+changeset:   747:e4439acc05ed
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 21:10:06 2008 +0900
+summary:     bump version number
+
+changeset:   746:c190c5b3c560
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 20:42:48 2008 +0900
+summary:     change to temp dir before downloading auto updater
+
+changeset:   745:c195b694e298
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 20:25:08 2008 +0900
+summary:     fix question/answer regeneration (thanks to nathaneal law)
+
+changeset:   744:543f4cda569c
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 17:44:33 2008 +0900
+summary:     model merging
+
+changeset:   743:725e383f8f41
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Aug 25 19:06:43 2008 +0900
 summary:     call set_menubar_icons() after app init

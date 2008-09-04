@@ -128,6 +128,7 @@ def test_cardOrder():
 def test_modelAddDelete():
     deck = DeckStorage.Deck()
     deck.addModel(JapaneseModel())
+    deck.addModel(JapaneseModel())
     f = deck.newFact()
     f['Expression'] = u'1'
     f['Meaning'] = u'2'
@@ -136,4 +137,3 @@ def test_modelAddDelete():
     deck.deleteModel(deck.currentModel)
     assert deck.cardCount() == 0
     deck.s.refresh(deck)
-    assert deck.currentModel == None

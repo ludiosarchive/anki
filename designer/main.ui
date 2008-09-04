@@ -26,9 +26,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>57</y>
+     <y>53</y>
      <width>555</width>
-     <height>212</height>
+     <height>220</height>
     </rect>
    </property>
    <property name="sizePolicy" >
@@ -358,7 +358,7 @@
      <x>0</x>
      <y>0</y>
      <width>555</width>
-     <height>23</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp" >
@@ -446,6 +446,8 @@
     <property name="title" >
      <string>&amp;Advanced</string>
     </property>
+    <addaction name="actionMergeModels" />
+    <addaction name="separator" />
     <addaction name="actionCheckDatabaseIntegrity" />
     <addaction name="actionOptimizeDatabase" />
    </widget>
@@ -459,9 +461,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>269</y>
+     <y>273</y>
      <width>555</width>
-     <height>23</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>
@@ -472,7 +474,7 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>23</y>
+     <y>19</y>
      <width>555</width>
      <height>34</height>
     </rect>
@@ -873,6 +875,11 @@
    </property>
    <property name="text" >
     <string>Optimize Database...</string>
+   </property>
+  </action>
+  <action name="actionMergeModels" >
+   <property name="text" >
+    <string>Merge models...</string>
    </property>
   </action>
  </widget>

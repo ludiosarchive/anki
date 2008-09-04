@@ -1092,6 +1092,7 @@ class AnkiQt(QMainWindow):
         self.connect(self.mainWin.actionUndoAnswer, SIGNAL("triggered()"), self.onUndoAnswer)
         self.connect(self.mainWin.actionCheckDatabaseIntegrity, SIGNAL("triggered()"), self.onCheckDB)
         self.connect(self.mainWin.actionOptimizeDatabase, SIGNAL("triggered()"), self.onOptimizeDB)
+        self.connect(self.mainWin.actionMergeModels, SIGNAL("triggered()"), self.onMergeModels)
 
     def enableDeckMenuItems(self, enabled=True):
         "setEnabled deck-related items."
@@ -1233,7 +1234,7 @@ class AnkiQt(QMainWindow):
         if self.state != "showQuestion":
             playFromText(self.currentCard.answer)
 
-    # DB related
+    # Advanced features
     ##########################################################################
 
     def onCheckDB(self):
@@ -1253,3 +1254,20 @@ class AnkiQt(QMainWindow):
     def onOptimizeDB(self):
         size = self.deck.optimize()
         ui.utils.showInfo("Database optimized.\nShrunk by %d bytes" % size)
+
+    def onMergeModels(self):
+        ret = self.deck.canMergeModels()
+        if ret[0] == "ok":
+            if not ret[1]:
+                ui.utils.showInfo(_(
+                    "No models found to merge. If you want to merge models,\n"
+                    "all models must have the same name."))
+                return
+            if ui.utils.askUser(_(
+                "Would you like to merge models that have the same name?")):
+                self.deck.mergeModels(ret[1])
+                ui.utils.showInfo(_("Merge complete."))
+        else:
+            ui.utils.showWarning(_("""%s.
+Anki can only merge models if they have exactly
+the same field count and card count.""") % ret[1])

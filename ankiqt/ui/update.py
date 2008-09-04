@@ -7,6 +7,7 @@ import urllib, urllib2, os, sys, time, httplib
 import anki, anki.utils, anki.lang, anki.stats
 import ankiqt
 import simplejson
+import tempfile
 
 #baseUrl = "http://localhost:5000/update/"
 baseUrl = "http://anki.ichi2.net/update/"
@@ -94,6 +95,8 @@ class Updater(QThread):
         self.emit(SIGNAL("statusChanged"), msg, timeout)
 
     def run(self):
+        dir = tempfile.mkdtemp(prefix="anki-update")
+        os.chdir(dir)
         filename = os.path.abspath(self.filename)
         try:
             f = urllib2.urlopen(baseUrl + "getQt")

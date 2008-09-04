@@ -46,6 +46,8 @@ class ModelProperties(QDialog):
         self.readCurrentField()
         self.connect(self.dialog.fieldList, SIGNAL("currentRowChanged(int)"),
                      self.fieldRowChanged)
+        self.connect(self.dialog.tabWidget, SIGNAL("currentChanged(int)"),
+                     self.fieldRowChanged)
         self.connect(self.dialog.fieldAdd, SIGNAL("clicked()"),
                      self.addField)
         self.connect(self.dialog.fieldDelete, SIGNAL("clicked()"),

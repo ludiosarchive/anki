@@ -36,6 +36,13 @@ for i in range(10):
     #print "total stats", time() - t
     print "total all", time() - t3
 
+
+while 1:
+    x = raw_input("cmd:")
+    t = time()
+    d.s.statement(x)
+    print time() - t
+
 failhere
 
 # syncing

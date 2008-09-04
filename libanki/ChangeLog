@@ -1,5 +1,60 @@
-changeset:   703:027099bf01ef
+changeset:   714:d10138a2f9f5
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 21:09:41 2008 +0900
+summary:     bump version number
+
+changeset:   713:78fba5eca19e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 20:06:51 2008 +0900
+summary:     drop indices only if exist, don't check folder is writeable
+
+changeset:   712:1d5578fc859e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 19:26:41 2008 +0900
+summary:     remove obsolote indices, use priority index
+
+changeset:   711:c9c5e73e233f
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 17:58:38 2008 +0900
+summary:     fix media dir file size check
+
+changeset:   710:af42a3f9fb5a
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 17:44:17 2008 +0900
+summary:     fix bug setting current model, add model merging support
+
+changeset:   709:84f9dfcc25fa
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 16:10:29 2008 +0900
+summary:     fix mature/young card counts (ignore priorities)
+
+changeset:   708:ead7f8877468
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 16:07:04 2008 +0900
+summary:     fix seenCardCount()/newCardCount() to ignore priorities
+
+changeset:   707:996de202997e
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 27 04:04:11 2008 +0900
+summary:     if no earliest time, tell user to add new cards
+
+changeset:   706:0aa73467b953
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 27 02:49:58 2008 +0900
+summary:     catch cards with no card model too
+
+changeset:   705:7a5f77987b42
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 26 23:18:59 2008 +0900
+summary:     make fixIntegrity() syncable, add more checks
+
+changeset:   704:7cd31348d5d6
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 26 12:42:01 2008 +0900
+summary:     update lastInterval/due/factor
+
+changeset:   703:027099bf01ef
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Aug 25 19:06:28 2008 +0900
 summary:     encode string as utf-8 before sending to latex (fix win32)

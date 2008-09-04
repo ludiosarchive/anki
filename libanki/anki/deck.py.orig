@@ -1289,24 +1289,31 @@ class DeckStorage(object):
     def Deck(path=None, rebuild=True, backup=True, lock=True):
         "Create a new deck or attach to an existing one."
         # generate a temp name if necessary
+        fd = None
         if path is None:
             path = DeckStorage.newDeckPath()
-        create = True
         if path != -1:
             if isinstance(path, types.UnicodeType):
                 path = path.encode(sys.getfilesystemencoding())
             path = os.path.abspath(path)
             #print "using path", path
-            if os.path.exists(path):
+            if os.path.exists(path) and not fd:
                 # attach
                 if not os.access(path, os.R_OK | os.W_OK):
                     raise DeckAccessError(_("Can't read/write deck"))
                 create = False
+            else:
+                # create
+                if not os.access(os.path.dirname(path), os.R_OK | os.W_OK):
+                    raise DeckAccessError(_("Can't read/write directory"))
+                create = True
+        else:
+            create = True
         # attach and sync/fetch deck - first, to unicode
         if not isinstance(path, types.UnicodeType):
             path = unicode(path, sys.getfilesystemencoding())
         # sqlite needs utf8
-        (engine, session) = DeckStorage._attach(path.encode("utf-8"), create)
+        (engine, session) = DeckStorage._attach(path.encode("utf-8"))
         s = session()
         try:
             if create:
@@ -1346,7 +1353,7 @@ class DeckStorage(object):
         return deck
     Deck = staticmethod(Deck)
 
-    def _attach(path, create):
+    def _attach(path):
         "Attach to a file, initializing DB"
         if path == -1:
             path = "sqlite:///:memory:"
@@ -1362,10 +1369,7 @@ class DeckStorage(object):
             metadata.create_all(engine)
         except DBAPIError, e:
             engine.dispose()
-            if create:
-                raise DeckAccessError(_("Can't read/write deck"))
-            else:
-                raise DeckWrongFormatError("Deck is not in the right format")
+            raise DeckWrongFormatError("Deck is not in the right format")
         return (engine, session)
     _attach = staticmethod(_attach)
 
@@ -1535,14 +1539,14 @@ order by priority desc, due""")
             deck.s.commit()
         if deck.version == 3:
             # remove conflicting and unused indexes
-            deck.s.statement("drop index if exists ix_cards_isDueCombined")
-            deck.s.statement("drop index if exists ix_facts_lastCardId")
-            deck.s.statement("drop index if exists ix_cards_successive")
-            deck.s.statement("drop index if exists ix_cards_priority")
-            deck.s.statement("drop index if exists ix_cards_reps")
-            deck.s.statement("drop index if exists ix_cards_due")
-            deck.s.statement("drop index if exists ix_stats_type")
-            deck.s.statement("drop index if exists ix_stats_day")
+            deck.s.statement("drop index ix_cards_isDueCombined")
+            deck.s.statement("drop index ix_facts_lastCardId")
+            deck.s.statement("drop index ix_cards_successive")
+            deck.s.statement("drop index ix_cards_priority")
+            deck.s.statement("drop index ix_cards_reps")
+            deck.s.statement("drop index ix_cards_due")
+            deck.s.statement("drop index ix_stats_type")
+            deck.s.statement("drop index ix_stats_day")
             deck.s.statement("drop index if exists ix_factsDeleted_cardId")
             deck.s.statement("drop index if exists ix_modelsDeleted_cardId")
             DeckStorage._addIndices(deck)
