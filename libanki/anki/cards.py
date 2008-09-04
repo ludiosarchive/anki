@@ -20,7 +20,7 @@ from anki.utils import parseTags, findTag, stripHTML, genID
 cardsTable = Table(
     'cards', metadata,
     Column('id', Integer, primary_key=True),
-    Column('factId', Integer, ForeignKey("facts.id"), nullable=False, index=True),
+    Column('factId', Integer, ForeignKey("facts.id"), nullable=False),
     Column('cardModelId', Integer, ForeignKey("cardModels.id"), nullable=False),
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
@@ -29,7 +29,8 @@ cardsTable = Table(
     # cached - changed on fact update
     Column('question', UnicodeText, nullable=False, default=u""),
     Column('answer', UnicodeText, nullable=False, default=u""),
-    # default to 'normal' priority
+    # default to 'normal' priority;
+    # this is indexed in deck.py as we need to create a reverse index
     Column('priority', Integer, nullable=False, default=2),
     Column('interval', Float, nullable=False, default=0),
     Column('lastInterval', Float, nullable=False, default=0),
@@ -56,7 +57,13 @@ cardsTable = Table(
     # this duplicates the above data, because there's no way to map imported
     # data to the above
     Column('yesCount', Integer, nullable=False, default=0),
-    Column('noCount', Integer, nullable=False, default=0))
+    Column('noCount', Integer, nullable=False, default=0),
+    # cache
+    Column('spaceUntil', Float, nullable=False, default=0),
+    Column('relativeDelay', Float, nullable=False, default=0),
+    Column('isDue', Boolean, nullable=False, default=0),
+    Column('type', Integer, nullable=False, default=0),
+    Column('combinedDue', Integer, nullable=False, default=0))
 
 class Card(object):
     "A card."
@@ -64,6 +71,9 @@ class Card(object):
     def __init__(self, fact=None, cardModel=None):
         self.tags = u""
         self.id = genID()
+        # new cards start as new & due
+        self.type = 2
+        self.isDue = True
         if fact:
             self.fact = fact
         if cardModel:
@@ -133,6 +143,90 @@ class Card(object):
                             self.fact.model.tags)
         return findTag(tag, alltags)
 
+    def fromDB(self, s, id):
+        r = s.first("select * from cards where id = :id",
+                    id=id)
+        (self.id,
+         self.factId,
+         self.cardModelId,
+         self.created,
+         self.modified,
+         self.tags,
+         self.ordinal,
+         self.question,
+         self.answer,
+         self.priority,
+         self.interval,
+         self.lastInterval,
+         self.due,
+         self.lastDue,
+         self.factor,
+         self.lastFactor,
+         self.firstAnswered,
+         self.reps,
+         self.successive,
+         self.averageTime,
+         self.reviewTime,
+         self.youngEase0,
+         self.youngEase1,
+         self.youngEase2,
+         self.youngEase3,
+         self.youngEase4,
+         self.matureEase0,
+         self.matureEase1,
+         self.matureEase2,
+         self.matureEase3,
+         self.matureEase4,
+         self.yesCount,
+         self.noCount,
+         self.spaceUntil,
+         self.relativeDelay,
+         self.isDue,
+         self.type,
+         self.combinedDue) = r
+        self._thinkingTime = time.time()
+
+    def toDB(self, s):
+        "Write card to DB. Note that isDue assumes card is not spaced."
+        if self.reps == 0:
+            self.type = 2
+        elif self.successive:
+            self.type = 1
+        else:
+            self.type = 0
+        s.execute("""update cards set
+modified=:modified,
+tags=:tags,
+interval=:interval,
+lastInterval=:lastInterval,
+due=:due,
+lastDue=:lastDue,
+factor=:factor,
+lastFactor=:lastFactor,
+firstAnswered=:firstAnswered,
+reps=:reps,
+successive=:successive,
+averageTime=:averageTime,
+reviewTime=:reviewTime,
+youngEase0=:youngEase0,
+youngEase1=:youngEase1,
+youngEase2=:youngEase2,
+youngEase3=:youngEase3,
+youngEase4=:youngEase4,
+matureEase0=:matureEase0,
+matureEase1=:matureEase1,
+matureEase2=:matureEase2,
+matureEase3=:matureEase3,
+matureEase4=:matureEase4,
+yesCount=:yesCount,
+noCount=:noCount,
+spaceUntil = :spaceUntil,
+relativeDelay = :interval / (strftime("%s", "now") - :due + 1),
+isDue = :isDue,
+type = :type,
+combinedDue = max(:spaceUntil, :due)
+where id=:id""", self.__dict__)
+
 mapper(Card, cardsTable, properties={
     'cardModel': relation(CardModel),
     'fact': relation(Fact, backref="cards", primaryjoin=
@@ -152,5 +246,5 @@ mapper(Fact, factsTable, properties={
 cardsDeletedTable = Table(
     'cardsDeleted', metadata,
     Column('cardId', Integer, ForeignKey("cards.id"),
-           nullable=False, index=True),
+           nullable=False),
     Column('deletedTime', Float, nullable=False))

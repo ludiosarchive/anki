@@ -48,12 +48,12 @@ class View(object):
         self.clearWindow()
         self.setBackgroundColour()
         self.maybeHelp()
-        if self.main.deck.totalCardCount():
+        if self.main.deck.cardCount():
             if not self.main.lastCard or (
                 self.main.config['suppressLastCardContent'] and
                 self.main.config['suppressLastCardInterval']):
                 self.buffer += "<br>"
-            else: #if self.main.lastCard:
+            else:
                 self.drawTopSection()
         if self.state == "showQuestion":
             self.drawQuestion()
@@ -137,28 +137,28 @@ class View(object):
 
     def drawLastCard(self):
         "Show the last card if not the current one, and next time."
-        if self.main.lastCard and (
-            self.state == "deckFinished" or
-            self.main.lastCard != self.main.currentCard):
+        if self.main.lastCard:
             if not self.main.config['suppressLastCardContent']:
-                q = self.main.lastCard.question.replace("<br>", "  ")
-                q = stripHTML(q)
-                if len(q) > 50:
-                    q = q[:50] + "..."
-                a = self.main.lastCard.answer.replace("<br>", "  ")
-                a = stripHTML(a)
-                if len(a) > 50:
-                    a = a[:50] + "..."
-                s = "%s<br>%s" % (q, a)
-                s = stripLatex(s)
-                self.write('<span class="lastCard">%s</span><br>' % s)
+                if (self.state == "deckFinished" or
+                    self.main.currentCard.id != self.main.lastCard.id):
+                    q = self.main.lastCard.question.replace("<br>", "  ")
+                    q = stripHTML(q)
+                    if len(q) > 50:
+                        q = q[:50] + "..."
+                    a = self.main.lastCard.answer.replace("<br>", "  ")
+                    a = stripHTML(a)
+                    if len(a) > 50:
+                        a = a[:50] + "..."
+                    s = "%s<br>%s" % (q, a)
+                    s = stripLatex(s)
+                    self.write('<span class="lastCard">%s</span><br>' % s)
             if not self.main.config['suppressLastCardInterval']:
                 if self.main.lastQuality > 1:
                     msg = _("Well done! This card will appear again in "
                             "<b>%(next)s</b>.") % \
                             {"next":self.main.lastScheduledTime}
                 else:
-                    msg = _("This card will appear again in "
+                    msg = _("This card will appear again in less than "
                             "<b>%(next)s</b>.") % \
                             {"next":self.main.lastScheduledTime}
                 self.write(msg)
@@ -218,14 +218,14 @@ time before you see it again will get bigger.
 
 <tr>
 <td>
-<a href="welcome:open"><img src=":/icons/fileopen.png"></a>
+<a href="welcome:open"><img src=":/icons/document-open.png"></a>
 </td>
 <td valign=middle><h2><a href="welcome:open">Open an existing deck</a></h2></td>
 </tr>
 
 <tr>
 <td>
-<a href="welcome:new"><img src=":/icons/filenew.png"></a>
+<a href="welcome:new"><img src=":/icons/document-new.png"></a>
 </td>
 <td valign=middle>
 <h2><a href="welcome:new">Create a new deck</a></h2></td>
@@ -264,20 +264,6 @@ card' from the Edit menu."""))
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."
-        next = self.main.deck.earliestTimeStr()
-        suspended = self.main.deck.suspendedCardCount()
-        waiting = self.main.deck.spacedCardCount()
-        self.clearWindow()
-        self.write(_("""
-<h1>Congratulations!</h1>You have finished the deck for now.<br>
-The next question will be shown in <b>%(next)s</b>.<p>
-There are %(waiting)d
-<a href="http://ichi2.net/anki/wiki/FrequentlyAskedQuestions#head-ef653836eaddb2b9c1af6b8fa56bcea458a04c20">spaced</a> cards.<br>
-There are %(suspended)d suspended cards.<p>
-Spaced cards are cards that won't be shown for a while, because you have seen<br>
-a related card recently. Suspended cards are cards removed from the learning<br>
-process - they won't be shown until you unsuspend them.""") % {
-    "next": next,
-    "suspended": suspended,
-    "waiting": waiting,
-    })
+        self.write("<center>" +
+                   self.main.deck.deckFinishedMsg() +
+                   "</center>")

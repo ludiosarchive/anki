@@ -29,6 +29,7 @@ from anki.facts import Fact, Field
 from anki.cards import Card
 from anki.stats import Stats, globalStats
 from anki.history import CardHistoryEntry
+from anki.stats import dailyStats, globalStats
 
 if simplejson.__version__ < "1.7.3":
     raise "SimpleJSON must be 1.7.3 or later."
@@ -186,6 +187,7 @@ class SyncTools(object):
         self.applyPayloadReply(res)
 
     def genPayload(self, lsum, rsum):
+        self.preSyncRefresh()
         payload = {}
         # first, handle models, facts and cards
         for key in ("models", "facts", "cards"):
@@ -204,6 +206,7 @@ class SyncTools(object):
 
     def applyPayload(self, payload):
         reply = {}
+        self.preSyncRefresh()
         # model, facts and cards
         for key in ("models", "facts", "cards"):
             # send back any requested
@@ -234,12 +237,19 @@ class SyncTools(object):
             self.updateStats(reply['stats'])
             self.updateHistory(reply['history'])
         self.postSyncRefresh()
+        # the client needs to rebuild the priorities
+        # (the server does so when the deck is loaded to apply noweb/nophone)
+        self.deck.updateAllPriorities()
 
     def postSyncRefresh(self):
         "Flush changes to DB, and reload object associations."
         self.deck.s.flush()
         self.deck.s.refresh(self.deck)
         self.deck.currentModel
+
+    def preSyncRefresh(self):
+        # ensure global stats are available (queue may not be built)
+        self.deck._globalStats = globalStats(self.deck.s)
 
     def getObjsFromKey(self, ids, key):
         return getattr(self, "get" + key.capitalize())(ids)
@@ -382,6 +392,11 @@ values
             'ordinal': f[3],
             'value': f[4]
             } for f in fields]
+        # delete local fields since ids may have changed
+        self.deck.s.execute(
+            "delete from fields where factId in (%s)" %
+            ",".join([str(f[0]) for f in facts]))
+        # then update
         self.deck.s.execute("""
 insert or replace into fields
 (id, factId, fieldModelId, ordinal, value)
@@ -393,7 +408,6 @@ values
 
     # Cards
     ##########################################################################
-    # in sql for efficiency
 
     def getCards(self, ids):
         return self.realTuples(self.deck.s.all("""
@@ -402,8 +416,8 @@ priority, interval, lastInterval, due, lastDue, factor,
 firstAnswered, reps, successive, averageTime, reviewTime, youngEase0,
 youngEase1, youngEase2, youngEase3, youngEase4, matureEase0,
 matureEase1, matureEase2, matureEase3, matureEase4, yesCount, noCount,
-question, answer, lastFactor from cards
-where id in (%s)""" % ",".join([str(i) for i in ids])))
+question, answer, lastFactor, spaceUntil, isDue, type, combinedDue
+from cards where id in (%s)""" % ",".join([str(i) for i in ids])))
 
     def updateCards(self, cards):
         if not cards:
@@ -441,6 +455,10 @@ where id in (%s)""" % ",".join([str(i) for i in ids])))
                   'question': c[30],
                   'answer': c[31],
                   'lastFactor': c[32],
+                  'spaceUntil': c[33],
+                  'isDue': c[34],
+                  'type': c[35],
+                  'combinedDue': c[36],
                   } for c in cards]
         self.deck.s.execute("""
 insert or replace into cards
@@ -449,14 +467,16 @@ priority, interval, lastInterval, due, lastDue, factor,
 firstAnswered, reps, successive, averageTime, reviewTime, youngEase0,
 youngEase1, youngEase2, youngEase3, youngEase4, matureEase0,
 matureEase1, matureEase2, matureEase3, matureEase4, yesCount, noCount,
-question, answer, lastFactor)
+question, answer, lastFactor, spaceUntil, isDue, type, combinedDue,
+relativeDelay)
 values
 (:id, :factId, :cardModelId, :created, :modified, :tags, :ordinal,
 :priority, :interval, :lastInterval, :due, :lastDue, :factor,
 :firstAnswered, :reps, :successive, :averageTime, :reviewTime, :youngEase0,
 :youngEase1, :youngEase2, :youngEase3, :youngEase4, :matureEase0,
 :matureEase1, :matureEase2, :matureEase3, :matureEase4, :yesCount,
-:noCount, :question, :answer, :lastFactor)""", dlist)
+:noCount, :question, :answer, :lastFactor, :spaceUntil, :isDue,
+:type, :combinedDue, 0)""", dlist)
 
     def deleteCards(self, ids):
         self.deck.deleteCards(ids)
@@ -478,6 +498,7 @@ values
         del d['s']
         del d['path']
         del d['syncName']
+        del d['version']
         # these may be deleted before bundling
         if 'models' in d: del d['models']
         if 'currentModel' in d: del d['currentModel']
@@ -494,26 +515,33 @@ values
             del s['id']
             return s
         lastDay = date.fromtimestamp(self.deck.lastSync)
+        ids = self.deck.s.column0(
+            "select id from stats where type = 1 and day >= :day", day=lastDay)
+        stat = Stats()
+        def statFromId(id):
+            stat.fromDB(self.deck.s, id)
+            return stat
         stats = {
-            'global': bundleStat(globalStats(self.deck.s)),
-            'daily': [bundleStat(s) for s in self.deck.s.query(Stats).\
-                      filter(Stats.type == 1).\
-                      filter(Stats.day >= lastDay).all()]
+            'global': bundleStat(self.deck._globalStats),
+            'daily': [bundleStat(statFromId(id)) for id in ids],
             }
         return stats
 
     def updateStats(self, stats):
-        gs = globalStats(self.deck.s)
         stats['global']['day'] = date.fromordinal(stats['global']['day'])
-        self.applyDict(gs, stats['global'])
+        self.applyDict(self.deck._globalStats, stats['global'])
+        self.deck._globalStats.toDB(self.deck.s)
         for record in stats['daily']:
             record['day'] = date.fromordinal(record['day'])
-            stat = self.deck.s.query(Stats).filter_by(type=1).filter_by(
-                day=record['day']).first()
-            if not stat:
-                stat = Stats(1)
-                self.applyDict(stat, record)
-                self.deck.s.save(stat)
+            stat = Stats()
+            id = self.deck.s.scalar("select id from stats where type = :type and day = :day",
+                                    type=1, day=record['day'])
+            if id:
+                stat.fromDB(self.deck.s, id)
+            else:
+                stat.create(self.deck.s, 1, record['day'])
+            self.applyDict(stat, record)
+            stat.toDB(self.deck.s)
 
     def bundleHistory(self):
         def bundleHist(hist):
@@ -550,6 +578,7 @@ class HttpSyncServerProxy(SyncClient):
         self.username = user
         self.password = passwd
         self.syncURL="http://anki.ichi2.net/sync/"
+        #self.syncURL="http://anki.ichi2.net:5001/sync/"
         #self.syncURL="http://localhost:5000/sync/"
         self.protocolVersion = 2
 

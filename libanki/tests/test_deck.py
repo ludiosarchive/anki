@@ -67,7 +67,7 @@ def test_saveAs():
     deck.addFact(f)
     # save in new deck
     newDeck = deck.saveAs(path)
-    assert newDeck.totalCardCount() == 1
+    assert newDeck.cardCount() == 1
     newDeck.close()
     deck.close()
 
@@ -128,12 +128,12 @@ def test_cardOrder():
 def test_modelAddDelete():
     deck = DeckStorage.Deck()
     deck.addModel(JapaneseModel())
+    deck.addModel(JapaneseModel())
     f = deck.newFact()
     f['Expression'] = u'1'
     f['Meaning'] = u'2'
     deck.addFact(f)
-    assert deck.totalCardCount() == 2
+    assert deck.cardCount() == 2
     deck.deleteModel(deck.currentModel)
-    assert deck.totalCardCount() == 0
+    assert deck.cardCount() == 0
     deck.s.refresh(deck)
-    assert deck.currentModel == None

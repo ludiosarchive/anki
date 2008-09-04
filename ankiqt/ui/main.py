@@ -7,7 +7,8 @@ from PyQt4.QtCore import *
 
 # fixme: sample files read only, need to copy
 
-import os, sys, re, types, gettext, stat, traceback, shutil, time
+import os, sys, re, types, gettext, stat, traceback
+import copy, shutil, time
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -15,7 +16,6 @@ from anki import DeckStorage
 from anki.errors import *
 from anki.sound import hasSound, playFromText
 from anki.utils import addTags, deleteTags
-from anki.deck import FutureItem
 import anki.lang
 import ankiqt
 ui = ankiqt.ui
@@ -24,12 +24,13 @@ config = ankiqt.config
 class AnkiQt(QMainWindow):
     def __init__(self, app, config, args):
         QMainWindow.__init__(self)
+        if sys.platform.startswith("darwin"):
+            qt_mac_set_menubar_icons(False)
         ankiqt.mw = self
         self.app = app
         self.config = config
         self.deck = None
         self.views = []
-        self.macHacks()
         self.setLang()
         self.setupFonts()
         self.setupBackupDir()
@@ -57,6 +58,9 @@ class AnkiQt(QMainWindow):
             self.removeToolBar(self.mainWin.toolBar)
             self.mainWin.toolBar.hide()
         self.show()
+        if sys.platform.startswith("darwin"):
+            self.setUnifiedTitleAndToolBarOnMac(True)
+            pass
         # load deck
         try:
             self.maybeLoadLastDeck(args)
@@ -116,7 +120,7 @@ class AnkiQt(QMainWindow):
             else:
                 return self.moveToState("noDeck")
         elif state == "auto":
-            # load again without resetting current card
+            self.currentCard = None
             if self.deck:
                 return self.moveToState("getQuestion")
             else:
@@ -134,12 +138,19 @@ class AnkiQt(QMainWindow):
             # hide all deck-associated dialogs
             ui.dialogs.closeAll()
         elif state == "getQuestion":
-            if self.deck.totalCardCount() == 0:
+            self.deck._countsDirty = True
+            if self.deck.cardCount() == 0:
                 return self.moveToState("deckEmpty")
             else:
                 if not self.currentCard:
                     self.currentCard = self.deck.getCard()
                 if self.currentCard:
+                    if self.lastCard:
+                        if self.lastCard.id == self.currentCard.id:
+                            if self.currentCard.combinedDue > time.time():
+                                # if the same card is being shown and it's not
+                                # due yet, give up
+                                return self.moveToState("deckFinished")
                     self.enableCardMenuItems()
                     return self.moveToState("showQuestion")
                 else:
@@ -186,16 +197,15 @@ class AnkiQt(QMainWindow):
 
     def cardAnswered(self, quality):
         "Reschedule current card and move back to getQuestion state."
-        # for undo
-        oldFactor = self.currentCard.factor
-        successive = self.currentCard.successive
+        # copy card for undo
+        self.lastCardBackup = copy.copy(self.currentCard)
+        # remove card from session before updating it
+        self.deck.s.expunge(self.currentCard)
         self.deck.answerCard(self.currentCard, quality)
         self.lastScheduledTime = anki.utils.fmtTimeSpan(
             self.currentCard.due - time.time())
         self.lastQuality = quality
         self.lastCard = self.currentCard
-        self.lastCard.oldFactor = oldFactor
-        self.lastCard.oldSuccessive = successive
         self.currentCard = None
         if self.config['saveAfterAnswer']:
             num = self.config['saveAfterAnswerNum']
@@ -228,8 +238,9 @@ class AnkiQt(QMainWindow):
     def refreshStatus(self):
         "If triggered when the deck is finished, reset state."
         if self.state == "deckFinished":
+            # don't try refresh if the deck is closed during a sync
             if self.deck:
-                # don't try refresh if the deck is closed during a sync
+                self.deck.markExpiredCardsDue()
                 self.moveToState("getQuestion")
         if self.state != "deckFinished":
             if self.refreshTimer:
@@ -428,7 +439,18 @@ class AnkiQt(QMainWindow):
         if sync and self.config['syncOnLoad']:
             self.syncDeck(False)
         else:
-            self.rebuildQueue()
+            try:
+                self.rebuildQueue()
+            except:
+                ui.utils.showWarning(_(
+                    "Error building queue. Attempting recovery.."))
+                if self.onCheckDB():
+                    ui.utils.showWarning(
+                        _("Couldn't find the problem. Please open an "
+                          "issue on the issue tracker."))
+                else:
+                    # try again
+                    self.rebuildQueue()
         return True
 
     def importOldDeck(self, deckPath):
@@ -534,6 +556,7 @@ class AnkiQt(QMainWindow):
             if not sys.platform.startswith("darwin"):
                 a.setShortcut(_("Alt+%d" % n))
             a.setText(os.path.basename(file))
+            a.setStatusTip(os.path.abspath(file))
             self.connect(a, SIGNAL("triggered()"),
                          lambda n=n: self.loadRecent(n-1))
             self.mainWin.menuOpenRecent.addAction(a)
@@ -590,8 +613,8 @@ class AnkiQt(QMainWindow):
             self.deck.lastLoaded = self.deck.modified
             self.deck.s.flush()
             self.deck.s.commit()
-            self.syncDeck(onlyMerge=True)
-            return
+            if self.syncDeck(onlyMerge=True):
+                return
         self.deck = None
         self.moveToState("initial")
 
@@ -844,12 +867,9 @@ class AnkiQt(QMainWindow):
 
     def onUndoAnswer(self):
         # quick and dirty undo for now
-        self.lastCard.interval = self.lastCard.lastInterval
-        self.lastCard.due = self.lastCard.lastDue
-        self.lastCard.successive = self.lastCard.oldSuccessive
-        self.lastCard.reps -= 1
-        self.lastCard.factor = self.lastCard.oldFactor
+        self.currentCard = None
         self.deck.s.flush()
+        self.lastCardBackup.toDB(self.deck.s)
         self.reset()
 
     # Other menu operations
@@ -1024,6 +1044,7 @@ class AnkiQt(QMainWindow):
 
     deckRelatedMenus = (
         "Tools",
+        "Advanced",
         )
 
     def connectMenuActions(self):
@@ -1062,6 +1083,9 @@ class AnkiQt(QMainWindow):
         self.connect(self.mainWin.actionRepeatAnswerAudio, SIGNAL("triggered()"), self.onRepeatAnswer)
         self.connect(self.mainWin.actionRepeatAudio, SIGNAL("triggered()"), self.onRepeatAudio)
         self.connect(self.mainWin.actionUndoAnswer, SIGNAL("triggered()"), self.onUndoAnswer)
+        self.connect(self.mainWin.actionCheckDatabaseIntegrity, SIGNAL("triggered()"), self.onCheckDB)
+        self.connect(self.mainWin.actionOptimizeDatabase, SIGNAL("triggered()"), self.onOptimizeDB)
+        self.connect(self.mainWin.actionMergeModels, SIGNAL("triggered()"), self.onMergeModels)
 
     def enableDeckMenuItems(self, enabled=True):
         "setEnabled deck-related items."
@@ -1086,8 +1110,8 @@ class AnkiQt(QMainWindow):
                 # FIXME: safe to assume filesystem is utf-8?
                 "path": deckpath,
                 "title": title,
-                "cards": self.deck.totalCardCount(),
-                "facts": self.deck.totalFactCount(),
+                "cards": self.deck.cardCount(),
+                "facts": self.deck.factCount(),
                 }
         self.setWindowTitle(title)
 
@@ -1139,14 +1163,8 @@ class AnkiQt(QMainWindow):
         self.connect(self.autoUpdate, SIGNAL("clockIsOff"), self.clockIsOff)
         self.autoUpdate.start()
 
-    def newVerInStatusBar(self, version):
-        self.statusView.statusbar.showMessage(
-	            _("Anki Update Available: ") + version, 5000)
-
     def newVerAvail(self, version):
-        if self.config['suppressUpdate']:
-            self.newVerInStatusBar(version)
-        else:
+        if self.config['suppressUpdate'] < version['latestVersion']:
             ui.update.askAndUpdate(self, version)
 
     def clockIsOff(self, diff):
@@ -1189,14 +1207,6 @@ class AnkiQt(QMainWindow):
                 print "Error in %s.py" % plugin
                 print traceback.print_exc()
 
-    # Mac support
-    ##########################################################################
-
-    def macHacks(self):
-        if sys.platform.startswith("darwin"):
-            self.setUnifiedTitleAndToolBarOnMac(True)
-            qt_mac_set_menubar_icons(False)
-
     # Font localisation
     ##########################################################################
 
@@ -1217,3 +1227,41 @@ class AnkiQt(QMainWindow):
         playFromText(self.currentCard.question)
         if self.state != "showQuestion":
             playFromText(self.currentCard.answer)
+
+    # Advanced features
+    ##########################################################################
+
+    def onCheckDB(self):
+        "True if no problems"
+        ret = self.deck.fixIntegrity()
+        if ret == "ok":
+            ret = _("No problems found")
+            ui.utils.showInfo(ret)
+            ret = True
+        else:
+            ret = _("Problems found:\n%s") % ret
+            ui.utils.showWarning(ret)
+            ret = False
+        self.rebuildQueue()
+        return ret
+
+    def onOptimizeDB(self):
+        size = self.deck.optimize()
+        ui.utils.showInfo("Database optimized.\nShrunk by %d bytes" % size)
+
+    def onMergeModels(self):
+        ret = self.deck.canMergeModels()
+        if ret[0] == "ok":
+            if not ret[1]:
+                ui.utils.showInfo(_(
+                    "No models found to merge. If you want to merge models,\n"
+                    "all models must have the same name."))
+                return
+            if ui.utils.askUser(_(
+                "Would you like to merge models that have the same name?")):
+                self.deck.mergeModels(ret[1])
+                ui.utils.showInfo(_("Merge complete."))
+        else:
+            ui.utils.showWarning(_("""%s.
+Anki can only merge models if they have exactly
+the same field count and card count.""") % ret[1])

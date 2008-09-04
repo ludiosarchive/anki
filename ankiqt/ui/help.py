@@ -166,6 +166,8 @@ Please enter some things you want to learn.
 <tr><td><b>Ctrl+B</b></td><td> bold</td></tr>
 <tr><td><b>Ctrl+I</b></td><td> italic</td></tr>
 <tr><td><b>Ctrl+U</b></td><td> underline</td></tr>
+<tr><td><b>Alt+1</b></td><td> enable/disable card model 1</td></tr>
+<tr><td><b>Alt+2</b></td><td> enable/disable card model 2</td></tr>
 </table>
 
 <h2>Cards</h2>Depending on the language you selected, more than one card may

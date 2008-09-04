@@ -21,11 +21,11 @@ from anki.features import FeatureManager
 fieldsTable = Table(
     'fields', metadata,
     Column('id', Integer, primary_key=True),
-    Column('factId', Integer, ForeignKey("facts.id"), nullable=False, index=True),
+    Column('factId', Integer, ForeignKey("facts.id"), nullable=False),
     Column('fieldModelId', Integer, ForeignKey("fieldModels.id"),
-           nullable=False, index=True),
+           nullable=False),
     Column('ordinal', Integer, nullable=False),
-    Column('value', UnicodeText, nullable=False, index=True))
+    Column('value', UnicodeText, nullable=False))
 
 class Field(object):
     "A field in a fact."
@@ -56,6 +56,7 @@ factsTable = Table(
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
     Column('tags', UnicodeText, nullable=False, default=u""),
+    # the following two fields are obsolete and now stored in cards table
     Column('spaceUntil', Float, nullable=False, default=0),
     Column('lastCardId', Integer, ForeignKey(
     "cards.id", use_alter=True, name="lastCardIdfk")))
@@ -145,5 +146,5 @@ class Fact(object):
 factsDeletedTable = Table(
     'factsDeleted', metadata,
     Column('factId', Integer, ForeignKey("facts.id"),
-           nullable=False, index=True),
+           nullable=False),
     Column('deletedTime', Float, nullable=False))

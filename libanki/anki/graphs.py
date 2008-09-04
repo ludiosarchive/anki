@@ -50,12 +50,8 @@ class DeckGraphs(object):
             now[3] = 0; now[4] = 0
             self.startOfDay = time.mktime(now)
             all = self.deck.s.all("""
-select interval,
-case when facts.lastCardId = cards.id then
-cards.due else max(cards.due, facts.spaceUntil) end
-from cards, facts where
-cards.factId = facts.id and
-reps > 0 and priority != 0""")
+select interval, combinedDue
+from cards where reps > 0 and priority != 0""")
             for (interval, due) in all:
                 day=int(round(interval))
                 days[day] = days.get(day, 0) + 1

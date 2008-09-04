@@ -1,5 +1,535 @@
-changeset:   637:0a4493ceba9a
+changeset:   739:55ee54b34790
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 04:35:18 2008 +0900
+summary:     bump version number
+
+changeset:   738:a07944b55ff5
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 04:04:32 2008 +0900
+summary:     checkdb: regenerate question/answer cache, and mark all cards/facts/models mod
+
+changeset:   737:c6fbfb44d925
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:47:15 2008 +0900
+summary:     don't forget deletions when checking db
+
+changeset:   736:fba4ad426675
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:17:34 2008 +0900
+summary:     add german updates from [Bananeweizen at gmx dot de]
+
+changeset:   735:14b62b62df80
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:14:00 2008 +0900
+summary:     fix some problems with the exporting code
+
+changeset:   734:00a0a191a2a0
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 01:07:10 2008 +0900
+summary:     ignore deleted objects on import, fix html & forget deletions on checkdb
+
+changeset:   733:56fc2a350a49
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 02 16:15:07 2008 +0900
+summary:     add tidyHTML to utils, start work on additions to checkDB
+
+changeset:   732:e577dce1ca01
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 20:06:43 2008 +0900
+summary:     limit combinedDue to 1
+
+changeset:   731:00be0271bfa5
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 19:41:41 2008 +0900
+summary:     bump version number
+
+changeset:   730:ab282e5bfee0
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 17:34:26 2008 +0900
+summary:     fix initial spacing setting high spacing values
+
+changeset:   729:294cc15863b6
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:56:06 2008 +0900
+summary:     update spanish translations
+
+changeset:   728:487e131cb90e
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:50:02 2008 +0900
+summary:     bump version number
+
+changeset:   727:309a3b96f57f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:42:40 2008 +0900
+summary:     update graphs code to use new db layout
+
+changeset:   726:6ae2b8dfa397
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:37:33 2008 +0900
+summary:     set cards to not due when answering - they'll be updated later
+
+changeset:   725:aa2188746766
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 21:27:24 2008 +0900
+summary:     update relativeDelay for all cards, not just recently expired ones
+
+changeset:   724:02fea17b9d22
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 17:33:09 2008 +0900
+summary:     if card is suspended, set isDue = 0
+
+changeset:   723:5410d31cfadc
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 17:23:10 2008 +0900
+summary:     add support for changing order of card models and field models
+
+changeset:   722:a8b75ac64b1e
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:27:03 2008 +0900
+summary:     set new interval to 0.001, not 1
+
+changeset:   721:fe91fa7e876e
+parent:      717:9748f6c99a40
+parent:      720:c3c16d61c5fd
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:15:32 2008 +0900
+summary:     merge
+
+changeset:   720:c3c16d61c5fd
+parent:      719:a0178186c744
+parent:      654:c55cd3992387
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:08:33 2008 +0900
+summary:     merge
+
+changeset:   719:a0178186c744
+parent:      718:a83de27a1d93
+parent:      716:87f9ae70fea1
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:08:22 2008 +0900
+summary:     merge
+
+changeset:   718:a83de27a1d93
+parent:      714:d10138a2f9f5
+parent:      653:4a530339560c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:07:53 2008 +0900
+summary:     merge
+
+changeset:   717:9748f6c99a40
+parent:      715:ebb00029c503
+parent:      716:87f9ae70fea1
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:15:20 2008 +0900
+summary:     merge
+
+changeset:   716:87f9ae70fea1
+parent:      711:c9c5e73e233f
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 19:39:00 2008 +0900
+summary:     always choose oldest model when merging
+
+changeset:   715:ebb00029c503
+parent:      714:d10138a2f9f5
+parent:      654:c55cd3992387
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 15:14:33 2008 +0900
+summary:     merge
+
+changeset:   714:d10138a2f9f5
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 21:09:41 2008 +0900
+summary:     bump version number
+
+changeset:   713:78fba5eca19e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 20:06:51 2008 +0900
+summary:     drop indices only if exist, don't check folder is writeable
+
+changeset:   712:1d5578fc859e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 19:26:41 2008 +0900
+summary:     remove obsolote indices, use priority index
+
+changeset:   711:c9c5e73e233f
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 17:58:38 2008 +0900
+summary:     fix media dir file size check
+
+changeset:   710:af42a3f9fb5a
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 17:44:17 2008 +0900
+summary:     fix bug setting current model, add model merging support
+
+changeset:   709:84f9dfcc25fa
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 16:10:29 2008 +0900
+summary:     fix mature/young card counts (ignore priorities)
+
+changeset:   708:ead7f8877468
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 16:07:04 2008 +0900
+summary:     fix seenCardCount()/newCardCount() to ignore priorities
+
+changeset:   707:996de202997e
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 27 04:04:11 2008 +0900
+summary:     if no earliest time, tell user to add new cards
+
+changeset:   706:0aa73467b953
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 27 02:49:58 2008 +0900
+summary:     catch cards with no card model too
+
+changeset:   705:7a5f77987b42
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 26 23:18:59 2008 +0900
+summary:     make fixIntegrity() syncable, add more checks
+
+changeset:   704:7cd31348d5d6
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 26 12:42:01 2008 +0900
+summary:     update lastInterval/due/factor
+
+changeset:   703:027099bf01ef
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 19:06:28 2008 +0900
+summary:     encode string as utf-8 before sending to latex (fix win32)
+
+changeset:   702:222fee895606
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 17:52:49 2008 +0900
+summary:     bump version
+
+changeset:   701:beae5d21dcff
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 15:03:45 2008 +0900
+summary:     since we're randomizing field ids, delete local fields before syncing
+
+changeset:   700:9be61e41abc6
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 14:15:26 2008 +0900
+summary:     fix bug adding cards with priorities
+
+changeset:   699:26c2fd9803b3
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 01:52:10 2008 +0900
+summary:     catch interrupted system calls on osx (fix latex)
+
+changeset:   698:b00e8943896e
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:59:32 2008 +0900
+summary:     bump version number
+
+changeset:   697:72877d4c65ac
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:49:28 2008 +0900
+summary:     fix for old python
+
+changeset:   696:1dbfe6cf704f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:46:24 2008 +0900
+summary:     catch error when latex not available
+
+changeset:   695:849dd0cb1e66
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 20:34:05 2008 +0900
+summary:     check missing fields, reset isDue on check, force random field ids
+
+changeset:   694:a92453fe34fa
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 16:08:46 2008 +0900
+summary:     add fns to check deck integrity and optimize. backup before upgrade
+
+changeset:   693:40d7c642effe
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 15:12:56 2008 +0900
+summary:     flush before deleting
+
+changeset:   692:2ef84a67a27f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 14:20:18 2008 +0900
+summary:     rebuild all due cards on upgrade
+
+changeset:   691:1cc8b894488c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:24:35 2008 +0900
+summary:     fix typo
+
+changeset:   690:f1ad96b4ccdf
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:20:45 2008 +0900
+summary:     same for single priority
+
+changeset:   689:447e0ef9f5a2
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:20:17 2008 +0900
+summary:     don't mark card modified when updating priorities
+
+changeset:   688:c07dc999a451
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:01:07 2008 +0900
+summary:     fix for suspending cards
+
+changeset:   687:a1730621b2fa
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 05:52:13 2008 +0900
+summary:     in latex code keep win32 code win32 only
+
+changeset:   686:5351ab8ffe26
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 05:45:09 2008 +0900
+summary:     create media dir in latex
+
+changeset:   685:abdfdb8d8259
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:36:31 2008 +0900
+summary:     bump version
+
+changeset:   684:d8e21f20ea13
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:23:12 2008 +0900
+summary:     ease=0 -> interval=1, ensure relativeDelay is defined properly for vhp cards
+
+changeset:   683:210ac919afba
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:22:46 2008 +0900
+summary:     rebuild type on updatePriority() too
+
+changeset:   682:0743d48a5f6a
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:17:27 2008 +0900
+summary:     rebuild types when priorities change
+
+changeset:   681:562e0b7121e2
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:09:17 2008 +0900
+summary:     switch priority direction on new cards, fix indexes, upgrade deck
+
+changeset:   680:630332d5b52e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:08:05 2008 +0900
+summary:     card.toDB(): calculate relative delay based on new interval, not existing
+
+changeset:   679:47b11a72d93e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 13:52:30 2008 +0900
+summary:     encode texpath in file system encoding before calling latex
+
+changeset:   678:8b7e242c5c2c
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 04:10:36 2008 +0900
+summary:     make latex python 2.4 compatible
+
+changeset:   677:6e5256cca4ba
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 03:38:11 2008 +0900
+summary:     update translations
+
+changeset:   676:90385ecde4a2
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 03:37:36 2008 +0900
+summary:     revert to new sync proto
+
+changeset:   675:cdff208f7750
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 03:25:31 2008 +0900
+summary:     hide dos box on win32, use file system encoding on latex file
+
+changeset:   674:98c6d7176e58
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 03:01:39 2008 +0900
+summary:     use subprocess for latex generation, check cached image files better
+
+changeset:   673:b1e5281cc468
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 02:11:45 2008 +0900
+summary:     catch latex/dvipng error messages
+
+changeset:   672:9d9a66c4cc4c
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 01:27:43 2008 +0900
+summary:     add uniqueness check for media dir
+
+changeset:   671:d8412e943854
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 00:39:01 2008 +0900
+summary:     update  kanji stats for libanki
+
+changeset:   670:3279d36b3873
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 16:49:56 2008 +0900
+summary:     remove trailing <p> from finished msg
+
+changeset:   669:4194bf5ab584
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 03:02:05 2008 +0900
+summary:     add old sync code back in until ready to release
+
+changeset:   668:15057e5bfe96
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 02:57:57 2008 +0900
+summary:     when rounding, round to point
+
+changeset:   667:e3eecc872bd9
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 20 23:51:42 2008 +0900
+summary:     fix resetCard(), add deck finished msg
+
+changeset:   666:d10fe7cf68db
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 20 22:33:42 2008 +0900
+summary:     increase number of backups, allow new deck directory to be customized
+
+changeset:   665:0944063a48a9
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 20 15:23:11 2008 +0900
+summary:     put preSyncRefresh() in correct place
+
+changeset:   664:8de167986624
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 00:40:21 2008 +0900
+summary:     use native mac audio
+
+changeset:   663:5f3c43b8e09e
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 00:36:33 2008 +0900
+summary:     make sure to rebuild priorities for client after sync
+
+changeset:   662:a11e5e138913
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 18 17:39:36 2008 +0900
+summary:     catch missing files when queueing
+
+changeset:   661:4c84f8f41e29
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 18 14:56:52 2008 +0900
+summary:     avoid division by zero in markExpiredCardsDue()
+
+changeset:   660:7909069b4b98
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 18 14:34:58 2008 +0900
+summary:     fix previous change
+
+changeset:   659:4a9cebb03bbb
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 18 14:12:11 2008 +0900
+summary:     no need to update _dailyStats, bundle daily stats without orm
+
+changeset:   658:0c41b35558b8
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 18 14:03:57 2008 +0900
+summary:     update stats pre-sync
+
+changeset:   657:af0319d44b8d
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 15 21:11:28 2008 +0900
+summary:     make upgrade more robust, fix sync path
+
+changeset:   656:a7525fc35edd
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 15 17:20:23 2008 +0900
+summary:     typo in getCardIds(), don't sync new deck values yet
+
+changeset:   655:701156cd121f
+parent:      651:5d4b6f4cfeef
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 15 16:36:48 2008 +0900
+summary:     set _countsDirty on open, add getCards(), update updateAllPriorities()
+
+changeset:   654:c55cd3992387
+parent:      651:5d4b6f4cfeef
+parent:      653:4a530339560c
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:48:30 2008 +0900
+summary:     merge
+
+changeset:   653:4a530339560c
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:45:39 2008 +0900
+summary:     don't send version
+
+changeset:   652:f772a8c41ed8
+parent:      643:577fc8703e3e
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:34:23 2008 +0900
+summary:     use an explicit table name to avoid problems accessing old decks
+
+changeset:   651:5d4b6f4cfeef
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:43:59 2008 +0900
+summary:     don't send version number, as it's handled locally
+
+changeset:   650:19bb0dfba67f
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:21:17 2008 +0900
+summary:     remove debugging
+
+changeset:   649:03b8972f5bc7
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:04:50 2008 +0900
+summary:     when rolling back the deck, make sure to clear the session
+
+changeset:   648:0959736b0b6f
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 13:49:51 2008 +0900
+summary:     add final review support, cardsDueBy(), check due + 1 due to integer precision
+
+changeset:   647:14ee60a8146c
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 06 14:35:09 2008 +0900
+summary:     refactor failed card handling
+
+changeset:   646:0a3f138ce999
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 03 16:08:55 2008 +0900
+summary:     update function names
+
+changeset:   645:3e8f51d39c5c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 03 15:54:20 2008 +0900
+summary:     refactor stats code, counts, getCard
+
+changeset:   644:8de7f216a2eb
+parent:      642:e1198518d82f
+parent:      643:577fc8703e3e
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Jul 27 20:15:35 2008 +0900
+summary:     merge with stable
+
+changeset:   643:577fc8703e3e
+parent:      638:d9a10b14042f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Jul 27 20:14:56 2008 +0900
+summary:     add temporary hack to prevent obscure problem with web interface
+
+changeset:   642:e1198518d82f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Jul 27 15:54:57 2008 +0900
+summary:     more sql queue work. update stats and syncing too
+
+changeset:   641:3f7c2ec8f9af
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Jul 21 01:24:19 2008 +0900
+summary:     update stats code for sql only version
+
+changeset:   640:4bedac110b09
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Jul 20 16:15:52 2008 +0900
+summary:     further enhancements to scheduling algo, remove old code
+
+changeset:   639:54f572ab7574
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Jul 18 23:03:15 2008 +0900
+summary:     new scheduling algorithm, getCard/answerCard->non-orm, upgrade deck to v1
+
+changeset:   638:d9a10b14042f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Jul 12 14:03:49 2008 +0900
+summary:     change spacing method
+
+changeset:   637:0a4493ceba9a
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Jul 07 23:46:37 2008 +0900
 summary:     bump version number

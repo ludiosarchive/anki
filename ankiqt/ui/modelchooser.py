@@ -19,6 +19,7 @@ class ModelChooser(QHBoxLayout):
         self.onChangeFunc = onChangeFunc
         self.setMargin(0)
         self.setSpacing(6)
+        self.shortcuts = []
         label = QLabel(_("<b><u>M</u>odel</b>:"))
         self.addWidget(label)
         self.models = QComboBox()
@@ -32,7 +33,7 @@ class ModelChooser(QHBoxLayout):
         self.models.setSizePolicy(sizePolicy)
         self.addWidget(self.models)
         self.add = QPushButton()
-        self.add.setIcon(QIcon(":/icons/add.png"))
+        self.add.setIcon(QIcon(":/icons/list-add.png"))
         self.add.setToolTip(_("Add a new model"))
         self.add.setAutoDefault(False)
         self.addWidget(self.add)
@@ -106,11 +107,22 @@ class ModelChooser(QHBoxLayout):
     def drawCardModels(self):
         if not self.handleCards:
             return
+        # remove any shortcuts
+        for s in self.shortcuts:
+            s.setEnabled(False)
+        self.shortcuts = []
         m = self.deck.currentModel
         txt = ", ".join([c.name for c in m.cardModels if c.active])
         if len(txt) > 30:
             txt = txt[0:30] + "..."
         self.cards.setText(txt)
+        n = 1
+        for c in m.cardModels:
+            s = QShortcut(QKeySequence("Alt+%d" % n), self.parent)
+            self.parent.connect(s, SIGNAL("activated()"),
+                                lambda c=c: self.toggleCard(c))
+            self.shortcuts.append(s)
+            n += 1
 
     def onCardChange(self):
         m = QMenu(self.parent)
@@ -129,18 +141,27 @@ class ModelChooser(QHBoxLayout):
         m.exec_(self.cards.mapToGlobal(QPoint(0,0)))
 
     def cardChangeTriggered(self, bool, action, card):
-        model = self.deck.currentModel
         if bool:
             card.active = True
-            self.deck.currentModel.cardModels.remove(card)
-            self.deck.currentModel.cardModels.append(card)
-        else:
-            active = 0
-            for c in model.cardModels:
-                if c.active:
-                    active += 1
-            if active > 1:
-                card.active = False
+        elif self.canDisableModel():
+            card.active = False
+        self.drawCardModels()
+
+    def canDisableModel(self):
+        active = 0
+        model = self.deck.currentModel
+        for c in model.cardModels:
+            if c.active:
+                active += 1
+        if active > 1:
+            return True
+        return False
+
+    def toggleCard(self, card):
+        if not card.active:
+            card.active = True
+        elif self.canDisableModel():
+            card.active = False
         self.drawCardModels()
 
 class AddModel(QDialog):

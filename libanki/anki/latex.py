@@ -8,7 +8,14 @@ Latex support
 """
 __docformat__ = 'restructuredtext'
 
-import re, tempfile, os, sys
+import re, tempfile, os, sys, subprocess
+from htmlentitydefs import entitydefs
+try:
+    import hashlib
+    md5 = hashlib.md5
+except ImportError:
+    import md5
+    md5 = md5.new
 
 latexPreamble = ("\\documentclass[12pt]{article}\n"
                  "\\special{papersize=3in,5in}"
@@ -16,7 +23,7 @@ latexPreamble = ("\\documentclass[12pt]{article}\n"
                  "\\pagestyle{empty}\n"
                  "\\begin{document}")
 latexPostamble = "\\end{document}"
-latexDviPngCmd = "dvipng -D 200 -T tight"
+latexDviPngCmd = ["dvipng", "-D", "200", "-T", "tight"]
 
 regexps = {
     "standard": re.compile(r"\[latex\](.+?)\[/latex\]", re.DOTALL | re.IGNORECASE),
@@ -52,27 +59,55 @@ def stripLatex(text):
         text = text.replace(match.group(), "")
     return text
 
+def call(*args, **kwargs):
+    try:
+        o = subprocess.Popen(*args, **kwargs)
+    except OSError:
+        # command not found
+        return -1
+    while 1:
+        try:
+            ret = o.wait()
+        except OSError:
+            # interrupted system call
+            continue
+        break
+    return ret
+
 def imgLink(deck, latex):
     "Parse LATEX and return a HTML image representing the output."
-    from htmlentitydefs import entitydefs
     for match in re.compile("&([a-z]+);", re.IGNORECASE).finditer(latex):
         if match.group(1) in entitydefs:
             latex = latex.replace(match.group(), entitydefs[match.group(1)])
     latex = re.sub("<br( /)?>", "\n", latex)
-    name = os.path.join(tmpdir, "%d.png" % hash(latex))
-    log = os.path.join(tmpdir, "latex_log.txt")
-    texpath = os.path.join(tmpdir, "tmp.tex")
-    texfile = file(texpath, "w")
-    texfile.write(latexPreamble + "\n")
-    texfile.write(latex + "\n")
-    texfile.write(latexPostamble + "\n")
-    texfile.close()
-    if not os.path.exists(name):
+    latex = latex.encode("utf-8")
+    imageFile = "latex-%s.png" % md5(latex).hexdigest()
+    imagePath = os.path.join(deck.mediaDir(create=True), imageFile)
+    imagePath = imagePath.encode(sys.getfilesystemencoding())
+    if not os.path.exists(imagePath):
+        log = open(os.path.join(tmpdir, "latex_log.txt"), "w+")
+        texpath = os.path.join(tmpdir, "tmp.tex")
+        texfile = file(texpath, "w")
+        texfile.write(latexPreamble + "\n")
+        texfile.write(latex + "\n")
+        texfile.write(latexPostamble + "\n")
+        texfile.close()
+        texpath = texpath.encode(sys.getfilesystemencoding())
         oldcwd = os.getcwd()
+        if sys.platform == "win32":
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            si = None
         try:
             os.chdir(tmpdir)
-            os.system("latex -interaction=nonstopmode %s >> %s 2>&1" % (texpath, log))
-            os.system(latexDviPngCmd + " tmp.dvi -o %s >> %s" % (name, log))
+            errmsg = _("Error executing 'latex' or 'dvipng' - are they installed?")
+            if call(["latex", "-interaction=nonstopmode",
+                     texpath], stdout=log, stderr=log, startupinfo=si):
+                return errmsg
+            if call(latexDviPngCmd + ["tmp.dvi", "-o", imagePath],
+                    stdout=log, stderr=log, startupinfo=si):
+                return errmsg
         finally:
             os.chdir(oldcwd)
-    return '<img src="%s">' % name
+    return '<img src="%s">' % imageFile

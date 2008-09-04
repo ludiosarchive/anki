@@ -75,9 +75,9 @@ class AnkiExporter(Exporter):
         if not self.includeSchedulingInfo:
             self.newDeck.s.statement("""
 update cards set
-interval = 0,
+interval = 0.001,
 lastInterval = 0,
-due = 0,
+due = created,
 lastDue = 0,
 factor = 2.5,
 firstAnswered = 0,
@@ -97,14 +97,13 @@ matureEase3 = 0,
 matureEase4 = 0,
 yesCount = 0,
 noCount = 0,
+spaceUntil = 0,
+isDue = 1,
+relativeDelay = 0,
+type = 2,
+combinedDue = created,
 modified = :now
 """, now=time.time())
-            # update spacing
-            self.newDeck.s.statement("""
-update facts set
-lastCardId = null,
-spaceUntil = 0,
-modified = :now""", now=time.time())
         # need to save manually
         self.newDeck.s.commit()
         self.newDeck.close()

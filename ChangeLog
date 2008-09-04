@@ -1,5 +1,323 @@
-changeset:   708:9451eae5a208
+changeset:   771:cb95843ba6ec
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 05:23:55 2008 +0900
+summary:     remove debian dir
+
+changeset:   770:35a2f14d440d
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 04:35:41 2008 +0900
+summary:     bump version number
+
+changeset:   769:efa4c5a348dc
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 03:38:51 2008 +0900
+summary:     updated german translations from [Bananeweizen at gmx dot de]
+
+changeset:   768:9075d5825e29
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 02 16:14:09 2008 +0900
+summary:     factor pruneHTML into libanki
+
+changeset:   767:847d8f4cf083
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 23:40:03 2008 +0900
+summary:     update translations
+
+changeset:   766:dbf82a0cb361
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 23:39:46 2008 +0900
+summary:     fix menus
+
+changeset:   765:554a0025ef38
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 19:41:26 2008 +0900
+summary:     bump version number
+
+changeset:   764:c409cc86cd13
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 19:40:58 2008 +0900
+summary:     strip leading/trailing whitespace
+
+changeset:   763:0bddf38529bd
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 18:32:52 2008 +0900
+summary:     fix problems escaping html (causing extra spaces to be inserted)
+
+changeset:   762:0920d0d6c6b4
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 17:50:26 2008 +0900
+summary:     fix problem recording minimum spacing with periods
+
+changeset:   761:44c72b39eeee
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 12:23:15 2008 +0900
+summary:     fix capitalization in menus
+
+changeset:   760:937d1e207f64
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 00:32:55 2008 +0900
+summary:     don't hide last card msg on fin, center msg, only stop double card if not due
+
+changeset:   759:4c6b2407a30d
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 00:17:31 2008 +0900
+summary:     check card dupes via id, not object, reset current card on auto
+
+changeset:   758:049cbcc348a0
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 00:10:03 2008 +0900
+summary:     strip single empty paragraph
+
+changeset:   757:3daa78ee8bd8
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 23:59:49 2008 +0900
+summary:     change html escaping to preserve colours
+
+changeset:   756:30266124390a
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:56:45 2008 +0900
+summary:     update spanish translations
+
+changeset:   755:2f0e3f5a3bc4
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:49:48 2008 +0900
+summary:     bump version number
+
+changeset:   754:a700b3ec1478
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:49:35 2008 +0900
+summary:     make about dialog translatable
+
+changeset:   753:1a4141980049
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:49:18 2008 +0900
+summary:     another patch from Nathanael Law: fix a bug & enable/disable move up/down buttons
+
+changeset:   752:a693cfbcbbad
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 22:48:48 2008 +0900
+summary:     expunge card on answering, since we update db directly
+
+changeset:   751:18bd8dac5361
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 21:29:15 2008 +0900
+summary:     hide edit cards dialog first, to show we've received the event
+
+changeset:   750:b72657d4ef56
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 17:22:11 2008 +0900
+summary:     show full path of recent file in status bar
+
+changeset:   749:733382d7738a
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 31 17:14:32 2008 +0900
+summary:     add support for changing order of card models and field models
+
+changeset:   748:0a43022bc866
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 21:21:10 2008 +0900
+summary:     add comment about having same name
+
+changeset:   747:e4439acc05ed
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 21:10:06 2008 +0900
+summary:     bump version number
+
+changeset:   746:c190c5b3c560
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 20:42:48 2008 +0900
+summary:     change to temp dir before downloading auto updater
+
+changeset:   745:c195b694e298
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 29 20:25:08 2008 +0900
+summary:     fix question/answer regeneration (thanks to nathaneal law)
+
+changeset:   744:543f4cda569c
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 28 17:44:33 2008 +0900
+summary:     model merging
+
+changeset:   743:725e383f8f41
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 19:06:43 2008 +0900
+summary:     call set_menubar_icons() after app init
+
+changeset:   742:394e8a22ce01
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 17:53:06 2008 +0900
+summary:     bump version
+
+changeset:   741:1006b32430e8
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 15:19:20 2008 +0900
+summary:     update the stats whenever getQuestion is called
+
+changeset:   740:c828fb3ef89b
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:58:57 2008 +0900
+summary:     work around an osx bug
+
+changeset:   739:3985b6a1302d
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:02:34 2008 +0900
+summary:     change picture icon again
+
+changeset:   738:b3df7d8ec7db
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:02:27 2008 +0900
+summary:     change i
+
+changeset:   737:d968b7a2dbc6
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:59:27 2008 +0900
+summary:     change icon
+
+changeset:   736:55567faed309
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:52:32 2008 +0900
+summary:     new icons
+
+changeset:   735:4cf70cf64496
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:45:29 2008 +0900
+summary:     new icons, improve integrity check
+
+changeset:   734:89d91e0d3417
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 16:10:53 2008 +0900
+summary:     disable advanced menu when deck not open
+
+changeset:   733:bda2c7cf46b6
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 16:08:17 2008 +0900
+summary:     integrity check, update handling
+
+changeset:   732:b583fe72e197
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:25:19 2008 +0900
+summary:     rename 'ready to add', as silly in editor
+
+changeset:   731:f7e55fb507cd
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 05:53:29 2008 +0900
+summary:     create media dir when latex added
+
+changeset:   730:fcde5237f8c9
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 00:32:02 2008 +0900
+summary:     force info dialog in add cards to a fixed height
+
+changeset:   729:547750d4f09b
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:36:49 2008 +0900
+summary:     bump version number
+
+changeset:   728:9886f22c8158
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:36:10 2008 +0900
+summary:     fix japanese reading shortcut
+
+changeset:   727:1e9d3fa9f9aa
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:23:36 2008 +0900
+summary:     fix undo, update card count when refreshing page
+
+changeset:   726:1e742db56ddd
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 04:11:00 2008 +0900
+summary:     increase size of about box
+
+changeset:   725:fabe74dee1f6
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 03:38:54 2008 +0900
+summary:     update translations
+
+changeset:   724:07593ce4bd07
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 02:19:05 2008 +0900
+summary:     bump version number
+
+changeset:   723:d71740fc991a
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 02:17:23 2008 +0900
+summary:     off by one character movement introduced in qt4.4
+
+changeset:   722:9cebb7e911ab
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 17:53:32 2008 +0900
+summary:     add help for duplicate & missing fields in add cards dialog
+
+changeset:   721:b8b13cc6a780
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 17:24:38 2008 +0900
+summary:     don't change card model order in model selector, add shortcut keys
+
+changeset:   720:31979af1c9ae
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 01:50:06 2008 +0900
+summary:     improve model properties and deck properties dialogs
+
+changeset:   719:bc16d6f69d8a
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 20 23:51:54 2008 +0900
+summary:     factor finished message into library
+
+changeset:   718:94efb87e22bb
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 01:07:37 2008 +0900
+summary:     since I can't keep CREDITS up to date, refer people to the changelog instead
+
+changeset:   717:9483d27b19cf
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 00:50:09 2008 +0900
+summary:     make double click work with chinese models, too
+
+changeset:   716:c69d7ba763dd
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 00:43:37 2008 +0900
+summary:     remove any pyc files before building mac version
+
+changeset:   715:7fb77fee1092
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 18 23:47:51 2008 +0900
+summary:     if sync fails on new, close deck
+
+changeset:   714:62b007f52bc1
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 15 21:14:30 2008 +0900
+summary:     update version
+
+changeset:   713:9b5bce251851
+parent:      711:311dfe083e2c
+parent:      712:30d6e6f86e10
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:17:50 2008 +0900
+summary:     merge
+
+changeset:   712:30d6e6f86e10
+parent:      708:9451eae5a208
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:17:20 2008 +0900
+summary:     add local server for convenience
+
+changeset:   711:311dfe083e2c
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:17:05 2008 +0900
+summary:     don't show same card twice, mark expired due, fix undo, improve congrats screen
+
+changeset:   710:d6762d010ce6
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 03 16:10:19 2008 +0900
+summary:     from hashbang from ankiqt/__init__.py
+
+changeset:   709:89cc676bb1da
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 03 16:08:19 2008 +0900
+summary:     update for new libanki
+
+changeset:   708:9451eae5a208
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Jul 07 23:58:51 2008 +0900
 summary:     default to tray off

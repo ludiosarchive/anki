@@ -367,7 +367,7 @@ class EditDeck(QDialog):
         self.setWindowTitle(_("Anki - Edit Deck (%(cur)d "
                               "of %(tot)d cards shown)") %
                             {"cur": len(self.model.cards),
-                             "tot": self.deck.totalCardCount()})
+                             "tot": self.deck.cardCount()})
 
     def filterTextChanged(self):
         interval = 500
@@ -628,6 +628,7 @@ where id in (%s)""" % ",".join([
         self.updateAfterCardChange(reset=True)
 
     def accept(self):
+        self.hide()
         self.deck.deleteCards(self.model.deleted.keys())
         if len(self.model.deleted):
             self.parent.setStatus(
