@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/main.ui'
 #
 
-#      by: PyQt4 UI code generator 4.3.3
+#      by: PyQt4 UI code generator 4.4.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,17 +12,16 @@ from PyQt4 import QtCore, QtGui
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(QtCore.QSize(QtCore.QRect(0,0,543,400).size()).expandedTo(MainWindow.minimumSizeHint()))
-
+        MainWindow.resize(543,400)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred,QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
-        MainWindow.setWindowIcon(QtGui.QIcon(":/icons/anki.png"))
-
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/anki.png")
+        MainWindow.setWindowIcon(icon)
         self.centralwidget = QtGui.QWidget(MainWindow)
-
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding,QtGui.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
@@ -30,36 +29,27 @@ class Ui_MainWindow(object):
         self.centralwidget.setSizePolicy(sizePolicy)
         self.centralwidget.setAutoFillBackground(True)
         self.centralwidget.setObjectName("centralwidget")
-
         self.hboxlayout = QtGui.QHBoxLayout(self.centralwidget)
         self.hboxlayout.setSpacing(0)
         self.hboxlayout.setMargin(0)
         self.hboxlayout.setObjectName("hboxlayout")
-
         self.mainTextFrame = QtGui.QFrame(self.centralwidget)
-
         palette = QtGui.QPalette()
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Window,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive,QtGui.QPalette.Window,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled,QtGui.QPalette.Window,brush)
@@ -68,14 +58,11 @@ class Ui_MainWindow(object):
         self.mainTextFrame.setFrameShape(QtGui.QFrame.NoFrame)
         self.mainTextFrame.setFrameShadow(QtGui.QFrame.Raised)
         self.mainTextFrame.setObjectName("mainTextFrame")
-
         self.vboxlayout = QtGui.QVBoxLayout(self.mainTextFrame)
         self.vboxlayout.setSpacing(0)
         self.vboxlayout.setMargin(5)
         self.vboxlayout.setObjectName("vboxlayout")
-
         self.mainText = QtGui.QTextBrowser(self.mainTextFrame)
-
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding,QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -90,52 +77,40 @@ class Ui_MainWindow(object):
         self.mainText.setOpenExternalLinks(False)
         self.mainText.setObjectName("mainText")
         self.vboxlayout.addWidget(self.mainText)
-
         self.buttonWidget = QtGui.QWidget(self.mainTextFrame)
         self.buttonWidget.setObjectName("buttonWidget")
         self.vboxlayout.addWidget(self.buttonWidget)
         self.hboxlayout.addWidget(self.mainTextFrame)
-
         self.helpFrame = QtGui.QFrame(self.centralwidget)
         self.helpFrame.setFrameShape(QtGui.QFrame.NoFrame)
         self.helpFrame.setFrameShadow(QtGui.QFrame.Raised)
         self.helpFrame.setObjectName("helpFrame")
-
         self.hboxlayout1 = QtGui.QHBoxLayout(self.helpFrame)
         self.hboxlayout1.setSpacing(0)
         self.hboxlayout1.setMargin(0)
         self.hboxlayout1.setObjectName("hboxlayout1")
-
         self.line = QtGui.QFrame(self.helpFrame)
         self.line.setFrameShape(QtGui.QFrame.VLine)
         self.line.setFrameShadow(QtGui.QFrame.Sunken)
         self.line.setObjectName("line")
         self.hboxlayout1.addWidget(self.line)
-
         self.innerHelpFrame = QtGui.QFrame(self.helpFrame)
-
         palette = QtGui.QPalette()
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,250,230))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Window,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,250,230))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive,QtGui.QPalette.Window,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,250,230))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(207,207,207))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled,QtGui.QPalette.Window,brush)
@@ -144,15 +119,12 @@ class Ui_MainWindow(object):
         self.innerHelpFrame.setFrameShape(QtGui.QFrame.NoFrame)
         self.innerHelpFrame.setFrameShadow(QtGui.QFrame.Raised)
         self.innerHelpFrame.setObjectName("innerHelpFrame")
-
         self.hboxlayout2 = QtGui.QHBoxLayout(self.innerHelpFrame)
         self.hboxlayout2.setSpacing(6)
         self.hboxlayout2.setMargin(9)
         self.hboxlayout2.setObjectName("hboxlayout2")
-
         self.help = QtGui.QTextBrowser(self.innerHelpFrame)
         self.help.setEnabled(True)
-
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -160,17 +132,13 @@ class Ui_MainWindow(object):
         self.help.setSizePolicy(sizePolicy)
         self.help.setMinimumSize(QtCore.QSize(200,0))
         self.help.setMaximumSize(QtCore.QSize(300,16777215))
-
         palette = QtGui.QPalette()
-
         brush = QtGui.QBrush(QtGui.QColor(255,250,230))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(255,250,230))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive,QtGui.QPalette.Base,brush)
-
         brush = QtGui.QBrush(QtGui.QColor(207,207,207))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled,QtGui.QPalette.Base,brush)
@@ -183,171 +151,177 @@ class Ui_MainWindow(object):
         self.hboxlayout1.addWidget(self.innerHelpFrame)
         self.hboxlayout.addWidget(self.helpFrame)
         MainWindow.setCentralWidget(self.centralwidget)
-
         self.menubar = QtGui.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0,0,543,27))
         self.menubar.setObjectName("menubar")
-
         self.menuHelp = QtGui.QMenu(self.menubar)
         self.menuHelp.setObjectName("menuHelp")
-
         self.menuEdit = QtGui.QMenu(self.menubar)
         self.menuEdit.setObjectName("menuEdit")
-
         self.menuDeck = QtGui.QMenu(self.menubar)
         self.menuDeck.setObjectName("menuDeck")
-
         self.menuOpenRecent = QtGui.QMenu(self.menuDeck)
         self.menuOpenRecent.setObjectName("menuOpenRecent")
-
         self.menuTools = QtGui.QMenu(self.menubar)
         self.menuTools.setObjectName("menuTools")
-
         self.menu_Lookup = QtGui.QMenu(self.menuTools)
         self.menu_Lookup.setObjectName("menu_Lookup")
         MainWindow.setMenuBar(self.menubar)
-
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-
         self.toolBar = QtGui.QToolBar(MainWindow)
         self.toolBar.setEnabled(True)
         self.toolBar.setOrientation(QtCore.Qt.Horizontal)
         self.toolBar.setObjectName("toolBar")
         MainWindow.addToolBar(QtCore.Qt.TopToolBarArea,self.toolBar)
-
         self.actionExit = QtGui.QAction(MainWindow)
-        self.actionExit.setIcon(QtGui.QIcon(":/icons/exit.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/exit.png")
+        self.actionExit.setIcon(icon)
         self.actionExit.setObjectName("actionExit")
-
         self.actionNew = QtGui.QAction(MainWindow)
-        self.actionNew.setIcon(QtGui.QIcon(":/icons/filenew.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/filenew.png")
+        self.actionNew.setIcon(icon)
         self.actionNew.setObjectName("actionNew")
-
         self.actionOpen = QtGui.QAction(MainWindow)
-        self.actionOpen.setIcon(QtGui.QIcon(":/icons/fileopen.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/fileopen.png")
+        self.actionOpen.setIcon(icon)
         self.actionOpen.setObjectName("actionOpen")
-
         self.actionClose = QtGui.QAction(MainWindow)
-        self.actionClose.setIcon(QtGui.QIcon(":/icons/fileclose.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/fileclose.png")
+        self.actionClose.setIcon(icon)
         self.actionClose.setObjectName("actionClose")
-
         self.actionSave = QtGui.QAction(MainWindow)
-        self.actionSave.setIcon(QtGui.QIcon(":/icons/filesave.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/filesave.png")
+        self.actionSave.setIcon(icon)
         self.actionSave.setObjectName("actionSave")
-
         self.actionSyncdeck = QtGui.QAction(MainWindow)
-        self.actionSyncdeck.setIcon(QtGui.QIcon(":/icons/multisynk.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/multisynk.png")
+        self.actionSyncdeck.setIcon(icon)
         self.actionSyncdeck.setObjectName("actionSyncdeck")
-
         self.actionAddcards = QtGui.QAction(MainWindow)
-        self.actionAddcards.setIcon(QtGui.QIcon(":/icons/add.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/add.png")
+        self.actionAddcards.setIcon(icon)
         self.actionAddcards.setObjectName("actionAddcards")
-
         self.actionEditdeck = QtGui.QAction(MainWindow)
-        self.actionEditdeck.setIcon(QtGui.QIcon(":/icons/view_text.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/view_text.png")
+        self.actionEditdeck.setIcon(icon)
         self.actionEditdeck.setObjectName("actionEditdeck")
-
         self.actionPreferences = QtGui.QAction(MainWindow)
-        self.actionPreferences.setIcon(QtGui.QIcon(":/icons/configure.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/configure.png")
+        self.actionPreferences.setIcon(icon)
         self.actionPreferences.setObjectName("actionPreferences")
-
         self.actionLookup_expr = QtGui.QAction(MainWindow)
         self.actionLookup_expr.setObjectName("actionLookup_expr")
-
         self.actionLookup_mean = QtGui.QAction(MainWindow)
         self.actionLookup_mean.setObjectName("actionLookup_mean")
-
         self.actionLookup_as = QtGui.QAction(MainWindow)
         self.actionLookup_as.setObjectName("actionLookup_as")
-
         self.actionLookup_es = QtGui.QAction(MainWindow)
         self.actionLookup_es.setObjectName("actionLookup_es")
-
         self.actionLookup_esk = QtGui.QAction(MainWindow)
         self.actionLookup_esk.setObjectName("actionLookup_esk")
-
         self.actionKstats = QtGui.QAction(MainWindow)
-        self.actionKstats.setIcon(QtGui.QIcon(":/icons/kanji.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/kanji.png")
+        self.actionKstats.setIcon(icon)
         self.actionKstats.setObjectName("actionKstats")
-
         self.actionDstats = QtGui.QAction(MainWindow)
-        self.actionDstats.setIcon(QtGui.QIcon(":/icons/spreadsheet.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/spreadsheet.png")
+        self.actionDstats.setIcon(icon)
         self.actionDstats.setObjectName("actionDstats")
-
         self.actionStarthere = QtGui.QAction(MainWindow)
-        self.actionStarthere.setIcon(QtGui.QIcon(":/icons/help.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/help.png")
+        self.actionStarthere.setIcon(icon)
         self.actionStarthere.setObjectName("actionStarthere")
-
         self.actionReportbug = QtGui.QAction(MainWindow)
         self.actionReportbug.setObjectName("actionReportbug")
-
         self.actionAbout = QtGui.QAction(MainWindow)
-        self.actionAbout.setIcon(QtGui.QIcon(":/icons/anki.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/anki.png")
+        self.actionAbout.setIcon(icon)
         self.actionAbout.setObjectName("actionAbout")
-
         self.actionCstats = QtGui.QAction(MainWindow)
-        self.actionCstats.setIcon(QtGui.QIcon(":/icons/package_games_card.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/package_games_card.png")
+        self.actionCstats.setIcon(icon)
         self.actionCstats.setObjectName("actionCstats")
-
         self.actionDeckProperties = QtGui.QAction(MainWindow)
-        self.actionDeckProperties.setIcon(QtGui.QIcon(":/icons/contents.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/contents.png")
+        self.actionDeckProperties.setIcon(icon)
         self.actionDeckProperties.setObjectName("actionDeckProperties")
-
         self.actionImport = QtGui.QAction(MainWindow)
-        self.actionImport.setIcon(QtGui.QIcon(":/icons/fileimport.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/fileimport.png")
+        self.actionImport.setIcon(icon)
         self.actionImport.setObjectName("actionImport")
-
         self.actionGraphs = QtGui.QAction(MainWindow)
-        self.actionGraphs.setIcon(QtGui.QIcon(":/icons/colorscm.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/colorscm.png")
+        self.actionGraphs.setIcon(icon)
         self.actionGraphs.setObjectName("actionGraphs")
-
         self.actionExport = QtGui.QAction(MainWindow)
-        self.actionExport.setIcon(QtGui.QIcon(":/icons/compfile.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/compfile.png")
+        self.actionExport.setIcon(icon)
         self.actionExport.setObjectName("actionExport")
-
         self.actionDisplayProperties = QtGui.QAction(MainWindow)
-        self.actionDisplayProperties.setIcon(QtGui.QIcon(":/icons/fonts.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/fonts.png")
+        self.actionDisplayProperties.setIcon(icon)
         self.actionDisplayProperties.setObjectName("actionDisplayProperties")
-
         self.actionOpenSamples = QtGui.QAction(MainWindow)
         self.actionOpenSamples.setObjectName("actionOpenSamples")
-
         self.actionMarkCard = QtGui.QAction(MainWindow)
         self.actionMarkCard.setCheckable(True)
-        self.actionMarkCard.setIcon(QtGui.QIcon(":/icons/bookmark.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/bookmark.png")
+        self.actionMarkCard.setIcon(icon)
         self.actionMarkCard.setObjectName("actionMarkCard")
-
         self.actionSuspendCard = QtGui.QAction(MainWindow)
-        self.actionSuspendCard.setIcon(QtGui.QIcon(":/icons/player_pause.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/player_pause.png")
+        self.actionSuspendCard.setIcon(icon)
         self.actionSuspendCard.setObjectName("actionSuspendCard")
-
         self.actionModelProperties = QtGui.QAction(MainWindow)
-        self.actionModelProperties.setIcon(QtGui.QIcon(":/icons/kpersonalizer.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/kpersonalizer.png")
+        self.actionModelProperties.setIcon(icon)
         self.actionModelProperties.setObjectName("actionModelProperties")
-
         self.actionRepeatQuestionAudio = QtGui.QAction(MainWindow)
         self.actionRepeatQuestionAudio.setObjectName("actionRepeatQuestionAudio")
-
         self.actionRepeatAnswerAudio = QtGui.QAction(MainWindow)
         self.actionRepeatAnswerAudio.setObjectName("actionRepeatAnswerAudio")
-
         self.actionRepeatAudio = QtGui.QAction(MainWindow)
         self.actionRepeatAudio.setEnabled(False)
-        self.actionRepeatAudio.setIcon(QtGui.QIcon(":/icons/player_play.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/player_play.png")
+        self.actionRepeatAudio.setIcon(icon)
         self.actionRepeatAudio.setObjectName("actionRepeatAudio")
-
         self.actionUndoAnswer = QtGui.QAction(MainWindow)
         self.actionUndoAnswer.setEnabled(False)
-        self.actionUndoAnswer.setIcon(QtGui.QIcon(":/icons/undo.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/undo.png")
+        self.actionUndoAnswer.setIcon(icon)
         self.actionUndoAnswer.setObjectName("actionUndoAnswer")
-
         self.actionForum = QtGui.QAction(MainWindow)
         self.actionForum.setObjectName("actionForum")
-
         self.actionSaveAs = QtGui.QAction(MainWindow)
-        self.actionSaveAs.setIcon(QtGui.QIcon(":/icons/filesave.png"))
+        icon = QtGui.QIcon()
+        icon.addFile(":/icons/filesave.png")
+        self.actionSaveAs.setIcon(icon)
         self.actionSaveAs.setObjectName("actionSaveAs")
         self.menuHelp.addAction(self.actionStarthere)
         self.menuHelp.addSeparator()

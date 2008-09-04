@@ -58,7 +58,8 @@ class DeckProperties(QDialog):
         self.dialog.delay0.setText(unicode(self.d.delay0/60.0))
         self.dialog.delay1.setText(unicode(self.d.delay1/60.0))
         self.dialog.delay2.setText(unicode(self.d.delay2/60.0))
-        self.dialog.collapse.setText(unicode(self.d.collapseTime/60.0/60.0))
+        self.dialog.collapse.setCheckState(self.d.collapseTime
+                                           and Qt.Checked or Qt.Unchecked)
         self.dialog.failedCardMax.setText(unicode(self.d.failedCardMax))
         self.dialog.newCardOrder.setCurrentIndex(self.d.newCardOrder)
         # models
@@ -157,12 +158,12 @@ class DeckProperties(QDialog):
             self.updateField(self.d, 'delay1', v)
             v = float(self.dialog.delay2.text()) * 60.0
             self.updateField(self.d, 'delay2', v)
-            v = float(self.dialog.collapse.text()) * 60.0 * 60.0
-            self.updateField(self.d, 'collapseTime', v)
             v = int(self.dialog.failedCardMax.text())
             self.updateField(self.d, 'failedCardMax', v)
         except ValueError:
             pass
+        self.updateField(self.d, 'collapseTime',
+                         self.dialog.collapse.isChecked() and 1 or 0)
         self.updateField(self.d,
                          "highPriority",
                          unicode(self.dialog.highPriority.text()))

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
@@ -7,7 +6,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.6"
+appVersion="0.9.7"
 appWebsite="http://ichi2.net/anki/download/"
 appHelpSite="http://ichi2.net/anki/wiki/Documentation"
 appIssueTracker="http://code.google.com/p/anki/issues/list"

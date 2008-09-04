@@ -15,7 +15,6 @@ from anki import DeckStorage
 from anki.errors import *
 from anki.sound import hasSound, playFromText
 from anki.utils import addTags, deleteTags
-from anki.deck import FutureItem
 import anki.lang
 import ankiqt
 ui = ankiqt.ui
@@ -134,12 +133,12 @@ class AnkiQt(QMainWindow):
             # hide all deck-associated dialogs
             ui.dialogs.closeAll()
         elif state == "getQuestion":
-            if self.deck.totalCardCount() == 0:
+            if self.deck.cardCount() == 0:
                 return self.moveToState("deckEmpty")
             else:
                 if not self.currentCard:
                     self.currentCard = self.deck.getCard()
-                if self.currentCard:
+                if self.currentCard and self.currentCard != self.lastCard:
                     self.enableCardMenuItems()
                     return self.moveToState("showQuestion")
                 else:
@@ -228,8 +227,9 @@ class AnkiQt(QMainWindow):
     def refreshStatus(self):
         "If triggered when the deck is finished, reset state."
         if self.state == "deckFinished":
+            # don't try refresh if the deck is closed during a sync
             if self.deck:
-                # don't try refresh if the deck is closed during a sync
+                self.deck.markExpiredCardsDue()
                 self.moveToState("getQuestion")
         if self.state != "deckFinished":
             if self.refreshTimer:
@@ -606,8 +606,8 @@ class AnkiQt(QMainWindow):
             self.deck.lastLoaded = self.deck.modified
             self.deck.s.flush()
             self.deck.s.commit()
-            self.syncDeck(onlyMerge=True)
-            return
+            if self.syncDeck(onlyMerge=True):
+                return
         self.deck = None
         self.moveToState("initial")
 
@@ -865,7 +865,8 @@ class AnkiQt(QMainWindow):
         self.lastCard.successive = self.lastCard.oldSuccessive
         self.lastCard.reps -= 1
         self.lastCard.factor = self.lastCard.oldFactor
-        self.deck.s.flush()
+        self.lastCard.isDue = 1
+        self.lastCard.toDB(self.deck.s)
         self.reset()
 
     # Other menu operations
@@ -1102,8 +1103,8 @@ class AnkiQt(QMainWindow):
                 # FIXME: safe to assume filesystem is utf-8?
                 "path": deckpath,
                 "title": title,
-                "cards": self.deck.totalCardCount(),
-                "facts": self.deck.totalFactCount(),
+                "cards": self.deck.cardCount(),
+                "facts": self.deck.factCount(),
                 }
         self.setWindowTitle(title)
 

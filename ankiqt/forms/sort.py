@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/sort.ui'
 #
 
-#      by: PyQt4 UI code generator 4.3.3
+#      by: PyQt4 UI code generator 4.4.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,21 +12,17 @@ from PyQt4 import QtCore, QtGui
 class Ui_Sort(object):
     def setupUi(self, Sort):
         Sort.setObjectName("Sort")
-        Sort.resize(QtCore.QSize(QtCore.QRect(0,0,425,358).size()).expandedTo(Sort.minimumSizeHint()))
-
+        Sort.resize(425,358)
         self.vboxlayout = QtGui.QVBoxLayout(Sort)
         self.vboxlayout.setMargin(9)
         self.vboxlayout.setSpacing(20)
         self.vboxlayout.setObjectName("vboxlayout")
-
         self.label = QtGui.QLabel(Sort)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setWordWrap(True)
         self.label.setObjectName("label")
         self.vboxlayout.addWidget(self.label)
-
         self.fields = QtGui.QListWidget(Sort)
-
         font = QtGui.QFont()
         font.setPointSize(12)
         self.fields.setFont(font)
@@ -34,7 +30,6 @@ class Ui_Sort(object):
         self.fields.setTabKeyNavigation(True)
         self.fields.setObjectName("fields")
         self.vboxlayout.addWidget(self.fields)
-
         self.buttonBox = QtGui.QDialogButtonBox(Sort)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.NoButton|QtGui.QDialogButtonBox.Ok)

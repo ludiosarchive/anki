@@ -48,7 +48,7 @@ class View(object):
         self.clearWindow()
         self.setBackgroundColour()
         self.maybeHelp()
-        if self.main.deck.totalCardCount():
+        if self.main.deck.cardCount():
             if not self.main.lastCard or (
                 self.main.config['suppressLastCardContent'] and
                 self.main.config['suppressLastCardInterval']):
@@ -158,7 +158,7 @@ class View(object):
                             "<b>%(next)s</b>.") % \
                             {"next":self.main.lastScheduledTime}
                 else:
-                    msg = _("This card will appear again in "
+                    msg = _("This card will appear again in less than "
                             "<b>%(next)s</b>.") % \
                             {"next":self.main.lastScheduledTime}
                 self.write(msg)
@@ -264,20 +264,5 @@ card' from the Edit menu."""))
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."
-        next = self.main.deck.earliestTimeStr()
-        suspended = self.main.deck.suspendedCardCount()
-        waiting = self.main.deck.spacedCardCount()
         self.clearWindow()
-        self.write(_("""
-<h1>Congratulations!</h1>You have finished the deck for now.<br>
-The next question will be shown in <b>%(next)s</b>.<p>
-There are %(waiting)d
-<a href="http://ichi2.net/anki/wiki/FrequentlyAskedQuestions#head-ef653836eaddb2b9c1af6b8fa56bcea458a04c20">spaced</a> cards.<br>
-There are %(suspended)d suspended cards.<p>
-Spaced cards are cards that won't be shown for a while, because you have seen<br>
-a related card recently. Suspended cards are cards removed from the learning<br>
-process - they won't be shown until you unsuspend them.""") % {
-    "next": next,
-    "suspended": suspended,
-    "waiting": waiting,
-    })
+        self.write(self.main.deck.deckFinishedMsg())

@@ -250,5 +250,5 @@ mapper(Model, modelsTable, properties={
 modelsDeletedTable = Table(
     'modelsDeleted', metadata,
     Column('modelId', Integer, ForeignKey("models.id"),
-           nullable=False, index=True),
+           nullable=False),
     Column('deletedTime', Float, nullable=False))

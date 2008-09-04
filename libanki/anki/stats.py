@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 STATS_LIFE = 0
 STATS_DAY = 1
 
-import unicodedata, time, sys, os
+import unicodedata, time, sys, os, datetime
 import anki, anki.utils
 from datetime import date
 from anki.db import *
@@ -25,7 +25,6 @@ statsTable = Table(
     'stats', metadata,
     Column('id', Integer, primary_key=True),
     Column('type', Integer, nullable=False),
-    # for LIFE, update to time of first review?
     Column('day', Date, nullable=False, default=date.today),
     Column('reps', Integer, nullable=False, default=0),
     Column('averageTime', Float, nullable=False, default=0),
@@ -49,19 +48,104 @@ statsTable = Table(
     Column('matureEase4', Integer, nullable=False, default=0))
 
 class Stats(object):
-    def __init__(self, type):
+    def __init__(self):
+        self.day = date.today()
+        self.reps = 0
+        self.averageTime = 0
+        self.reviewTime = 0
+        self.distractedTime = 0
+        self.distractedReps = 0
+        self.newEase0 = 0
+        self.newEase1 = 0
+        self.newEase2 = 0
+        self.newEase3 = 0
+        self.newEase4 = 0
+        self.youngEase0 = 0
+        self.youngEase1 = 0
+        self.youngEase2 = 0
+        self.youngEase3 = 0
+        self.youngEase4 = 0
+        self.matureEase0 = 0
+        self.matureEase1 = 0
+        self.matureEase2 = 0
+        self.matureEase3 = 0
+        self.matureEase4 = 0
+
+    def fromDB(self, s, id):
+        r = s.first("select * from stats where id = :id", id=id)
+        (self.id,
+         self.type,
+         self.day,
+         self.reps,
+         self.averageTime,
+         self.reviewTime,
+         self.distractedTime,
+         self.distractedReps,
+         self.newEase0,
+         self.newEase1,
+         self.newEase2,
+         self.newEase3,
+         self.newEase4,
+         self.youngEase0,
+         self.youngEase1,
+         self.youngEase2,
+         self.youngEase3,
+         self.youngEase4,
+         self.matureEase0,
+         self.matureEase1,
+         self.matureEase2,
+         self.matureEase3,
+         self.matureEase4) = r
+        self.day = datetime.date(*[int(i) for i in self.day.split("-")])
+
+    def create(self, s, type, day):
         self.type = type
-        if type == STATS_LIFE:
-            self.id = 1
+        self.day = day
+        s.execute("""insert into stats
+(type, day, reps, averageTime, reviewTime, distractedTime, distractedReps,
+newEase0, newEase1, newEase2, newEase3, newEase4, youngEase0, youngEase1,
+youngEase2, youngEase3, youngEase4, matureEase0, matureEase1, matureEase2,
+matureEase3, matureEase4) values (:type, :day, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)""", self.__dict__)
+        self.id = s.scalar(
+            "select id from stats where type = :type and day = :day",
+            type=type, day=day)
+
+    def toDB(self, s):
+        assert self.id
+        s.execute("""update stats set
+type=:type,
+day=:day,
+reps=:reps,
+averageTime=:averageTime,
+reviewTime=:reviewTime,
+distractedTime=:distractedTime,
+distractedReps=:distractedReps,
+newEase0=:newEase0,
+newEase1=:newEase1,
+newEase2=:newEase2,
+newEase3=:newEase3,
+newEase4=:newEase4,
+youngEase0=:youngEase0,
+youngEase1=:youngEase1,
+youngEase2=:youngEase2,
+youngEase3=:youngEase3,
+youngEase4=:youngEase4,
+matureEase0=:matureEase0,
+matureEase1=:matureEase1,
+matureEase2=:matureEase2,
+matureEase3=:matureEase3,
+matureEase4=:matureEase4
+where id = :id""", self.__dict__)
 
 mapper(Stats, statsTable)
 
-def updateAllStats(s, card, ease, oldState):
+def updateAllStats(s, gs, ds, card, ease, oldState):
     "Update global and daily statistics."
-    updateStats(globalStats(s), card, ease, oldState)
-    updateStats(dailyStats(s), card, ease, oldState)
+    updateStats(s, gs, card, ease, oldState)
+    updateStats(s, ds, card, ease, oldState)
 
-def updateStats(stats, card, ease, oldState):
+def updateStats(s, stats, card, ease, oldState):
     stats.reps += 1
     delay = card.thinkingTime()
     if delay >= 60:
@@ -76,22 +160,34 @@ def updateStats(stats, card, ease, oldState):
     # update eases
     attr = oldState + "Ease%d" % ease
     setattr(stats, attr, getattr(stats, attr) + 1)
+    stats.toDB(s)
 
 def globalStats(s):
-    glob = s.query(Stats).get(1)
-    if not glob:
-        glob = Stats(STATS_LIFE)
-        s.save(glob)
-        s.flush()
-    return glob
+    type = STATS_LIFE
+    today = date.today()
+    id = s.scalar("select id from stats where type = :type",
+                  type=type)
+    stats = Stats()
+    if id:
+        stats.fromDB(s, id)
+        return stats
+    else:
+        stats.create(s, type, today)
+    stats.type = type
+    return stats
 
 def dailyStats(s):
-    today = s.query(Stats).filter_by(type=1).filter_by(day=date.today()).first()
-    if not today:
-        today = Stats(STATS_DAY)
-        s.save(today)
-        s.flush()
-    return today
+    type = STATS_DAY
+    today = date.today()
+    id = s.scalar("select id from stats where type = :type and day = :day",
+                  type=type, day=today)
+    stats = Stats()
+    if id:
+        stats.fromDB(s, id)
+        return stats
+    else:
+        stats.create(s, type, today)
+    return stats
 
 def summarizeStats(stats, pre=""):
     "Generate percentages and total counts for STATS. Optionally prefix."
@@ -142,12 +238,11 @@ def setPercentage(h, a, b):
     except ZeroDivisionError:
         h[a + "%"] = 0
 
-def getStats(s):
+def getStats(s, gs, ds):
     "Return a handy dictionary exposing a number of internal stats."
     h = {}
-    h.update(summarizeStats(globalStats(s), "g"))
-    h.update(summarizeStats(dailyStats(s), "d"))
-
+    h.update(summarizeStats(gs, "g"))
+    h.update(summarizeStats(ds, "d"))
     return h
 
 # Card stats
@@ -226,7 +321,7 @@ class DeckStats(object):
         d = self.deck
         html="<h1>" + _("Deck Statistics") + "</h1>"
         html += _("Deck created: <b>%s</b> ago<br>") % self.createdTimeStr()
-        total = d.totalCardCount()
+        total = d.cardCount()
         new = d.newCardCount()
         young = d.youngCardCount()
         old = d.matureCardCount()
@@ -255,7 +350,7 @@ class DeckStats(object):
         html += _("First-seen cards: <b>%(gNewYes%)0.1f%%</b> "
                   "(<b>%(gNewYes)d</b> of <b>%(gNewTotal)d</b>)<br><br>") % stats
         # average pending time
-        existing = d.totalCardCount() - d.newCardCount()
+        existing = d.cardCount() - d.newCardCount()
         avgInt = self.getAverageInterval()
         if existing and avgInt:
             html += _("<b>Averages</b><br>")
@@ -297,7 +392,7 @@ class DeckStats(object):
 
     def newPerDay(self):
         "Average number of new cards added each day."
-        return self.deck.totalCardCount() / max(1, self.ageInDays())
+        return self.deck.cardCount() / max(1, self.ageInDays())
 
     def createdTimeStr(self):
         return anki.utils.fmtTimeSpan(time.time() - self.deck.created)
@@ -375,7 +470,7 @@ cards.factId = fields.factId
         counts = [(name, len(found), len(all)) \
                   for (name, all), found in zip(self.kanjiGrades, self.kanjiSets)]
         out = (_("<h1>Kanji statistics</h1>The %d seen cards in this deck "
-                 "contain:") % self.deck.oldCardCount() +
+                 "contain:") % self.deck.seenCardCount() +
                "<br/><ul>" +
                # total kanji
                _("<li>%d total unique kanji.</li>") %

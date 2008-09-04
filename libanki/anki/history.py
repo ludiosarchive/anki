@@ -45,4 +45,26 @@ class CardHistoryEntry(object):
         self.delay = delay
         self.thinkingTime = card.thinkingTime()
 
+    def writeSQL(self, s):
+        s.statement("""
+insert into reviewHistory
+(cardId, lastInterval, nextInterval, ease, delay, lastFactor,
+nextFactor, reps, thinkingTime, yesCount, noCount, time)
+values (
+:cardId, :lastInterval, :nextInterval, :ease, :delay,
+:lastFactor, :nextFactor, :reps, :thinkingTime, :yesCount, :noCount,
+:time)""",
+                    cardId=self.cardId,
+                    lastInterval=self.lastInterval,
+                    nextInterval=self.nextInterval,
+                    ease=self.ease,
+                    delay=self.delay,
+                    lastFactor=self.lastFactor,
+                    nextFactor=self.nextFactor,
+                    reps=self.reps,
+                    thinkingTime=self.thinkingTime,
+                    yesCount=self.yesCount,
+                    noCount=self.noCount,
+                    time=time.time())
+
 mapper(CardHistoryEntry, reviewHistoryTable)

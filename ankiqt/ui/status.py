@@ -117,7 +117,7 @@ class StatusView(object):
 
     def redraw(self):
         p = QPalette()
-        stats = self.main.deck.getStats(self.main.currentCard)
+        stats = self.main.deck.getStats()
         remStr = _("Remaining: ")
         if self.state == "deckFinished":
             self.mode.setStyleSheet("background: #aaffaa;")

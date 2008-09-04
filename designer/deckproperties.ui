@@ -8,8 +8,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>491</width>
-    <height>535</height>
+    <width>523</width>
+    <height>575</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -22,6 +22,14 @@
       <number>0</number>
      </property>
      <widget class="QWidget" name="tab" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>501</width>
+        <height>493</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>Description &amp;&amp; Synchronisation</string>
       </attribute>
@@ -29,16 +37,7 @@
        <property name="spacing" >
         <number>6</number>
        </property>
-       <property name="leftMargin" >
-        <number>6</number>
-       </property>
-       <property name="topMargin" >
-        <number>6</number>
-       </property>
-       <property name="rightMargin" >
-        <number>6</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>6</number>
        </property>
        <item>
@@ -91,29 +90,38 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_4" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>501</width>
+        <height>493</height>
+       </rect>
+      </property>
       <attribute name="title" >
-       <string>Priorities &amp;&amp; Postponing</string>
+       <string>Priorities &amp;&amp; Suspending</string>
       </attribute>
       <layout class="QVBoxLayout" >
        <property name="spacing" >
         <number>6</number>
        </property>
-       <property name="leftMargin" >
-        <number>6</number>
-       </property>
-       <property name="topMargin" >
-        <number>6</number>
-       </property>
-       <property name="rightMargin" >
-        <number>6</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>6</number>
        </property>
        <item>
+        <widget class="QLabel" name="label_16" >
+         <property name="text" >
+          <string>&lt;h1>Priorities&lt;/h1>A comma-separated list of tags to prioritize or deprioritize&lt;a href="http://ichi2.net/anki/wiki/Priorities">?&lt;/a></string>
+         </property>
+         <property name="openExternalLinks" >
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label_21" >
          <property name="text" >
-          <string>&lt;h1>Very high priority&lt;/h1>A comma-separated list of tags to prioritize. Matching cards are placed at the top of the revision queue.</string>
+          <string>&lt;h2>Very high priority&lt;/h2></string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>
@@ -126,7 +134,7 @@
        <item>
         <widget class="QLabel" name="label_17" >
          <property name="text" >
-          <string>&lt;h1>High priority&lt;/h1>Matching cards are placed at the top of the revision queue or new card queue, depending on if they have been seen before.</string>
+          <string>&lt;h2>High priority&lt;/h2></string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>
@@ -139,7 +147,7 @@
        <item>
         <widget class="QLabel" name="label_24" >
          <property name="text" >
-          <string>&lt;h1>Low priority&lt;/h1>Matching cards are placed at the bottom of the new card queue.</string>
+          <string>&lt;h2>Low priority&lt;/h2></string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>
@@ -152,7 +160,7 @@
        <item>
         <widget class="QLabel" name="label_23" >
          <property name="text" >
-          <string>&lt;h1>Postponing&lt;/h1>Any matching cards will not be shown until unsuspended. The web and phone interfaces automatically add 'noweb' and 'nophone' - give these tags to your cards to prevent them from showing on the phone or web interface.</string>
+          <string>&lt;h2>Suspended&lt;/h2></string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>
@@ -167,7 +175,7 @@
          <property name="orientation" >
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" >
+         <property name="sizeHint" stdset="0" >
           <size>
            <width>20</width>
            <height>40</height>
@@ -178,6 +186,14 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_2" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>501</width>
+        <height>493</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>Scheduling</string>
       </attribute>
@@ -185,16 +201,7 @@
        <property name="spacing" >
         <number>6</number>
        </property>
-       <property name="leftMargin" >
-        <number>6</number>
-       </property>
-       <property name="topMargin" >
-        <number>6</number>
-       </property>
-       <property name="rightMargin" >
-        <number>6</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>6</number>
        </property>
        <item>
@@ -215,22 +222,10 @@
        </item>
        <item>
         <layout class="QGridLayout" >
-         <property name="leftMargin" >
+         <property name="margin" >
           <number>0</number>
          </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
-          <number>0</number>
-         </property>
-         <property name="horizontalSpacing" >
-          <number>6</number>
-         </property>
-         <property name="verticalSpacing" >
+         <property name="spacing" >
           <number>6</number>
          </property>
          <item row="0" column="0" >
@@ -342,7 +337,7 @@
            <property name="sizeType" >
             <enum>QSizePolicy::Fixed</enum>
            </property>
-           <property name="sizeHint" >
+           <property name="sizeHint" stdset="0" >
             <size>
              <width>180</width>
              <height>20</height>
@@ -367,22 +362,10 @@
        </item>
        <item>
         <layout class="QGridLayout" >
-         <property name="leftMargin" >
+         <property name="margin" >
           <number>0</number>
          </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
-          <number>0</number>
-         </property>
-         <property name="horizontalSpacing" >
-          <number>6</number>
-         </property>
-         <property name="verticalSpacing" >
+         <property name="spacing" >
           <number>6</number>
          </property>
          <item row="0" column="0" >
@@ -397,7 +380,7 @@
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
-           <property name="sizeHint" >
+           <property name="sizeHint" stdset="0" >
             <size>
              <width>40</width>
              <height>20</height>
@@ -408,7 +391,10 @@
          <item row="1" column="0" >
           <widget class="QLabel" name="label_22" >
            <property name="text" >
-            <string>&lt;b>Made a mistake (1) on a young card</string>
+            <string>&lt;b>Made a mistake (1) on a young&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-3b268fd372f260751f5e9020a79d54a4f68e1829">?&lt;/a> card</string>
+           </property>
+           <property name="openExternalLinks" >
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -417,7 +403,7 @@
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
-           <property name="sizeHint" >
+           <property name="sizeHint" stdset="0" >
             <size>
              <width>40</width>
              <height>20</height>
@@ -448,7 +434,10 @@
          <item row="2" column="0" >
           <widget class="QLabel" name="label_19" >
            <property name="text" >
-            <string>&lt;b>Made a mistake (1) on a mature card&lt;/b></string>
+            <string>&lt;b>Made a mistake (1) on a mature&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-3b268fd372f260751f5e9020a79d54a4f68e1829">?&lt;/a> card&lt;/b></string>
+           </property>
+           <property name="openExternalLinks" >
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -457,7 +446,7 @@
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
-           <property name="sizeHint" >
+           <property name="sizeHint" stdset="0" >
             <size>
              <width>40</width>
              <height>20</height>
@@ -480,51 +469,41 @@
        <item>
         <widget class="QLabel" name="label_25" >
          <property name="text" >
-          <string>&lt;h1>Final drill &amp; failed card limit&lt;/h1></string>
+          <string>&lt;h1>Failed card limit &amp; collapsing&lt;/h1></string>
          </property>
         </widget>
        </item>
        <item>
         <layout class="QGridLayout" >
          <item row="0" column="0" >
-          <widget class="QLabel" name="label_26" >
+          <widget class="QLabel" name="label_12" >
            <property name="text" >
-            <string>The number of hours to collapse in the final drill. Use 0 to disable.</string>
+            <string>&lt;b>Maximum failed cards&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-e081bb818555df4a9fd06e16e685835a95303e0c">?&lt;/a>&lt;/b></string>
+           </property>
+           <property name="openExternalLinks" >
+            <bool>true</bool>
            </property>
           </widget>
          </item>
          <item row="0" column="1" >
-          <spacer>
-           <property name="orientation" >
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" >
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="0" column="2" >
-          <widget class="QLineEdit" name="collapse" >
-           <property name="sizePolicy" >
-            <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="failedCardMax" />
          </item>
          <item row="1" column="0" >
-          <widget class="QLabel" name="label_12" >
+          <widget class="QLabel" name="label_26" >
            <property name="text" >
-            <string>The maximum number of failed cards to allow at once.</string>
+            <string>&lt;b>Show failed cards early&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-c34f83f4acaf3d9a8f59dcff02dd6abec930ebaf">?&lt;/a>&lt;/b></string>
+           </property>
+           <property name="openExternalLinks" >
+            <bool>true</bool>
            </property>
           </widget>
          </item>
-         <item row="1" column="2" >
-          <widget class="QLineEdit" name="failedCardMax" />
+         <item row="1" column="1" >
+          <widget class="QCheckBox" name="collapse" >
+           <property name="text" >
+            <string/>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -534,9 +513,9 @@
           <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeType" >
-          <enum>QSizePolicy::Preferred</enum>
+          <enum>QSizePolicy::Expanding</enum>
          </property>
-         <property name="sizeHint" >
+         <property name="sizeHint" stdset="0" >
           <size>
            <width>20</width>
            <height>20</height>
@@ -547,6 +526,14 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_3" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>501</width>
+        <height>493</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>Models</string>
       </attribute>
@@ -554,16 +541,7 @@
        <property name="spacing" >
         <number>6</number>
        </property>
-       <property name="leftMargin" >
-        <number>6</number>
-       </property>
-       <property name="topMargin" >
-        <number>6</number>
-       </property>
-       <property name="rightMargin" >
-        <number>6</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>6</number>
        </property>
        <item>
@@ -584,16 +562,7 @@
          <property name="spacing" >
           <number>6</number>
          </property>
-         <property name="leftMargin" >
-          <number>0</number>
-         </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
+         <property name="margin" >
           <number>0</number>
          </property>
          <item>
@@ -654,8 +623,8 @@
   <tabstop>delay0</tabstop>
   <tabstop>delay1</tabstop>
   <tabstop>delay2</tabstop>
-  <tabstop>collapse</tabstop>
   <tabstop>failedCardMax</tabstop>
+  <tabstop>collapse</tabstop>
   <tabstop>modelsList</tabstop>
   <tabstop>modelsAdd</tabstop>
   <tabstop>modelsEdit</tabstop>

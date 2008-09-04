@@ -245,7 +245,8 @@ class Anki03Importer(Importer):
         deck.lowPriority = u", ".join(oldDeck.sched.lowPriority)
         deck.suspended = u", ".join(oldDeck.sched.suspendedTags)
         # scheduler global stats
-        stats = Stats(STATS_LIFE)
+        stats = Stats()
+        stats.create(deck.s, 0, datetime.date.today())
         stats.day = datetime.date.fromtimestamp(oldDeck.created)
         stats.averageTime = oldDeck.sched.globalStats['averageTime']
         stats.reviewTime = oldDeck.sched.globalStats['totalTime']
@@ -273,7 +274,7 @@ class Anki03Importer(Importer):
                    oldDeck.sched.globalStats['young']['no'] +
                    oldDeck.sched.globalStats['old']['no'])
         stats.reps = yesCount + noCount
-        s.save(stats)
+        stats.toDB(deck.s)
         # ignore daily stats & history, they make no sense on new version
         s.flush()
         deck.updateAllPriorities()

@@ -1,5 +1,98 @@
-changeset:   708:9451eae5a208
+changeset:   726:1e742db56ddd
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 04:11:00 2008 +0900
+summary:     increase size of about box
+
+changeset:   725:fabe74dee1f6
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 03:38:54 2008 +0900
+summary:     update translations
+
+changeset:   724:07593ce4bd07
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 02:19:05 2008 +0900
+summary:     bump version number
+
+changeset:   723:d71740fc991a
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 02:17:23 2008 +0900
+summary:     off by one character movement introduced in qt4.4
+
+changeset:   722:9cebb7e911ab
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 17:53:32 2008 +0900
+summary:     add help for duplicate & missing fields in add cards dialog
+
+changeset:   721:b8b13cc6a780
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 17:24:38 2008 +0900
+summary:     don't change card model order in model selector, add shortcut keys
+
+changeset:   720:31979af1c9ae
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 21 01:50:06 2008 +0900
+summary:     improve model properties and deck properties dialogs
+
+changeset:   719:bc16d6f69d8a
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Aug 20 23:51:54 2008 +0900
+summary:     factor finished message into library
+
+changeset:   718:94efb87e22bb
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 01:07:37 2008 +0900
+summary:     since I can't keep CREDITS up to date, refer people to the changelog instead
+
+changeset:   717:9483d27b19cf
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 00:50:09 2008 +0900
+summary:     make double click work with chinese models, too
+
+changeset:   716:c69d7ba763dd
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Aug 19 00:43:37 2008 +0900
+summary:     remove any pyc files before building mac version
+
+changeset:   715:7fb77fee1092
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 18 23:47:51 2008 +0900
+summary:     if sync fails on new, close deck
+
+changeset:   714:62b007f52bc1
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 15 21:14:30 2008 +0900
+summary:     update version
+
+changeset:   713:9b5bce251851
+parent:      711:311dfe083e2c
+parent:      712:30d6e6f86e10
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:17:50 2008 +0900
+summary:     merge
+
+changeset:   712:30d6e6f86e10
+parent:      708:9451eae5a208
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:17:20 2008 +0900
+summary:     add local server for convenience
+
+changeset:   711:311dfe083e2c
+user:        Damien Elmes <hg@repose.cx>
+date:        Thu Aug 14 15:17:05 2008 +0900
+summary:     don't show same card twice, mark expired due, fix undo, improve congrats screen
+
+changeset:   710:d6762d010ce6
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 03 16:10:19 2008 +0900
+summary:     from hashbang from ankiqt/__init__.py
+
+changeset:   709:89cc676bb1da
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 03 16:08:19 2008 +0900
+summary:     update for new libanki
+
+changeset:   708:9451eae5a208
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Jul 07 23:58:51 2008 +0900
 summary:     default to tray off

@@ -26,7 +26,7 @@ def fmtTimeSpan(time, pad=0, point=0):
     "Return a string representing a time span (eg '2 days')."
     (type, point) = optimalPeriod(time, point)
     time = convertSecondsTo(time, type)
-    fmt = timeTable[type](_pluralCount(round(time)))
+    fmt = timeTable[type](_pluralCount(round(time, point)))
     timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
     return ("%" + (fmt % timestr)) % time
 

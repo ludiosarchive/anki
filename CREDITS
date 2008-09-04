@@ -1,22 +1,3 @@
-Details of who contributed what can be found in the ChangeLog history. Special
-mention:
-
-"Lac":
-- significant improvements to the original wx version, including major changes
-to the edit card dialog (searching, speedups, etc), and mac specific fixes
-- built and maintained the mac version until fc became anki, and offered lots
-of useful input into how things work on the mac.
-- improved hiragana generation with kakasi
-- wrote most of the original kanji stats
-
-"Iroiro":
-- a number of bugfixes, most of the original kanji occurrences code
-
-"Frostschutz":
-- some bugfixes, lots of testing, and constantly trying to donate
-
-All of the translators have been a great help, too:
-
-* Laurent Steffan
-* Andreas Klauer
-* "Pcsl"
+Many people have contributed bug reports, patches and feature suggestions.
+Thanks also to those who have donated or provided translations. Further detail
+is available in the changelog.

@@ -367,7 +367,7 @@ class EditDeck(QDialog):
         self.setWindowTitle(_("Anki - Edit Deck (%(cur)d "
                               "of %(tot)d cards shown)") %
                             {"cur": len(self.model.cards),
-                             "tot": self.deck.totalCardCount()})
+                             "tot": self.deck.cardCount()})
 
     def filterTextChanged(self):
         interval = 500

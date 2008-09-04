@@ -215,6 +215,11 @@ class FactEditor(object):
         # update available tags
         self.tags.setDeck(self.deck)
         self.fieldsGrid.addWidget(self.tags, n, 1)
+        # status warning
+        n += 1
+        self.warning = QLabel()
+        self.warning.setOpenExternalLinks(True)
+        self.fieldsGrid.addWidget(self.warning, n, 1)
         # update fields
         self.updateFields(check)
         self.parent.setUpdatesEnabled(True)
@@ -301,7 +306,6 @@ class FactEditor(object):
     def checkValid(self):
         empty = []
         dupe = []
-        problems = []
         for field in self.fact.fields:
             p = QPalette()
             p.setColor(QPalette.Text, QColor("#000000"))
@@ -327,6 +331,16 @@ class FactEditor(object):
             if self.onFactInvalid:
                 self.onFactInvalid(self.fact)
             self.factState = "invalid"
+        if invalid:
+            self.warning.setText(_(
+                "Some fields are "
+                "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
+                "#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a>"
+                " or not "
+                "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
+                "#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."))
+        else:
+            self.warning.setText("")
 
     def onTagChange(self, text):
         if not self.updatingFields:
@@ -412,6 +426,7 @@ class FactEditor(object):
             w.insertHtml("[latex][/latex]")
             w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
+            w.moveCursor(QTextCursor.PreviousCharacter)
 
     def insertLatexEqn(self):
         w = self.focusedEdit()
@@ -419,12 +434,14 @@ class FactEditor(object):
             w.insertHtml("[$][/$]")
             w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
+            w.moveCursor(QTextCursor.PreviousCharacter)
 
     def insertLatexMathEnv(self):
         w = self.focusedEdit()
         if w:
             w.insertHtml("[$$][/$$]")
             w.moveCursor(QTextCursor.PreviousWord)
+            w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
 
     def fieldsAreBlank(self):
@@ -496,7 +513,7 @@ class FactEdit(QTextEdit):
 
     # this shouldn't be necessary if/when we move away from kakasi
     def mouseDoubleClickEvent(self, evt):
-        r = QRegExp("\\{(.*\\|.*)\\}")
+        r = QRegExp("\\{(.*[|,].*)\\}")
         r.setMinimal(True)
 
         mouseposition = self.textCursor().position()
@@ -514,7 +531,7 @@ class FactEdit(QTextEdit):
 
                 string = r.cap(1)
                 offset = 0
-                bits = string.split("|")
+                bits = re.split("[|,]", str(string))
                 for index in range(0, len(bits)):
                     offset += len(bits[index]) + 1
                     if mouseposition < offset:

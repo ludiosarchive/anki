@@ -33,8 +33,8 @@ class ModelProperties(QDialog):
         self.dialog.description.setText(self.m.description)
         self.dialog.tags.setText(self.m.tags)
         self.dialog.decorators.setText(self.m.features)
-        self.dialog.spacing.setText(str(self.m.spacing*100))
-        self.dialog.initialSpacing.setText(str(self.m.initialSpacing))
+        self.dialog.spacing.setText(str(self.m.spacing))
+        self.dialog.initialSpacing.setText(str(self.m.initialSpacing/60))
 
     # Fields
     ##########################################################################
@@ -325,9 +325,9 @@ class ModelProperties(QDialog):
                          unicode(self.dialog.decorators.text()))
         try:
             self.updateField(self.m, 'spacing',
-                             float(self.dialog.spacing.text())/100.0)
+                             float(self.dialog.spacing.text()))
             self.updateField(self.m, 'initialSpacing',
-                             int(self.dialog.initialSpacing.text()))
+                             int(self.dialog.initialSpacing.text())*60)
         except ValueError:
             pass
         # before field, or it's overwritten
