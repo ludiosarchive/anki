@@ -52,7 +52,7 @@ decksTable = Table(
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
     Column('description', UnicodeText, nullable=False, default=u""),
-    Column('version', Integer, nullable=False, default=2),
+    Column('version', Integer, nullable=False, default=3),
     Column('currentModelId', Integer, ForeignKey("models.id")),
     # syncing
     Column('syncName', UnicodeText),
@@ -415,11 +415,11 @@ suspended</a> cards.''') % {
             if newPriority != oldPriority:
                 newPriorities.append({"id": cardId, "pri": newPriority})
         # update db
-        self.s.execute(text("""
-update cards set priority = :pri, modified = %f where cards.id = :id""" %
-                            now),
-                          newPriorities)
+        self.s.execute(text(
+            "update cards set priority = :pri where cards.id = :id"),
+            newPriorities)
         self.rebuildTypes()
+        self.s.execute("update cards set isDue = 0 where priority = 0")
 
     def updatePriority(self, card):
         "Update priority on a single card."
@@ -429,7 +429,7 @@ update cards set priority = :pri, modified = %f where cards.id = :id""" %
         p = self.priorityFromTagString(tags, tagCache)
         if p != card.priority:
             card.priority = p
-            self.flushMod()
+            self.flush()
             self.rebuildTypes(" where id = %d" % card.id)
 
     def priorityFromTagString(self, tagString, tagCache):
@@ -656,6 +656,7 @@ where factId = :fid and cardModelId = :cmid""",
 
     def deleteFact(self, factId):
         "Delete a fact. Removes any associated cards. Don't flush."
+        self.s.flush()
         # remove any remaining cards
         self.s.statement("insert into cardsDeleted select id, :time "
                          "from cards where factId = :factId",
@@ -672,6 +673,7 @@ where factId = :fid and cardModelId = :cmid""",
         "Bulk delete facts by ID. Assume any cards have already been removed."
         if not ids:
             return
+        self.s.flush()
         now = time.time()
         strids = ",".join([str(id) for id in ids])
         self.s.statement("delete from facts where id in (%s)" % strids)
@@ -687,6 +689,7 @@ where factId = :fid and cardModelId = :cmid""",
 
     def deleteCard(self, id):
         "Delete a card given its id. Delete any unused facts. Don't flush."
+        self.s.flush()
         factId = self.s.scalar("select factId from cards where id=:id", id=id)
         self.s.statement("delete from cards where id = :id", id=id)
         self.s.statement("insert into cardsDeleted values (:id, :time)",
@@ -699,6 +702,7 @@ where factId = :fid and cardModelId = :cmid""",
         "Bulk delete cards by ID."
         if not ids:
             return
+        self.s.flush()
         now = time.time()
         strids = ",".join([str(id) for id in ids])
         # grab fact ids
@@ -1088,6 +1092,63 @@ Rename for uniqueness if not the same. Return the new name."""
         # and return the new deck object
         return newDeck
 
+    # DB maintenance
+    ##########################################################################
+
+    def fixIntegrity(self):
+        "Responsibility of caller to call rebuildQueue()"
+        if self.s.scalar("pragma integrity_check") != "ok":
+            return _("Database file damaged. Restore from backup.")
+        problems = []
+        # does the user have a model?
+        if not self.s.scalar("select count(id) from models"):
+            self.addModel(stdmodels.byName("Basic"))
+            self.s.flush()
+            problems.append(_("Deck was missing a model"))
+        # is currentModel pointing to a valid model?
+        if not self.s.all("""
+select decks.id from decks, models where
+decks.currentModelId = models.id"""):
+            self.currentModelId = self.models[0].id
+            self.s.flush()
+            problems.append(_("The current model didn't exist"))
+        # facts missing a field?
+        ids = self.s.column0("""
+select distinct facts.id from facts, fieldModels where
+facts.modelId = fieldModels.modelId and fieldModels.id not in
+(select fieldModelId from fields where factId = facts.id)""")
+        if ids:
+            self.s.execute(
+                "delete from facts where id in (%s)" %
+                ",".join([str(id) for id in ids]))
+            problems.append(_("Deleted %d facts with missing fields") %
+                            len(ids))
+        # cards missing a fact?
+        ids = self.s.column0("""
+select id from cards where factId not in (select id from facts)""")
+        if ids:
+            self.s.execute("delete from cards where id in (%s)" %
+                           ",".join(["%d" % i for i in ids]))
+            problems.append(_("Deleted %d cards with missing fact") %
+                            len(ids))
+        # preventative measures
+        self.s.execute("update cards set isDue = 0")
+        self.updateAllPriorities()
+        self.rebuildQueue()
+        if problems:
+            self.flushMod()
+            return "\n".join(problems)
+        return "ok"
+
+    def optimize(self):
+        oldSize = os.stat(self.path)[stat.ST_SIZE]
+        self.s.statement("vacuum")
+        self.s.statement("analyze")
+        newSize = os.stat(self.path)[stat.ST_SIZE]
+        return oldSize - newSize
+
+##########################################################################
+
 mapper(Deck, decksTable, properties={
     'currentModel': relation(anki.models.Model, primaryjoin=
                              decksTable.c.currentModelId ==
@@ -1168,6 +1229,8 @@ class DeckStorage(object):
                 DeckStorage._addIndices(deck)
                 deck.s.statement("analyze")
             else:
+                if backup:
+                    DeckStorage.backup(deck.modified, path)
                 deck = DeckStorage._upgradeDeck(deck, path)
         except OperationalError, e:
             if (str(e.orig).startswith("database table is locked") or
@@ -1181,9 +1244,6 @@ class DeckStorage(object):
             deck.rebuildQueue()
         deck._initVars()
         deck.s.commit()
-        # rotate backups
-        if not create and backup:
-            DeckStorage.backup(deck.modified, path)
         return deck
     Deck = staticmethod(Deck)
 
@@ -1374,6 +1434,14 @@ order by priority desc, due""")
             # optimize indices
             deck.s.statement("analyze")
             deck.version = 2
+            deck.s.commit()
+        if deck.version == 2:
+            # compensate for bug in 0.9.7 by rebuilding isDue and priorities
+            deck.s.statement("update cards set isDue = 0")
+            deck.updateAllPriorities()
+            # compensate for bug in early 0.9.x where fieldId was not unique
+            deck.s.statement("update fields set id = random()")
+            deck.version = 3
             deck.s.commit()
         return deck
     _upgradeDeck = staticmethod(_upgradeDeck)

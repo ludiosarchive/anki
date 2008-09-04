@@ -29,7 +29,6 @@ class AnkiQt(QMainWindow):
         self.config = config
         self.deck = None
         self.views = []
-        self.macHacks()
         self.setLang()
         self.setupFonts()
         self.setupBackupDir()
@@ -57,6 +56,9 @@ class AnkiQt(QMainWindow):
             self.removeToolBar(self.mainWin.toolBar)
             self.mainWin.toolBar.hide()
         self.show()
+        if sys.platform.startswith("darwin"):
+            self.setUnifiedTitleAndToolBarOnMac(True)
+            pass
         # load deck
         try:
             self.maybeLoadLastDeck(args)
@@ -427,7 +429,18 @@ class AnkiQt(QMainWindow):
         if sync and self.config['syncOnLoad']:
             self.syncDeck(False)
         else:
-            self.rebuildQueue()
+            try:
+                self.rebuildQueue()
+            except:
+                ui.utils.showWarning(_(
+                    "Error building queue. Attempting recovery.."))
+                if self.onCheckDB():
+                    ui.utils.showWarning(
+                        _("Couldn't find the problem. Please open an "
+                          "issue on the issue tracker."))
+                else:
+                    # try again
+                    self.rebuildQueue()
         return True
 
     def importOldDeck(self, deckPath):
@@ -1036,6 +1049,7 @@ class AnkiQt(QMainWindow):
 
     deckRelatedMenus = (
         "Tools",
+        "Advanced",
         )
 
     def connectMenuActions(self):
@@ -1074,6 +1088,8 @@ class AnkiQt(QMainWindow):
         self.connect(self.mainWin.actionRepeatAnswerAudio, SIGNAL("triggered()"), self.onRepeatAnswer)
         self.connect(self.mainWin.actionRepeatAudio, SIGNAL("triggered()"), self.onRepeatAudio)
         self.connect(self.mainWin.actionUndoAnswer, SIGNAL("triggered()"), self.onUndoAnswer)
+        self.connect(self.mainWin.actionCheckDatabaseIntegrity, SIGNAL("triggered()"), self.onCheckDB)
+        self.connect(self.mainWin.actionOptimizeDatabase, SIGNAL("triggered()"), self.onOptimizeDB)
 
     def enableDeckMenuItems(self, enabled=True):
         "setEnabled deck-related items."
@@ -1150,14 +1166,8 @@ class AnkiQt(QMainWindow):
         self.connect(self.autoUpdate, SIGNAL("clockIsOff"), self.clockIsOff)
         self.autoUpdate.start()
 
-    def newVerInStatusBar(self, version):
-        self.statusView.statusbar.showMessage(
-	            _("Anki Update Available: ") + version, 5000)
-
     def newVerAvail(self, version):
-        if self.config['suppressUpdate']:
-            self.newVerInStatusBar(version)
-        else:
+        if self.config['suppressUpdate'] < version['latestVersion']:
             ui.update.askAndUpdate(self, version)
 
     def clockIsOff(self, diff):
@@ -1200,14 +1210,6 @@ class AnkiQt(QMainWindow):
                 print "Error in %s.py" % plugin
                 print traceback.print_exc()
 
-    # Mac support
-    ##########################################################################
-
-    def macHacks(self):
-        if sys.platform.startswith("darwin"):
-            self.setUnifiedTitleAndToolBarOnMac(True)
-            qt_mac_set_menubar_icons(False)
-
     # Font localisation
     ##########################################################################
 
@@ -1228,3 +1230,24 @@ class AnkiQt(QMainWindow):
         playFromText(self.currentCard.question)
         if self.state != "showQuestion":
             playFromText(self.currentCard.answer)
+
+    # DB related
+    ##########################################################################
+
+    def onCheckDB(self):
+        "True if no problems"
+        ret = self.deck.fixIntegrity()
+        if ret == "ok":
+            ret = _("No problems found")
+            ui.utils.showInfo(ret)
+            ret = True
+        else:
+            ret = _("Problems found:\n%s") % ret
+            ui.utils.showWarning(ret)
+            ret = False
+        self.rebuildQueue()
+        return ret
+
+    def onOptimizeDB(self):
+        size = self.deck.optimize()
+        ui.utils.showInfo("Database optimized.\nShrunk by %d bytes" % size)

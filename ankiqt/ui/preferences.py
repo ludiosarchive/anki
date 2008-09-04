@@ -161,7 +161,6 @@ class Preferences(QDialog):
             self.config['easeButtonStyle'] != 'standard')
         self.dialog.tallButtons.setChecked(
             self.config['easeButtonHeight'] != 'standard')
-        self.dialog.suppressUpdate.setChecked(self.config['suppressUpdate'])
         self.dialog.suppressEstimates.setChecked(self.config['suppressEstimates'])
         self.dialog.suppressLastCardInterval.setChecked(self.config['suppressLastCardInterval'])
         self.dialog.suppressLastCardContent.setChecked(self.config['suppressLastCardContent'])
@@ -178,7 +177,6 @@ class Preferences(QDialog):
             self.config['easeButtonHeight'] = 'tall'
         else:
             self.config['easeButtonHeight'] = 'standard'
-        self.config['suppressUpdate'] = self.dialog.suppressUpdate.isChecked()
         self.config['suppressLastCardInterval'] = self.dialog.suppressLastCardInterval.isChecked()
         self.config['suppressLastCardContent'] = self.dialog.suppressLastCardContent.isChecked()
         self.config['showTray'] = self.dialog.showTray.isChecked()

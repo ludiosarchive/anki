@@ -1,5 +1,50 @@
-changeset:   731:f7e55fb507cd
+changeset:   740:c828fb3ef89b
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:58:57 2008 +0900
+summary:     work around an osx bug
+
+changeset:   739:3985b6a1302d
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:02:34 2008 +0900
+summary:     change picture icon again
+
+changeset:   738:b3df7d8ec7db
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:02:27 2008 +0900
+summary:     change i
+
+changeset:   737:d968b7a2dbc6
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:59:27 2008 +0900
+summary:     change icon
+
+changeset:   736:55567faed309
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:52:32 2008 +0900
+summary:     new icons
+
+changeset:   735:4cf70cf64496
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:45:29 2008 +0900
+summary:     new icons, improve integrity check
+
+changeset:   734:89d91e0d3417
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 16:10:53 2008 +0900
+summary:     disable advanced menu when deck not open
+
+changeset:   733:bda2c7cf46b6
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 16:08:17 2008 +0900
+summary:     integrity check, update handling
+
+changeset:   732:b583fe72e197
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:25:19 2008 +0900
+summary:     rename 'ready to add', as silly in editor
+
+changeset:   731:f7e55fb507cd
 user:        Damien Elmes <hg@repose.cx>
 date:        Sat Aug 23 05:53:29 2008 +0900
 summary:     create media dir when latex added

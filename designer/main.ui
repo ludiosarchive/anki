@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>543</width>
-    <height>400</height>
+    <width>555</width>
+    <height>292</height>
    </rect>
   </property>
   <property name="sizePolicy" >
@@ -19,9 +19,18 @@
    <string>Anki</string>
   </property>
   <property name="windowIcon" >
-   <iconset resource="../icons.qrc" >:/icons/anki.png</iconset>
+   <iconset resource="../icons.qrc" >
+    <normaloff>:/icons/anki.png</normaloff>:/icons/anki.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>57</y>
+     <width>555</width>
+     <height>212</height>
+    </rect>
+   </property>
    <property name="sizePolicy" >
     <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
      <horstretch>1</horstretch>
@@ -35,16 +44,7 @@
     <property name="spacing" >
      <number>0</number>
     </property>
-    <property name="leftMargin" >
-     <number>0</number>
-    </property>
-    <property name="topMargin" >
-     <number>0</number>
-    </property>
-    <property name="rightMargin" >
-     <number>0</number>
-    </property>
-    <property name="bottomMargin" >
+    <property name="margin" >
      <number>0</number>
     </property>
     <item>
@@ -126,16 +126,7 @@
        <property name="spacing" >
         <number>0</number>
        </property>
-       <property name="leftMargin" >
-        <number>5</number>
-       </property>
-       <property name="topMargin" >
-        <number>5</number>
-       </property>
-       <property name="rightMargin" >
-        <number>5</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>5</number>
        </property>
        <item>
@@ -190,16 +181,7 @@
        <property name="spacing" >
         <number>0</number>
        </property>
-       <property name="leftMargin" >
-        <number>0</number>
-       </property>
-       <property name="topMargin" >
-        <number>0</number>
-       </property>
-       <property name="rightMargin" >
-        <number>0</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>0</number>
        </property>
        <item>
@@ -288,16 +270,7 @@
           <property name="spacing" >
            <number>6</number>
           </property>
-          <property name="leftMargin" >
-           <number>9</number>
-          </property>
-          <property name="topMargin" >
-           <number>9</number>
-          </property>
-          <property name="rightMargin" >
-           <number>9</number>
-          </property>
-          <property name="bottomMargin" >
+          <property name="margin" >
            <number>9</number>
           </property>
           <item>
@@ -384,8 +357,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>543</width>
-     <height>27</height>
+     <width>555</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp" >
@@ -468,17 +441,41 @@
     <addaction name="actionCstats" />
     <addaction name="separator" />
     <addaction name="menu_Lookup" />
-    <addaction name="separator" />
+   </widget>
+   <widget class="QMenu" name="menuAdvanced" >
+    <property name="title" >
+     <string>&amp;Advanced</string>
+    </property>
+    <addaction name="actionCheckDatabaseIntegrity" />
+    <addaction name="actionOptimizeDatabase" />
    </widget>
    <addaction name="menuDeck" />
    <addaction name="menuEdit" />
    <addaction name="menuTools" />
+   <addaction name="menuAdvanced" />
    <addaction name="menuHelp" />
   </widget>
-  <widget class="QStatusBar" name="statusbar" />
+  <widget class="QStatusBar" name="statusbar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>269</y>
+     <width>555</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
   <widget class="QToolBar" name="toolBar" >
    <property name="enabled" >
     <bool>true</bool>
+   </property>
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>23</y>
+     <width>555</width>
+     <height>34</height>
+    </rect>
    </property>
    <property name="orientation" >
     <enum>Qt::Horizontal</enum>
@@ -507,7 +504,8 @@
   </widget>
   <action name="actionExit" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/exit.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/application-exit.png</normaloff>:/icons/application-exit.png</iconset>
    </property>
    <property name="text" >
     <string>E&amp;xit</string>
@@ -518,7 +516,8 @@
   </action>
   <action name="actionNew" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/filenew.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-new.png</normaloff>:/icons/document-new.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;New</string>
@@ -529,7 +528,8 @@
   </action>
   <action name="actionOpen" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/fileopen.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-open.png</normaloff>:/icons/document-open.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Open...</string>
@@ -540,7 +540,8 @@
   </action>
   <action name="actionClose" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/fileclose.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/fileclose.png</normaloff>:/icons/fileclose.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Close</string>
@@ -551,7 +552,8 @@
   </action>
   <action name="actionSave" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/filesave.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-save.png</normaloff>:/icons/document-save.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Save</string>
@@ -562,7 +564,8 @@
   </action>
   <action name="actionSyncdeck" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/multisynk.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/multisynk.png</normaloff>:/icons/multisynk.png</iconset>
    </property>
    <property name="text" >
     <string>Save and S&amp;ync</string>
@@ -573,7 +576,8 @@
   </action>
   <action name="actionAddcards" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/add.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/list-add.png</normaloff>:/icons/list-add.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Add Cards...</string>
@@ -587,7 +591,8 @@
   </action>
   <action name="actionEditdeck" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/view_text.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/view_text.png</normaloff>:/icons/view_text.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Edit Deck...</string>
@@ -598,7 +603,8 @@
   </action>
   <action name="actionPreferences" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/configure.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/configure.png</normaloff>:/icons/configure.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Preferences...</string>
@@ -652,29 +658,36 @@
   </action>
   <action name="actionKstats" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/kanji.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/kanji.png</normaloff>:/icons/kanji.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Kanji statistics</string>
+    <string>&amp;Kanji Statistics</string>
    </property>
   </action>
   <action name="actionDstats" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/spreadsheet.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/spreadsheet.png</normaloff>:/icons/spreadsheet.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Deck statistics</string>
+    <string>&amp;Deck Statistics</string>
    </property>
   </action>
   <action name="actionStarthere" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/help.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/go-home.png</normaloff>:/icons/go-home.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Start here...</string>
    </property>
   </action>
   <action name="actionReportbug" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/kbugbuster.png</normaloff>:/icons/kbugbuster.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Report bug...</string>
    </property>
@@ -684,7 +697,8 @@
   </action>
   <action name="actionAbout" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/anki.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/anki.png</normaloff>:/icons/anki.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;About...</string>
@@ -692,15 +706,17 @@
   </action>
   <action name="actionCstats" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/package_games_card.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/package_games_card.png</normaloff>:/icons/package_games_card.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Card statistics</string>
+    <string>&amp;Card Statistics</string>
    </property>
   </action>
   <action name="actionDeckProperties" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/contents.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/contents.png</normaloff>:/icons/contents.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Deck Properties...</string>
@@ -711,7 +727,8 @@
   </action>
   <action name="actionImport" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/fileimport.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-import.png</normaloff>:/icons/document-import.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Import...</string>
@@ -719,7 +736,8 @@
   </action>
   <action name="actionGraphs" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/colorscm.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/colorscm.png</normaloff>:/icons/colorscm.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Graphs</string>
@@ -727,7 +745,8 @@
   </action>
   <action name="actionExport" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/compfile.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-export.png</normaloff>:/icons/document-export.png</iconset>
    </property>
    <property name="text" >
     <string>Expor&amp;t...</string>
@@ -735,7 +754,8 @@
   </action>
   <action name="actionDisplayProperties" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/fonts.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/preferences-desktop-font.png</normaloff>:/icons/preferences-desktop-font.png</iconset>
    </property>
    <property name="text" >
     <string>Disp&amp;lay Properties...</string>
@@ -754,7 +774,8 @@
     <bool>true</bool>
    </property>
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/bookmark.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/rating.png</normaloff>:/icons/rating.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Mark Card</string>
@@ -762,7 +783,8 @@
   </action>
   <action name="actionSuspendCard" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/player_pause.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/media-playback-pause.png</normaloff>:/icons/media-playback-pause.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Suspend fact</string>
@@ -773,7 +795,8 @@
   </action>
   <action name="actionModelProperties" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/kpersonalizer.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/kpersonalizer.png</normaloff>:/icons/kpersonalizer.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Model Properties...</string>
@@ -784,12 +807,12 @@
   </action>
   <action name="actionRepeatQuestionAudio" >
    <property name="text" >
-    <string>Repeat &amp;question audio</string>
+    <string>Repeat &amp;Question Audio</string>
    </property>
   </action>
   <action name="actionRepeatAnswerAudio" >
    <property name="text" >
-    <string>Repeat &amp;answer audio</string>
+    <string>Repeat &amp;Answer Audio</string>
    </property>
   </action>
   <action name="actionRepeatAudio" >
@@ -797,7 +820,8 @@
     <bool>false</bool>
    </property>
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/player_play.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/media-playback-start.png</normaloff>:/icons/media-playback-start.png</iconset>
    </property>
    <property name="text" >
     <string>Repeat las&amp;t audio</string>
@@ -808,23 +832,47 @@
     <bool>false</bool>
    </property>
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/undo.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/edit-undo.png</normaloff>:/icons/edit-undo.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Undo last answer</string>
    </property>
   </action>
   <action name="actionForum" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/view-pim-news.png</normaloff>:/icons/view-pim-news.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Forum...</string>
    </property>
   </action>
   <action name="actionSaveAs" >
    <property name="icon" >
-    <iconset resource="../icons.qrc" >:/icons/filesave.png</iconset>
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-save-as.png</normaloff>:/icons/document-save-as.png</iconset>
    </property>
    <property name="text" >
     <string>Save &amp;As</string>
+   </property>
+  </action>
+  <action name="actionCheckDatabaseIntegrity" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/sqlitebrowser.png</normaloff>:/icons/sqlitebrowser.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Check Database Integrity...</string>
+   </property>
+  </action>
+  <action name="actionOptimizeDatabase" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/games-solve.png</normaloff>:/icons/games-solve.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Optimize Database...</string>
    </property>
   </action>
  </widget>

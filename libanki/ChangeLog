@@ -1,5 +1,65 @@
-changeset:   687:a1730621b2fa
+changeset:   699:26c2fd9803b3
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 01:52:10 2008 +0900
+summary:     catch interrupted system calls on osx (fix latex)
+
+changeset:   698:b00e8943896e
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Aug 25 00:59:32 2008 +0900
+summary:     bump version number
+
+changeset:   697:72877d4c65ac
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:49:28 2008 +0900
+summary:     fix for old python
+
+changeset:   696:1dbfe6cf704f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 23:46:24 2008 +0900
+summary:     catch error when latex not available
+
+changeset:   695:849dd0cb1e66
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 20:34:05 2008 +0900
+summary:     check missing fields, reset isDue on check, force random field ids
+
+changeset:   694:a92453fe34fa
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 16:08:46 2008 +0900
+summary:     add fns to check deck integrity and optimize. backup before upgrade
+
+changeset:   693:40d7c642effe
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 15:12:56 2008 +0900
+summary:     flush before deleting
+
+changeset:   692:2ef84a67a27f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Aug 24 14:20:18 2008 +0900
+summary:     rebuild all due cards on upgrade
+
+changeset:   691:1cc8b894488c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:24:35 2008 +0900
+summary:     fix typo
+
+changeset:   690:f1ad96b4ccdf
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:20:45 2008 +0900
+summary:     same for single priority
+
+changeset:   689:447e0ef9f5a2
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:20:17 2008 +0900
+summary:     don't mark card modified when updating priorities
+
+changeset:   688:c07dc999a451
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 13:01:07 2008 +0900
+summary:     fix for suspending cards
+
+changeset:   687:a1730621b2fa
 user:        Damien Elmes <hg@repose.cx>
 date:        Sat Aug 23 05:52:13 2008 +0900
 summary:     in latex code keep win32 code win32 only

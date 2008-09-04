@@ -6,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>475</width>
-    <height>500</height>
+    <height>525</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -24,7 +24,7 @@
         <x>0</x>
         <y>0</y>
         <width>453</width>
-        <height>426</height>
+        <height>443</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -244,7 +244,7 @@
         <x>0</x>
         <y>0</y>
         <width>453</width>
-        <height>426</height>
+        <height>443</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -432,7 +432,7 @@
         <x>0</x>
         <y>0</y>
         <width>453</width>
-        <height>426</height>
+        <height>443</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -470,13 +470,6 @@
           </widget>
          </item>
          <item row="4" column="0" >
-          <widget class="QCheckBox" name="suppressUpdate" >
-           <property name="text" >
-            <string>Suppress update dialog (display in status bar instead)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0" >
           <widget class="QCheckBox" name="editCurrentOnly" >
            <property name="text" >
             <string>Start Edit Deck with only current card selected</string>
@@ -486,28 +479,28 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="0" >
+         <item row="5" column="0" >
           <widget class="QCheckBox" name="suppressEstimates" >
            <property name="text" >
             <string>Hide next interval when showing answer buttons</string>
            </property>
           </widget>
          </item>
-         <item row="7" column="0" >
+         <item row="6" column="0" >
           <widget class="QCheckBox" name="suppressLastCardInterval" >
            <property name="text" >
             <string>Hide interval of last card</string>
            </property>
           </widget>
          </item>
-         <item row="8" column="0" >
+         <item row="7" column="0" >
           <widget class="QCheckBox" name="suppressLastCardContent" >
            <property name="text" >
             <string>Hide question/answer of last card</string>
            </property>
           </widget>
          </item>
-         <item row="9" column="0" >
+         <item row="8" column="0" >
           <widget class="QCheckBox" name="showTray" >
            <property name="text" >
             <string>Show tray icon</string>

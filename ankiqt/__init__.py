@@ -6,7 +6,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.7.1"
+appVersion="0.9.7.2"
 appWebsite="http://ichi2.net/anki/download/"
 appHelpSite="http://ichi2.net/anki/wiki/Documentation"
 appIssueTracker="http://code.google.com/p/anki/issues/list"
@@ -94,6 +94,9 @@ def run():
             psyco.profile()
         except ImportError:
             print "Installing python-psyco is strongly recommended."
+
+    if sys.platform.startswith("darwin"):
+        qt_mac_set_menubar_icons(False)
 
     app.exec_()
 

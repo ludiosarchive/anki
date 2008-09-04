@@ -218,14 +218,14 @@ time before you see it again will get bigger.
 
 <tr>
 <td>
-<a href="welcome:open"><img src=":/icons/fileopen.png"></a>
+<a href="welcome:open"><img src=":/icons/document-open.png"></a>
 </td>
 <td valign=middle><h2><a href="welcome:open">Open an existing deck</a></h2></td>
 </tr>
 
 <tr>
 <td>
-<a href="welcome:new"><img src=":/icons/filenew.png"></a>
+<a href="welcome:new"><img src=":/icons/document-new.png"></a>
 </td>
 <td valign=middle>
 <h2><a href="welcome:new">Create a new deck</a></h2></td>

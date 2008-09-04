@@ -59,6 +59,21 @@ def stripLatex(text):
         text = text.replace(match.group(), "")
     return text
 
+def call(*args, **kwargs):
+    try:
+        o = subprocess.Popen(*args, **kwargs)
+    except OSError:
+        # command not found
+        return -1
+    while 1:
+        try:
+            ret = o.wait()
+        except OSError:
+            # interrupted system call
+            continue
+        break
+    return ret
+
 def imgLink(deck, latex):
     "Parse LATEX and return a HTML image representing the output."
     for match in re.compile("&([a-z]+);", re.IGNORECASE).finditer(latex):
@@ -85,14 +100,13 @@ def imgLink(deck, latex):
             si = None
         try:
             os.chdir(tmpdir)
-            if subprocess.call(["latex", "-interaction=nonstopmode",
-                                texpath], stdout=log, stderr=log,
-                               startupinfo=si) != 0:
-                return _("Error executing 'latex' - is it installed?")
-            if subprocess.call(latexDviPngCmd + ["tmp.dvi", "-o", imagePath],
-                               stdout=log, stderr=log,
-                               startupinfo=si) != 0:
-                return _("Error executing 'dvipng' - is it installed?")
+            errmsg = _("Error executing 'latex' or 'dvipng' - are they installed?")
+            if call(["latex", "-interaction=nonstopmode",
+                     texpath], stdout=log, stderr=log, startupinfo=si):
+                return errmsg
+            if call(latexDviPngCmd + ["tmp.dvi", "-o", imagePath],
+                    stdout=log, stderr=log, startupinfo=si):
+                return errmsg
         finally:
             os.chdir(oldcwd)
     return '<img src="%s">' % imageFile

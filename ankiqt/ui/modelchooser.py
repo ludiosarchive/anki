@@ -33,7 +33,7 @@ class ModelChooser(QHBoxLayout):
         self.models.setSizePolicy(sizePolicy)
         self.addWidget(self.models)
         self.add = QPushButton()
-        self.add.setIcon(QIcon(":/icons/add.png"))
+        self.add.setIcon(QIcon(":/icons/list-add.png"))
         self.add.setToolTip(_("Add a new model"))
         self.add.setAutoDefault(False)
         self.addWidget(self.add)

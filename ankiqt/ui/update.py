@@ -124,31 +124,26 @@ class Updater(QThread):
         os.unlink(filename)
 
 def askAndUpdate(parent, version=None):
-    if not version:
-        baseStr = _("<h1>Update Anki manually</h1>"
-                    "Usually there is no need to do this. "
-                    "You will be notified automatically "
-                    "when a new version of Anki is available. ")
-    else:
-        baseStr = _("""<h1>Anki updated</h1>A new version of Anki is
-        available.<br/>""")
-    if sys.platform == "win32":
-        # automated installer available
-        ret = QMessageBox.question(
-            parent, "Anki", baseStr +
-            _("Would you like to download it now?"),
-            QMessageBox.Yes | QMessageBox.No)
-        if ret == QMessageBox.Yes:
+    version = version['latestVersion']
+    baseStr = (
+        _("""<h1>Anki updated</h1>Anki %s has been released.<br>""") %
+        version)
+    msg = QMessageBox(parent)
+    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    msg.setIcon(QMessageBox.Information)
+    msg.setText(baseStr + _("Would you like to download it now?"))
+    button = QPushButton(_("Ignore this update"))
+    msg.addButton(button, QMessageBox.RejectRole)
+    ret = msg.exec_()
+    if msg.clickedButton() == button:
+        # ignore this update
+        parent.config['suppressUpdate'] = version
+    elif ret == QMessageBox.Yes:
+        if sys.platform == "win32":
             parent.autoUpdate = Updater()
             parent.connect(parent.autoUpdate,
                            SIGNAL("statusChanged"),
                            parent.setStatus)
             parent.autoUpdate.start()
-    else:
-        # manual
-        ret = QMessageBox.question(
-            parent, "Anki", baseStr +
-            "Would you like to visit the website now?",
-            QMessageBox.Yes | QMessageBox.No)
-        if ret == QMessageBox.Yes:
+        else:
             QDesktopServices.openUrl(QUrl(ankiqt.appWebsite))

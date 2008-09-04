@@ -129,7 +129,7 @@ class FactEditor(object):
         self.addSound.setFocusPolicy(Qt.NoFocus)
         self.addSound.setShortcut(_("Ctrl+s"))
         self.addSound.setEnabled(False)
-        self.addSound.setIcon(QIcon(":/icons/arts.png"))
+        self.addSound.setIcon(QIcon(":/icons/text-speak.png"))
         self.addSound.setToolTip(_("Add audio"))
         self.iconsBox.addWidget(self.addSound)
         self.addSound.setStyle(self.plastiqueStyle)
@@ -341,7 +341,7 @@ class FactEditor(object):
                 "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
                 "#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."))
         else:
-            self.warning.setText("Ready to add.")
+            self.warning.setText(_("All fields valid"))
 
     def onTagChange(self, text):
         if not self.updatingFields:
