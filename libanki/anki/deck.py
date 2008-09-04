@@ -52,7 +52,7 @@ decksTable = Table(
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
     Column('description', UnicodeText, nullable=False, default=u""),
-    Column('version', Integer, nullable=False, default=1),
+    Column('version', Integer, nullable=False, default=2),
     Column('currentModelId', Integer, ForeignKey("models.id")),
     # syncing
     Column('syncName', UnicodeText),
@@ -211,17 +211,17 @@ where id != :id and factId = :factId""",
     # Queue/cache management
     ##########################################################################
 
-    def rebuildTypes(self):
-        "Rebuild the type cache. Should only be necessary on upgrade."
+    def rebuildTypes(self, where=""):
+        "Rebuild the type cache. Done on upgrade or priority change."
         self.s.statement("""
 update cards
 set type = (case
 when successive = 0 and reps != 0 and priority != 0
 then 0 -- failed
-when successive != 0 and reps != 0 and priority > 1
+when priority = 4 or successive != 0 and reps != 0 and priority > 1
 then 1 -- review
 else 2 -- new
-end)""")
+end)""" + where)
 
     def markExpiredCardsDue(self):
         "Tag expired cards as due."
@@ -248,7 +248,7 @@ where isDue = 0 and priority != 0 and combinedDue < :now""",
         # if interval is less than mid interval, use presets
         if (card.interval + delay) < self.midIntervalMin:
             if ease < 2:
-                interval = 0
+                interval = 1
             elif ease == 2:
                 interval = random.uniform(self.hardIntervalMin,
                                           self.hardIntervalMax)
@@ -313,13 +313,13 @@ where isDue = 0 and priority != 0 and combinedDue < :now""",
         "Reset progress on cards in IDS."
         strids = ",".join([str(id) for id in ids])
         self.s.statement("""
-update cards set interval = 0, lastInterval = 0, lastDue = 0,
+update cards set interval = 1, lastInterval = 0, lastDue = 0,
 factor = 2.5, reps = 0, successive = 0, averageTime = 0, reviewTime = 0,
 youngEase0 = 0, youngEase1 = 0, youngEase2 = 0, youngEase3 = 0,
 youngEase4 = 0, matureEase0 = 0, matureEase1 = 0, matureEase2 = 0,
 matureEase3 = 0,matureEase4 = 0, yesCount = 0, noCount = 0,
-spaceUntil = 0, relativeDelay = 0, isDue = 0, type = 0, combinedDue = 0,
-modified = :now, due = :now
+spaceUntil = 0, relativeDelay = 0, isDue = 0, type = 2,
+combinedDue = created, modified = :now, due = created
 where id in (%s)""" % strids, now=time.time())
         self.flushMod()
 
@@ -419,6 +419,7 @@ suspended</a> cards.''') % {
 update cards set priority = :pri, modified = %f where cards.id = :id""" %
                             now),
                           newPriorities)
+        self.rebuildTypes()
 
     def updatePriority(self, card):
         "Update priority on a single card."
@@ -429,6 +430,7 @@ update cards set priority = :pri, modified = %f where cards.id = :id""" %
         if p != card.priority:
             card.priority = p
             self.flushMod()
+            self.rebuildTypes(" where id = %d" % card.id)
 
     def priorityFromTagString(self, tagString, tagCache):
         tags = parseTags(tagString.lower())
@@ -1243,10 +1245,10 @@ create index if not exists ix_cards_failedOrder on cards
 (type, isDue, due)""")
         deck.s.statement("""
 create index if not exists ix_cards_newRandomOrder on cards
-(priority, factId, ordinal)""")
+(priority desc, factId, ordinal)""")
         deck.s.statement("""
 create index if not exists ix_cards_newOrderedOrder on cards
-(priority, due)""")
+(priority desc, due)""")
         # stats
         deck.s.statement("""
 create index if not exists ix_stats_type on stats (type)""""")
@@ -1306,13 +1308,13 @@ order by type, isDue, priority desc, relativeDelay""")
 create view acqCardsRandom as
 select * from cards
 where type = 2 and isDue = 1
-order by priority, factId, ordinal""")
+order by priority desc, factId, ordinal""")
         s.statement("drop view if exists acqCardsOrdered")
         s.statement("""
 create view acqCardsOrdered as
 select * from cards
 where type = 2 and isDue = 1
-order by priority, due""")
+order by priority desc, due""")
     _addViews = staticmethod(_addViews)
 
     def _upgradeDeck(deck, path):
@@ -1362,6 +1364,17 @@ order by priority, due""")
             deck.s.commit()
             # optimize indices
             deck.s.statement("analyze")
+        if deck.version == 1:
+            # fix indexes and views
+            deck.s.statement("drop index ix_cards_newRandomOrder")
+            deck.s.statement("drop index ix_cards_newOrderedOrder")
+            DeckStorage._addViews(deck)
+            DeckStorage._addIndices(deck)
+            deck.rebuildTypes()
+            # optimize indices
+            deck.s.statement("analyze")
+            deck.version = 2
+            deck.s.commit()
         return deck
     _upgradeDeck = staticmethod(_upgradeDeck)
 

@@ -1,5 +1,50 @@
-changeset:   678:8b7e242c5c2c
+changeset:   687:a1730621b2fa
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 05:52:13 2008 +0900
+summary:     in latex code keep win32 code win32 only
+
+changeset:   686:5351ab8ffe26
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 05:45:09 2008 +0900
+summary:     create media dir in latex
+
+changeset:   685:abdfdb8d8259
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:36:31 2008 +0900
+summary:     bump version
+
+changeset:   684:d8e21f20ea13
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:23:12 2008 +0900
+summary:     ease=0 -> interval=1, ensure relativeDelay is defined properly for vhp cards
+
+changeset:   683:210ac919afba
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:22:46 2008 +0900
+summary:     rebuild type on updatePriority() too
+
+changeset:   682:0743d48a5f6a
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:17:27 2008 +0900
+summary:     rebuild types when priorities change
+
+changeset:   681:562e0b7121e2
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:09:17 2008 +0900
+summary:     switch priority direction on new cards, fix indexes, upgrade deck
+
+changeset:   680:630332d5b52e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:08:05 2008 +0900
+summary:     card.toDB(): calculate relative delay based on new interval, not existing
+
+changeset:   679:47b11a72d93e
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 13:52:30 2008 +0900
+summary:     encode texpath in file system encoding before calling latex
+
+changeset:   678:8b7e242c5c2c
 user:        Damien Elmes <hg@repose.cx>
 date:        Fri Aug 22 04:10:36 2008 +0900
 summary:     make latex python 2.4 compatible

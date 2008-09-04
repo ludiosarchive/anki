@@ -1,5 +1,30 @@
-changeset:   726:1e742db56ddd
+changeset:   731:f7e55fb507cd
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 05:53:29 2008 +0900
+summary:     create media dir when latex added
+
+changeset:   730:fcde5237f8c9
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Aug 23 00:32:02 2008 +0900
+summary:     force info dialog in add cards to a fixed height
+
+changeset:   729:547750d4f09b
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:36:49 2008 +0900
+summary:     bump version number
+
+changeset:   728:9886f22c8158
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 18:36:10 2008 +0900
+summary:     fix japanese reading shortcut
+
+changeset:   727:1e9d3fa9f9aa
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Aug 22 17:23:36 2008 +0900
+summary:     fix undo, update card count when refreshing page
+
+changeset:   726:1e742db56ddd
 user:        Damien Elmes <hg@repose.cx>
 date:        Fri Aug 22 04:11:00 2008 +0900
 summary:     increase size of about box

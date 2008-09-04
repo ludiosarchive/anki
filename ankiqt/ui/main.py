@@ -7,7 +7,8 @@ from PyQt4.QtCore import *
 
 # fixme: sample files read only, need to copy
 
-import os, sys, re, types, gettext, stat, traceback, shutil, time
+import os, sys, re, types, gettext, stat, traceback
+import copy, shutil, time
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -117,6 +118,7 @@ class AnkiQt(QMainWindow):
         elif state == "auto":
             # load again without resetting current card
             if self.deck:
+                self.deck._countsDirty = True
                 return self.moveToState("getQuestion")
             else:
                 return self.moveToState("noDeck")
@@ -185,16 +187,13 @@ class AnkiQt(QMainWindow):
 
     def cardAnswered(self, quality):
         "Reschedule current card and move back to getQuestion state."
-        # for undo
-        oldFactor = self.currentCard.factor
-        successive = self.currentCard.successive
+        # copy card for undo
+        self.lastCardBackup = copy.copy(self.currentCard)
         self.deck.answerCard(self.currentCard, quality)
         self.lastScheduledTime = anki.utils.fmtTimeSpan(
             self.currentCard.due - time.time())
         self.lastQuality = quality
         self.lastCard = self.currentCard
-        self.lastCard.oldFactor = oldFactor
-        self.lastCard.oldSuccessive = successive
         self.currentCard = None
         if self.config['saveAfterAnswer']:
             num = self.config['saveAfterAnswerNum']
@@ -860,13 +859,9 @@ class AnkiQt(QMainWindow):
 
     def onUndoAnswer(self):
         # quick and dirty undo for now
-        self.lastCard.interval = self.lastCard.lastInterval
-        self.lastCard.due = self.lastCard.lastDue
-        self.lastCard.successive = self.lastCard.oldSuccessive
-        self.lastCard.reps -= 1
-        self.lastCard.factor = self.lastCard.oldFactor
-        self.lastCard.isDue = 1
-        self.lastCard.toDB(self.deck.s)
+        self.currentCard = None
+        self.deck.s.flush()
+        self.lastCardBackup.toDB(self.deck.s)
         self.reset()
 
     # Other menu operations

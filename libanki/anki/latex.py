@@ -66,7 +66,7 @@ def imgLink(deck, latex):
             latex = latex.replace(match.group(), entitydefs[match.group(1)])
     latex = re.sub("<br( /)?>", "\n", latex)
     imageFile = "latex-%s.png" % md5(latex).hexdigest()
-    imagePath = os.path.join(deck.mediaDir(), imageFile)
+    imagePath = os.path.join(deck.mediaDir(create=True), imageFile)
     imagePath = imagePath.encode(sys.getfilesystemencoding())
     if not os.path.exists(imagePath):
         log = open(os.path.join(tmpdir, "latex_log.txt"), "w+")
@@ -76,9 +76,13 @@ def imgLink(deck, latex):
         texfile.write(latex + "\n")
         texfile.write(latexPostamble + "\n")
         texfile.close()
+        texpath = texpath.encode(sys.getfilesystemencoding())
         oldcwd = os.getcwd()
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        if sys.platform == "win32":
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            si = None
         try:
             os.chdir(tmpdir)
             if subprocess.call(["latex", "-interaction=nonstopmode",

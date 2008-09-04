@@ -14,7 +14,7 @@ import cgi
 
 # timing
 
-for i in range(3):
+for i in range(10):
     t3 = time()
     print "getIds..",
     t = time()
@@ -36,7 +36,7 @@ for i in range(3):
     #print "total stats", time() - t
     print "total all", time() - t3
 
-#failhere
+failhere
 
 # syncing
 

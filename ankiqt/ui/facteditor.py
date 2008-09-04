@@ -218,6 +218,7 @@ class FactEditor(object):
         # status warning
         n += 1
         self.warning = QLabel()
+        self.warning.setFixedHeight(20)
         self.warning.setOpenExternalLinks(True)
         self.fieldsGrid.addWidget(self.warning, n, 1)
         # update fields
@@ -340,7 +341,7 @@ class FactEditor(object):
                 "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
                 "#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."))
         else:
-            self.warning.setText("")
+            self.warning.setText("Ready to add.")
 
     def onTagChange(self, text):
         if not self.updatingFields:
@@ -423,6 +424,7 @@ class FactEditor(object):
     def insertLatex(self):
         w = self.focusedEdit()
         if w:
+            self.deck.mediaDir(create=True)
             w.insertHtml("[latex][/latex]")
             w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
@@ -431,6 +433,7 @@ class FactEditor(object):
     def insertLatexEqn(self):
         w = self.focusedEdit()
         if w:
+            self.deck.mediaDir(create=True)
             w.insertHtml("[$][/$]")
             w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
@@ -439,6 +442,7 @@ class FactEditor(object):
     def insertLatexMathEnv(self):
         w = self.focusedEdit()
         if w:
+            self.deck.mediaDir(create=True)
             w.insertHtml("[$$][/$$]")
             w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
@@ -531,7 +535,7 @@ class FactEdit(QTextEdit):
 
                 string = r.cap(1)
                 offset = 0
-                bits = re.split("[|,]", str(string))
+                bits = re.split("[|,]", unicode(string))
                 for index in range(0, len(bits)):
                     offset += len(bits[index]) + 1
                     if mouseposition < offset:
