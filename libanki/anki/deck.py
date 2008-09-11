@@ -26,9 +26,8 @@ from anki.errors import DeckAccessError, DeckWrongFormatError
 from anki.stdmodels import BasicModel
 from anki.utils import parseTags, tidyHTML
 from anki.history import CardHistoryEntry
-from anki.models import Model
+from anki.models import Model, CardModel
 from anki.stats import dailyStats, globalStats
-from anki.models import CardModel
 
 # ensure all the metadata in other files is loaded before proceeding
 import anki.models, anki.facts, anki.cards, anki.stats, anki.history
@@ -49,6 +48,9 @@ NewCardOrder = {
     1: _("Show new cards in order they were added"),
     }
 
+NEW_CARDS_LAST = 1
+NEW_CARDS_DISTRIBUTE = 0
+
 # parts of the code assume we only have one deck
 decksTable = Table(
     'decks', metadata,
@@ -56,7 +58,7 @@ decksTable = Table(
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
     Column('description', UnicodeText, nullable=False, default=u""),
-    Column('version', Integer, nullable=False, default=3),
+    Column('version', Integer, nullable=False, default=7),
     Column('currentModelId', Integer, ForeignKey("models.id")),
     # syncing
     Column('syncName', UnicodeText),
@@ -75,7 +77,7 @@ decksTable = Table(
     Column('delay1', Integer, nullable=False, default=1200),
     Column('delay2', Integer, nullable=False, default=28800),
     # collapsing future cards
-    Column('collapseTime', Float, nullable=False, default=18000),
+    Column('collapseTime', Integer, nullable=False, default=1),
     # priorities & postponing
     Column('highPriority', UnicodeText, nullable=False, default=u""),
     Column('medPriority', UnicodeText, nullable=False, default=u""),
@@ -83,10 +85,15 @@ decksTable = Table(
     Column('suspended', UnicodeText, nullable=False, default=u"Suspended"),
     # 0 is random, 1 is by input date
     Column('newCardOrder', Integer, nullable=False, default=0),
-    # not currently used
-    Column('newCardSpacing', Integer, nullable=False, default=0),
+    # when to show new cards
+    Column('newCardSpacing', Integer, nullable=False, default=NEW_CARDS_DISTRIBUTE),
     # limit the number of failed cards in play
-    Column('failedCardMax', Integer, nullable=False, default=20))
+    Column('failedCardMax', Integer, nullable=False, default=20),
+    # number of new cards to show per day
+    Column('newCardsPerDay', Integer, nullable=False, default=20),
+    # currently unused
+    Column('sessionRepLimit', Integer, nullable=False, default=100),
+    Column('sessionTimeLimit', Integer, nullable=False, default=1800))
 
 class Deck(object):
     "Top-level object. Manages facts, cards and scheduling information."
@@ -115,47 +122,88 @@ class Deck(object):
     ##########################################################################
 
     def getCard(self, orm=True):
-        ids = self.getCardIds()
-        if ids:
-            return self.cardFromId(ids[0], orm)
+        id = self.getCardId()
+        if id:
+            return self.cardFromId(id, orm)
 
     def getCards(self, limit=1, orm=True):
         ids = self.getCardIds(limit)
         return [self.cardFromId(x, orm) for x in ids]
 
-    def getCardIds(self, limit=1):
-        """Return up to LIMIT number of pending card IDs.
-Caller is responsible for checking cards are not spaced if
-limit is above 1."""
+    def getCardId(self):
+        "Return the next due card id, or None."
         now = time.time()
         ids = []
         # failed card due?
-        ids += self.s.column0("select id from failedCardsNow limit %d" % limit)
-        rem = limit - len(ids)
-        if rem > 0:
-            # failed card queue too big?
-            if self.failedCount >= self.failedCardMax:
-                ids += self.s.column0(
-                    "select id from failedCardsSoon limit %d" % rem)
-        rem = limit - len(ids)
-        if rem > 0:
-            # card due for review?
-            ids += self.s.column0("select id from revCards limit %d" % rem)
-        rem = limit - len(ids)
-        if rem > 0:
-            # new card
-            if self.newCardOrder == 0:
-                ids += self.s.column0(
-                    "select id from acqCardsRandom limit %d" % rem)
+        id = self.s.scalar("select id from failedCardsNow limit 1")
+        if id:
+            return id
+        # failed card queue too big?
+        if self.failedCount >= self.failedCardMax:
+            id = self.s.scalar(
+                "select id from failedCardsSoon limit 1")
+            if id:
+                return id
+        # distribute new cards?
+        if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
+            if self._timeForNewCard():
+                id = self._getNewCard()
+                if id:
+                    return id
+        # card due for review?
+        id = self.s.scalar("select id from revCards limit 1")
+        if id:
+            return id
+        # new card last?
+        if self.newCardSpacing == NEW_CARDS_LAST:
+            id = self._getNewCard()
+            if id:
+                return id
+        if self.collapseTime:
+            # final review
+            id = self.s.scalar(
+                "select id from failedCardsSoon limit 1")
+            return id
+
+    def _timeForNewCard(self):
+        # no cards for review, so force new
+        if not self.reviewCount:
+            return True
+        # force old if there are very high priority cards
+        if self.s.scalar(
+            "select 1 from cards where type = 1 and isDue = 1 "
+            "and priority = 4 limit 1"):
+            return False
+        if self.newCardModulus:
+            return self._dailyStats.reps % self.newCardModulus == 0
+        else:
+            return False
+
+    def _getNewCard(self):
+        if self.newCardsPerDay - self.newCardsToday() <= 0:
+            return
+        if self.newCardOrder == 0:
+            return self.s.scalar(
+                "select id from acqCardsRandom limit 1")
+        else:
+            return self.s.scalar(
+                "select id from acqCardsOrdered limit 1")
+
+    def getCardIds(self, limit):
+        """Return limit number of cards.
+Caller is responsible for ensuring cards are not spaced."""
+        def getCard():
+            id = self.getCardId()
+            self.s.statement("update cards set isDue = 0 where id = :id", id=id)
+            return id
+        arr = []
+        for i in range(limit):
+            c = getCard()
+            if c:
+                arr.append(c)
             else:
-                ids += self.s.column0(
-                    "select id from acqCardsOrdered limit %d" % rem)
-        if not ids:
-            if self.collapseTime:
-                # final review
-                ids += self.s.column0(
-                    "select id from failedCardsSoon limit %d" % rem)
-        return ids
+                break
+        return arr
 
     def cardFromId(self, id, orm=False):
         if orm:
@@ -227,9 +275,9 @@ where id != :id and factId = :factId""",
         self.s.statement("""
 update cards
 set type = (case
-when successive = 0 and reps != 0 and priority != 0
+when successive = 0 and reps != 0
 then 0 -- failed
-when priority = 4 or successive != 0 and reps != 0 and priority > 1
+when successive != 0 and reps != 0
 then 1 -- review
 else 2 -- new
 end)""" + where)
@@ -256,6 +304,18 @@ where isDue = 1""")
         self._dailyStats = dailyStats(self.s)
         # invalid card count
         self._countsDirty = True
+        # determine new card distribution
+        if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
+            remainingNew = self.newCardsPerDay - self.newCardsToday()
+            newCount = min(self.newCount, remainingNew)
+            if newCount:
+                self.newCardModulus = (newCount + self.reviewCount) / newCount
+                # if there are cards to review, ensure that modulo doesn't go
+                # under 2
+                if self.reviewCount:
+                    self.newCardModulus = max(2, self.newCardModulus)
+            else:
+                self.newCardModulus = 0
 
     # Interval management
     ##########################################################################
@@ -347,23 +407,30 @@ where id in (%s)""" % strids, now=time.time(), new=NEW_INTERVAL)
     def nextDueMsg(self):
         next = self.earliestTime()
         if next:
-            if next - time.time() > 86400:
+            newCardsTomorrow = min(self.newCount, self.newCardsPerDay)
+            msg = _('''\
+At the same time tomorrow:<br><br>
+- There will be <b>%(wait)d</b> cards waiting for review<br>
+- There will be <b>%(new)d</b>
+<a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-061e5433d4571d7ec7ecba0c329c09bd27c84d63">
+new cards</a> waiting''') % {
+                'new': newCardsTomorrow,
+                'wait': self.cardsDueBy(time.time() + 86400)
+                }
+            if next - time.time() > 86400 and not newCardsTomorrow:
                 msg = (_("The next card will be shown in <b>%s</b>") %
                        self.earliestTimeStr())
-            else:
-                msg = (_("At the same time tomorrow, there will be "
-                         "<b>%d</b> cards waiting") %
-                       self.cardsDueBy(time.time() + 86400))
         else:
             msg = _("The deck is empty. Please add some cards.")
         return msg
 
     def earliestTime(self):
         """Return the time of the earliest card.
-        This may be in the past if the deck is not finished.
-        If the deck has no (enabled) cards, return None."""
+This may be in the past if the deck is not finished.
+If the deck has no (enabled) cards, return None.
+Ignore new cards."""
         return self.s.scalar("""
-select combinedDue from cards where priority != 0
+select combinedDue from cards where priority != 0 and type != 2
 order by combinedDue limit 1""")
 
     def earliestTimeStr(self, next=None):
@@ -376,10 +443,10 @@ order by combinedDue limit 1""")
         return anki.utils.fmtTimeSpan(diff)
 
     def cardsDueBy(self, time):
-        "Number of cards due at TIME."
+        "Number of cards due at TIME. Ignore new cards"
         return self.s.scalar("""
 select count(id) from cards where combinedDue < :time
-and priority != 0""", time=time)
+and priority != 0 and type != 2""", time=time)
 
     def nextIntervalStr(self, card, ease):
         "Return the next interval for CARD given EASE as a string."
@@ -410,10 +477,10 @@ and priority != 0""", time=time)
 <h1>Congratulations!</h1>You have finished the deck for now.<br><br>
 %(next)s
 <br><br>
-There are %(waiting)d
+- There are <b>%(waiting)d</b>
 <a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-59a81e35b6afb23930005e943068945214d194b3">
 spaced</a> cards.<br>
-There are %(suspended)d
+- There are <b>%(suspended)d</b>
 <a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-37d2db274e6caa23aef55e29655a6b806901774b">
 suspended</a> cards.''') % {
     "next": self.nextDueMsg(),
@@ -485,7 +552,7 @@ suspended</a> cards.''') % {
         d['low'] = dict([(k, 1) for k in t])
         return d
 
-    # Card/fact counts
+    # Card/fact counts - all in deck, not just due
     ##########################################################################
 
     def cardCount(self):
@@ -507,6 +574,16 @@ suspended</a> cards.''') % {
     def newCardCount(self):
         return self.s.scalar(
             "select count(id) from cards where reps = 0")
+
+    # Counts related to due cards
+    ##########################################################################
+
+    def newCardsToday(self):
+        return (self._dailyStats.newEase0 +
+                self._dailyStats.newEase1 +
+                self._dailyStats.newEase2 +
+                self._dailyStats.newEase3 +
+                self._dailyStats.newEase4)
 
     def updateCounts(self):
         "Update failed/rev/new counts if cache is dirty."
@@ -716,9 +793,6 @@ where facts.id not in (select factId from cards)""")
 
     # Cards
     ##########################################################################
-
-    #def getCardById(self, id):
-    #    return self.s.query(anki.cards.Card).get(id)
 
     def deleteCard(self, id):
         "Delete a card given its id. Delete any unused facts. Don't flush."
@@ -1234,7 +1308,7 @@ Rename for uniqueness if not the same. Return the new name."""
         problems = []
         # does the user have a model?
         if not self.s.scalar("select count(id) from models"):
-            self.addModel(stdmodels.byName("Basic"))
+            self.addModel(BasicModel())
             problems.append(_("Deck was missing a model"))
         # is currentModel pointing to a valid model?
         if not self.s.all("""
@@ -1304,6 +1378,7 @@ select id from fields where factId not in (select id from facts)""")
         self.s.statement("update cards set modified = :t", t=time.time())
         self.s.statement("update facts set modified = :t", t=time.time())
         self.s.statement("update models set modified = :t", t=time.time())
+        self.lastSync = 0
         # update deck and save
         self.flushMod()
         self.save()
@@ -1379,6 +1454,15 @@ class DeckStorage(object):
             if create:
                 deck = DeckStorage._init(s)
             else:
+                if s.scalar("select version from decks limit 1") < 5:
+                    # add missing deck field
+                    s.execute("""
+alter table decks add column newCardsPerDay integer not null default 20""")
+                if s.scalar("select version from decks limit 1") < 6:
+                    s.execute("""
+alter table decks add column sessionRepLimit integer not null default 100""")
+                    s.execute("""
+alter table decks add column sessionTimeLimit integer not null default 1800""")
                 deck = s.query(Deck).get(1)
             # attach db vars
             deck.path = path
@@ -1615,6 +1699,22 @@ order by priority desc, due""")
             DeckStorage._addIndices(deck)
             deck.s.statement("analyze")
             deck.version = 4
+            deck.s.commit()
+        if deck.version == 4:
+            # decks field upgraded earlier
+            deck.version = 5
+            deck.s.commit()
+        if deck.version == 5:
+            # new spacing
+            deck.newCardSpacing = NEW_CARDS_DISTRIBUTE
+            deck.version = 6
+            deck.s.commit()
+            # low priority cards now stay in same queue
+            deck.rebuildTypes()
+        if deck.version == 6:
+            # removed 'new cards first' option, so order has changed
+            deck.newCardSpacing = NEW_CARDS_DISTRIBUTE
+            deck.version = 7
             deck.s.commit()
         return deck
     _upgradeDeck = staticmethod(_upgradeDeck)

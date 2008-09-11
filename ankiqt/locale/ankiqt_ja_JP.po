@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-03 03:38+0900\n"
+"POT-Creation-Date: 2008-09-07 00:04+0900\n"
 "PO-Revision-Date: 2008-03-28 17:07+0900\n"
 "Last-Translator: Andrew Wright <guswright80@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -117,12 +117,12 @@ msgstr "クイズ/追加/編集の時"
 msgid "%(del)d deleted."
 msgstr "%(del)d個を削除しました。"
 
-#: ui/deckproperties.py:66
+#: ui/deckproperties.py:73
 #, python-format
 msgid "%(name)s [%(facts)d facts]"
 msgstr "%(name)s [ファクト　%(facts)d個]"
 
-#: ui/main.py:1124
+#: ui/main.py:1136
 #, python-format
 msgid "%(path)s (%(facts)d facts, %(cards)d cards) - %(title)s"
 msgstr "%(path)s (ファクト　%(facts)d個, カード　%(cards)d個) - %(title)s"
@@ -137,7 +137,7 @@ msgstr "%d個をエクスポートしました。"
 msgid "%s ago"
 msgstr "%s前"
 
-#: ui/main.py:1280
+#: ui/main.py:1293
 #, python-format
 msgid ""
 "%s.\n"
@@ -150,7 +150,7 @@ msgstr ""
 msgid "&About.."
 msgstr "Ankiについて(&A)..."
 
-#: forms/deckproperties.py:345 forms/modelproperties.py:382
+#: forms/deckproperties.py:363 forms/modelproperties.py:382
 #: forms/modelproperties.py:401
 msgid "&Add"
 msgstr "追加(&A)"
@@ -192,12 +192,12 @@ msgstr "単語帳プロパティ"
 msgid "&Deck Statistics"
 msgstr "単語帳の統計(&D)"
 
-#: forms/deckproperties.py:347 forms/modelproperties.py:383
+#: forms/deckproperties.py:365 forms/modelproperties.py:383
 #: forms/modelproperties.py:402
 msgid "&Delete"
 msgstr "削除(&D)"
 
-#: forms/deckproperties.py:346 forms/main.py:431
+#: forms/deckproperties.py:364 forms/main.py:431
 msgid "&Edit"
 msgstr "編集(&E)"
 
@@ -320,31 +320,31 @@ msgstr "反転された単語をedictで(&w)..."
 msgid "; disabled"
 msgstr ""
 
-#: ui/main.py:798
+#: ui/main.py:809
 msgid "<a href=py:miss>Missing Kanji</a><br>"
 msgstr ""
 
-#: ui/main.py:355
+#: ui/main.py:369
 #, python-format
 msgid "<b>%(ease0)s</b>"
 msgstr "<b>%(ease0)s後</b>"
 
-#: ui/main.py:356
+#: ui/main.py:370
 #, python-format
 msgid "<b>%(ease1)s</b>"
 msgstr "<b>%(ease1)s後</b>"
 
-#: ui/main.py:357
+#: ui/main.py:371
 #, python-format
 msgid "<b>%(ease2)s</b>"
 msgstr "<b>%(ease2)s後</b>"
 
-#: ui/main.py:358
+#: ui/main.py:372
 #, python-format
 msgid "<b>%(ease3)s</b>"
 msgstr "<b>%(ease3)s後</b>"
 
-#: ui/main.py:359
+#: ui/main.py:373
 #, python-format
 msgid "<b>%(ease4)s</b>"
 msgstr "<b>%(ease4)s後</b>"
@@ -374,7 +374,7 @@ msgstr ""
 msgid "<b>Description</b>"
 msgstr "<b>メモ</b>"
 
-#: forms/deckproperties.py:329
+#: forms/deckproperties.py:347
 msgid "<b>Easy</b>"
 msgstr "<b>簡単</b>"
 
@@ -390,11 +390,11 @@ msgstr ""
 msgid "<b>File to import</b>:"
 msgstr "<b>読み込みファイル</b>:"
 
-#: forms/deckproperties.py:326
+#: forms/deckproperties.py:344
 msgid "<b>Hard</b>"
 msgstr "<b>難しい</b>"
 
-#: ui/main.py:328
+#: ui/main.py:342
 msgid "<b>How well did you remember?</b>"
 msgstr "<b>どのぐらい覚えていましたか。</b>"
 
@@ -402,19 +402,19 @@ msgstr "<b>どのぐらい覚えていましたか。</b>"
 msgid "<b>Limit to tags</b>:"
 msgstr "<b>このタグが付いている条件で</b>:"
 
-#: forms/deckproperties.py:339
+#: forms/deckproperties.py:357
 msgid "<b>Made a mistake (1) on a mature<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-3b268fd372f260751f5e9020a79d54a4f68e1829\">?</a> card</b>"
 msgstr ""
 
-#: forms/deckproperties.py:338
+#: forms/deckproperties.py:356
 msgid "<b>Made a mistake (1) on a young<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-3b268fd372f260751f5e9020a79d54a4f68e1829\">?</a> card"
 msgstr ""
 
-#: forms/deckproperties.py:341
+#: forms/deckproperties.py:359
 msgid "<b>Maximum failed cards<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-e081bb818555df4a9fd06e16e685835a95303e0c\">?</a></b>"
 msgstr ""
 
-#: forms/deckproperties.py:330
+#: forms/deckproperties.py:348
 msgid "<b>Medium</b>"
 msgstr "<b>普通</b>"
 
@@ -425,6 +425,10 @@ msgstr ""
 #: forms/modelproperties.py:372 forms/modelproperties.py:391
 msgid "<b>Name</b>"
 msgstr "<b>名前</b>"
+
+#: forms/deckproperties.py:353
+msgid "<b>Number of new cards per day"
+msgstr ""
 
 #: forms/modelproperties.py:396
 msgid "<b>Numeric?</b>"
@@ -442,7 +446,7 @@ msgstr "<b>質問の隠し</b>"
 msgid "<b>Required?</b>"
 msgstr "<b>必須</b>"
 
-#: forms/deckproperties.py:342
+#: forms/deckproperties.py:360
 msgid "<b>Show failed cards early<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-c34f83f4acaf3d9a8f59dcff02dd6abec930ebaf\">?</a></b>"
 msgstr ""
 
@@ -458,7 +462,7 @@ msgstr "<b>タグ</b>"
 msgid "<b>Tags<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-09efbe5fd6809ae0d90543adf92014b8eb9ef1bf\">?</a></b>"
 msgstr ""
 
-#: forms/deckproperties.py:337
+#: forms/deckproperties.py:355
 msgid "<b>Totally forgot (0)</b>"
 msgstr "<b>全く覚えていない (0)</b>"
 
@@ -509,7 +513,7 @@ msgstr "<h1>モデル</h1>"
 msgid "<h1>Cumulative view of due cards</h1>"
 msgstr "<h1>カード累積表</h1>"
 
-#: ui/main.py:815
+#: ui/main.py:826
 msgid "<h1>Current card</h1>"
 msgstr "<h1>現在のカード</h1>"
 
@@ -525,11 +529,11 @@ msgstr ""
 "<h1>毎日の成績</h1>この \n"
 "        グラフは今日の答えの正解率を示しています。"
 
-#: forms/deckproperties.py:315
+#: forms/deckproperties.py:333
 msgid "<h1>Deck description</h1>"
 msgstr "<h1>コメント</h1>"
 
-#: forms/deckproperties.py:336
+#: forms/deckproperties.py:354
 msgid "<h1>Delay on mistake</h1>The time until Anki shows you a card you got wrong. The default is 10 minutes."
 msgstr ""
 
@@ -545,7 +549,7 @@ msgstr "<h1>空単語帳</h1>この単語帳はカードがありません。カ
 msgid "<h1>Estimated time</h1>This is how long it will take to complete the current mode at your current pace."
 msgstr ""
 
-#: forms/deckproperties.py:340
+#: forms/deckproperties.py:358
 #, fuzzy
 msgid "<h1>Failed card limit & collapsing</h1>"
 msgstr "<h1>最終ドリルと間違えたカードの制限</h1>"
@@ -574,7 +578,7 @@ msgstr "<h1>初めて答えた</h1>"
 msgid "<h1>Interface language</h1>The language for the user interface: dialogs, menus, etc."
 msgstr "<h1>インタフェースの言語</h1>ダイアログ、メニュー等の言語"
 
-#: ui/main.py:818
+#: ui/main.py:829
 msgid "<h1>Last card</h1>"
 msgstr "<h1>先のカード</h1>"
 
@@ -586,16 +590,17 @@ msgstr "<h1>勉強</h1>新しいカードを勉強しています。"
 msgid "<h1>Model properties</h1>"
 msgstr "<h1>モデルプロパティ</h1>"
 
-#: forms/deckproperties.py:344
+#: forms/deckproperties.py:362
 msgid "<h1>Models</h1>Models define what sort of information you're studying, and the way to show it to you. Models range from a simple representation of a single flashcard with a \"front\" and \"back\" side, to more complicated domain specific models: a model for Russian verbs may define two verb forms, and test you on both of them."
 msgstr "<h1>モデル</h1>モデルで勉強する情報を定義します。モデルの中に情報は「フィールド」というものに保存されています。モデルそのものは簡単な「表」と「裏」のモデルから、様々な情報が付いてるモデルまで、柔軟なものに広がっています。"
 
-#: forms/deckproperties.py:325
-msgid "<h1>New & young cards</h1>The initial times to use when scheduling cards, in days."
+#: forms/deckproperties.py:343
+#, fuzzy
+msgid "<h1>New cards</h1>The initial times to use when scheduling cards, in days."
 msgstr "<h1>新しいカード</h1>最初の時にこの日日を使います。"
 
-#: forms/deckproperties.py:319
-msgid "<h1>Priorities</h1>A comma-separated list of tags to prioritize or deprioritize<a href=\"http://ichi2.net/anki/wiki/Priorities\">?</a>"
+#: forms/deckproperties.py:337
+msgid "<h1>Priorities</h1>A comma-separated list of tags to prioritize or deprioritize<a href=\"http://ichi2.net/anki/wiki/CardDisplayOrderAndPriorities\">?</a>"
 msgstr ""
 
 #: ui/status.py:155
@@ -631,7 +636,7 @@ msgstr "<h1>標準フォント</h1>単語帳のフォントにはディスプレ
 msgid "<h1>Synchronisation</h1>Synchronisation enables you to access your deck from the web and your mobile phone. You can <a href=\"http://anki.ichi2.net/\">create a free account</a>."
 msgstr "<h1>同期</h1>同期の機能でウェブや携帯でも利用することができます。<a href=\"http://anki.ichi2.net/\">無料で登録します</a>"
 
-#: forms/deckproperties.py:316
+#: forms/deckproperties.py:334
 msgid "<h1>Synchronisation</h1>Synchronisation lets you use your deck on multiple computers at the same time. You can also use it to study on the web, for when you're not at home. You can also study on your mobile phone if your phone has internet access."
 msgstr "<h1>同期</h1>同期の機能でウェッブや携帯でも利用することができます。"
 
@@ -718,20 +723,20 @@ msgstr "何を勉強しましょうか？"
 msgid "<h1>Where should we synchronize to?</h1>"
 msgstr "どこへ同期しますか？"
 
-#: forms/deckproperties.py:321
+#: forms/deckproperties.py:339
 msgid "<h2>High priority</h2>"
 msgstr ""
 
-#: forms/deckproperties.py:322
+#: forms/deckproperties.py:340
 #, fuzzy
 msgid "<h2>Low priority</h2>"
 msgstr "<h1>モデルプロパティ</h1>"
 
-#: forms/deckproperties.py:323
+#: forms/deckproperties.py:341
 msgid "<h2>Suspended</h2>"
 msgstr ""
 
-#: forms/deckproperties.py:320
+#: forms/deckproperties.py:338
 msgid "<h2>Very high priority</h2>"
 msgstr ""
 
@@ -759,7 +764,7 @@ msgstr "簡単な質問/解答クイズスタイル"
 msgid "About Anki"
 msgstr "Ankiについて"
 
-#: ui/main.py:309
+#: ui/main.py:323
 msgid "About right"
 msgstr "よかった"
 
@@ -808,7 +813,7 @@ msgstr "上級の設定"
 msgid "All fields valid"
 msgstr ""
 
-#: ui/main.py:573
+#: ui/main.py:587
 #, python-format
 msgid "Alt+%d"
 msgstr ""
@@ -829,7 +834,7 @@ msgstr ""
 msgid "Alt+M"
 msgstr ""
 
-#: ui/main.py:469
+#: ui/main.py:483
 #, python-format
 msgid ""
 "An error occurred while upgrading:\n"
@@ -858,7 +863,7 @@ msgstr "Anki - 単語帳を編集"
 msgid "Anki - Edit Deck (%(cur)d of %(tot)d cards shown)"
 msgstr ""
 
-#: ui/main.py:718
+#: ui/main.py:729
 #, python-format
 msgid ""
 "Anki was unable to save your configuration file:\n"
@@ -981,7 +986,7 @@ msgstr "閉じる"
 msgid "Close and lose current input?"
 msgstr ""
 
-#: ui/main.py:305
+#: ui/main.py:319
 msgid "Completely forgot"
 msgstr "全然覚えていない。"
 
@@ -989,7 +994,7 @@ msgstr "全然覚えていない。"
 msgid "Connecting.."
 msgstr "接続中.."
 
-#: ui/main.py:449
+#: ui/main.py:463
 msgid "Couldn't find the problem. Please open an issue on the issue tracker."
 msgstr ""
 
@@ -1031,7 +1036,7 @@ msgstr "Ctrl+5"
 msgid "Ctrl+A"
 msgstr "Ctrl+A"
 
-#: ui/main.py:1142
+#: ui/main.py:1154
 msgid "Ctrl+D"
 msgstr "Ctrl+D"
 
@@ -1135,7 +1140,7 @@ msgstr "同期、スケジュール、カードの優先、モデルなどをカ
 msgid "Czech"
 msgstr ""
 
-#: ui/main.py:638 ui/main.py:678
+#: ui/main.py:652 ui/main.py:692
 msgid "Deck files (*.anki)"
 msgstr "Ankiの単語帳 (*.anki)"
 
@@ -1143,7 +1148,7 @@ msgstr "Ankiの単語帳 (*.anki)"
 msgid "Deck graphs"
 msgstr "単語帳のグラフ"
 
-#: ui/main.py:668
+#: ui/main.py:682
 msgid "Deck is not modified."
 msgstr "ファイルが只今変化されていません。"
 
@@ -1151,7 +1156,7 @@ msgstr "ファイルが只今変化されていません。"
 msgid "Delete Tag.."
 msgstr "カードタグを削除..."
 
-#: forms/deckproperties.py:318
+#: forms/deckproperties.py:336
 msgid "Description && Synchronisation"
 msgstr "単語帳の説明・同期"
 
@@ -1163,7 +1168,7 @@ msgstr ""
 msgid "Dialog"
 msgstr ""
 
-#: ui/main.py:307
+#: ui/main.py:321
 msgid "Difficult"
 msgstr "難しかった"
 
@@ -1206,7 +1211,7 @@ msgstr "終了(&x)"
 msgid "ETA: <b>%(timeLeft)s</b>"
 msgstr ""
 
-#: ui/main.py:311
+#: ui/main.py:325
 msgid "Easy"
 msgstr "簡単だった"
 
@@ -1214,7 +1219,7 @@ msgstr "簡単だった"
 msgid "Edit card"
 msgstr "編集"
 
-#: forms/deckproperties.py:314
+#: forms/deckproperties.py:332
 msgid "Edit deck properties"
 msgstr "単語帳プロパティを編集"
 
@@ -1254,11 +1259,11 @@ msgstr ""
 msgid "Enter tag(s) to delete from each fact:"
 msgstr ""
 
-#: ui/main.py:446
+#: ui/main.py:460
 msgid "Error building queue. Attempting recovery.."
 msgstr ""
 
-#: ui/main.py:75
+#: ui/main.py:73
 msgid "Error running initHook. Broken plugin?"
 msgstr ""
 
@@ -1336,7 +1341,7 @@ msgstr "前景の色"
 msgid "French"
 msgstr "フランス語"
 
-#: ui/main.py:850
+#: ui/main.py:861
 msgid "Generating report (may take time).."
 msgstr "レポートを集計中。しばらくお待ちください"
 
@@ -1460,7 +1465,7 @@ msgstr "Latex数学環境"
 msgid "Learning"
 msgstr "勉強中"
 
-#: ui/main.py:830
+#: ui/main.py:841
 msgid "Loading graphs (may take time).."
 msgstr "グラフを集計中。しばらくお待ちください"
 
@@ -1478,7 +1483,7 @@ msgstr "%sをALCで検索しています。"
 msgid "Looking %s up on edict.."
 msgstr "%sをedictで検索しています。"
 
-#: ui/main.py:306
+#: ui/main.py:320
 msgid "Made a mistake"
 msgstr "間違えた"
 
@@ -1487,8 +1492,8 @@ msgstr "間違えた"
 msgid "Map to %s"
 msgstr ""
 
-#: forms/deckproperties.py:331 forms/deckproperties.py:332
-#: forms/deckproperties.py:334
+#: forms/deckproperties.py:349 forms/deckproperties.py:350
+#: forms/deckproperties.py:352
 msgid "Max"
 msgstr ""
 
@@ -1497,7 +1502,7 @@ msgstr ""
 msgid "Merge Models.."
 msgstr "モデルを同期中.."
 
-#: ui/main.py:1278
+#: ui/main.py:1291
 msgid "Merge complete."
 msgstr ""
 
@@ -1506,8 +1511,8 @@ msgstr ""
 msgid "Merge with '%s' on server"
 msgstr "「%s」というサーバにある単語帳に合体する"
 
-#: forms/deckproperties.py:327 forms/deckproperties.py:328
-#: forms/deckproperties.py:333
+#: forms/deckproperties.py:345 forms/deckproperties.py:346
+#: forms/deckproperties.py:351
 msgid "Min"
 msgstr ""
 
@@ -1531,7 +1536,7 @@ msgstr "モデルプロパティ"
 msgid "Model properties"
 msgstr "モデルプロパティ"
 
-#: forms/deckproperties.py:348
+#: forms/deckproperties.py:366
 msgid "Models"
 msgstr "モデル"
 
@@ -1563,44 +1568,44 @@ msgstr ""
 msgid "Move selected field up"
 msgstr ""
 
-#: ui/main.py:308
+#: ui/main.py:322
 #, python-format
 msgid "Next in <b>%(ease2)s</b>"
 msgstr "次回: <b>%(ease2)s後</b>"
 
-#: ui/main.py:310
+#: ui/main.py:324
 #, python-format
 msgid "Next in <b>%(ease3)s</b>"
 msgstr "次回: <b>%(ease3)s後</b>"
 
-#: ui/main.py:312
+#: ui/main.py:326
 #, python-format
 msgid "Next in <b>%(ease4)s</b>"
 msgstr "次回: <b>%(ease4)s後</b>"
 
-#: ui/main.py:821
+#: ui/main.py:832
 msgid "No current card or last card."
 msgstr "現在のカードも先のカードもありません。"
 
-#: ui/main.py:772
+#: ui/main.py:783
 msgid "No expression in current card."
 msgstr "このカードは、「表現」のフィールドに入力されていません。"
 
-#: ui/main.py:779
+#: ui/main.py:790
 msgid "No meaning in current card."
 msgstr "このカードは、「意味」のフィールドに入力されていません。"
 
-#: ui/main.py:1272
+#: ui/main.py:1285
 msgid ""
 "No models found to merge. If you want to merge models,\n"
 "all models must have the same name."
 msgstr ""
 
-#: ui/main.py:1253
+#: ui/main.py:1266
 msgid "No problems found"
 msgstr ""
 
-#: ui/main.py:969
+#: ui/main.py:980
 msgid "Not syncing, username or password unset."
 msgstr "ユーザー名またはパスワードが登録されてないので、同期が出来ません。"
 
@@ -1616,7 +1621,7 @@ msgstr "最近使用した単語帳"
 msgid "Open Sa&mple..."
 msgstr "単語帳の例を開く(&O)"
 
-#: ui/main.py:641
+#: ui/main.py:655
 msgid "Open deck"
 msgstr "ファイルを開く"
 
@@ -1632,6 +1637,11 @@ msgstr ""
 msgid "Password"
 msgstr "パスワード:"
 
+#: ui/graphs.py:153 ui/graphs.py:163 ui/graphs.py:172 ui/graphs.py:180
+#: ui/graphs.py:188
+msgid "Period"
+msgstr ""
+
 #: ui/modelproperties.py:361
 msgid "Please add a new card first."
 msgstr "まず新しいカードを入力してください。"
@@ -1640,7 +1650,7 @@ msgstr "まず新しいカードを入力してください。"
 msgid "Please add a new field first."
 msgstr "まず新しいフィールドを作成してください。"
 
-#: ui/deckproperties.py:97
+#: ui/deckproperties.py:104
 msgid "Please add another model first."
 msgstr "まずもう一つのモデルを作成してください。"
 
@@ -1656,7 +1666,7 @@ msgstr "ユーザー名とパスワードを確認してください。"
 msgid "Please enable a different model first."
 msgstr "まず他のモデルを有効してください。"
 
-#: ui/main.py:847
+#: ui/main.py:858
 msgid "Please install python-matplotlib to access graphs."
 msgstr "python-matplotlabが必要です。python-matplotlibをインストールしてください。"
 
@@ -1676,12 +1686,12 @@ msgstr "空白の値を拒否します。"
 msgid "Preview"
 msgstr "プレビュー"
 
-#: forms/deckproperties.py:324
+#: forms/deckproperties.py:342
 #, fuzzy
 msgid "Priorities && Suspending"
 msgstr "優先・延期"
 
-#: ui/main.py:1257
+#: ui/main.py:1270
 #, python-format
 msgid ""
 "Problems found:\n"
@@ -1757,7 +1767,7 @@ msgstr "カードを答える時に"
 msgid "Save and S&ync"
 msgstr "保存と同期をします(&y)"
 
-#: ui/main.py:674
+#: ui/main.py:688
 msgid "Save deck"
 msgstr "単語帳を保存する"
 
@@ -1765,15 +1775,15 @@ msgstr "単語帳を保存する"
 msgid "Save when closing"
 msgstr "閉じる時に自動的に保存する"
 
-#: ui/main.py:696
+#: ui/main.py:710
 msgid "Saving.."
 msgstr "保存中.."
 
-#: ui/main.py:700
+#: ui/main.py:714
 msgid "Saving..done"
 msgstr "保存を完了しました。"
 
-#: forms/deckproperties.py:343
+#: forms/deckproperties.py:361
 msgid "Scheduling"
 msgstr "スケジューリング"
 
@@ -1786,7 +1796,7 @@ msgstr "送信中です。（ローカル +%(a)d/-%(b)d、 リモート +%(c)d/-
 msgid "Server is down or operation failed."
 msgstr "サーバに接続できませんでした。"
 
-#: ui/main.py:282
+#: ui/main.py:296
 msgid "Show answer"
 msgstr "解答を表示"
 
@@ -1842,7 +1852,7 @@ msgstr "ファイルを開く時に自動的に同期する"
 msgid "Sync: nothing to do"
 msgstr "同期：更新は不要"
 
-#: forms/deckproperties.py:317
+#: forms/deckproperties.py:335
 msgid "Synchronize this deck with name:"
 msgstr "この名前を使って単語帳を同期します。"
 
@@ -1911,10 +1921,6 @@ msgstr ""
 msgid "The number of cards scheduled for a given number of days."
 msgstr "横には、表示された日から次に表示する日までの日数です。縦には、その日数があるカードの枚数。"
 
-#: forms/deckproperties.py:335
-msgid "The order to show new cards."
-msgstr "新しいカードを表示する順番:"
-
 #: ui/sync.py:47
 msgid "The sync protocol has changed. Please upgrade."
 msgstr "同期するプロトコルがかわりました。新しいバージョンをダウンロードしてください。"
@@ -1958,7 +1964,7 @@ msgstr ""
 "\n"
 "本当にモデルとカードを削除しますか？"
 
-#: ui/deckproperties.py:103
+#: ui/deckproperties.py:110
 #, python-format
 msgid ""
 "This model is used by %d facts.\n"
@@ -1969,7 +1975,7 @@ msgstr ""
 "このモデルを削除すれば、関係しているカードも削除されます。\n"
 "このモデルを削除しますか。"
 
-#: ui/main.py:839
+#: ui/main.py:850
 msgid ""
 "To display graphs, Anki needs a .dll file which\n"
 "you don't have. Please install:\n"
@@ -1981,11 +1987,11 @@ msgstr ""
 msgid "Toggle Delete"
 msgstr "削除(&D)"
 
-#: ui/main.py:654
+#: ui/main.py:668
 msgid "Unable to load file."
 msgstr "ファイルを開けませんでした。"
 
-#: ui/main.py:435
+#: ui/main.py:449
 msgid "Unable to load the same deck twice."
 msgstr "この単語帳はもう開いています。二度と開けることができません。"
 
@@ -2054,11 +2060,11 @@ msgstr "よくできました！次に表示されるのは <b>%(next)s後</b>�
 msgid "Would you like to download it now?"
 msgstr "今ダウンロードしますか。"
 
-#: ui/main.py:1276
+#: ui/main.py:1289
 msgid "Would you like to merge models that have the same name?"
 msgstr ""
 
-#: ui/main.py:1191
+#: ui/main.py:1204
 #, python-format
 msgid ""
 "Your computer clock is not set to the correct time.\n"
@@ -2066,7 +2072,7 @@ msgid ""
 " Please ensure it is set correctly and then restart Anki."
 msgstr ""
 
-#: ui/main.py:844
+#: ui/main.py:855
 msgid ""
 "Your version of Matplotlib is broken.\n"
 "Please see http://repose.ath.cx/tracker/anki/issue102"
@@ -2078,7 +2084,7 @@ msgstr ""
 msgid "cards"
 msgstr "カード毎に保存する"
 
-#: ui/main.py:1189
+#: ui/main.py:1202
 msgid "early"
 msgstr ""
 
@@ -2091,7 +2097,7 @@ msgstr "ファクト毎に保存する"
 msgid "in %s"
 msgstr "%s後"
 
-#: ui/main.py:1187
+#: ui/main.py:1200
 msgid "late"
 msgstr ""
 
@@ -2553,6 +2559,9 @@ msgstr "<b>%s</b>へ写像しました"
 
 #~ msgid "The number of hours to collapse in the final drill. Use 0 to disable."
 #~ msgstr "勉強が終わったら、カードの期限が右にある時間の前だったら、最終ドリルに含まれる。"
+
+#~ msgid "The order to show new cards."
+#~ msgstr "新しいカードを表示する順番:"
 
 #~ msgid "Think about the answer, then hit Enter when ready."
 #~ msgstr "思い出したらEnterを押してください。"

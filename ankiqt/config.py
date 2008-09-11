@@ -4,6 +4,8 @@
 # User configuration handling
 ##########################################################################
 
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 import os, sys, cPickle, locale, types
 
 # compatability
@@ -40,7 +42,8 @@ class Config(dict):
             'saveAfterAdding': True,
             'saveAfterAddingNum': 10,
             'saveOnClose': True,
-            'mainWindowGeometry': (100, 100, 550, 625),
+            'mainWindowSize': QSize(550, 625),
+            'mainWindowPos': QPoint(100, 100),
             'easeButtonStyle': 'standard',
             'easeButtonHeight': 'standard',
             'suppressUpdate': False,

@@ -264,6 +264,6 @@ card' from the Edit menu."""))
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."
-        self.write("<center>" +
+        self.write("<br><center><table width=250><tr><td align='left'>" +
                    self.main.deck.deckFinishedMsg() +
-                   "</center>")
+                   "</td></tr></table></center>")

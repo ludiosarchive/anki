@@ -1,8 +1,68 @@
-changeset:   771:cb95843ba6ec
+changeset:   783:f2e1209c1f2e
 tag:         tip
 user:        Damien Elmes <hg@repose.cx>
-date:        Wed Sep 03 05:23:55 2008 +0900
+date:        Sun Sep 07 01:04:26 2008 +0900
+summary:     add debian diff
+
+changeset:   782:64bbc71bf76e
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 07 00:04:58 2008 +0900
+summary:     update spanish translations
+
+changeset:   781:c3fa61627da3
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 23:50:47 2008 +0900
+summary:     bump version number
+
+changeset:   780:b184386be21a
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 23:44:36 2008 +0900
+summary:     new resize/move that should work on all platforms, don't set c+w on mac
+
+changeset:   779:b3ccd75b96f2
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 22:28:00 2008 +0900
+summary:     change scheduling options
+
+changeset:   778:ece55e98a4ea
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 22:12:59 2008 +0900
+summary:     ensure window is visible (based on patch by David Knaack)
+
+changeset:   777:d1b3a6ab2c02
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 21:10:59 2008 +0900
+summary:     add space in deck message
+
+changeset:   776:36f2787b1fc7
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 20:38:28 2008 +0900
+summary:     update priority url
+
+changeset:   775:0ab9164b739b
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 19:01:02 2008 +0900
+summary:     add max new cards and new card scheduling options
+
+changeset:   774:f28a50fae006
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 18:31:54 2008 +0900
 summary:     remove debian dir
+
+changeset:   773:7b21553ea9a2
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 18:28:12 2008 +0900
+summary:     center deck finished message but left align it
+
+changeset:   772:1eb6c7d80ae1
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 15:22:39 2008 +0900
+summary:     add 'period' translation
+
+changeset:   771:512b057f1dae
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 15:00:59 2008 +0900
+summary:     disable undo answer on deck close
 
 changeset:   770:35a2f14d440d
 user:        Damien Elmes <hg@repose.cx>

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-03 03:16+0900\n"
+"POT-Creation-Date: 2008-09-07 00:05+0900\n"
 "PO-Revision-Date: 2008-02-27 20:45+1100\n"
 "Last-Translator: Laurent Steffan <devel@laurentsteffan.com>\n"
 "Language-Team: LMS <anki_tradu@laurentsteffan.com>\n"
@@ -14,17 +14,17 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: deck.py:408
+#: deck.py:476
 #, python-format
 msgid ""
 "\n"
 "<h1>Congratulations!</h1>You have finished the deck for now.<br><br>\n"
 "%(next)s\n"
 "<br><br>\n"
-"There are %(waiting)d\n"
+"- There are <b>%(waiting)d</b>\n"
 "<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-59a81e35b6afb23930005e943068945214d194b3\">\n"
 "spaced</a> cards.<br>\n"
-"There are %(suspended)d\n"
+"- There are <b>%(suspended)d</b>\n"
 "<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-37d2db274e6caa23aef55e29655a6b806901774b\">\n"
 "suspended</a> cards."
 msgstr ""
@@ -234,9 +234,14 @@ msgstr "Paquet Anki (*.anki)"
 msgid "Anki decks (*.anki)"
 msgstr "Paquets Anki (*.anki)"
 
-#: deck.py:353
+#: deck.py:411
 #, python-format
-msgid "At the same time tomorrow, there will be <b>%d</b> cards waiting"
+msgid ""
+"At the same time tomorrow:<br><br>\n"
+"- There will be <b>%(wait)d</b> cards waiting for review<br>\n"
+"- There will be <b>%(new)d</b>\n"
+"<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-061e5433d4571d7ec7ecba0c329c09bd27c84d63\">\n"
+"new cards</a> waiting"
 msgstr ""
 
 #: stdmodels.py:78 stdmodels.py:166 stdmodels.py:194
@@ -255,7 +260,7 @@ msgstr "D'arrière en avant"
 msgid "Basic"
 msgstr "Simple"
 
-#: deck.py:1362 deck.py:1425
+#: deck.py:1445 deck.py:1517
 msgid "Can't read/write deck"
 msgstr "Impossible de lire/écrire le paquet"
 
@@ -270,6 +275,10 @@ msgstr "Marqueurs de modèles de cartes"
 #: stats.py:293
 msgid "Card tags"
 msgstr "Marqueurs de cartes"
+
+#: graphs.py:77 graphs.py:99 graphs.py:113 graphs.py:135
+msgid "Cards"
+msgstr "Cartes"
 
 #: exporting.py:209
 msgid "Cards in tab-separated text file (*.txt)"
@@ -295,8 +304,16 @@ msgstr "Facteur actuel"
 msgid "Current interval"
 msgstr "Intervalle actuel"
 
-#: deck.py:1232
+#: deck.py:1307
 msgid "Database file damaged. Restore from backup."
+msgstr ""
+
+#: graphs.py:136
+msgid "Day"
+msgstr ""
+
+#: graphs.py:78 graphs.py:100 graphs.py:114
+msgid "Days"
 msgstr ""
 
 #: stats.py:322
@@ -308,31 +325,31 @@ msgstr "Statistiques de paquet"
 msgid "Deck created: <b>%s</b> ago<br>"
 msgstr "Paquet créé : il y a <b>%s</b><br>"
 
-#: deck.py:1237
+#: deck.py:1312
 msgid "Deck was missing a model"
 msgstr ""
 
-#: deck.py:1258
+#: deck.py:1333
 #, python-format
 msgid "Deleted %d cards with missing fact"
 msgstr ""
 
-#: deck.py:1266
+#: deck.py:1341
 #, python-format
 msgid "Deleted %d cards with no card model"
 msgstr ""
 
-#: deck.py:1280
+#: deck.py:1355
 #, python-format
 msgid "Deleted %d dangling fields"
 msgstr ""
 
-#: deck.py:1251
+#: deck.py:1326
 #, python-format
 msgid "Deleted %d facts with missing fields"
 msgstr ""
 
-#: deck.py:1271
+#: deck.py:1346
 #, python-format
 msgid "Deleted %d facts with no cards"
 msgstr ""
@@ -353,7 +370,7 @@ msgstr "Marqueurs de fait"
 msgid "Facts in tab-separated text file (*.txt)"
 msgstr "Faits dans un fichier texte à séparateur tabulation (*.txt)"
 
-#: deck.py:1396
+#: deck.py:1488
 msgid "File is in use by another process"
 msgstr "Un autre processus utilise ce fichier"
 
@@ -438,12 +455,12 @@ msgstr "Cartes mûres : <b>%(gMatureYes%)0.1f%%</b> (<b>%(gMatureYes)d</b> sur <
 msgid "Mature cards: <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
 msgstr "Cartes mûres : <b>%(old)d</b> (<b>%(oldP)0.2f%%</b>)<br>"
 
-#: deck.py:820
+#: deck.py:895
 #, python-format
 msgid "Model '%s' has wrong card model count"
 msgstr ""
 
-#: deck.py:824
+#: deck.py:899
 #, python-format
 msgid "Model '%s' has wrong field model count"
 msgstr ""
@@ -500,16 +517,16 @@ msgstr "Fichiers texte (*.txt)"
 msgid "The answer."
 msgstr "La réponse."
 
-#: deck.py:1243
+#: deck.py:1318
 msgid "The current model didn't exist"
 msgstr ""
 
-#: deck.py:357
+#: deck.py:424
 #, fuzzy
 msgid "The deck is empty. Please add some cards."
 msgstr "Veuillez d'abord ajouter des cartes.<p/>"
 
-#: deck.py:350
+#: deck.py:421
 #, python-format
 msgid "The next card will be shown in <b>%s</b>"
 msgstr ""
@@ -523,7 +540,7 @@ msgstr "Nombre total de cartes : <b>%d</b><br><br>"
 msgid "Total time"
 msgstr "Temps total"
 
-#: deck.py:604
+#: deck.py:682
 msgid "Unknown"
 msgstr "Inconnu"
 
@@ -563,7 +580,7 @@ msgstr "[vide]"
 msgid "[invalid format; see model properties]"
 msgstr "[format invalide ; voir les propriétés du modèle]"
 
-#: deck.py:388
+#: deck.py:456
 msgid "a short time"
 msgstr "un temps court"
 
@@ -572,7 +589,7 @@ msgstr "un temps court"
 msgid "in %s"
 msgstr "dans %s"
 
-#: deck.py:373
+#: deck.py:441
 msgid "unknown"
 msgstr "inconnu"
 
@@ -624,9 +641,6 @@ msgstr "inconnu"
 
 #~ msgid "Can't read/write directory"
 #~ msgstr "Impossible de lire/écrire le répertoire"
-
-#~ msgid "Cards"
-#~ msgstr "Cartes"
 
 #~ msgid "Colon/semicolon/tab-separated text file (*.*)"
 #~ msgstr "Fichier texte à séparateur virgule/point-virgule/tabulation (*.*)"

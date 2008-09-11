@@ -150,7 +150,7 @@ def intervalGraph(parent, deck):
     nextDue = AdjustableFigure(dg.nextDue, 30)
     nextDue.addWidget(QLabel(_("<h1>Due cards</h1>")))
     nextDue.addFigure()
-    nextDue.addSlider("Period", range)
+    nextDue.addSlider(_("Period"), range)
     nextDue.addExplanation(_("The number of cards due each day over the "
                              "period.\n"
                              "Today is 0; cards less than zero are overdue."))
@@ -160,7 +160,7 @@ def intervalGraph(parent, deck):
     cumDue = AdjustableFigure(dg.cumulativeDue, 30)
     cumDue.addWidget(QLabel(_("<h1>Cumulative view of due cards</h1>")))
     cumDue.addFigure()
-    cumDue.addSlider("Period", range)
+    cumDue.addSlider(_("Period"), range)
     cumDue.addExplanation(_("The number of cards due each day, assuming "
                              "no study."))
 
@@ -169,7 +169,7 @@ def intervalGraph(parent, deck):
     interval = AdjustableFigure(dg.intervalPeriod, 30)
     interval.addWidget(QLabel(_("<h1>Card intervals</h1>")))
     interval.addFigure()
-    interval.addSlider("Period", range)
+    interval.addSlider(_("Period"), range)
     interval.addExplanation(_("The number of cards scheduled for a given "
                              "number of days."))
     vbox.addWidget(interval)
@@ -177,7 +177,7 @@ def intervalGraph(parent, deck):
     added = AdjustableFigure(dg.addedRecently, 30)
     added.addWidget(QLabel(_("<h1>Added cards</h1>")))
     added.addFigure()
-    added.addSlider("Period", range)
+    added.addSlider(_("Period"), range)
     added.addExplanation(_("The number of cards added on a given day."))
     vbox.addWidget(added)
 
@@ -185,7 +185,7 @@ def intervalGraph(parent, deck):
         dg.addedRecently, args + ('firstAnswered',)), 30)
     answered.addWidget(QLabel(_("<h1>First answered</h1>")))
     answered.addFigure()
-    answered.addSlider("Period", range)
+    answered.addSlider(_("Period"), range)
     answered.addExplanation(_("The number of cards first answered on a "
                               "given day.\nThis will be different to "
                               "'added cards' if you are\nusing a "
