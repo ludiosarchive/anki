@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-03 03:38+0900\n"
+"POT-Creation-Date: 2008-09-07 00:04+0900\n"
 "PO-Revision-Date: 2007-08-13 16:28+0200\n"
 "Last-Translator: Andreas Klauer <Andreas.Klauer@metamorpher.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -135,12 +135,12 @@ msgstr " <b>Beim Abfragen/Hinzufügen/Editieren</b>"
 msgid "%(del)d deleted."
 msgstr "%(del)d entfernt."
 
-#: ui/deckproperties.py:66
+#: ui/deckproperties.py:73
 #, python-format
 msgid "%(name)s [%(facts)d facts]"
 msgstr "%(name)s [%(facts)d Fakten]"
 
-#: ui/main.py:1124
+#: ui/main.py:1136
 #, python-format
 msgid "%(path)s (%(facts)d facts, %(cards)d cards) - %(title)s"
 msgstr "%(path)s (%(facts)d Fakten, %(cards)d Karten) - %(title)s"
@@ -155,7 +155,7 @@ msgstr "%d exportiert."
 msgid "%s ago"
 msgstr "vor %s"
 
-#: ui/main.py:1280
+#: ui/main.py:1293
 #, python-format
 msgid ""
 "%s.\n"
@@ -170,7 +170,7 @@ msgstr ""
 msgid "&About.."
 msgstr "&Über..."
 
-#: forms/deckproperties.py:345 forms/modelproperties.py:382
+#: forms/deckproperties.py:363 forms/modelproperties.py:382
 #: forms/modelproperties.py:401
 msgid "&Add"
 msgstr "&Hinzufügen"
@@ -207,12 +207,12 @@ msgstr "&Stapeleinstellungen..."
 msgid "&Deck Statistics"
 msgstr "&Stapelstatistik"
 
-#: forms/deckproperties.py:347 forms/modelproperties.py:383
+#: forms/deckproperties.py:365 forms/modelproperties.py:383
 #: forms/modelproperties.py:402
 msgid "&Delete"
 msgstr "&Entfernen"
 
-#: forms/deckproperties.py:346 forms/main.py:431
+#: forms/deckproperties.py:364 forms/main.py:431
 msgid "&Edit"
 msgstr "&Bearbeiten"
 
@@ -324,31 +324,31 @@ msgstr "...&Wortmarkierung im Edict"
 msgid "; disabled"
 msgstr "; gesperrt"
 
-#: ui/main.py:798
+#: ui/main.py:809
 msgid "<a href=py:miss>Missing Kanji</a><br>"
 msgstr "<a href=py:miss>Fehlende Kanji</a><br>"
 
-#: ui/main.py:355
+#: ui/main.py:369
 #, python-format
 msgid "<b>%(ease0)s</b>"
 msgstr "<b>%(ease0)s</b>"
 
-#: ui/main.py:356
+#: ui/main.py:370
 #, python-format
 msgid "<b>%(ease1)s</b>"
 msgstr "<b>%(ease1)s</b>"
 
-#: ui/main.py:357
+#: ui/main.py:371
 #, python-format
 msgid "<b>%(ease2)s</b>"
 msgstr "<b>%(ease2)s</b>"
 
-#: ui/main.py:358
+#: ui/main.py:372
 #, python-format
 msgid "<b>%(ease3)s</b>"
 msgstr "<b>%(ease3)s</b>"
 
-#: ui/main.py:359
+#: ui/main.py:373
 #, python-format
 msgid "<b>%(ease4)s</b>"
 msgstr "<b>%(ease4)s</b>"
@@ -378,7 +378,7 @@ msgstr "<b>Karten-spezifische Tags</b>"
 msgid "<b>Description</b>"
 msgstr "<b>Beschreibung</b>"
 
-#: forms/deckproperties.py:329
+#: forms/deckproperties.py:347
 msgid "<b>Easy</b>"
 msgstr "<b>Leicht</b>"
 
@@ -394,11 +394,11 @@ msgstr ""
 msgid "<b>File to import</b>:"
 msgstr "<b>zu importierende Datei</b>:"
 
-#: forms/deckproperties.py:326
+#: forms/deckproperties.py:344
 msgid "<b>Hard</b>"
 msgstr "<b>Schwer</b>"
 
-#: ui/main.py:328
+#: ui/main.py:342
 msgid "<b>How well did you remember?</b>"
 msgstr "<b>Wie gut hast Du Dich erinnert?</b>"
 
@@ -406,19 +406,19 @@ msgstr "<b>Wie gut hast Du Dich erinnert?</b>"
 msgid "<b>Limit to tags</b>:"
 msgstr "<b>Auf Tags beschränken</b>:"
 
-#: forms/deckproperties.py:339
+#: forms/deckproperties.py:357
 msgid "<b>Made a mistake (1) on a mature<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-3b268fd372f260751f5e9020a79d54a4f68e1829\">?</a> card</b>"
 msgstr ""
 
-#: forms/deckproperties.py:338
+#: forms/deckproperties.py:356
 msgid "<b>Made a mistake (1) on a young<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-3b268fd372f260751f5e9020a79d54a4f68e1829\">?</a> card"
 msgstr ""
 
-#: forms/deckproperties.py:341
+#: forms/deckproperties.py:359
 msgid "<b>Maximum failed cards<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-e081bb818555df4a9fd06e16e685835a95303e0c\">?</a></b>"
 msgstr ""
 
-#: forms/deckproperties.py:330
+#: forms/deckproperties.py:348
 msgid "<b>Medium</b>"
 msgstr "<b>Mittel</b>"
 
@@ -429,6 +429,10 @@ msgstr ""
 #: forms/modelproperties.py:372 forms/modelproperties.py:391
 msgid "<b>Name</b>"
 msgstr "<b>Name</b>"
+
+#: forms/deckproperties.py:353
+msgid "<b>Number of new cards per day"
+msgstr ""
 
 #: forms/modelproperties.py:396
 msgid "<b>Numeric?</b>"
@@ -446,7 +450,7 @@ msgstr "<b>Frage verstecken</b>"
 msgid "<b>Required?</b>"
 msgstr "<b>Benötigt?</b>"
 
-#: forms/deckproperties.py:342
+#: forms/deckproperties.py:360
 msgid "<b>Show failed cards early<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-c34f83f4acaf3d9a8f59dcff02dd6abec930ebaf\">?</a></b>"
 msgstr ""
 
@@ -462,7 +466,7 @@ msgstr "<b>Tags</b>"
 msgid "<b>Tags<a href=\"http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-09efbe5fd6809ae0d90543adf92014b8eb9ef1bf\">?</a></b>"
 msgstr ""
 
-#: forms/deckproperties.py:337
+#: forms/deckproperties.py:355
 msgid "<b>Totally forgot (0)</b>"
 msgstr "<b>Völlig vergessen (0)</b>"
 
@@ -513,7 +517,7 @@ msgstr "<h1>Karten-Modelle</h1>"
 msgid "<h1>Cumulative view of due cards</h1>"
 msgstr "<h1>Kumulative Ansicht fälliger Karten</h1>"
 
-#: ui/main.py:815
+#: ui/main.py:826
 msgid "<h1>Current card</h1>"
 msgstr "<h1>Aktuelle Karte</h1>"
 
@@ -537,11 +541,11 @@ msgstr ""
 "Abgelenkte Zeit: %(disTime)s<br>\n"
 "Gesamte Zeit: %(revTime)s"
 
-#: forms/deckproperties.py:315
+#: forms/deckproperties.py:333
 msgid "<h1>Deck description</h1>"
 msgstr "<h1>Stapelbeschreibung</h1>"
 
-#: forms/deckproperties.py:336
+#: forms/deckproperties.py:354
 #, fuzzy
 msgid "<h1>Delay on mistake</h1>The time until Anki shows you a card you got wrong. The default is 10 minutes."
 msgstr ""
@@ -560,7 +564,7 @@ msgstr "<h1>Leerer Stapel</h1>Dein Kartenstapel ist leer. Bitte füge ein paar K
 msgid "<h1>Estimated time</h1>This is how long it will take to complete the current mode at your current pace."
 msgstr "<h1>Geschätzte Zeit</h1>Wenn Du mit gleicher Geschwindigkeit weitermachst, wird es ungefähr so lange dauern, bis Du die Karten wiederholt / gelernt hast."
 
-#: forms/deckproperties.py:340
+#: forms/deckproperties.py:358
 msgid "<h1>Failed card limit & collapsing</h1>"
 msgstr ""
 
@@ -588,7 +592,7 @@ msgstr "<h1>Erstmals beantwortet</h1>"
 msgid "<h1>Interface language</h1>The language for the user interface: dialogs, menus, etc."
 msgstr "<h1>Spracheinstellung</h1>Die Sprache für die Benutzeroberfläche: Dialoge, Menüs, usw."
 
-#: ui/main.py:818
+#: ui/main.py:829
 msgid "<h1>Last card</h1>"
 msgstr "<h1>Letzte Karte</h1>"
 
@@ -600,16 +604,16 @@ msgstr "<h1>Lernen</h1>Du lernst gerade neue Karten."
 msgid "<h1>Model properties</h1>"
 msgstr "<h1>Modelleinstellungen</h1>"
 
-#: forms/deckproperties.py:344
+#: forms/deckproperties.py:362
 msgid "<h1>Models</h1>Models define what sort of information you're studying, and the way to show it to you. Models range from a simple representation of a single flashcard with a \"front\" and \"back\" side, to more complicated domain specific models: a model for Russian verbs may define two verb forms, and test you on both of them."
 msgstr "<h1>Modelle</h1>Mit Modellen wird festgelegt, welche Informationen gelernt und auf welche Art sie präsentiert werden. Ein einfaches Modell für einzelne Karteikarten hat nur eine Vorder- und Rückseite, es sind aber auch komplizierte Modelle denkbar, die z.B. unterschiedliche Verbformen definieren und alle abfragen."
 
-#: forms/deckproperties.py:325
-msgid "<h1>New & young cards</h1>The initial times to use when scheduling cards, in days."
+#: forms/deckproperties.py:343
+msgid "<h1>New cards</h1>The initial times to use when scheduling cards, in days."
 msgstr ""
 
-#: forms/deckproperties.py:319
-msgid "<h1>Priorities</h1>A comma-separated list of tags to prioritize or deprioritize<a href=\"http://ichi2.net/anki/wiki/Priorities\">?</a>"
+#: forms/deckproperties.py:337
+msgid "<h1>Priorities</h1>A comma-separated list of tags to prioritize or deprioritize<a href=\"http://ichi2.net/anki/wiki/CardDisplayOrderAndPriorities\">?</a>"
 msgstr ""
 
 #: ui/status.py:155
@@ -665,7 +669,7 @@ msgstr ""
 "<h1>Synchronisieren</h1>\n"
 "Durch Synchronisieren kann der Stapel im Web und auf dem Mobiltelefon verfügbar gemacht werden. Du kannst kostenlos einen <a href=\"http://anki.ichi2.net/\">Zugang registrieren</a>."
 
-#: forms/deckproperties.py:316
+#: forms/deckproperties.py:334
 msgid "<h1>Synchronisation</h1>Synchronisation lets you use your deck on multiple computers at the same time. You can also use it to study on the web, for when you're not at home. You can also study on your mobile phone if your phone has internet access."
 msgstr ""
 "<h1>Synchronisieren</h1>\n"
@@ -756,19 +760,19 @@ msgstr "<h1>Was möchtest Du lernen?</h1>"
 msgid "<h1>Where should we synchronize to?</h1>"
 msgstr "<h1>Womit soll synchronisiert werden?</h1>"
 
-#: forms/deckproperties.py:321
+#: forms/deckproperties.py:339
 msgid "<h2>High priority</h2>"
 msgstr "<h2>Hohe Priorität</h2>"
 
-#: forms/deckproperties.py:322
+#: forms/deckproperties.py:340
 msgid "<h2>Low priority</h2>"
 msgstr "<h2>Niedrige Priorität</h2>"
 
-#: forms/deckproperties.py:323
+#: forms/deckproperties.py:341
 msgid "<h2>Suspended</h2>"
 msgstr "<h2>Ausgesetzt</h2>"
 
-#: forms/deckproperties.py:320
+#: forms/deckproperties.py:338
 msgid "<h2>Very high priority</h2>"
 msgstr "<h2>Sehr hohe Priorität</h2>"
 
@@ -796,7 +800,7 @@ msgstr ""
 msgid "About Anki"
 msgstr "Über Anki"
 
-#: ui/main.py:309
+#: ui/main.py:323
 msgid "About right"
 msgstr "Ungefähr korrekt"
 
@@ -847,7 +851,7 @@ msgstr "Erweitert"
 msgid "All fields valid"
 msgstr "Alle Felder gültig"
 
-#: ui/main.py:573
+#: ui/main.py:587
 #, python-format
 msgid "Alt+%d"
 msgstr ""
@@ -868,7 +872,7 @@ msgstr ""
 msgid "Alt+M"
 msgstr ""
 
-#: ui/main.py:469
+#: ui/main.py:483
 #, python-format
 msgid ""
 "An error occurred while upgrading:\n"
@@ -899,7 +903,7 @@ msgstr "Anki - Stapel editieren"
 msgid "Anki - Edit Deck (%(cur)d of %(tot)d cards shown)"
 msgstr "Anki - Stapel editieren (zeige %(cur)d von %(tot)d Karten)"
 
-#: ui/main.py:718
+#: ui/main.py:729
 #, python-format
 msgid ""
 "Anki was unable to save your configuration file:\n"
@@ -1026,7 +1030,7 @@ msgstr "Schließen"
 msgid "Close and lose current input?"
 msgstr "Schließen und aktuelle Eingabe verwerfen?"
 
-#: ui/main.py:305
+#: ui/main.py:319
 msgid "Completely forgot"
 msgstr "Völlig vergessen."
 
@@ -1034,7 +1038,7 @@ msgstr "Völlig vergessen."
 msgid "Connecting.."
 msgstr "Verbinde..."
 
-#: ui/main.py:449
+#: ui/main.py:463
 msgid "Couldn't find the problem. Please open an issue on the issue tracker."
 msgstr ""
 
@@ -1076,7 +1080,7 @@ msgstr ""
 msgid "Ctrl+A"
 msgstr ""
 
-#: ui/main.py:1142
+#: ui/main.py:1154
 msgid "Ctrl+D"
 msgstr ""
 
@@ -1180,7 +1184,7 @@ msgstr "Synchronisation, Zeitabstände, Prioritäten und Modelle anpassen."
 msgid "Czech"
 msgstr "Tschechisch"
 
-#: ui/main.py:638 ui/main.py:678
+#: ui/main.py:652 ui/main.py:692
 msgid "Deck files (*.anki)"
 msgstr "Stapeldateien (*.anki)"
 
@@ -1188,7 +1192,7 @@ msgstr "Stapeldateien (*.anki)"
 msgid "Deck graphs"
 msgstr "Stapeldiagramme"
 
-#: ui/main.py:668
+#: ui/main.py:682
 msgid "Deck is not modified."
 msgstr "Stapel ist unverändert."
 
@@ -1196,7 +1200,7 @@ msgstr "Stapel ist unverändert."
 msgid "Delete Tag.."
 msgstr "Tag löschen..."
 
-#: forms/deckproperties.py:318
+#: forms/deckproperties.py:336
 msgid "Description && Synchronisation"
 msgstr "Beschreibung && Synchronisation"
 
@@ -1208,7 +1212,7 @@ msgstr "Ermittle Unterschiede..."
 msgid "Dialog"
 msgstr "Dialog"
 
-#: ui/main.py:307
+#: ui/main.py:321
 msgid "Difficult"
 msgstr "Schwer"
 
@@ -1250,7 +1254,7 @@ msgstr "&Beenden"
 msgid "ETA: <b>%(timeLeft)s</b>"
 msgstr "Noch: <b>%(timeLeft)s</b>"
 
-#: ui/main.py:311
+#: ui/main.py:325
 msgid "Easy"
 msgstr "Einfach"
 
@@ -1258,7 +1262,7 @@ msgstr "Einfach"
 msgid "Edit card"
 msgstr "Karte editieren"
 
-#: forms/deckproperties.py:314
+#: forms/deckproperties.py:332
 msgid "Edit deck properties"
 msgstr "Stapeleinstellungen ändern"
 
@@ -1298,11 +1302,11 @@ msgstr "Dieses Tag von den Karten entfernen:"
 msgid "Enter tag(s) to delete from each fact:"
 msgstr "Dieses Tag von den Fakten entfernen:"
 
-#: ui/main.py:446
+#: ui/main.py:460
 msgid "Error building queue. Attempting recovery.."
 msgstr ""
 
-#: ui/main.py:75
+#: ui/main.py:73
 msgid "Error running initHook. Broken plugin?"
 msgstr ""
 
@@ -1380,7 +1384,7 @@ msgstr "Vordergrundfarbe"
 msgid "French"
 msgstr "Französisch"
 
-#: ui/main.py:850
+#: ui/main.py:861
 msgid "Generating report (may take time).."
 msgstr "Erstelle Report (kann etwas dauern)..."
 
@@ -1503,7 +1507,7 @@ msgstr ""
 msgid "Learning"
 msgstr "Lernen"
 
-#: ui/main.py:830
+#: ui/main.py:841
 msgid "Loading graphs (may take time).."
 msgstr "Lade Diagramme (kann eine Weile dauern)..."
 
@@ -1521,7 +1525,7 @@ msgstr "Suche nach %s im ALC..."
 msgid "Looking %s up on edict.."
 msgstr "Suche nach %s im edict..."
 
-#: ui/main.py:306
+#: ui/main.py:320
 msgid "Made a mistake"
 msgstr "Habe mich geirrt."
 
@@ -1530,8 +1534,8 @@ msgstr "Habe mich geirrt."
 msgid "Map to %s"
 msgstr "%s zuordnen"
 
-#: forms/deckproperties.py:331 forms/deckproperties.py:332
-#: forms/deckproperties.py:334
+#: forms/deckproperties.py:349 forms/deckproperties.py:350
+#: forms/deckproperties.py:352
 msgid "Max"
 msgstr "Maximum"
 
@@ -1539,7 +1543,7 @@ msgstr "Maximum"
 msgid "Merge Models.."
 msgstr "Modelle zusammenführen..."
 
-#: ui/main.py:1278
+#: ui/main.py:1291
 msgid "Merge complete."
 msgstr "Zusammenführen beendet."
 
@@ -1548,8 +1552,8 @@ msgstr "Zusammenführen beendet."
 msgid "Merge with '%s' on server"
 msgstr "Führe mit '%s' auf dem Server zusammen"
 
-#: forms/deckproperties.py:327 forms/deckproperties.py:328
-#: forms/deckproperties.py:333
+#: forms/deckproperties.py:345 forms/deckproperties.py:346
+#: forms/deckproperties.py:351
 msgid "Min"
 msgstr "Minimum"
 
@@ -1573,7 +1577,7 @@ msgstr "Modelleinstellungen"
 msgid "Model properties"
 msgstr "Modelleinstellungen"
 
-#: forms/deckproperties.py:348
+#: forms/deckproperties.py:366
 msgid "Models"
 msgstr "Modelle"
 
@@ -1605,34 +1609,34 @@ msgstr "Ausgewähltes Feld nach unten schieben"
 msgid "Move selected field up"
 msgstr "Ausgewähltes Feld nach oben schieben"
 
-#: ui/main.py:308
+#: ui/main.py:322
 #, python-format
 msgid "Next in <b>%(ease2)s</b>"
 msgstr "nächstes Mal in <b>%(ease2)s</b>"
 
-#: ui/main.py:310
+#: ui/main.py:324
 #, python-format
 msgid "Next in <b>%(ease3)s</b>"
 msgstr "nächstes Mal in <b>%(ease3)s</b>"
 
-#: ui/main.py:312
+#: ui/main.py:326
 #, python-format
 msgid "Next in <b>%(ease4)s</b>"
 msgstr "nächstes Mal in <b>%(ease4)s</b>"
 
-#: ui/main.py:821
+#: ui/main.py:832
 msgid "No current card or last card."
 msgstr ""
 
-#: ui/main.py:772
+#: ui/main.py:783
 msgid "No expression in current card."
 msgstr "Keine Frage in dieser Karte."
 
-#: ui/main.py:779
+#: ui/main.py:790
 msgid "No meaning in current card."
 msgstr "Keine Antwort in dieser Karte."
 
-#: ui/main.py:1272
+#: ui/main.py:1285
 msgid ""
 "No models found to merge. If you want to merge models,\n"
 "all models must have the same name."
@@ -1640,11 +1644,11 @@ msgstr ""
 "Keine Modelle zum Zusammenführen gefunden. Wenn Du Modelle zusammenführen willst,\n"
 "müssen alle Modelle den gleichen Namen haben."
 
-#: ui/main.py:1253
+#: ui/main.py:1266
 msgid "No problems found"
 msgstr "Keine Probleme gefunden"
 
-#: ui/main.py:969
+#: ui/main.py:980
 msgid "Not syncing, username or password unset."
 msgstr "Synchronisiere nicht, Benutzername oder Passwort fehlt."
 
@@ -1660,7 +1664,7 @@ msgstr "Lade wiede&r"
 msgid "Open Sa&mple..."
 msgstr "Lade &Beispiel..."
 
-#: ui/main.py:641
+#: ui/main.py:655
 msgid "Open deck"
 msgstr "Lade Stapel"
 
@@ -1676,6 +1680,11 @@ msgstr "Datenbank optimieren"
 msgid "Password"
 msgstr "Passwort"
 
+#: ui/graphs.py:153 ui/graphs.py:163 ui/graphs.py:172 ui/graphs.py:180
+#: ui/graphs.py:188
+msgid "Period"
+msgstr ""
+
 #: ui/modelproperties.py:361
 msgid "Please add a new card first."
 msgstr "Bitte füge zuerst eine neue Karte hinzu."
@@ -1684,7 +1693,7 @@ msgstr "Bitte füge zuerst eine neue Karte hinzu."
 msgid "Please add a new field first."
 msgstr "Bitte füge zuerst ein neues Feld hinzu."
 
-#: ui/deckproperties.py:97
+#: ui/deckproperties.py:104
 msgid "Please add another model first."
 msgstr "Bitte füge zuerst ein anderes Modell hinzu."
 
@@ -1700,7 +1709,7 @@ msgstr "Bitte überprüfe Deinen Benutzernamen und Dein Passwort."
 msgid "Please enable a different model first."
 msgstr "Bitte aktiviere zuerst ein anderes Kartenmodell."
 
-#: ui/main.py:847
+#: ui/main.py:858
 msgid "Please install python-matplotlib to access graphs."
 msgstr "Bitte installiere python-matplotlib für die Diagramme."
 
@@ -1720,11 +1729,11 @@ msgstr "Dieses Feld darf nicht leer bleiben"
 msgid "Preview"
 msgstr "Vorschau"
 
-#: forms/deckproperties.py:324
+#: forms/deckproperties.py:342
 msgid "Priorities && Suspending"
 msgstr "Priorität && Aufschub"
 
-#: ui/main.py:1257
+#: ui/main.py:1270
 #, python-format
 msgid ""
 "Problems found:\n"
@@ -1797,7 +1806,7 @@ msgstr "Speichere nach Beantwortung von"
 msgid "Save and S&ync"
 msgstr "Speichern und s&ynchronisieren"
 
-#: ui/main.py:674
+#: ui/main.py:688
 msgid "Save deck"
 msgstr "Speichere Stapel"
 
@@ -1805,15 +1814,15 @@ msgstr "Speichere Stapel"
 msgid "Save when closing"
 msgstr "Speichern beim Beenden"
 
-#: ui/main.py:696
+#: ui/main.py:710
 msgid "Saving.."
 msgstr "Speichere..."
 
-#: ui/main.py:700
+#: ui/main.py:714
 msgid "Saving..done"
 msgstr "Speichere... fertig"
 
-#: forms/deckproperties.py:343
+#: forms/deckproperties.py:361
 msgid "Scheduling"
 msgstr "Zeitabstände"
 
@@ -1826,7 +1835,7 @@ msgstr "Synchronisiere... lokal +%(a)d/-%(b)d Karten, auf dem Server +%(c)d/-%(d
 msgid "Server is down or operation failed."
 msgstr "Server ist down oder Vorgang fehlgeschlagen."
 
-#: ui/main.py:282
+#: ui/main.py:296
 msgid "Show answer"
 msgstr "Antwort anzeigen"
 
@@ -1882,7 +1891,7 @@ msgstr "Beim Öffnen synchronisieren"
 msgid "Sync: nothing to do"
 msgstr "Synchronisieren: nichts zu tun"
 
-#: forms/deckproperties.py:317
+#: forms/deckproperties.py:335
 msgid "Synchronize this deck with name:"
 msgstr "Stapel mit diesem Namen synchronisieren:"
 
@@ -1946,10 +1955,6 @@ msgstr ""
 msgid "The number of cards scheduled for a given number of days."
 msgstr "Anzahl der Karten die nach einem bestimmten Zeitraum gezeigt werden."
 
-#: forms/deckproperties.py:335
-msgid "The order to show new cards."
-msgstr "Reihenfolge in der neue Karten angezeigt werden."
-
 #: ui/sync.py:47
 msgid "The sync protocol has changed. Please upgrade."
 msgstr "Das Synchronisierungs-Protokoll hat sich geändert. Bitte updaten."
@@ -1995,7 +2000,7 @@ msgstr ""
 "\n"
 "Karten wirklich löschen?"
 
-#: ui/deckproperties.py:103
+#: ui/deckproperties.py:110
 #, python-format
 msgid ""
 "This model is used by %d facts.\n"
@@ -2006,7 +2011,7 @@ msgstr ""
 "Willst Du es wirklich löschen?\n"
 "Wenn Du es löschst, gehen all diese Karten verloren."
 
-#: ui/main.py:839
+#: ui/main.py:850
 msgid ""
 "To display graphs, Anki needs a .dll file which\n"
 "you don't have. Please install:\n"
@@ -2018,11 +2023,11 @@ msgstr ""
 msgid "Toggle Delete"
 msgstr "Zum Löschen vormerken"
 
-#: ui/main.py:654
+#: ui/main.py:668
 msgid "Unable to load file."
 msgstr "Kann Datei nicht laden."
 
-#: ui/main.py:435
+#: ui/main.py:449
 msgid "Unable to load the same deck twice."
 msgstr "Kann nicht mehrfach den selben Stapel laden."
 
@@ -2091,11 +2096,11 @@ msgstr "Gut gemacht! Diese Karte wird in <b>%(next)s</b> wiederholt."
 msgid "Would you like to download it now?"
 msgstr "Möchtest du es jetzt herunterladen?"
 
-#: ui/main.py:1276
+#: ui/main.py:1289
 msgid "Would you like to merge models that have the same name?"
 msgstr "Möchtest Du Modelle zusammenführen, die den gleichen Namen haben?"
 
-#: ui/main.py:1191
+#: ui/main.py:1204
 #, python-format
 msgid ""
 "Your computer clock is not set to the correct time.\n"
@@ -2106,7 +2111,7 @@ msgstr ""
 "Es ist %(sec)d Sekunden %(type)s.\n"
 " Bitte stell sicher, dass die Uhr korrekt eingestellt ist und starte Anki neu."
 
-#: ui/main.py:844
+#: ui/main.py:855
 msgid ""
 "Your version of Matplotlib is broken.\n"
 "Please see http://repose.ath.cx/tracker/anki/issue102"
@@ -2116,7 +2121,7 @@ msgstr ""
 msgid "cards"
 msgstr "Karten"
 
-#: ui/main.py:1189
+#: ui/main.py:1202
 msgid "early"
 msgstr ""
 
@@ -2129,7 +2134,7 @@ msgstr "Fakten"
 msgid "in %s"
 msgstr "in %s"
 
-#: ui/main.py:1187
+#: ui/main.py:1200
 msgid "late"
 msgstr ""
 
@@ -2561,6 +2566,9 @@ msgstr "abgebildet auf <b>%s</b>"
 
 #~ msgid "Syncing not enabled! See deck preferences."
 #~ msgstr "Synchronisation nicht aktiviert! Siehe Stapeleinstellungen."
+
+#~ msgid "The order to show new cards."
+#~ msgstr "Reihenfolge in der neue Karten angezeigt werden."
 
 #~ msgid "This card has been scheduled for review in <b>%s</b>."
 #~ msgstr "Diese Karte wird in <b>%s</b> wiederholt."

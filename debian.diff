@@ -1,0 +1,781 @@
+diff -r -N -u ankiqt-1/ankiqt/ui/main.py ankiqt-deb/ankiqt/ui/main.py
+--- ankiqt-1/ankiqt/ui/main.py	2008-09-06 23:44:03.000000000 +0900
++++ ankiqt-deb/ankiqt/ui/main.py	2008-09-07 00:48:05.000000000 +0900
+@@ -528,26 +528,10 @@
+         return defaultDir
+ 
+     def getSamplesDir(self):
+-        path = os.path.join(ankiqt.runningDir, "libanki")
++        path = "/usr/share/doc/anki/examples"
+         if not os.path.exists(path):
+-            path = os.path.join(
+-                os.path.join(ankiqt.runningDir, ".."), "libanki")
+-            if not os.path.exists(path):
+-                path = ankiqt.runningDir
+-        if sys.platform.startswith("win32"):
+-            path = os.path.split(
+-                os.path.split(ankiqt.runningDir)[0])[0]
+-        elif sys.platform.startswith("darwin"):
+-            path = ankiqt.runningDir + "/../../.."
+-        else:
+-            path = os.path.join(path, "anki")
+-        path = os.path.join(path, "samples")
+-        path = os.path.normpath(path)
+-        if os.path.exists(path):
+-            if sys.platform.startswith("darwin"):
+-                return self.openMacSamplesDir(path)
+-            return path
+-        return ""
++            return ""
++        return path
+ 
+     def openMacSamplesDir(self, path):
+         # some versions of macosx don't allow the open dialog to point inside
+@@ -950,7 +934,7 @@
+ 
+     def setLang(self):
+         "Set the user interface language."
+-        languageDir=os.path.join(ankiqt.modDir, "locale")
++        languageDir="/usr/share/locale"
+         self.languageTrans = gettext.translation('ankiqt', languageDir,
+                                             languages=[self.config["interfaceLang"]],
+                                             fallback=True)
+diff -r -N -u ankiqt-1/debian/anki-launcher ankiqt-deb/debian/anki-launcher
+--- ankiqt-1/debian/anki-launcher	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/anki-launcher	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,8 @@
++#!/usr/bin/python
++# Simplified launcher for anki as installed in the Debian system
++
++import sys
++sys.path[0:0] = ['/usr/share/anki']
++
++import ankiqt
++ankiqt.run()
+diff -r -N -u ankiqt-1/debian/anki.1 ankiqt-deb/debian/anki.1
+--- ankiqt-1/debian/anki.1	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/anki.1	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,52 @@
++.\"                                      Hey, EMACS: -*- nroff -*-
++.\" First parameter, NAME, should be all caps
++.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
++.\" other parameters are allowed: see man(7), man(1)
++.TH ANKI 1 "August 11, 2007"
++.\" Please adjust this date whenever revising the manpage.
++.\"
++.\" Some roff macros, for reference:
++.\" .nh        disable hyphenation
++.\" .hy        enable hyphenation
++.\" .ad l      left justify
++.\" .ad b      justify to both left and right margins
++.\" .nf        disable filling
++.\" .fi        enable filling
++.\" .br        insert line break
++.\" .sp <n>    insert n+1 empty lines
++.\" for manpage-specific macros, see man(7)
++.SH NAME
++anki \- flashcard program for language learning
++.SH DESCRIPTION
++\fBAnki\fP is a program designed to help you remember facts (such as words and
++phrases in a foreign language) as easily, quickly and efficiently as possible.
++To do this, it tracks how well you remember each fact, and uses that
++information to optimally schedule review times. With a minimal amount of
++effort, you can greatly increase the amount of material you remember, making
++study more productive, and more fun.
++
++Anki is based on a theory called \fIspaced repetition\fP. In simple terms, it means
++that each time you review some material, you should wait longer than last time
++before reviewing it again. This maximizes the time spent studying difficult
++material and minimizes the time spent reviewing things you already know. The
++concept is simple, but the vast majority of memory trainers and flashcard
++programs out there either avoid the concept all together, or implement
++inflexible and suboptimal methods that were originally designed for pen and
++paper.
++
++Anki's primary target is people studying Japanese, and Japanese native speakers
++studying English. However, it can be used to remember anything at all, and
++there are some users who are studying Chinese and possibly other languages with
++it. 
++.SH OPTIONS
++.B anki
++does not take command line options.  Its interface is entirely graphical.
++.SH SEE ALSO
++Anki home page: <http://ichi2.net/anki/index.html>
++.br
++Community support thread: <http://forum.koohii.com/viewtopic.php?id=556&p=1>
++.SH AUTHOR
++anki was written by Damien Elmes <anki@ichi2.net>.
++.PP
++This manual page was written by Nicholas Breen <nbreen@ofb.net>,
++for the Debian project (but may be used by others).
+diff -r -N -u ankiqt-1/debian/anki.install ankiqt-deb/debian/anki.install
+--- ankiqt-1/debian/anki.install	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/anki.install	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,13 @@
++ankiqt/*.py					usr/share/anki/ankiqt
++ankiqt/forms/*.py				usr/share/anki/ankiqt/forms
++ankiqt/ui/*.py					usr/share/anki/ankiqt/ui
++libanki/anki/*.py				usr/share/anki/anki
++libanki/anki/features/*.py			usr/share/anki/anki/features
++libanki/anki/features/chinese/__init__.py	usr/share/anki/anki/features/chinese
++unihan.db					usr/share/anki/anki/features/chinese
++libanki/anki/importing/*.py			usr/share/anki/anki/importing
++
++ankiqt/locale/*/				usr/share/locale
++libanki/anki/locale/*/				usr/share/locale
++debian/anki.xpm					usr/share/pixmaps
++anki.desktop					usr/share/applications
+diff -r -N -u ankiqt-1/debian/anki.menu ankiqt-deb/debian/anki.menu
+--- ankiqt-1/debian/anki.menu	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/anki.menu	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,3 @@
++?package(anki):needs="X11" section="Applications/Education"\
++  title="Anki" command="/usr/bin/anki"\
++  icon="/usr/share/pixmaps/anki.xpm"
+diff -r -N -u ankiqt-1/debian/anki.xpm ankiqt-deb/debian/anki.xpm
+--- ankiqt-1/debian/anki.xpm	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/anki.xpm	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,291 @@
++/* XPM */
++static char * anki_xpm[] = {
++"32 32 256 2",
++"  	c None",
++". 	c #525252",
++"+ 	c #515151",
++"@ 	c #505050",
++"# 	c #4F4F4F",
++"$ 	c #4D4D4D",
++"% 	c #4B4B4B",
++"& 	c #4A4A4A",
++"* 	c #494949",
++"= 	c #484848",
++"- 	c #474747",
++"; 	c #464646",
++"> 	c #454545",
++", 	c #444444",
++"' 	c #424242",
++") 	c #404040",
++"! 	c #595959",
++"~ 	c #5E5E5E",
++"{ 	c #707070",
++"] 	c #787878",
++"^ 	c #7C7C7C",
++"/ 	c #7B7B7B",
++"( 	c #7A7A7A",
++"_ 	c #797979",
++": 	c #777777",
++"< 	c #767676",
++"[ 	c #757575",
++"} 	c #747474",
++"| 	c #737373",
++"1 	c #727272",
++"2 	c #6D6D6D",
++"3 	c #606060",
++"4 	c #636363",
++"5 	c #828282",
++"6 	c #808080",
++"7 	c #7F7F7F",
++"8 	c #7E7E7E",
++"9 	c #7D7D7D",
++"0 	c #6C6C6C",
++"a 	c #616161",
++"b 	c #898989",
++"c 	c #888888",
++"d 	c #868686",
++"e 	c #848484",
++"f 	c #818181",
++"g 	c #989898",
++"h 	c #656565",
++"i 	c #646464",
++"j 	c #8A8A8A",
++"k 	c #8E8E8E",
++"l 	c #8C8C8C",
++"m 	c #858585",
++"n 	c #838383",
++"o 	c #929292",
++"p 	c #A7A7A7",
++"q 	c #949494",
++"r 	c #C7C7C7",
++"s 	c #E8E9E9",
++"t 	c #6E6E6E",
++"u 	c #696969",
++"v 	c #959595",
++"w 	c #939393",
++"x 	c #919191",
++"y 	c #8F8F8F",
++"z 	c #999999",
++"A 	c #F6FBFE",
++"B 	c #DFEFFB",
++"C 	c #E6F1F9",
++"D 	c #BADEF5",
++"E 	c #D4E9F7",
++"F 	c #A5A5A5",
++"G 	c #575757",
++"H 	c #979797",
++"I 	c #969696",
++"J 	c #8D8D8D",
++"K 	c #8B8B8B",
++"L 	c #878787",
++"M 	c #E5EFF5",
++"N 	c #97CDF1",
++"O 	c #8DC8EF",
++"P 	c #7ABFED",
++"Q 	c #D4EAF9",
++"R 	c #C6C6C6",
++"S 	c #5B5B5B",
++"T 	c #9E9E9E",
++"U 	c #9C9C9C",
++"V 	c #9B9B9B",
++"W 	c #E5E7E8",
++"X 	c #B4DAF5",
++"Y 	c #90C9F0",
++"Z 	c #94CBF1",
++"` 	c #ABD6F3",
++" .	c #E4F2FB",
++"..	c #D6D7D7",
++"+.	c #5F5F5F",
++"@.	c #A2A2A2",
++"#.	c #A0A0A0",
++"$.	c #9F9F9F",
++"%.	c #9D9D9D",
++"&.	c #9A9A9A",
++"*.	c #B5B5B5",
++"=.	c #E8F3FA",
++"-.	c #AED8F4",
++";.	c #A9D5F3",
++">.	c #ADD7F4",
++",.	c #CDE7F8",
++"'.	c #EAF5FC",
++").	c #E7E7E7",
++"!.	c #626262",
++"~.	c #909090",
++"{.	c #A1A1A1",
++"].	c #D8D8D8",
++"^.	c #EFF2F3",
++"/.	c #ECF1F4",
++"(.	c #E8F3FC",
++"_.	c #F0F0F0",
++":.	c #B6B6B6",
++"<.	c #666666",
++"[.	c #010101",
++"}.	c #686868",
++"|.	c #A9A9A9",
++"1.	c #B0B0B0",
++"2.	c #E9EAEA",
++"3.	c #F7FBFD",
++"4.	c #D7D7D7",
++"5.	c #6A6A6A",
++"6.	c #000000",
++"7.	c #5D5D5D",
++"8.	c #585858",
++"9.	c #A8A8A8",
++"0.	c #E1E1E1",
++"a.	c #ACACAC",
++"b.	c #5A5A5A",
++"c.	c #717171",
++"d.	c #EEF0F1",
++"e.	c #CCCCCC",
++"f.	c #565656",
++"g.	c #676767",
++"h.	c #C9C9C9",
++"i.	c #AAD6F4",
++"j.	c #DBEBF6",
++"k.	c #ADADAD",
++"l.	c #6F6F6F",
++"m.	c #ECF3F7",
++"n.	c #4CA9E7",
++"o.	c #4EAAE7",
++"p.	c #D2E9F9",
++"q.	c #319CE3",
++"r.	c #118CDF",
++"s.	c #E4E4E4",
++"t.	c #C2C2C2",
++"u.	c #C0C0C0",
++"v.	c #C8C8C8",
++"w.	c #EEEFF0",
++"x.	c #9DD0F2",
++"y.	c #2998E2",
++"z.	c #1C91E0",
++"A.	c #92CBF0",
++"B.	c #96CDF1",
++"C.	c #98CEF1",
++"D.	c #99CEF1",
++"E.	c #F0F8FD",
++"F.	c #5C5C5C",
++"G.	c #ECECEC",
++"H.	c #EEF5F9",
++"I.	c #C1E1F7",
++"J.	c #93CBF0",
++"K.	c #58AEE9",
++"L.	c #3BA0E5",
++"M.	c #2F9AE3",
++"N.	c #2596E2",
++"O.	c #1990E0",
++"P.	c #108BDF",
++"Q.	c #0686DD",
++"R.	c #47A6E7",
++"S.	c #E9EFF3",
++"T.	c #171717",
++"U.	c #DBEDFA",
++"V.	c #70BAEB",
++"W.	c #67B6EA",
++"X.	c #5BB0E8",
++"Y.	c #52ABE7",
++"Z.	c #45A5E6",
++"`.	c #3CA1E5",
++" +	c #309BE3",
++".+	c #2796E2",
++"++	c #50ABE8",
++"@+	c #DCEDF9",
++"#+	c #A5A6A6",
++"$+	c #4C4C4C",
++"%+	c #0F0F0F",
++"&+	c #ECEDEE",
++"*+	c #E1F1FB",
++"=+	c #94CBF0",
++"-+	c #7ABEED",
++";+	c #6EB9EB",
++">+	c #64B4EA",
++",+	c #58AEE8",
++"'+	c #4FAAE7",
++")+	c #43A4E5",
++"!+	c #3FA2E5",
++"~+	c #CBE6F8",
++"{+	c #D0D0D0",
++"]+	c #101010",
++"^+	c #F1F6FA",
++"/+	c #B7DCF5",
++"(+	c #84C4EE",
++"_+	c #7BBFED",
++":+	c #6FB9EB",
++"<+	c #66B5EA",
++"[+	c #5AAFE8",
++"}+	c #5BAFE8",
++"|+	c #F1F5F7",
++"1+	c #6B6B6B",
++"2+	c #D1D1D1",
++"3+	c #E2F1FB",
++"4+	c #8EC8F0",
++"5+	c #82C2EE",
++"6+	c #78BEED",
++"7+	c #6CB8EB",
++"8+	c #63B3EA",
++"9+	c #D5EBF9",
++"0+	c #B9B9B9",
++"a+	c #545454",
++"b+	c #111111",
++"c+	c #C5C5C5",
++"d+	c #E7F4FC",
++"e+	c #A5D3F3",
++"f+	c #AAD5F4",
++"g+	c #ACD7F4",
++"h+	c #8FC9F0",
++"i+	c #CACACA",
++"j+	c #ECF6FC",
++"k+	c #C2E1F6",
++"l+	c #CBE5F7",
++"m+	c #F0F7FD",
++"n+	c #F9FCFE",
++"o+	c #C7E4F7",
++"p+	c #B1D9F4",
++"q+	c #F1F8FC",
++"r+	c #121212",
++"s+	c #CFCFCF",
++"t+	c #F5FAFD",
++"u+	c #EFF7FC",
++"v+	c #F3F3F4",
++"w+	c #F1F1F1",
++"x+	c #0D0D0D",
++"y+	c #BFBFBF",
++"z+	c #FDFEFE",
++"A+	c #EBEBEB",
++"B+	c #AEAEAE",
++"C+	c #040404",
++"D+	c #1B1B1B",
++"E+	c #A3A3A3",
++"F+	c #0E0E0E",
++"G+	c #020202",
++"                                                                ",
++"                . + @ # $ $ % & * = - ; > , ' ' )               ",
++"            ! ~ { ] ^ / ( _ _ ] : < [ } | | 1 2 3 $ '           ",
++"            4 / 5 6 7 8 9 ^ / ( ( _ ] : < [ } } | 0 %           ",
++"          a ^ b c d e 5 f 6 7 8 9 ^ / ( _ 9 g f < [ h &         ",
++"          i j k l j c d m n 5 f 6 o p q j r s g _ ] t +         ",
++"          u v w x y k l j b d m n z A B C D E F ^ / } G         ",
++"          0 z H I q o x y J K b L j M N O P Q R 6 8 < S         ",
++"          { T U V z H I q o x y J y W X Y Z `  ...o ( +.        ",
++"          } @.#.$.%.U &.g H v w x *.=.-.;.>.,.'.).T 9 !.        ",
++"          @ ~.o g T {.$.%.U &.g %.].^./.(.Q _.:.K L 6 <.        ",
++"          [.+.!.}.2 ] c T #.T U %.|.1.1.2.3.4.o J K e 5.        ",
++"          6.3 ~ 7.S ! 8.S t L w T T %.V 9.0.a.q w x b t         ",
++"          6.4 !.3 +.7.S b.c.! a { e U $.%.9.V g H v J 1         ",
++"          6.<.h 4 !.3 +.~.d.e.0 G f.! } w T $.%.U &.o <         ",
++"          6.5.}.g.h 4 !.h.i.j.k.b.! G f.3 [ &.@.#.$.I (         ",
++"          6.2 0 5.u g.l.m.n.o.=.m 7.b.! G f.! 1 w {.V 8         ",
++"          6.{ l.2 0 5.z p.q.r.Z s.t.u.u.a.l.G f.~ : V 5         ",
++"          6.} [ J T v.w.x.y.z.z.A.B.C.D.E.*.S b.8.G G F.        ",
++"          6./ 1.G.H.I.J.K.L.M.N.O.P.Q.R.S.~.~ 7.S b.* T.        ",
++"          6.d ].U.O V.W.X.Y.Z.`. +.+++@+#+h !.3 ~ 7.$+%+        ",
++"          6.8 &.&+*+=+-+;+>+,+'+)+!+~+{+2 g.h i !.3 # ]+        ",
++"          6.f 6 K v.^+/+(+_+:+<+[+}+|+z 1+5.}.g.h i . ]+        ",
++"          6.e n f m 2+3+N 4+5+6+7+8+9+0+l.2 1+5.}.g.a+b+        ",
++"          6.c L m e c+d+-.e+f+g+h+_+g+2.} c.l.t 0 1+8.b+        ",
++"          6.K j c L i+j+k+l+m+n+ .o+p+q+b } 1 c.l.t b.r+        ",
++"          6.7 J l j s+t+u+v+0+~.*.4._.w+L ] < } | c.G x+        ",
++"          6.a x y J y+z+A+B+d e 5 L V V 8 / _ ] < [ & C+        ",
++"            D+[ o x H E+y K b c d e n f 6 8 ^ / _ g.F+          ",
++"            G+D+4 n o x y k l K b c d m n 5 7 | $ D+6.          ",
++"                6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.6.              ",
++"                                                                "};
+diff -r -N -u ankiqt-1/debian/changelog ankiqt-deb/debian/changelog
+--- ankiqt-1/debian/changelog	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/changelog	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,125 @@
++anki (0.9.7.6-1) unstable; urgency=low
++
++  * New release
++
++ -- Damien Elmes <resolve@repose.cx>  Tue, 02 Sep 2008 00:22:19 +0900
++
++anki (0.9.7.5-1) unstable; urgency=low
++
++  * New release
++
++ -- Damien Elmes <resolve@repose.cx>  Mon, 01 Sep 2008 01:32:09 +0900
++
++anki (0.9.7.4-1) unstable; urgency=low
++
++  * New release
++
++ -- Damien Elmes <resolve@repose.cx>  Sat, 30 Aug 2008 01:09:16 +0900
++
++anki (0.9.7.3-1) unstable; urgency=low
++
++  * New release
++
++ -- Damien Elmes <resolve@repose.cx>  Mon, 25 Aug 2008 19:11:24 +0900
++
++anki (0.9.7.2-1) unstable; urgency=low
++
++  * New release
++
++ -- Damien Elmes <resolve@repose.cx>  Mon, 25 Aug 2008 03:36:04 +0900
++
++anki (0.9.7.1-1) unstable; urgency=low
++
++  * New release
++
++ -- Damien Elmes <resolve@repose.cx>  Sat, 23 Aug 2008 05:36:39 +0900
++
++anki (0.9.7-1) unstable; urgency=low
++
++  * New release
++
++ -- Damien Elmes <resolve@repose.cx>  Fri, 22 Aug 2008 04:27:48 +0900
++
++anki (0.9.6-1) unstable; urgency=low
++
++  * New upstream release
++  * Event handler treatment of objects fixed in upstream release (closes:
++    #486295)
++  * Uncloseable dialogs fixed in upstream release (closes: #483315)
++  * debian/control: update python-qt4 dependency for anki from >= 4.2 to >=
++    4.4
++  * debian/control: Standards-Version bumped to 3.8.0, no changes necessary
++  * anki.desktop: Upstream removed obsolete encoding field, patching no longer
++    necessary
++  * Upstream removed shell bangs from all Python modules except
++    ankiqt/__init__.py so only that one still needs patching
++
++ -- Andreas Bombe <aeb@debian.org>  Fri, 18 Jul 2008 03:42:08 +0200
++
++anki (0.9.5.7-1) unstable; urgency=low
++
++  * New upstream release
++
++ -- Andreas Bombe <aeb@debian.org>  Sun, 06 Apr 2008 17:05:49 +0200
++
++anki (0.9.5.5-1) unstable; urgency=low
++
++  * New upstream release now licensed under GPL 3 or later
++  * debian/copyright: adapt to upstream relicense
++  * debian/rules: install CREDITS as documentation
++  * debian/rules: move upstream debian/ files out of the way on build and
++    restore in clean, file removals aren't recorded in Debian diffs
++
++ -- Andreas Bombe <aeb@debian.org>  Mon, 31 Mar 2008 00:29:22 +0200
++
++anki (0.9.5.4-2) unstable; urgency=low
++
++  * Add python-sqlite2 to Build-Depends-Indep, now it really builds in a clean
++    chroot and fixes the FTBFS
++
++ -- Andreas Bombe <aeb@debian.org>  Tue, 11 Mar 2008 14:12:35 +0100
++
++anki (0.9.5.4-1) unstable; urgency=low
++
++  * New upstream release
++  * debian/control: add Suggests dvipng, it's used for rendering LaTeX
++    snippets
++  * debian/control: add python-sqlalchemy to Build-Depends-Indep, fixes FTBFS
++    (closes: #470334)
++
++ -- Andreas Bombe <aeb@debian.org>  Mon, 10 Mar 2008 22:52:15 +0100
++
++anki (0.9.5.2-1) unstable; urgency=low
++
++  * New upstream release fixes some serious bugs with card intervals
++  * debian/rules: clean target now also removes all .pyc and .pyo files
++    generated during a possible execution of the uninstalled anki
++
++ -- Andreas Bombe <aeb@debian.org>  Fri, 29 Feb 2008 01:07:37 +0100
++
++anki (0.9.5-2) unstable; urgency=low
++
++  * debian/control: Forgot to add python-pysqlite2 to Depends, required for
++    Python versions < 2.5 (closes: #468347)
++
++ -- Andreas Bombe <aeb@debian.org>  Thu, 28 Feb 2008 16:33:12 +0100
++
++anki (0.9.5-1) unstable; urgency=low
++
++  * New upstream release
++  * Remove shell bangs from all Python modules that had them for aesthetic
++    reasons, no lintian warnings anymore
++  * debian/rules: remove execute permissions from ankiqt/__init__.py for the
++    same reason
++  * ankiqt/ui/main.py: make setupAutoUpdate() return without doing anything to
++    avoid bugging the user about new upstream versions on every start
++  * debian/control: move all build depends except debhelper to
++    Build-Depends-Indep
++
++ -- Andreas Bombe <aeb@debian.org>  Thu, 28 Feb 2008 02:31:56 +0100
++
++anki (0.9.4-1) unstable; urgency=low
++
++  * Initial release. (closes: #452067)
++
++ -- Andreas Bombe <aeb@debian.org>  Mon, 25 Feb 2008 00:28:52 +0100
+diff -r -N -u ankiqt-1/debian/compat ankiqt-deb/debian/compat
+--- ankiqt-1/debian/compat	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/compat	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1 @@
++6
+diff -r -N -u ankiqt-1/debian/control ankiqt-deb/debian/control
+--- ankiqt-1/debian/control	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/control	2008-09-07 00:58:12.000000000 +0900
+@@ -0,0 +1,30 @@
++Source: anki
++Maintainer: Andreas Bombe <aeb@debian.org>
++Section: misc
++Priority: optional
++Build-Depends: debhelper (>= 6)
++Build-Depends-Indep: unicode-data, bzip2, python-support (>= 0.6),
++	python-sqlalchemy (>= 0.4.1), python-pysqlite2
++Standards-Version: 3.8.0
++Homepage: http://ichi2.net/anki
++
++Package: anki
++Architecture: all
++Section: misc
++Depends: ${python:Depends}, python-qt4 (>= 4.3), python-simplejson (>= 1.7.3),
++	python-sqlalchemy (>= 0.4.1), python-pysqlite2 (>= 2.3.0)
++Recommends: python-matplotlib, kakasi
++Suggests: dvipng
++Description: flashcard learning program with special support for Japanese
++ Anki is a program designed to help you remember facts (such as words and
++ phrases in a foreign language) as easily, quickly and efficiently as possible.
++ To do this, it tracks how well you remember each fact, and uses that
++ information to optimally schedule review times.
++ .
++ While Anki can be used for studying anything, it also ships with special
++ features designed to make studying Japanese and English easier: integrated
++ dictionary lookups, missing kanji reports, and more.
++ .
++ Besides text, it supports sounds, images and rendering TeX snippets in the
++ cards.  Sample card decks are included for a subset of the Japanese Language
++ Proficiency Test vocabulary and for some Russian vocabulary.
+diff -r -N -u ankiqt-1/debian/copyright ankiqt-deb/debian/copyright
+--- ankiqt-1/debian/copyright	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/copyright	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,75 @@
++Anki was debianised by Andreas Bombe <aeb@debian.org>.  It was downloaded from
++http://ichi2.net/anki/download/
++
++Upstream author:  Damien Elmes, with contributions by "Lac", "Iroiro" and
++"Frostschutz".  Translations provided by Laurent Steffan, Andreas Klauer and
++"Pcsl".
++
++License:
++ # Copyright: Damien Elmes <anki@ichi2.net>
++ # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
++
++On Debian systems, the complete text of the GNU General Public License version 3
++can be found in /usr/share/common-licenses/GPL-3.
++
++The .orig.tar.gz was repackaged from the original .tgz to remove the sample
++deck 'RTK1+3.anki'.  This deck has an unclear licensing status as it is a
++compilation of kanji from the book series "Remembering the Kanji" by James
++Heisig.  All sample decks were created by Damien Elmes.
++
++
++The package includes unihan.db, a database created from Unihan.txt by Unicode,
++Inc.  Its copyright is:
++
++    EXHIBIT 1 UNICODE, INC. LICENSE AGREEMENT - DATA FILES AND SOFTWARE
++    
++    Unicode Data Files include all data files under the directories
++    http://www.unicode.org/Public/ and http://www.unicode.org/reports/. Unicode
++    Software includes any source code published in the Unicode Standard or
++    under the directories http://www.unicode.org/Public/ and
++    http://www.unicode.org/reports/.
++    
++    NOTICE TO USER: Carefully read the following legal agreement. BY
++    DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING UNICODE INC.'S DATA
++    FILES ("DATA FILES"), AND/OR SOFTWARE ("SOFTWARE"), YOU UNEQUIVOCALLY
++    ACCEPT, AND AGREE TO BE BOUND BY, ALL OF THE TERMS AND CONDITIONS OF THIS
++    AGREEMENT. IF YOU DO NOT AGREE, DO NOT DOWNLOAD, INSTALL, COPY, DISTRIBUTE
++    OR USE THE DATA FILES OR SOFTWARE.
++    
++    COPYRIGHT AND PERMISSION NOTICE
++    
++    Copyright © 1991-2005 Unicode, Inc. All rights reserved. Distributed under
++    the Terms of Use in http://www.unicode.org/copyright.html.
++    
++    Permission is hereby granted, free of charge, to any person obtaining a
++    copy of the Unicode data files and any associated documentation (the "Data
++    Files") or Unicode software and any associated documentation (the
++    "Software") to deal in the Data Files or Software without restriction,
++    including without limitation the rights to use, copy, modify, merge,
++    publish, distribute, and/or sell copies of the Data Files or Software, and
++    to permit persons to whom the Data Files or Software are furnished to do
++    so, provided that (a) the above copyright notice(s) and this permission
++    notice appear with all copies of the Data Files or Software, (b) both the
++    above copyright notice(s) and this permission notice appear in associated
++    documentation, and (c) there is clear notice in each modified Data File or
++    in the Software as well as in the documentation associated with the Data
++    File(s) or Software that the data or software has been modified.
++    
++    THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
++    KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
++    THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS
++    INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR
++    CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
++    USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
++    TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
++    PERFORMANCE OF THE DATA FILES OR SOFTWARE.
++    
++    Except as contained in this notice, the name of a copyright holder shall
++    not be used in advertising or otherwise to promote the sale, use or other
++    dealings in these Data Files or Software without prior written
++    authorization of the copyright holder.
++    
++    Unicode and the Unicode logo are trademarks of Unicode, Inc., and may be
++    registered in some jurisdictions. All other trademarks and registered
++    trademarks mentioned herein are the property of their respective owners.
+diff -r -N -u ankiqt-1/debian/dirs ankiqt-deb/debian/dirs
+--- ankiqt-1/debian/dirs	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/dirs	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,3 @@
++usr/bin
++usr/share/pixmaps
++usr/share/applications
+diff -r -N -u ankiqt-1/debian/docs ankiqt-deb/debian/docs
+--- ankiqt-1/debian/docs	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/docs	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,2 @@
++README
++README.development
+diff -r -N -u ankiqt-1/debian/pycompat ankiqt-deb/debian/pycompat
+--- ankiqt-1/debian/pycompat	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/pycompat	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1 @@
++2
+diff -r -N -u ankiqt-1/debian/rules ankiqt-deb/debian/rules
+--- ankiqt-1/debian/rules	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/rules	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,53 @@
++#!/usr/bin/make -f
++
++build: build-stamp
++build-stamp:
++	dh_testdir
++	bunzip2 </usr/share/unicode/Unihan.txt.bz2 >Unihan.txt
++	python libanki/anki/features/chinese/save_unihan.py
++	touch build-stamp
++
++movedebfiles:
++	dh_testdir
++	-tar -cf upstreamdebfiles.tar debian/dirs debian/docs debian/pycompat
++	rm -f debian/dirs debian/docs debian/pycompat
++
++unmovedebfiles:
++	dh_testdir
++	if [ -f upstreamdebfiles.tar ]; then tar -xf upstreamdebfiles.tar; fi
++	rm -f upstreamdebfiles.tar
++
++binary: binary-arch binary-indep
++binary-arch: build
++
++binary-indep: build movedebfiles
++	dh_testdir
++	dh_testroot
++	dh_clean
++	dh_installdirs usr/bin
++	dh_install
++	cp debian/anki-launcher debian/anki/usr/bin/anki
++	dh_installchangelogs
++	dh_installdocs README README.development README.translating CREDITS
++	dh_installexamples libanki/samples/*.anki
++	dh_installmenu
++	dh_desktop
++	dh_pysupport
++	dh_installman debian/anki.1
++	dh_compress -X.anki
++	chmod a-x debian/anki/usr/share/anki/ankiqt/__init__.py
++	dh_fixperms
++	dh_installdeb
++	dh_gencontrol
++	dh_md5sums
++	dh_builddeb
++
++clean: unmovedebfiles
++	dh_testdir
++	dh_testroot
++	rm -f build-stamp
++	rm -f Unihan.txt unihan.db
++	find -name \*.py[co] -exec rm {} \;
++	dh_clean
++
++.PHONY: build clean binary binary-arch binary-indep movedebfiles unmovedebfiles
+diff -r -N -u ankiqt-1/debian/watch ankiqt-deb/debian/watch
+--- ankiqt-1/debian/watch	1970-01-01 09:00:00.000000000 +0900
++++ ankiqt-deb/debian/watch	2008-09-07 00:48:05.000000000 +0900
+@@ -0,0 +1,3 @@
++version=3
++
++http://ichi2.net/anki/download/ anki-(.*)\.tgz
+diff -r -N -u ankiqt-1/libanki/anki/features/chinese/save_unihan.py ankiqt-deb/libanki/anki/features/chinese/save_unihan.py
+--- ankiqt-1/libanki/anki/features/chinese/save_unihan.py	2008-01-28 22:49:56.000000000 +0900
++++ ankiqt-deb/libanki/anki/features/chinese/save_unihan.py	2008-09-07 00:48:16.000000000 +0900
+@@ -1,7 +1,5 @@
+ # read unihan.txt and save it as a db
+ 
+-import psyco; psyco.full()
+-
+ from sqlalchemy import (Table, Integer, Float, Unicode, Column, MetaData,
+                         ForeignKey, Boolean, String, Date, UniqueConstraint,
+                         UnicodeText)
+diff -r -N -u ankiqt-1/libanki/anki/lang.py ankiqt-deb/libanki/anki/lang.py
+--- ankiqt-1/libanki/anki/lang.py	2008-06-12 13:13:00.000000000 +0900
++++ ankiqt-deb/libanki/anki/lang.py	2008-09-07 00:48:27.000000000 +0900
+@@ -33,7 +33,7 @@
+ 
+ def setLang(lang, local=True):
+     base = os.path.dirname(os.path.abspath(__file__))
+-    localeDir = os.path.join(base, "locale")
++    localeDir = "/usr/share/locale"
+     if not os.path.exists(localeDir):
+         localeDir = os.path.join(
+             os.path.dirname(sys.argv[0]), "locale")

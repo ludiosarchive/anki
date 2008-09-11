@@ -1,5 +1,45 @@
-changeset:   739:55ee54b34790
+changeset:   747:a52a2a8d5102
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 07 00:05:58 2008 +0900
+summary:     update spanish translations
+
+changeset:   746:3d24c220cf3c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 23:50:26 2008 +0900
+summary:     bump version number
+
+changeset:   745:1b3ddc8a0d57
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 22:29:09 2008 +0900
+summary:     put distribute cards first
+
+changeset:   744:68e39d789164
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 22:26:38 2008 +0900
+summary:     remove 'new cards first' option
+
+changeset:   743:b2124055af6c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 21:54:26 2008 +0900
+summary:     fix bug in getCardIds
+
+changeset:   742:8b2a0ad58993
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 21:42:38 2008 +0900
+summary:     don't force a check - it'll cause problems with syncing
+
+changeset:   741:9d0dd086b846
+user:        Damien Elmes <hg@repose.cx>
+date:        Sat Sep 06 21:29:24 2008 +0900
+summary:     new card handling, multiple schedulers, integrity improvs, more
+
+changeset:   740:dee624693448
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 03 15:22:59 2008 +0900
+summary:     translate days/cards in graphs
+
+changeset:   739:55ee54b34790
 user:        Damien Elmes <hg@repose.cx>
 date:        Wed Sep 03 04:35:18 2008 +0900
 summary:     bump version number

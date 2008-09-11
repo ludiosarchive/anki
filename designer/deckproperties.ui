@@ -9,13 +9,13 @@
     <x>0</x>
     <y>0</y>
     <width>523</width>
-    <height>575</height>
+    <height>615</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Edit deck properties</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout" name="verticalLayout" >
    <item>
     <widget class="QTabWidget" name="qtabwidget" >
      <property name="currentIndex" >
@@ -27,7 +27,7 @@
         <x>0</x>
         <y>0</y>
         <width>501</width>
-        <height>493</height>
+        <height>533</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -95,7 +95,7 @@
         <x>0</x>
         <y>0</y>
         <width>501</width>
-        <height>493</height>
+        <height>533</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -111,7 +111,7 @@
        <item>
         <widget class="QLabel" name="label_16" >
          <property name="text" >
-          <string>&lt;h1>Priorities&lt;/h1>A comma-separated list of tags to prioritize or deprioritize&lt;a href="http://ichi2.net/anki/wiki/Priorities">?&lt;/a></string>
+          <string>&lt;h1>Priorities&lt;/h1>A comma-separated list of tags to prioritize or deprioritize&lt;a href="http://ichi2.net/anki/wiki/CardDisplayOrderAndPriorities">?&lt;/a></string>
          </property>
          <property name="openExternalLinks" >
           <bool>true</bool>
@@ -191,7 +191,7 @@
         <x>0</x>
         <y>0</y>
         <width>501</width>
-        <height>493</height>
+        <height>533</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -213,7 +213,7 @@
           </sizepolicy>
          </property>
          <property name="text" >
-          <string>&lt;h1>New &amp; young cards&lt;/h1>The initial times to use when scheduling cards, in days.</string>
+          <string>&lt;h1>New cards&lt;/h1>The initial times to use when scheduling cards, in days.</string>
          </property>
          <property name="wordWrap" >
           <bool>true</bool>
@@ -318,32 +318,50 @@
         </layout>
        </item>
        <item>
-        <widget class="QLabel" name="label_11" >
-         <property name="text" >
-          <string>The order to show new cards.</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <layout class="QHBoxLayout" >
          <item>
           <widget class="QComboBox" name="newCardOrder" />
          </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2" >
          <item>
-          <spacer>
+          <widget class="QComboBox" name="newCardScheduling" />
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout" >
+         <item>
+          <widget class="QLabel" name="label_11" >
+           <property name="text" >
+            <string>&lt;b>Number of new cards per day</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2" >
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
            </property>
-           <property name="sizeType" >
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
            <property name="sizeHint" stdset="0" >
             <size>
-             <width>180</width>
+             <width>40</width>
              <height>20</height>
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="newCardsPerDay" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -524,6 +542,10 @@
         </spacer>
        </item>
       </layout>
+      <zorder>label_15</zorder>
+      <zorder>label_18</zorder>
+      <zorder>label_25</zorder>
+      <zorder></zorder>
      </widget>
      <widget class="QWidget" name="tab_3" >
       <property name="geometry" >
@@ -531,7 +553,7 @@
         <x>0</x>
         <y>0</y>
         <width>501</width>
-        <height>493</height>
+        <height>533</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -620,6 +642,7 @@
   <tabstop>easyMin</tabstop>
   <tabstop>easyMax</tabstop>
   <tabstop>newCardOrder</tabstop>
+  <tabstop>newCardScheduling</tabstop>
   <tabstop>delay0</tabstop>
   <tabstop>delay1</tabstop>
   <tabstop>delay2</tabstop>

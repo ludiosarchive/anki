@@ -42,11 +42,9 @@ class AnkiQt(QMainWindow):
         self.help = ui.help.HelpArea(self.mainWin.helpFrame, self.config, self)
 	self.trayIcon = ui.tray.AnkiTrayIcon( self )
         self.connectMenuActions()
-        if sys.platform.startswith("darwin"):
-            # window creeps on osx, just resize
-            self.resize(*self.config['mainWindowGeometry'][2:4])
-        else:
-            self.setGeometry(QRect(*self.config['mainWindowGeometry']))
+        self.resize(self.config['mainWindowSize'])
+        self.move(self.config['mainWindowPos'])
+        self.maybeMoveWindow()
         self.bodyView = ui.view.View(self, self.mainWin.mainText,
                                      self.mainWin.mainTextFrame)
         self.addView(self.bodyView)
@@ -76,6 +74,22 @@ class AnkiQt(QMainWindow):
             print traceback.print_exc()
         # check for updates
         self.setupAutoUpdate()
+
+    def maybeMoveWindow(self):
+        # If the window is positioned off the screen, move it back into view
+        moveWin = False
+        if self.pos().x() > (self.app.desktop().width() - 200):
+            moveWin = True
+            newX = self.app.desktop().width() - self.size().width()
+        else:
+            newX = self.pos().x()
+        if self.pos().y() > (self.app.desktop().height() - 200):
+            moveWin = True
+            newY = self.app.desktop().height() - self.size().height()
+        else:
+            newY = self.pos().y()
+        if moveWin:
+            self.move( newX, newY )
 
     # State machine
     ##########################################################################
@@ -689,12 +703,9 @@ class AnkiQt(QMainWindow):
     def prepareForExit(self):
         "Save config and window geometry."
         self.runHook('quit')
-        g = self.geometry()
         self.help.hide()
-        self.config['mainWindowGeometry'] = (g.left(),
-                                             g.top(),
-                                             self.width(),
-                                             self.height())
+        self.config['mainWindowPos'] = self.pos()
+        self.config['mainWindowSize'] = self.size()
         # save config
         try:
             self.config.save()
@@ -1034,6 +1045,7 @@ class AnkiQt(QMainWindow):
         "DisplayProperties",
         "DeckProperties",
         "ModelProperties",
+        "UndoAnswer",
         "Export",
         "MarkCard",
         "Graphs",
@@ -1124,6 +1136,7 @@ class AnkiQt(QMainWindow):
     def alterShortcuts(self):
         if sys.platform.startswith("darwin"):
             self.mainWin.actionAddcards.setShortcut(_("Ctrl+D"))
+            self.mainWin.actionClose.setShortcut("")
 
     def updateMarkAction(self):
         self.mainWin.actionMarkCard.blockSignals(True)

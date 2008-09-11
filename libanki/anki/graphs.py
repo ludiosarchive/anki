@@ -74,8 +74,8 @@ from cards where reps > 0 and priority != 0""")
         self.addMissing(dayslist, self.stats['lowestInDay'], days)
         (x, y) = self.unzip(dayslist.items())
         self.filledGraph(graph, days, x, y, "#4444ff")
-        graph.set_ylabel("Cards")
-        graph.set_xlabel("Days")
+        graph.set_ylabel(_("Cards"))
+        graph.set_xlabel(_("Days"))
         graph.set_xlim(xmin=self.stats['lowestInDay'], xmax=days)
         return fig
 
@@ -96,8 +96,8 @@ from cards where reps > 0 and priority != 0""")
         x = list(x); x.append(99999)
         y.append(count)
         self.filledGraph(graph, days, x, y, "#aaaaff")
-        graph.set_ylabel("Cards")
-        graph.set_xlabel("Days")
+        graph.set_ylabel(_("Cards"))
+        graph.set_xlabel(_("Days"))
         graph.set_xlim(xmin=self.stats['lowestInDay'], xmax=days)
         graph.set_ylim(ymax=count+100)
         return fig
@@ -110,8 +110,8 @@ from cards where reps > 0 and priority != 0""")
         intervals = self.unzip(ints.items())
         graph = fig.add_subplot(111)
         self.filledGraph(graph, days, intervals[0], intervals[1], "#aaffaa")
-        graph.set_ylabel("Cards")
-        graph.set_xlabel("Days")
+        graph.set_ylabel(_("Cards"))
+        graph.set_xlabel(_("Days"))
         graph.set_xlim(xmin=0, xmax=days)
         return fig
 
@@ -132,8 +132,8 @@ from cards where reps > 0 and priority != 0""")
         else:
             colour = "#ffcccc"
         self.filledGraph(graph, numdays, intervals[0], intervals[1], colour)
-        graph.set_ylabel("Cards")
-        graph.set_xlabel("Day")
+        graph.set_ylabel(_("Cards"))
+        graph.set_xlabel(_("Day"))
         graph.set_xlim(xmin=-numdays, xmax=0)
         return fig
 

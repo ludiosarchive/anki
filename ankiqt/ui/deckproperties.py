@@ -21,6 +21,11 @@ class DeckProperties(QDialog):
         self.dialog.setupUi(self)
         self.dialog.newCardOrder.insertItems(
             0, QStringList(NewCardOrder.values()))
+        self.dialog.newCardScheduling.insertItems(
+            0, QStringList([
+            "Spread new cards out through reviews",
+            "Show new cards after all other cards",
+            ]))
         self.readData()
         self.connect(self.dialog.modelsAdd, SIGNAL("clicked()"), self.onAdd)
         self.connect(self.dialog.modelsEdit, SIGNAL("clicked()"), self.onEdit)
@@ -55,7 +60,9 @@ class DeckProperties(QDialog):
         self.dialog.collapse.setCheckState(self.d.collapseTime
                                            and Qt.Checked or Qt.Unchecked)
         self.dialog.failedCardMax.setText(unicode(self.d.failedCardMax))
+        self.dialog.newCardsPerDay.setText(unicode(self.d.newCardsPerDay))
         self.dialog.newCardOrder.setCurrentIndex(self.d.newCardOrder)
+        self.dialog.newCardScheduling.setCurrentIndex(self.d.newCardSpacing)
         # models
         self.updateModelsList()
 
@@ -154,6 +161,8 @@ class DeckProperties(QDialog):
             self.updateField(self.d, 'delay2', v)
             v = int(self.dialog.failedCardMax.text())
             self.updateField(self.d, 'failedCardMax', v)
+            v = int(self.dialog.newCardsPerDay.text())
+            self.updateField(self.d, 'newCardsPerDay', v)
         except ValueError:
             pass
         self.updateField(self.d, 'collapseTime',
@@ -173,6 +182,8 @@ class DeckProperties(QDialog):
         # new card order
         self.updateField(self.d, "newCardOrder",
                          self.dialog.newCardOrder.currentIndex())
+        self.updateField(self.d, "newCardSpacing",
+                         self.dialog.newCardScheduling.currentIndex())
         # mark deck dirty and close
         if self.origMod != self.d.modified:
             self.parent.reset()
