@@ -13,7 +13,7 @@ from anki.facts import Fact
 from anki.cards import Card
 from anki.models import FieldModel
 
-import psyco; psyco.full()
+#import psyco; psyco.profile()
 
 # Local tests
 ##########################################################################
@@ -49,8 +49,8 @@ def teardown():
 
 @nose.with_setup(setup_local, teardown)
 def test_localsync_diffing():
-    assert deck1.totalCardCount() == 2
-    assert deck2.totalCardCount() == 2
+    assert deck1.cardCount() == 2
+    assert deck2.cardCount() == 2
     lsum = client.summary(deck1.lastSync)
     rsum = server.summary(deck1.lastSync)
     result = client.diffSummary(lsum, rsum, 'cards')
@@ -160,11 +160,11 @@ def test_localsync_models():
 
 @nose.with_setup(setup_local, teardown)
 def test_localsync_factsandcards():
-    assert deck1.totalFactCount() == 1 and deck1.totalCardCount() == 2
-    assert deck2.totalFactCount() == 1 and deck2.totalCardCount() == 2
+    assert deck1.factCount() == 1 and deck1.cardCount() == 2
+    assert deck2.factCount() == 1 and deck2.cardCount() == 2
     client.sync()
-    assert deck1.totalFactCount() == 2 and deck1.totalCardCount() == 4
-    assert deck2.totalFactCount() == 2 and deck2.totalCardCount() == 4
+    assert deck1.factCount() == 2 and deck1.cardCount() == 4
+    assert deck2.factCount() == 2 and deck2.cardCount() == 4
     # ensure the fact was copied across
     f1 = deck1.s.query(Fact).first()
     f2 = deck1.s.query(Fact).get(f1.id)
@@ -195,19 +195,19 @@ def test_localsync_threeway():
     cards = deck1.addFact(f)
     card = cards[0]
     client.sync()
-    assert deck1.totalCardCount() == 6
-    assert deck2.totalCardCount() == 6
+    assert deck1.cardCount() == 6
+    assert deck2.cardCount() == 6
     # check it propagates from server to deck3
     client2.sync()
-    assert deck3.totalCardCount() == 6
+    assert deck3.cardCount() == 6
     # delete a card on deck1
     deck1.deleteCard(card.id)
     client.sync()
-    assert deck1.totalCardCount() == 5
-    assert deck2.totalCardCount() == 5
+    assert deck1.cardCount() == 5
+    assert deck2.cardCount() == 5
     # make sure the delete is now propagated from the server to deck3
     client2.sync()
-    assert deck3.totalCardCount() == 5
+    assert deck3.cardCount() == 5
 
 # @nose.with_setup(setup_local, teardown)
 # def test_localsync_upgradeAndSync():

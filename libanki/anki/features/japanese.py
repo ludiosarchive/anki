@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import sys, os
 from anki.features import Feature
@@ -21,7 +20,15 @@ class KakasiController(object):
             dir = os.path.abspath(dir + "/../../../../..")
             import platform
             # don't add kakasi to the path on powerpc, it's buggy
-            if platform.processor() != "powerpc":
+            # and loop until this works, since processor() is buggy
+            while 1:
+                try:
+                    proc = platform.processor()
+                except IOError:
+                    proc = None
+                if proc:
+                    break
+            if proc != "powerpc":
                 os.environ['PATH'] += ":" + dir + "/kakasi"
             os.environ['ITAIJIDICT'] = dir + "/kakasi/itaijidict"
             os.environ['KANWADICT'] = dir + "/kakasi/kanwadict"
@@ -58,6 +65,7 @@ class KakasiController(object):
         text = text.replace("\n", " ")
         text = text.replace(u'\uff5e', "~")
         text = text.replace("<br>", "---newline---")
+        text = text.replace("<br />", "---newline---")
         text = stripHTML(text)
         text = text.replace("---newline---", "<br>")
         return text

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import re, os, sys
-from anki.utils import parseTags, stripHTML
+from anki.utils import parseTags, stripHTML, tidyHTML
 import anki.sound
 from ankiqt import ui
 
@@ -129,7 +129,7 @@ class FactEditor(object):
         self.addSound.setFocusPolicy(Qt.NoFocus)
         self.addSound.setShortcut(_("Ctrl+s"))
         self.addSound.setEnabled(False)
-        self.addSound.setIcon(QIcon(":/icons/arts.png"))
+        self.addSound.setIcon(QIcon(":/icons/text-speak.png"))
         self.addSound.setToolTip(_("Add audio"))
         self.iconsBox.addWidget(self.addSound)
         self.addSound.setStyle(self.plastiqueStyle)
@@ -215,6 +215,12 @@ class FactEditor(object):
         # update available tags
         self.tags.setDeck(self.deck)
         self.fieldsGrid.addWidget(self.tags, n, 1)
+        # status warning
+        n += 1
+        self.warning = QLabel()
+        self.warning.setFixedHeight(20)
+        self.warning.setOpenExternalLinks(True)
+        self.fieldsGrid.addWidget(self.warning, n, 1)
         # update fields
         self.updateFields(check)
         self.parent.setUpdatesEnabled(True)
@@ -234,7 +240,7 @@ class FactEditor(object):
         # text
         for (name, (field, w)) in self.fields.items():
             new = self.fact[name]
-            old = self.pruneHTML(unicode(w.toHtml()))
+            old = tidyHTML(unicode(w.toHtml()))
             # only update if something has changed, to preserve the cursor
             if new != old:
                 w.setHtml(new)
@@ -262,7 +268,7 @@ class FactEditor(object):
     def fieldChanged(self, field, widget):
         if self.updatingFields:
             return
-        value = self.pruneHTML(unicode(widget.toHtml()))
+        value = tidyHTML(unicode(widget.toHtml()))
         if value and not value.strip():
             widget.setText("")
             value = u""
@@ -276,14 +282,6 @@ class FactEditor(object):
             self.onChange(field)
         self.scheduleCheck()
         self.formatChanged(None)
-
-    def pruneHTML(self, html):
-        "Remove cruft like body tags and return just the important part."
-        html = re.sub(".*<body.*?>(.*)</body></html>",
-                      "\\1", html.replace("\n", u""))
-        html = re.sub('<p style=".*?">(.*?)</p>', u'\\1<br>', html)
-        html = re.sub('<br>$', u'', html)
-        return html
 
     def scheduleCheck(self):
         if not self.deck:
@@ -301,9 +299,9 @@ class FactEditor(object):
     def checkValid(self):
         empty = []
         dupe = []
-        problems = []
         for field in self.fact.fields:
             p = QPalette()
+            p.setColor(QPalette.Text, QColor("#000000"))
             if not self.fact.fieldValid(field):
                 empty.append(field)
                 p.setColor(QPalette.Base, QColor("#ffffcc"))
@@ -326,6 +324,16 @@ class FactEditor(object):
             if self.onFactInvalid:
                 self.onFactInvalid(self.fact)
             self.factState = "invalid"
+        if invalid:
+            self.warning.setText(_(
+                "Some fields are "
+                "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
+                "#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a>"
+                " or not "
+                "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
+                "#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."))
+        else:
+            self.warning.setText(_("All fields valid"))
 
     def onTagChange(self, text):
         if not self.updatingFields:
@@ -408,27 +416,33 @@ class FactEditor(object):
     def insertLatex(self):
         w = self.focusedEdit()
         if w:
+            self.deck.mediaDir(create=True)
             w.insertHtml("[latex][/latex]")
             w.moveCursor(QTextCursor.PreviousWord)
+            w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
 
     def insertLatexEqn(self):
         w = self.focusedEdit()
         if w:
+            self.deck.mediaDir(create=True)
             w.insertHtml("[$][/$]")
             w.moveCursor(QTextCursor.PreviousWord)
+            w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
 
     def insertLatexMathEnv(self):
         w = self.focusedEdit()
         if w:
+            self.deck.mediaDir(create=True)
             w.insertHtml("[$$][/$$]")
             w.moveCursor(QTextCursor.PreviousWord)
+            w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
 
     def fieldsAreBlank(self):
         for (field, widget) in self.fields.values():
-            value = self.pruneHTML(unicode(widget.toHtml()))
+            value = tidyHTML(unicode(widget.toHtml()))
             if value:
                 return False
         return True
@@ -438,7 +452,7 @@ class FactEditor(object):
             return
         # get this before we open the dialog
         w = self.focusedEdit()
-        key = _("Images (*.jpg *.png)")
+        key = _("Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)")
         file = ui.utils.getFile(self.parent, _("Add an image"), "picture", key)
         if not file:
             return
@@ -471,13 +485,13 @@ class FactEdit(QTextEdit):
         self.parent = parent
 
     def insertFromMimeData(self, source):
-        if source.hasHtml():
-            self.insertHtml(self.tidyHTML(unicode(source.html())))
-        elif source.hasText():
+        if source.hasText():
             self.insertPlainText(source.text())
+        elif source.hasHtml():
+            self.insertHtml(self.simplyHTML(unicode(source.html())))
 
-    def tidyHTML(self, html):
-        # FIXME: support pre tags
+    def simplifyHTML(self, html):
+        "Remove all style information and P tags."
         html = re.sub("\n", " ", html)
         html = re.sub("<br ?/?>", "\n", html)
         html = re.sub("<p ?/?>", "\n\n", html)
@@ -492,6 +506,42 @@ class FactEdit(QTextEdit):
         self.parent.lastFocusedEdit = self
         self.parent.resetFormatButtons()
         self.parent.disableButtons()
+
+    # this shouldn't be necessary if/when we move away from kakasi
+    def mouseDoubleClickEvent(self, evt):
+        r = QRegExp("\\{(.*[|,].*)\\}")
+        r.setMinimal(True)
+
+        mouseposition = self.textCursor().position()
+
+        blockoffset = 0
+        result = r.indexIn(self.toPlainText(), 0)
+
+        found = ""
+
+        while result != -1:
+            if mouseposition > result and mouseposition < result + r.matchedLength():
+                mouseposition -= result + 1
+                frompos = 0
+                topos = 0
+
+                string = r.cap(1)
+                offset = 0
+                bits = re.split("[|,]", unicode(string))
+                for index in range(0, len(bits)):
+                    offset += len(bits[index]) + 1
+                    if mouseposition < offset:
+                        found = bits[index]
+                        break
+                break
+
+            blockoffset= result + r.matchedLength()
+            result = r.indexIn(self.toPlainText(), blockoffset)
+
+        if found == "":
+            QTextEdit.mouseDoubleClickEvent(self,evt)
+            return
+        self.setPlainText(self.toPlainText().replace(result, r.matchedLength(), found))
 
     def focusInEvent(self, evt):
         if (self.parent.lastFocusedEdit and

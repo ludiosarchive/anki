@@ -23,7 +23,7 @@ setup(name='anki',
       author='Damien Elmes',
       author_email='anki@ichi2.net',
       url='http://ichi2.net/anki/index.html',
-      license='GPLv2',
+      license='GPLv3',
       packages=find_packages(),
       package_data={'anki':
                     ['samples/*','locale/*/*/*']},

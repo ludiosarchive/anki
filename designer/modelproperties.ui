@@ -8,20 +8,28 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>568</width>
-    <height>533</height>
+    <width>544</width>
+    <height>589</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Model Properties</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout" name="verticalLayout" >
    <item>
     <widget class="QTabWidget" name="tabWidget" >
      <property name="currentIndex" >
       <number>0</number>
      </property>
      <widget class="QWidget" name="tab" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>522</width>
+        <height>515</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>Model properties</string>
       </attribute>
@@ -29,16 +37,7 @@
        <property name="spacing" >
         <number>6</number>
        </property>
-       <property name="leftMargin" >
-        <number>9</number>
-       </property>
-       <property name="topMargin" >
-        <number>9</number>
-       </property>
-       <property name="rightMargin" >
-        <number>9</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>9</number>
        </property>
        <item>
@@ -50,28 +49,16 @@
        </item>
        <item>
         <layout class="QGridLayout" >
-         <property name="leftMargin" >
+         <property name="margin" >
           <number>0</number>
          </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
-          <number>0</number>
-         </property>
-         <property name="horizontalSpacing" >
-          <number>6</number>
-         </property>
-         <property name="verticalSpacing" >
+         <property name="spacing" >
           <number>6</number>
          </property>
          <item row="0" column="0" >
           <widget class="QLabel" name="label" >
            <property name="text" >
-            <string>&lt;b>Name&lt;/b>:</string>
+            <string>&lt;b>Name&lt;/b></string>
            </property>
            <property name="alignment" >
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -81,7 +68,7 @@
          <item row="2" column="0" >
           <widget class="QLabel" name="label_2" >
            <property name="text" >
-            <string>&lt;b>Description&lt;/b>:</string>
+            <string>&lt;b>Description&lt;/b></string>
            </property>
            <property name="alignment" >
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -101,37 +88,26 @@
          <item row="4" column="0" >
           <widget class="QLabel" name="label_4" >
            <property name="text" >
-            <string>&lt;b>Features&lt;/b>:</string>
+            <string>&lt;b>Features&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-f57a8f871fc97ceb2f6daa43528fd640ee63b4f4">?&lt;/a>&lt;/b></string>
            </property>
            <property name="alignment" >
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
            </property>
-          </widget>
-         </item>
-         <item row="4" column="1" >
-          <layout class="QVBoxLayout" >
-           <property name="spacing" >
-            <number>0</number>
+           <property name="openExternalLinks" >
+            <bool>true</bool>
            </property>
-           <item>
-            <widget class="QLabel" name="label_6" >
-             <property name="text" >
-              <string>Special features used by the model.</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="decorators" />
-           </item>
-          </layout>
+          </widget>
          </item>
          <item row="1" column="0" >
           <widget class="QLabel" name="label_3" >
            <property name="text" >
-            <string>&lt;b>Tags&lt;/b>:</string>
+            <string>&lt;b>Tags&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-09efbe5fd6809ae0d90543adf92014b8eb9ef1bf">?&lt;/a>&lt;/b></string>
            </property>
            <property name="alignment" >
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
+           <property name="openExternalLinks" >
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -141,10 +117,13 @@
          <item row="3" column="0" >
           <widget class="QLabel" name="label_5" >
            <property name="text" >
-            <string>&lt;b>Card spacing&lt;/b></string>
+            <string>&lt;b>Card spacing&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-59a81e35b6afb23930005e943068945214d194b3">?&lt;/a>&lt;/b></string>
            </property>
            <property name="alignment" >
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
+           <property name="openExternalLinks" >
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -153,7 +132,10 @@
            <item row="0" column="0" >
             <widget class="QLabel" name="label_16" >
              <property name="text" >
-              <string>Initial delay in seconds for each card</string>
+              <string>Minimum spacing&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-4ee3a58e2fdd61da8ef81984213862d3bc0ed4bd">?&lt;/a></string>
+             </property>
+             <property name="openExternalLinks" >
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -165,7 +147,7 @@
              <property name="orientation" >
               <enum>Qt::Horizontal</enum>
              </property>
-             <property name="sizeHint" >
+             <property name="sizeHint" stdset="0" >
               <size>
                <width>40</width>
                <height>20</height>
@@ -176,7 +158,10 @@
            <item row="1" column="0" >
             <widget class="QLabel" name="label_24" >
              <property name="text" >
-              <string>Percentage of minimum interval</string>
+              <string>Minimum interval multiplier&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-51074b785bb6049b44fce9f18fca198100c4d2f7">?&lt;/a></string>
+             </property>
+             <property name="openExternalLinks" >
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -185,11 +170,22 @@
            </item>
           </layout>
          </item>
+         <item row="4" column="1" >
+          <widget class="QLineEdit" name="decorators" />
+         </item>
         </layout>
        </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab_2" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>522</width>
+        <height>515</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>Fields</string>
       </attribute>
@@ -197,16 +193,7 @@
        <property name="spacing" >
         <number>6</number>
        </property>
-       <property name="leftMargin" >
-        <number>9</number>
-       </property>
-       <property name="topMargin" >
-        <number>9</number>
-       </property>
-       <property name="rightMargin" >
-        <number>9</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>9</number>
        </property>
        <item>
@@ -228,16 +215,7 @@
          <property name="spacing" >
           <number>6</number>
          </property>
-         <property name="leftMargin" >
-          <number>0</number>
-         </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
+         <property name="margin" >
           <number>0</number>
          </property>
          <item>
@@ -261,16 +239,7 @@
            <property name="spacing" >
             <number>6</number>
            </property>
-           <property name="leftMargin" >
-            <number>0</number>
-           </property>
-           <property name="topMargin" >
-            <number>0</number>
-           </property>
-           <property name="rightMargin" >
-            <number>0</number>
-           </property>
-           <property name="bottomMargin" >
+           <property name="margin" >
             <number>0</number>
            </property>
            <item>
@@ -293,6 +262,32 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QPushButton" name="fieldUp" >
+             <property name="toolTip" >
+              <string>Move selected field up</string>
+             </property>
+             <property name="text" >
+              <string>Move &amp;Up</string>
+             </property>
+             <property name="autoDefault" >
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="fieldDown" >
+             <property name="toolTip" >
+              <string>Move selected field down</string>
+             </property>
+             <property name="text" >
+              <string>Move Dow&amp;n</string>
+             </property>
+             <property name="autoDefault" >
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
@@ -306,36 +301,15 @@
           <property name="spacing" >
            <number>6</number>
           </property>
-          <property name="leftMargin" >
-           <number>9</number>
-          </property>
-          <property name="topMargin" >
-           <number>9</number>
-          </property>
-          <property name="rightMargin" >
-           <number>9</number>
-          </property>
-          <property name="bottomMargin" >
+          <property name="margin" >
            <number>9</number>
           </property>
           <item>
            <layout class="QGridLayout" >
-            <property name="leftMargin" >
+            <property name="margin" >
              <number>0</number>
             </property>
-            <property name="topMargin" >
-             <number>0</number>
-            </property>
-            <property name="rightMargin" >
-             <number>0</number>
-            </property>
-            <property name="bottomMargin" >
-             <number>0</number>
-            </property>
-            <property name="horizontalSpacing" >
-             <number>6</number>
-            </property>
-            <property name="verticalSpacing" >
+            <property name="spacing" >
              <number>6</number>
             </property>
             <item row="2" column="0" >
@@ -392,10 +366,13 @@
             <item row="5" column="0" >
              <widget class="QLabel" name="label_22" >
               <property name="text" >
-               <string>&lt;b>Features&lt;/b></string>
+               <string>&lt;b>Features&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-f57a8f871fc97ceb2f6daa43528fd640ee63b4f4">?&lt;/a>&lt;/b></string>
               </property>
               <property name="alignment" >
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
+              <property name="openExternalLinks" >
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -411,25 +388,9 @@
               <property name="spacing" >
                <number>0</number>
               </property>
-              <property name="leftMargin" >
+              <property name="margin" >
                <number>0</number>
               </property>
-              <property name="topMargin" >
-               <number>0</number>
-              </property>
-              <property name="rightMargin" >
-               <number>0</number>
-              </property>
-              <property name="bottomMargin" >
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="label_25" >
-                <property name="text" >
-                 <string>Special features used by the field.</string>
-                </property>
-               </widget>
-              </item>
               <item>
                <widget class="QLineEdit" name="fieldFeatures" />
               </item>
@@ -457,6 +418,14 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_3" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>522</width>
+        <height>515</height>
+       </rect>
+      </property>
       <attribute name="title" >
        <string>Cards</string>
       </attribute>
@@ -464,16 +433,7 @@
        <property name="spacing" >
         <number>6</number>
        </property>
-       <property name="leftMargin" >
-        <number>9</number>
-       </property>
-       <property name="topMargin" >
-        <number>9</number>
-       </property>
-       <property name="rightMargin" >
-        <number>9</number>
-       </property>
-       <property name="bottomMargin" >
+       <property name="margin" >
         <number>9</number>
        </property>
        <item>
@@ -504,16 +464,7 @@
          <property name="spacing" >
           <number>6</number>
          </property>
-         <property name="leftMargin" >
-          <number>0</number>
-         </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
+         <property name="margin" >
           <number>0</number>
          </property>
          <item>
@@ -537,16 +488,7 @@
            <property name="spacing" >
             <number>6</number>
            </property>
-           <property name="leftMargin" >
-            <number>0</number>
-           </property>
-           <property name="topMargin" >
-            <number>0</number>
-           </property>
-           <property name="rightMargin" >
-            <number>0</number>
-           </property>
-           <property name="bottomMargin" >
+           <property name="margin" >
             <number>0</number>
            </property>
            <item>
@@ -570,6 +512,26 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QPushButton" name="cardUp" >
+             <property name="toolTip" >
+              <string>Move selected card model up</string>
+             </property>
+             <property name="text" >
+              <string>Move &amp;Up</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="cardDown" >
+             <property name="toolTip" >
+              <string>Move selected card model down</string>
+             </property>
+             <property name="text" >
+              <string>Move Dow&amp;n</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
@@ -583,36 +545,15 @@
           <property name="spacing" >
            <number>6</number>
           </property>
-          <property name="leftMargin" >
-           <number>9</number>
-          </property>
-          <property name="topMargin" >
-           <number>9</number>
-          </property>
-          <property name="rightMargin" >
-           <number>9</number>
-          </property>
-          <property name="bottomMargin" >
+          <property name="margin" >
            <number>9</number>
           </property>
           <item>
            <layout class="QGridLayout" >
-            <property name="leftMargin" >
+            <property name="margin" >
              <number>0</number>
             </property>
-            <property name="topMargin" >
-             <number>0</number>
-            </property>
-            <property name="rightMargin" >
-             <number>0</number>
-            </property>
-            <property name="bottomMargin" >
-             <number>0</number>
-            </property>
-            <property name="horizontalSpacing" >
-             <number>6</number>
-            </property>
-            <property name="verticalSpacing" >
+            <property name="spacing" >
              <number>6</number>
             </property>
             <item row="1" column="1" >
@@ -628,6 +569,9 @@
                 <width>16777215</width>
                 <height>60</height>
                </size>
+              </property>
+              <property name="horizontalScrollBarPolicy" >
+               <enum>Qt::ScrollBarAlwaysOff</enum>
               </property>
               <property name="tabChangesFocus" >
                <bool>true</bool>
@@ -672,6 +616,9 @@
                 <height>60</height>
                </size>
               </property>
+              <property name="horizontalScrollBarPolicy" >
+               <enum>Qt::ScrollBarAlwaysOff</enum>
+              </property>
               <property name="tabChangesFocus" >
                <bool>true</bool>
               </property>
@@ -683,10 +630,13 @@
             <item row="3" column="0" >
              <widget class="QLabel" name="label_15" >
               <property name="text" >
-               <string>&lt;b>Answer format&lt;/b></string>
+               <string>&lt;b>Answer format&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-b8916ff117aa0da4a414ce9b9b9be4a232eab2f4">?&lt;/a>&lt;/b></string>
               </property>
               <property name="alignment" >
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
+              <property name="openExternalLinks" >
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -707,7 +657,23 @@
                 <height>60</height>
                </size>
               </property>
+              <property name="horizontalScrollBarPolicy" >
+               <enum>Qt::ScrollBarAlwaysOff</enum>
+              </property>
               <property name="tabChangesFocus" >
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" >
+             <widget class="QLabel" name="label_12" >
+              <property name="text" >
+               <string>&lt;b>Name/tag&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-09efbe5fd6809ae0d90543adf92014b8eb9ef1bf">?&lt;/a>&lt;/b></string>
+              </property>
+              <property name="alignment" >
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
+              <property name="openExternalLinks" >
                <bool>true</bool>
               </property>
              </widget>
@@ -715,20 +681,13 @@
             <item row="2" column="0" >
              <widget class="QLabel" name="label_14" >
               <property name="text" >
-               <string>&lt;b>Question format&lt;/b></string>
+               <string>&lt;b>Question format&lt;a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-b8916ff117aa0da4a414ce9b9b9be4a232eab2f4">?&lt;/a>&lt;/b></string>
               </property>
               <property name="alignment" >
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
               </property>
-             </widget>
-            </item>
-            <item row="0" column="0" >
-             <widget class="QLabel" name="label_12" >
-              <property name="text" >
-               <string>&lt;b>Name/tag&lt;/b></string>
-              </property>
-              <property name="alignment" >
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              <property name="openExternalLinks" >
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -764,6 +723,8 @@
   <tabstop>fieldList</tabstop>
   <tabstop>fieldAdd</tabstop>
   <tabstop>fieldDelete</tabstop>
+  <tabstop>fieldUp</tabstop>
+  <tabstop>fieldDown</tabstop>
   <tabstop>fieldName</tabstop>
   <tabstop>fieldDescription</tabstop>
   <tabstop>fieldUnique</tabstop>
@@ -774,6 +735,8 @@
   <tabstop>cardAdd</tabstop>
   <tabstop>cardToggle</tabstop>
   <tabstop>cardDelete</tabstop>
+  <tabstop>cardUp</tabstop>
+  <tabstop>cardDown</tabstop>
   <tabstop>cardName</tabstop>
   <tabstop>cardDescription</tabstop>
   <tabstop>cardQuestion</tabstop>

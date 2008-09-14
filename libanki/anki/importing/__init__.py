@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Importing support
@@ -43,6 +42,7 @@ class Importer(object):
         self.log = []
         self.deck = deck
         self.total = 0
+        self.tagsToAdd = u""
 
     def doImport(self):
         "Import."
@@ -121,6 +121,7 @@ all but one card model."""))
         factIds = [genID() for n in range(len(cards))]
         self.deck.s.execute(factsTable.insert(),
             [{'modelId': self.model.id,
+              'tags': self.tagsToAdd,
               'id': factIds[n]} for n in range(len(cards))])
         self.deck.s.execute("""
 delete from factsDeleted
@@ -134,6 +135,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
             data = [{'factId': factIds[m],
                      'fieldModelId': fm.id,
                      'ordinal': fm.ordinal,
+                     'id': genID(),
                      'value': (index is not None and
                                cards[m].fields[index] or u"")}
                     for m in range(len(cards))]
@@ -219,9 +221,11 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
 from anki.importing.csv import TextImporter
 from anki.importing.anki10 import Anki10Importer
 from anki.importing.mnemosyne10 import Mnemosyne10Importer
+from anki.importing.wcu import WCUImporter
 
 Importers = (
     (_("TAB/semicolon-separated file (*.*)"), TextImporter),
     (_("Anki 1.0 deck (*.anki)"), Anki10Importer),
     (_("Mnemosyne 1.0 deck (*.mem)"), Mnemosyne10Importer),
+    (_("CueCard deck (*.wcu)"), WCUImporter),
     )

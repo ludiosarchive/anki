@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki, anki.utils
 from anki.sound import playFromText, stripSounds
-from anki.latex import renderLatex
+from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
 import types, time
 from ankiqt import ui
@@ -48,12 +48,13 @@ class View(object):
         self.clearWindow()
         self.setBackgroundColour()
         self.maybeHelp()
-        if self.main.deck.totalCardCount():
-            self.addStyles()
-            if self.main.lastCard:
-                self.drawTopSection()
-            else:
+        if self.main.deck.cardCount():
+            if not self.main.lastCard or (
+                self.main.config['suppressLastCardContent'] and
+                self.main.config['suppressLastCardInterval']):
                 self.buffer += "<br>"
+            else:
+                self.drawTopSection()
         if self.state == "showQuestion":
             self.drawQuestion()
         elif self.state == "showAnswer":
@@ -68,18 +69,19 @@ class View(object):
 
     def addStyles(self):
         # card styles
-        self.buffer += "<style>\n"
+        s = "<style>\n"
         if self.main.currentCard:
-            self.buffer += self.main.currentCard.css()
+            s += self.main.currentCard.css()
         # last card
         for base in ("lastCard", "interface"):
             family = self.main.config[base + "FontFamily"]
             size = self.main.config[base + "FontSize"]
             color = ("; color: " + self.main.config[base + "Colour"])
-            self.buffer += ('.%s {font-family: "%s"; font-size: %spx%s}\n' %
+            s += ('.%s {font-family: "%s"; font-size: %spx%s}\n' %
                             (base, family, size, color))
         # standard margins
-        self.buffer += "</style>"
+        s += "</style>"
+        return s
 
     def clearWindow(self):
         self.body.setHtml("")
@@ -90,7 +92,7 @@ class View(object):
 
     def flush(self):
         "Write the current HTML buffer to the screen."
-        self.body.setHtml(self.buffer)
+        self.body.setHtml(self.addStyles() + '<div class="interface">' + self.buffer + "</div>")
 
     def write(self, text):
         if type(text) != types.UnicodeType:
@@ -135,28 +137,31 @@ class View(object):
 
     def drawLastCard(self):
         "Show the last card if not the current one, and next time."
-        if self.main.lastCard and (
-            self.state == "deckFinished" or
-            self.main.lastCard != self.main.currentCard):
-            q = self.main.lastCard.question.replace("<br>", "  ")
-            q = stripHTML(q)
-            if len(q) > 50:
-                q = q[:50] + "..."
-            a = self.main.lastCard.answer.replace("<br>", "  ")
-            a = stripHTML(a)
-            if len(a) > 50:
-                a = a[:50] + "..."
-            s = "%s<br>%s" % (q, a)
-            self.write('<span class="lastCard">%s</span><br>' % s)
-            if self.main.lastQuality > 1:
-                msg = _("Well done! This card will appear again in "
-                        "<b>%(next)s</b>.") % \
-                        {"next":self.main.lastScheduledTime}
-            else:
-                msg = _("This card will appear again in "
-                        "<b>%(next)s</b>.") % \
-                        {"next":self.main.lastScheduledTime}
-            self.write('<span class="interface">' + msg + "</span><br>")
+        if self.main.lastCard:
+            if not self.main.config['suppressLastCardContent']:
+                if (self.state == "deckFinished" or
+                    self.main.currentCard.id != self.main.lastCard.id):
+                    q = self.main.lastCard.question.replace("<br>", "  ")
+                    q = stripHTML(q)
+                    if len(q) > 50:
+                        q = q[:50] + "..."
+                    a = self.main.lastCard.answer.replace("<br>", "  ")
+                    a = stripHTML(a)
+                    if len(a) > 50:
+                        a = a[:50] + "..."
+                    s = "%s<br>%s" % (q, a)
+                    s = stripLatex(s)
+                    self.write('<span class="lastCard">%s</span><br>' % s)
+            if not self.main.config['suppressLastCardInterval']:
+                if self.main.lastQuality > 1:
+                    msg = _("Well done! This card will appear again in "
+                            "<b>%(next)s</b>.") % \
+                            {"next":self.main.lastScheduledTime}
+                else:
+                    msg = _("This card will appear again in less than "
+                            "<b>%(next)s</b>.") % \
+                            {"next":self.main.lastScheduledTime}
+                self.write(msg)
 
     # Help
     ##########################################################################
@@ -185,7 +190,7 @@ class View(object):
     ##########################################################################
 
     def drawNoDeckMessage(self):
-        self.write("""<h1>Welcome to Anki!</h1>
+        self.write(_("""<h1>Welcome to Anki!</h1>
 <p>
 <table width=90%>
 <tr>
@@ -213,14 +218,14 @@ time before you see it again will get bigger.
 
 <tr>
 <td>
-<a href="welcome:open"><img src=":/icons/fileopen.png"></a>
+<a href="welcome:open"><img src=":/icons/document-open.png"></a>
 </td>
 <td valign=middle><h2><a href="welcome:open">Open an existing deck</a></h2></td>
 </tr>
 
 <tr>
 <td>
-<a href="welcome:new"><img src=":/icons/filenew.png"></a>
+<a href="welcome:new"><img src=":/icons/document-new.png"></a>
 </td>
 <td valign=middle>
 <h2><a href="welcome:new">Create a new deck</a></h2></td>
@@ -249,7 +254,7 @@ save by not forgetting.
 </td>
 </tr>
 </table>
-""")
+"""))
 
     def drawDeckEmptyMessage(self):
         "Tell the user the deck is empty."
@@ -259,20 +264,6 @@ card' from the Edit menu."""))
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."
-        next = self.main.deck.earliestTimeStr()
-        suspended = self.main.deck.suspendedCardCount()
-        waiting = self.main.deck.spacedCardCount()
-        self.clearWindow()
-        self.write(_("""
-<h1>Congratulations!</h1>You have finished the deck for now.<br>
-The next question will be shown in <b>%(next)s</b>.<p>
-There are %(waiting)d
-<a href="http://ichi2.net/anki/wiki/FrequentlyAskedQuestions#head-ef653836eaddb2b9c1af6b8fa56bcea458a04c20">spaced</a> cards.<br>
-There are %(suspended)d suspended cards.<p>
-Spaced cards are cards that won't be shown for a while, because you have seen<br>
-a related card recently. Suspended cards are cards removed from the learning<br>
-process - they won't be shown until you unsuspend them.""") % {
-    "next": next,
-    "suspended": suspended,
-    "waiting": waiting,
-    })
+        self.write("<br><center><table width=250><tr><td align='left'>" +
+                   self.main.deck.deckFinishedMsg() +
+                   "</td></tr></table></center>")

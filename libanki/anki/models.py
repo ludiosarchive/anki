@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Model - define the way in which facts are added and shown
@@ -207,7 +206,7 @@ modelsTable = Table(
     Column('name', UnicodeText, nullable=False),
     Column('description', UnicodeText, nullable=False, default=u""),
     Column('features', UnicodeText, nullable=False, default=u""),
-    Column('spacing', Float, nullable=False, default=0.25),
+    Column('spacing', Float, nullable=False, default=0.1),
     Column('initialSpacing', Float, nullable=False, default=600))
 
 class Model(object):
@@ -251,5 +250,5 @@ mapper(Model, modelsTable, properties={
 modelsDeletedTable = Table(
     'modelsDeleted', metadata,
     Column('modelId', Integer, ForeignKey("models.id"),
-           nullable=False, index=True),
+           nullable=False),
     Column('deletedTime', Float, nullable=False))

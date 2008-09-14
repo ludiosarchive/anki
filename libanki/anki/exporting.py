@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Exporting support
@@ -9,7 +8,7 @@ Exporting support
 """
 __docformat__ = 'restructuredtext'
 
-import itertools
+import itertools, time
 from operator import itemgetter
 from anki import DeckStorage
 from anki.cards import Card
@@ -76,11 +75,11 @@ class AnkiExporter(Exporter):
         if not self.includeSchedulingInfo:
             self.newDeck.s.statement("""
 update cards set
-interval = 0,
+interval = 0.001,
 lastInterval = 0,
-due = 0,
+due = created,
 lastDue = 0,
-factor = 0,
+factor = 2.5,
 firstAnswered = 0,
 reps = 0,
 successive = 0,
@@ -97,9 +96,16 @@ matureEase2 = 0,
 matureEase3 = 0,
 matureEase4 = 0,
 yesCount = 0,
-noCount = 0
-""")
-        self.newDeck.save()
+noCount = 0,
+spaceUntil = 0,
+isDue = 1,
+relativeDelay = 0,
+type = 2,
+combinedDue = created,
+modified = :now
+""", now=time.time())
+        # need to save manually
+        self.newDeck.s.commit()
         self.newDeck.close()
 
     def localSummary(self):
@@ -169,11 +175,15 @@ class TextFactExporter(Exporter):
         self.includeTags = False
 
     def doExport(self, file):
+        cardIds = self.cardIds()
         facts = self.deck.s.all("""
-select distinct facts.id, fields.value from cards, facts, fields
-where cards.factId = facts.id and
-facts.id = fields.factId
-order by facts.id, fields.fieldModelId""")
+select factId, value from fields
+where
+factId in
+(select distinct facts.id from facts, cards
+where facts.id = cards.factId
+and cards.id in (%s))
+order by factId, ordinal""" % ",".join([str(s) for s in cardIds]))
         txt = ""
         if self.includeTags:
             self.factTags = dict(self.deck.s.all(

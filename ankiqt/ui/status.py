@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -50,17 +50,17 @@ class StatusView(object):
         progressBarSize = (50, 12)
         # small spacer
         self.initialSpace = QWidget()
-        self.addWidget(self.initialSpace, 1, False)
+        self.addWidget(self.initialSpace, 1)
         # remaining & eta
         self.remText = QLabel()
-        self.addWidget(self.remText, 0, False)
-        self.addWidget(self.vertSep(), 0, False)
+        self.addWidget(self.remText, 0)
+        self.addWidget(self.vertSep(), 0)
         self.etaText = QLabel()
         self.etaText.setToolTip(_(
             "<h1>Estimated time</h1>"
             "This is how long it will take to complete the current mode "
             "at your current pace."))
-        self.addWidget(self.etaText, 0, False)
+        self.addWidget(self.etaText, 0)
         # progress
         self.addWidget(self.vertSep(), 0)
         self.progressBar = QProgressBar()
@@ -117,7 +117,7 @@ class StatusView(object):
 
     def redraw(self):
         p = QPalette()
-        stats = self.main.deck.getStats(self.main.currentCard)
+        stats = self.main.deck.getStats()
         remStr = _("Remaining: ")
         if self.state == "deckFinished":
             self.mode.setStyleSheet("background: #aaffaa;")
@@ -136,13 +136,18 @@ class StatusView(object):
                 self.mode.setStyleSheet("background: #ffffaa;")
             # remaining string, bolded depending on current card
             if not self.main.currentCard:
-                remStr += "%(failed)s + %(successive)s + %(new)s"
-            elif not self.main.currentCard.reps:
-                remStr += "%(failed)s + %(successive)s + <b>%(new)s</b>"
-            elif not self.main.currentCard.successive:
-                remStr += "<b>%(failed)s</b> + %(successive)s + %(new)s"
+                remStr += "%(failed1)s + %(successive1)s + %(new1)s"
             else:
-                remStr += "%(failed)s + <b>%(successive)s</b> + %(new)s"
+                q = self.main.deck.queueForCard(self.main.currentCard)
+                if q == "failed":
+                    remStr += "<u>%(failed1)s</u>&nbsp;&nbsp;%(successive1)s&nbsp;&nbsp;%(new1)s"
+                elif q == "rev":
+                    remStr += "%(failed1)s&nbsp;&nbsp;<u>%(successive1)s</u>&nbsp;&nbsp;%(new1)s"
+                else:
+                    remStr += "%(failed1)s&nbsp;&nbsp;%(successive1)s&nbsp;&nbsp;<u>%(new1)s</u>"
+        stats['failed1'] = '<font color=#990000>%s</font>' % stats['failed']
+        stats['successive1'] = '<font color=#000000>%s</font>' % stats['successive']
+        stats['new1'] = '<font color=#0000ff>%s</font>' % stats['new']
         self.remText.setText(remStr % stats)
         stats['suspended'] = self.main.deck.suspendedCardCount()
         stats['spaced'] = self.main.deck.spacedCardCount()
@@ -185,17 +190,17 @@ class StatusView(object):
         self.setProgressColour(p, stats['gMatureYes%'])
         self.retentionBar.setPalette(p)
         self.retentionBar.setValue(stats['gMatureYes%'])
-        stats['avgTime'] = anki.utils.fmtTimeSpan(stats['gAverageTime'])
-        stats['revTime'] = anki.utils.fmtTimeSpan(stats['gReviewTime'])
-        stats['disTime'] = anki.utils.fmtTimeSpan(stats['gDistractedTime'])
+        stats['avgTime'] = anki.utils.fmtTimeSpan(stats['gAverageTime'], point=2)
+        stats['revTime'] = anki.utils.fmtTimeSpan(stats['gReviewTime'], point=2)
+        stats['disTime'] = anki.utils.fmtTimeSpan(stats['gDistractedTime'], point=2)
         tip = _("<h1>Retention</h1>The " """
         percentage of material you've remembered over the life of<br>
         the deck. The bar shows your recall rate for cards answered<br>
-        correctly after a week or more. Cards less than a week old<br>
+        correctly after a month or more. Cards less than a month old<br>
         are not considered memorized yet."""
-                "<br><br><b>Correct and over a week: %(gMatureYes%)0.1f%% "
+                "<br><br><b>Correct and over a month: %(gMatureYes%)0.1f%% "
                 "(%(gMatureYes)d of %(gMatureTotal)d)</b><br>"
-                "Correct and under a week: %(gYoungYes%)0.1f%% "
+                "Correct and under a month: %(gYoungYes%)0.1f%% "
                 "(%(gYoungYes)d of %(gYoungTotal)d)<br>"
                 "Correct when seen the first time: %(gNewYes%)0.1f%% "
                 "(%(gNewYes)d of %(gNewTotal)d)<br>"
@@ -210,17 +215,17 @@ class StatusView(object):
         self.setProgressColour(p, stats['dYesTotal%'])
         self.progressBar.setPalette(p)
         self.progressBar.setValue(stats['dYesTotal%'])
-        stats['avgTime'] = anki.utils.fmtTimeSpan(stats['dAverageTime'])
-        stats['revTime'] = anki.utils.fmtTimeSpan(stats['dReviewTime'])
-        stats['disTime'] = anki.utils.fmtTimeSpan(stats['dDistractedTime'])
+        stats['avgTime'] = anki.utils.fmtTimeSpan(stats['dAverageTime'], point=2)
+        stats['revTime'] = anki.utils.fmtTimeSpan(stats['dReviewTime'], point=2)
+        stats['disTime'] = anki.utils.fmtTimeSpan(stats['dDistractedTime'], point=2)
         tip = _("<h1>Daily recall</h1>This " """
         bar shows the total percentage of correct answers<br>
         for today. It may be low if you've recently added lots of<br>
         difficult material. Don't worry too much about it, as the<br>
         retention bar on the right is more important."""
-                "<p/>Correct and over a week: %(dMatureYes%)0.1f%% "
+                "<p/>Correct and over a month: %(dMatureYes%)0.1f%% "
                 "(%(dMatureYes)d of %(dMatureTotal)d)<br>"
-                "Correct and under a week: %(dYoungYes%)0.1f%% "
+                "Correct and under a month: %(dYoungYes%)0.1f%% "
                 "(%(dYoungYes)d of %(dYoungTotal)d)<br>"
                 "Correct when seen the first time: %(dNewYes%)0.1f%% "
                 "(%(dNewYes)d of %(dNewTotal)d)<br>"

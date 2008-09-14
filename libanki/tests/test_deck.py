@@ -33,12 +33,14 @@ def test_attachNew():
     except OSError:
         pass
     deck = DeckStorage.Deck(path)
+    deck.close()
     del deck
     os.unlink(path)
 
 def test_attachOld():
     deck = DeckStorage.Deck(newPath)
     assert deck.modified == newModified
+    deck.close()
 
 def test_attachReadOnly():
     # non-writeable dir
@@ -50,6 +52,24 @@ def test_attachReadOnly():
                     lambda: DeckStorage.Deck(newPath))
     os.chmod(newPath, 0666)
     os.unlink(newPath)
+
+def test_saveAs():
+    path = "/tmp/test_saveAs"
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+    deck = DeckStorage.Deck()
+    deck.addModel(BasicModel())
+    # add a card
+    f = deck.newFact()
+    f['Front'] = u"foo"; f['Back'] = u"bar"
+    deck.addFact(f)
+    # save in new deck
+    newDeck = deck.saveAs(path)
+    assert newDeck.cardCount() == 1
+    newDeck.close()
+    deck.close()
 
 def test_factAddDelete():
     deck = DeckStorage.Deck()
@@ -108,12 +128,12 @@ def test_cardOrder():
 def test_modelAddDelete():
     deck = DeckStorage.Deck()
     deck.addModel(JapaneseModel())
+    deck.addModel(JapaneseModel())
     f = deck.newFact()
     f['Expression'] = u'1'
     f['Meaning'] = u'2'
     deck.addFact(f)
-    assert deck.totalCardCount() == 2
+    assert deck.cardCount() == 2
     deck.deleteModel(deck.currentModel)
-    assert deck.totalCardCount() == 0
+    assert deck.cardCount() == 0
     deck.s.refresh(deck)
-    assert deck.currentModel == None

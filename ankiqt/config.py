@@ -1,9 +1,11 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 # User configuration handling
 ##########################################################################
 
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 import os, sys, cPickle, locale, types
 
 # compatability
@@ -40,9 +42,16 @@ class Config(dict):
             'saveAfterAdding': True,
             'saveAfterAddingNum': 10,
             'saveOnClose': True,
-            'mainWindowGeometry': (100, 100, 550, 625),
+            'mainWindowSize': QSize(550, 625),
+            'mainWindowPos': QPoint(100, 100),
             'easeButtonStyle': 'standard',
             'easeButtonHeight': 'standard',
+            'suppressUpdate': False,
+            'suppressEstimates': False,
+            'suppressLastCardInterval': False,
+            'suppressLastCardContent': False,
+            'showTray': False,
+            'editCurrentOnly': True,
             'showSuspendedCards': True,
             }
         for (k,v) in fields.items():
@@ -123,7 +132,8 @@ class Config(dict):
         try:
             f = open(db)
             self.update(cPickle.load(f))
-        except IOError:
+        except (IOError, EOFError):
+            # config file was corrupted previously
             pass
         self.defaults()
         # fix old recent deck path list

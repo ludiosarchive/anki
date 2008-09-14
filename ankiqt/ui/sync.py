@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -103,12 +103,12 @@ class Sync(QThread):
             rsum = proxy.summary(self.lastSync)
 
             self.setStatus(_("Determining differences.."), 0)
-            oldCount = self.deck.totalCardCount()
+            oldCount = self.deck.cardCount()
             payload = client.genPayload(lsum, rsum)
             ladd = len(payload['added-cards'])
             radd = len(payload['missing-cards'])
             rdel = len(payload['deleted-cards'])
-            ldel = max(0, oldCount - self.deck.totalCardCount())
+            ldel = max(0, oldCount - self.deck.cardCount())
             stats = {"a": ladd, "b": ldel, "c": radd, "d": rdel}
 
             self.setStatus(_("Sending payload (local +%(a)d/-%(b)d, "

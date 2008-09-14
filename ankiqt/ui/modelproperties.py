@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -11,7 +11,7 @@ from ankiqt import ui
 
 class ModelProperties(QDialog):
 
-    def __init__(self, parent, model, main=None):
+    def __init__(self, parent, model, main=None, onFinish=None):
         QDialog.__init__(self, parent, Qt.Window)
         if not main:
             main = parent
@@ -19,7 +19,7 @@ class ModelProperties(QDialog):
         self.deck = main.deck
         self.origModTime = self.deck.modified
         self.m = model
-        self.alreadyClosed = False
+        self.onFinish = onFinish
         self.dialog = ankiqt.forms.modelproperties.Ui_ModelProperties()
         self.dialog.setupUi(self)
         self.setupFields()
@@ -33,25 +33,32 @@ class ModelProperties(QDialog):
         self.dialog.description.setText(self.m.description)
         self.dialog.tags.setText(self.m.tags)
         self.dialog.decorators.setText(self.m.features)
-        self.dialog.spacing.setText(str(self.m.spacing*100))
-        self.dialog.initialSpacing.setText(str(self.m.initialSpacing))
+        self.dialog.spacing.setText(str(self.m.spacing))
+        self.dialog.initialSpacing.setText(str(self.m.initialSpacing/60))
 
     # Fields
     ##########################################################################
 
     def setupFields(self):
+        self.fieldOrdinalUpdatedIds = []
         self.ignoreFieldUpdate = False
         self.currentField = None
         self.updateFields()
         self.readCurrentField()
         self.connect(self.dialog.fieldList, SIGNAL("currentRowChanged(int)"),
                      self.fieldRowChanged)
+        self.connect(self.dialog.tabWidget, SIGNAL("currentChanged(int)"),
+                     self.fieldRowChanged)
         self.connect(self.dialog.fieldAdd, SIGNAL("clicked()"),
                      self.addField)
         self.connect(self.dialog.fieldDelete, SIGNAL("clicked()"),
                      self.deleteField)
+        self.connect(self.dialog.fieldUp, SIGNAL("clicked()"),
+                     self.moveFieldUp)
+        self.connect(self.dialog.fieldDown, SIGNAL("clicked()"),
+                     self.moveFieldDown)
 
-    def updateFields(self):
+    def updateFields(self, row = None):
         oldRow = self.dialog.fieldList.currentRow()
         if oldRow == -1:
             oldRow = 0
@@ -66,7 +73,14 @@ class ModelProperties(QDialog):
             item = QListWidgetItem(label)
             self.dialog.fieldList.addItem(item)
             n += 1
-        self.dialog.fieldList.setCurrentRow(oldRow)
+        count = self.dialog.fieldList.count()
+        if row != None:
+            self.dialog.fieldList.setCurrentRow(row)
+        else:
+            while (count > 0 and oldRow > (count - 1)):
+                    oldRow -= 1
+            self.dialog.fieldList.setCurrentRow(oldRow)
+        self.enableFieldMoveButtons()
 
     def fieldRowChanged(self):
         if self.ignoreFieldUpdate:
@@ -77,6 +91,8 @@ class ModelProperties(QDialog):
     def readCurrentField(self):
         if not len(self.m.fieldModels):
             self.dialog.fieldEditBox.hide()
+            self.dialog.fieldUp.setEnabled(False)
+            self.dialog.fieldDown.setEnabled(False)
             return
         else:
             self.dialog.fieldEditBox.show()
@@ -88,6 +104,17 @@ class ModelProperties(QDialog):
         self.dialog.fieldRequired.setChecked(field.required)
         self.dialog.fieldFeatures.setText(field.features)
         self.dialog.numeric.setChecked(field.numeric)
+
+    def enableFieldMoveButtons(self):
+        row = self.dialog.fieldList.currentRow()
+        if row < 1:
+            self.dialog.fieldUp.setEnabled(False)
+        else:
+            self.dialog.fieldUp.setEnabled(True)
+        if row == -1 or row >= (self.dialog.fieldList.count() - 1):
+            self.dialog.fieldDown.setEnabled(False)
+        else:
+            self.dialog.fieldDown.setEnabled(True)
 
     def saveCurrentField(self):
         if not self.currentField:
@@ -145,11 +172,50 @@ class ModelProperties(QDialog):
         self.deck.deleteFieldModel(self.m, field)
         self.currentField = None
         self.updateFields()
+        # need to update q/a format
+        self.readCurrentCard()
+
+    def moveFieldUp(self):
+        row = self.dialog.fieldList.currentRow()
+        if row == -1:
+            return
+        if row == 0:
+            return
+        field = self.m.fieldModels[row]
+        tField = self.m.fieldModels[row - 1]
+        self.m.fieldModels.remove(field)
+        self.m.fieldModels.insert(row - 1, field)
+        if field.id not in self.fieldOrdinalUpdatedIds:
+            self.fieldOrdinalUpdatedIds.append(field.id)
+        if tField.id not in self.fieldOrdinalUpdatedIds:
+            self.fieldOrdinalUpdatedIds.append(tField.id)
+        self.ignoreFieldUpdate = True
+        self.updateFields(row - 1)
+        self.ignoreFieldUpdate = False
+
+    def moveFieldDown(self):
+        row = self.dialog.fieldList.currentRow()
+        if row == -1:
+            return
+        if row == len(self.m.fieldModels) - 1:
+            return
+        field = self.m.fieldModels[row]
+        tField = self.m.fieldModels[row + 1]
+        self.m.fieldModels.remove(field)
+        self.m.fieldModels.insert(row + 1, field)
+        if field.id not in self.fieldOrdinalUpdatedIds:
+            self.fieldOrdinalUpdatedIds.append(field.id)
+        if tField.id not in self.fieldOrdinalUpdatedIds:
+            self.fieldOrdinalUpdatedIds.append(tField.id)
+        self.ignoreFieldUpdate = True
+        self.updateFields(row + 1)
+        self.ignoreFieldUpdate = False
 
     # Cards
     ##########################################################################
 
     def setupCards(self):
+        self.cardOrdinalUpdatedIds = []
         self.ignoreCardUpdate = False
         self.currentCard = None
         self.updateCards()
@@ -162,8 +228,12 @@ class ModelProperties(QDialog):
                      self.deleteCard)
         self.connect(self.dialog.cardToggle, SIGNAL("clicked()"),
                      self.toggleCard)
+        self.connect(self.dialog.cardUp, SIGNAL("clicked()"),
+                     self.moveCardUp)
+        self.connect(self.dialog.cardDown, SIGNAL("clicked()"),
+                     self.moveCardDown)
 
-    def updateCards(self):
+    def updateCards(self, row = None):
         oldRow = self.dialog.cardList.currentRow()
         if oldRow == -1:
             oldRow = 0
@@ -183,7 +253,14 @@ class ModelProperties(QDialog):
             item = QListWidgetItem(label)
             self.dialog.cardList.addItem(item)
             n += 1
-        self.dialog.cardList.setCurrentRow(oldRow)
+        count = self.dialog.cardList.count()
+        if row != None:
+            self.dialog.cardList.setCurrentRow(row)
+        else:
+            while (count > 0 and oldRow > (count - 1)):
+                oldRow -= 1
+            self.dialog.cardList.setCurrentRow(oldRow)
+        self.enableCardMoveButtons()
 
     def cardRowChanged(self):
         if self.ignoreCardUpdate:
@@ -196,6 +273,8 @@ class ModelProperties(QDialog):
             self.dialog.cardEditBox.hide()
             self.dialog.cardToggle.setEnabled(False)
             self.dialog.cardDelete.setEnabled(False)
+            self.dialog.cardUp.setEnabled(False)
+            self.dialog.cardDown.setEnabled(False)
             return
         else:
             self.dialog.cardEditBox.show()
@@ -212,6 +291,17 @@ class ModelProperties(QDialog):
         else:
             self.dialog.questionInAnswer.setCheckState(Qt.Unchecked)
         self.updateToggleButtonText(card)
+
+    def enableCardMoveButtons(self):
+        row = self.dialog.cardList.currentRow()
+        if row < 1:
+            self.dialog.cardUp.setEnabled(False)
+        else:
+            self.dialog.cardUp.setEnabled(True)
+        if row == -1 or row >= (self.dialog.cardList.count() - 1):
+            self.dialog.cardDown.setEnabled(False)
+        else:
+            self.dialog.cardDown.setEnabled(True)
 
     def updateToggleButtonText(self, card):
         if card.active:
@@ -305,13 +395,47 @@ class ModelProperties(QDialog):
         self.m.setModified()
         self.deck.setModified()
 
+    def moveCardUp(self):
+        row = self.dialog.cardList.currentRow()
+        if row == -1:
+            return
+        if row == 0:
+            return
+        card = self.m.cardModels[row]
+        tCard = self.m.cardModels[row - 1]
+        self.m.cardModels.remove(card)
+        self.m.cardModels.insert(row - 1, card)
+        if card.id not in self.cardOrdinalUpdatedIds:
+            self.cardOrdinalUpdatedIds.append(card.id)
+        if tCard.id not in self.cardOrdinalUpdatedIds:
+            self.cardOrdinalUpdatedIds.append(tCard.id)
+        self.ignoreCardUpdate = True
+        self.updateCards(row - 1)
+        self.ignoreCardUpdate = False
+
+    def moveCardDown(self):
+        row = self.dialog.cardList.currentRow()
+        if row == -1:
+            return
+        if row == len(self.m.cardModels) - 1:
+            return
+        card = self.m.cardModels[row]
+        tCard = self.m.cardModels[row + 1]
+        self.m.cardModels.remove(card)
+        self.m.cardModels.insert(row + 1, card)
+        if card.id not in self.cardOrdinalUpdatedIds:
+            self.cardOrdinalUpdatedIds.append(card.id)
+        if tCard.id not in self.cardOrdinalUpdatedIds:
+            self.cardOrdinalUpdatedIds.append(tCard.id)
+        self.ignoreCardUpdate = True
+        self.updateCards(row + 1)
+        self.ignoreCardUpdate = False
+
     # Cleanup
     ##########################################################################
 
     def reject(self):
         "Save user settings on close."
-        if self.alreadyClosed:
-            return
         # update properties
         mname = unicode(self.dialog.name.text())
         if not mname:
@@ -325,15 +449,26 @@ class ModelProperties(QDialog):
                          unicode(self.dialog.decorators.text()))
         try:
             self.updateField(self.m, 'spacing',
-                             float(self.dialog.spacing.text())/100.0)
+                             float(self.dialog.spacing.text()))
             self.updateField(self.m, 'initialSpacing',
-                             int(self.dialog.initialSpacing.text()))
+                             float(self.dialog.initialSpacing.text())*60)
         except ValueError:
             pass
-        # before field, or it's overwritte
+        # before field, or it's overwritten
         self.saveCurrentCard()
         self.saveCurrentField()
-        self.alreadyClosed = True
-        self.close()
+        # rebuild ordinals if changed
+        if len(self.fieldOrdinalUpdatedIds) > 0:
+            self.deck.rebuildFieldOrdinals(self.m.id, self.fieldOrdinalUpdatedIds)
+            self.m.setModified()
+            self.deck.setModified()
+        if len(self.cardOrdinalUpdatedIds) > 0:
+            self.deck.rebuildCardOrdinals(self.cardOrdinalUpdatedIds)
+            self.m.setModified()
+            self.deck.setModified()
+        # if changed, reset deck
         if self.origModTime != self.deck.modified:
             self.parent.reset()
+        if self.onFinish:
+            self.onFinish()
+        QDialog.reject(self)
