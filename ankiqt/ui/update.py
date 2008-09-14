@@ -1,12 +1,15 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-import urllib, urllib2, os, sys, time
+import urllib, urllib2, os, sys, time, httplib
 import anki, anki.utils, anki.lang, anki.stats
 import ankiqt
+import simplejson
+import tempfile
 
+#baseUrl = "http://localhost:5000/update/"
 baseUrl = "http://anki.ichi2.net/update/"
 
 # when requesting latest version number, gather their version, deck size and
@@ -20,7 +23,7 @@ class LatestVersionFinder(QThread):
         self.config = main.config
         # calculate stats before we start a new thread
         if self.main.deck != None:
-            deckSize = self.main.deck.totalCardCount()
+            deckSize = self.main.deck.cardCount()
             stats = anki.stats.globalStats(self.main.deck.s)
             deckRecall = "%0.2f" % (
                 (stats.matureEase3 + stats.matureEase4) /
@@ -29,7 +32,7 @@ class LatestVersionFinder(QThread):
                       stats.matureEase2 +
                       stats.matureEase3 +
                       stats.matureEase4 + 0.000001) * 100)
-            pending = "(%d, %d)" % (self.main.deck.oldCardCount(),
+            pending = "(%d, %d)" % (self.main.deck.seenCardCount(),
                                     self.main.deck.newCardCount())
             ct = self.main.deck.created
             if ct:
@@ -62,16 +65,21 @@ class LatestVersionFinder(QThread):
         if not self.config['checkForUpdates']:
             return
         d = self.stats
+        d['proto'] = 2
         d = urllib.urlencode(d)
         try:
             f = urllib2.urlopen(baseUrl + "getQtVersion", d)
-        except urllib2.URLError:
+        except (urllib2.URLError, httplib.BadStatusLine):
             return
         resp = f.read()
         if not resp:
             return
-        if resp > ankiqt.appVersion:
+        resp = simplejson.loads(resp)
+        if resp['latestVersion'] > ankiqt.appVersion:
             self.emit(SIGNAL("newVerAvail"), resp)
+        diff = resp['currentTime'] - time.time()
+        if abs(diff) > 300:
+            self.emit(SIGNAL("clockIsOff"), diff)
 
 class Updater(QThread):
 
@@ -87,7 +95,9 @@ class Updater(QThread):
         self.emit(SIGNAL("statusChanged"), msg, timeout)
 
     def run(self):
-        filename = os.path.abspath(filename)
+        dir = tempfile.mkdtemp(prefix="anki-update")
+        os.chdir(dir)
+        filename = os.path.abspath(self.filename)
         try:
             f = urllib2.urlopen(baseUrl + "getQt")
         except urllib2.URLError:
@@ -107,40 +117,36 @@ class Updater(QThread):
                 break
             newfile.write(resp)
             perc += self.percChange
-            if perc > 100:
+            if perc > 99:
                 perc = 99
         newfile.close()
         self.setStatus(_("Updating.."))
-        os.system(filename)
+        os.chdir(os.path.dirname(filename))
+        os.system(os.path.basename(filename))
         self.setStatus(_("Update complete. Please restart Anki."))
         os.unlink(filename)
 
 def askAndUpdate(parent, version=None):
-    if not version:
-        baseStr = _("<h1>Update Anki manually</h1>"
-                    "Usually there is no need to do this. "
-                    "You will be notified automatically "
-                    "when a new version of Anki is available. ")
-    else:
-        baseStr = _("""<h1>Anki updated</h1>A new version of Anki is
-        available.<br/>""")
-    if sys.platform == "win32":
-        # automated installer available
-        ret = QMessageBox.question(
-            parent, "Anki", baseStr +
-            _("Would you like to download it now?"),
-            QMessageBox.Yes | QMessageBox.No)
-        if ret == QMessageBox.Yes:
+    version = version['latestVersion']
+    baseStr = (
+        _("""<h1>Anki updated</h1>Anki %s has been released.<br>""") %
+        version)
+    msg = QMessageBox(parent)
+    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    msg.setIcon(QMessageBox.Information)
+    msg.setText(baseStr + _("Would you like to download it now?"))
+    button = QPushButton(_("Ignore this update"))
+    msg.addButton(button, QMessageBox.RejectRole)
+    ret = msg.exec_()
+    if msg.clickedButton() == button:
+        # ignore this update
+        parent.config['suppressUpdate'] = version
+    elif ret == QMessageBox.Yes:
+        if sys.platform == "win32":
             parent.autoUpdate = Updater()
             parent.connect(parent.autoUpdate,
                            SIGNAL("statusChanged"),
                            parent.setStatus)
             parent.autoUpdate.start()
-    else:
-        # manual
-        ret = QMessageBox.question(
-            parent, "Anki", baseStr +
-            "Would you like to visit the website now?",
-            QMessageBox.Yes | QMessageBox.No)
-        if ret == QMessageBox.Yes:
+        else:
             QDesktopServices.openUrl(QUrl(ankiqt.appWebsite))

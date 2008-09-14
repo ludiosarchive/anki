@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Importing Anki v0.3 decks
@@ -16,6 +15,7 @@ from anki.cards import cardsTable
 from anki.stats import *
 from anki.features import FeatureManager
 from anki.importing import Importer
+from anki.utils import genID
 
 def transformClasses(m, c):
     "Map objects into dummy classes"
@@ -178,6 +178,7 @@ class Anki03Importer(Importer):
         for oldFact in oldDeck.facts:
             for field in oldFact.model.fields:
                 toAdd.append({'factId': oldFact.id,
+                              'id': genID(),
                               'fieldModelId': fieldModels[id(field)].id,
                               'ordinal': fieldModels[id(field)].ordinal,
                               'value': uni(oldFact.get(field.name, u""))})
@@ -244,7 +245,8 @@ class Anki03Importer(Importer):
         deck.lowPriority = u", ".join(oldDeck.sched.lowPriority)
         deck.suspended = u", ".join(oldDeck.sched.suspendedTags)
         # scheduler global stats
-        stats = Stats(STATS_LIFE)
+        stats = Stats()
+        stats.create(deck.s, 0, datetime.date.today())
         stats.day = datetime.date.fromtimestamp(oldDeck.created)
         stats.averageTime = oldDeck.sched.globalStats['averageTime']
         stats.reviewTime = oldDeck.sched.globalStats['totalTime']
@@ -272,13 +274,12 @@ class Anki03Importer(Importer):
                    oldDeck.sched.globalStats['young']['no'] +
                    oldDeck.sched.globalStats['old']['no'])
         stats.reps = yesCount + noCount
-        s.save(stats)
+        stats.toDB(deck.s)
         # ignore daily stats & history, they make no sense on new version
         s.flush()
         deck.updateAllPriorities()
         # save without updating mod time
         deck.modified = oldDeck.modified
         deck.lastLoaded = deck.modified
-        deck.s.flush()
         deck.s.commit()
         deck.save()

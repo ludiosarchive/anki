@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Anki (libanki)
@@ -54,6 +53,6 @@ try:
 except ImportError:
     pass
 
-version = "0.9.5"
+version = "0.9.7.8"
 
 from anki.deck import DeckStorage

@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import sys
 from PyQt4.QtGui import *
@@ -133,10 +133,7 @@ class HelpData(dict):
 
     def __init__(self):
         self['learn'] = _("""
-<h1>Learning new cards</h1>Anki is currently in 'learning mode'. Cards with a
-recall interval of less than a week will remain in this mode until you choose
-'Remembered easily', so you can repeat a question at 1-5 day intervals as many
-times as you want before moving on.
+<h1>Learning new cards</h1>Anki is currently in 'learning mode'.
 <p>
 As an alternative to using the mouse, spacebar and the number keys are
 available.
@@ -169,6 +166,8 @@ Please enter some things you want to learn.
 <tr><td><b>Ctrl+B</b></td><td> bold</td></tr>
 <tr><td><b>Ctrl+I</b></td><td> italic</td></tr>
 <tr><td><b>Ctrl+U</b></td><td> underline</td></tr>
+<tr><td><b>Alt+1</b></td><td> enable/disable card model 1</td></tr>
+<tr><td><b>Alt+2</b></td><td> enable/disable card model 2</td></tr>
 </table>
 
 <h2>Cards</h2>Depending on the language you selected, more than one card may

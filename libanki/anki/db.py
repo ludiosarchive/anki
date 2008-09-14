@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 DB tools
@@ -62,12 +61,10 @@ class SessionHelper(object):
 
     def statement(self, sql, **kwargs):
         "Execute a statement without returning any results. Flush first."
-        self.flush()
         self.execute(text(sql), kwargs)
 
     def statements(self, sql, data):
         "Execute a statement across data. Flush first."
-        self.flush()
         self.execute(text(sql), data)
 
     def __repr__(self):

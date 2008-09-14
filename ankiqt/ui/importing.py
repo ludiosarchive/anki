@@ -1,11 +1,11 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import os, copy, time
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki
-from anki.importing import *
+import anki.importing as importing
 from anki.errors import *
 import ankiqt.forms
 from ankiqt import ui
@@ -39,7 +39,7 @@ class ChangeMap(QDialog):
             self.field = self.model.fieldModels[row]
         else:
             self.field = None
-        self.close()
+        QDialog.accept(self)
 
 class ImportDialog(QDialog):
 
@@ -62,7 +62,7 @@ class ImportDialog(QDialog):
         self.importerChanged(0)
         self.connect(self.dialog.type, SIGNAL("activated(int)"),
                      self.importerChanged)
-        self.dialog.type.insertItems(0, QStringList(list(zip(*Importers)[0])))
+        self.dialog.type.insertItems(0, QStringList(list(zip(*importing.Importers)[0])))
         self.connect(self.dialog.file, SIGNAL("clicked()"),
                      self.changeFile)
         self.dialog.modelArea.setLayout(self.modelChooser)
@@ -71,7 +71,7 @@ class ImportDialog(QDialog):
         self.maybePreview()
 
     def importerChanged(self, idx):
-        self.importerFunc = zip(*Importers)[1][idx]
+        self.importerFunc = zip(*importing.Importers)[1][idx]
         if self.importerFunc.needMapper:
             self.modelChooser.show()
             self.dialog.tagDuplicates.show()
@@ -83,7 +83,7 @@ class ImportDialog(QDialog):
         self.maybePreview()
 
     def changeFile(self):
-        key = zip(*Importers)[0][self.dialog.type.currentIndex()]
+        key = zip(*importing.Importers)[0][self.dialog.type.currentIndex()]
         file = ui.utils.getFile(self, _("Import file"), "import", key)
         if not file:
             return
@@ -133,6 +133,7 @@ class ImportDialog(QDialog):
         self.dialog.status.setText(txt)
         self.file = None
         self.maybePreview()
+        self.parent.deck.updateAllPriorities()
         self.parent.rebuildQueue()
 
     def setupMappingFrame(self):
@@ -168,7 +169,7 @@ class ImportDialog(QDialog):
         # set up the mapping grid
         if self.mapwidget:
             self.mapbox.removeWidget(self.mapwidget)
-            self.mapwidget.setParent(None)
+            self.mapwidget.deleteLater()
         self.mapwidget = QWidget()
         self.mapbox.addWidget(self.mapwidget)
         self.grid = QGridLayout(self.mapwidget)

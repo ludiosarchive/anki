@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 History - keeping a record of all reviews
@@ -45,5 +44,27 @@ class CardHistoryEntry(object):
         self.ease = ease
         self.delay = delay
         self.thinkingTime = card.thinkingTime()
+
+    def writeSQL(self, s):
+        s.statement("""
+insert into reviewHistory
+(cardId, lastInterval, nextInterval, ease, delay, lastFactor,
+nextFactor, reps, thinkingTime, yesCount, noCount, time)
+values (
+:cardId, :lastInterval, :nextInterval, :ease, :delay,
+:lastFactor, :nextFactor, :reps, :thinkingTime, :yesCount, :noCount,
+:time)""",
+                    cardId=self.cardId,
+                    lastInterval=self.lastInterval,
+                    nextInterval=self.nextInterval,
+                    ease=self.ease,
+                    delay=self.delay,
+                    lastFactor=self.lastFactor,
+                    nextFactor=self.nextFactor,
+                    reps=self.reps,
+                    thinkingTime=self.thinkingTime,
+                    yesCount=self.yesCount,
+                    noCount=self.noCount,
+                    time=time.time())
 
 mapper(CardHistoryEntry, reviewHistoryTable)

@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -10,12 +10,6 @@ from ankiqt import ui
 from anki.utils import parseTags
 from anki.deck import NewCardOrder
 
-#         self.dialog.cardPos.clear()
-#         self.dialog.cardPos.insertItems(
-#             0, QStringList(Positions.values()))
-#         self.dialog.cardPos.setCurrentIndex(self.m.position)
-
-
 class DeckProperties(QDialog):
 
     def __init__(self, parent):
@@ -23,11 +17,15 @@ class DeckProperties(QDialog):
         self.parent = parent
         self.d = parent.deck
         self.origMod = self.d.modified
-        self.alreadyClosed = False
         self.dialog = ankiqt.forms.deckproperties.Ui_DeckProperties()
         self.dialog.setupUi(self)
         self.dialog.newCardOrder.insertItems(
             0, QStringList(NewCardOrder.values()))
+        self.dialog.newCardScheduling.insertItems(
+            0, QStringList([
+            "Spread new cards out through reviews",
+            "Show new cards after all other cards",
+            ]))
         self.readData()
         self.connect(self.dialog.modelsAdd, SIGNAL("clicked()"), self.onAdd)
         self.connect(self.dialog.modelsEdit, SIGNAL("clicked()"), self.onEdit)
@@ -59,22 +57,26 @@ class DeckProperties(QDialog):
         self.dialog.delay0.setText(unicode(self.d.delay0/60.0))
         self.dialog.delay1.setText(unicode(self.d.delay1/60.0))
         self.dialog.delay2.setText(unicode(self.d.delay2/60.0))
-        self.dialog.collapse.setText(unicode(self.d.collapseTime/60.0/60.0))
+        self.dialog.collapse.setCheckState(self.d.collapseTime
+                                           and Qt.Checked or Qt.Unchecked)
         self.dialog.failedCardMax.setText(unicode(self.d.failedCardMax))
+        self.dialog.newCardsPerDay.setText(unicode(self.d.newCardsPerDay))
         self.dialog.newCardOrder.setCurrentIndex(self.d.newCardOrder)
+        self.dialog.newCardScheduling.setCurrentIndex(self.d.newCardSpacing)
         # models
         self.updateModelsList()
 
     def updateModelsList(self):
         self.dialog.modelsList.clear()
-        self.models = {}
+        self.models = []
         for model in self.d.models:
             name = _("%(name)s [%(facts)d facts]") % {
                 'name': model.name,
                 'facts': self.d.modelUseCount(model),
                 }
-            self.models[name] = model
-        for (name, model) in sorted(self.models.items()):
+            self.models.append((name, model))
+        self.models.sort()
+        for (name, model) in self.models:
             item = QListWidgetItem(name)
             self.dialog.modelsList.addItem(item)
             if model == self.d.currentModel:
@@ -118,7 +120,7 @@ class DeckProperties(QDialog):
         row = self.dialog.modelsList.currentRow()
         if row == -1:
             return None
-        return sorted(self.models.items())[self.dialog.modelsList.currentRow()][1]
+        return self.models[self.dialog.modelsList.currentRow()][1]
 
     def updateField(self, obj, field, value):
         if getattr(obj, field) != value:
@@ -126,8 +128,6 @@ class DeckProperties(QDialog):
             self.d.setModified()
 
     def reject(self):
-        if self.alreadyClosed:
-            return
         # description
         self.updateField(self.d, 'description',
                          unicode(self.dialog.deckDescription.toPlainText()))
@@ -159,12 +159,14 @@ class DeckProperties(QDialog):
             self.updateField(self.d, 'delay1', v)
             v = float(self.dialog.delay2.text()) * 60.0
             self.updateField(self.d, 'delay2', v)
-            v = float(self.dialog.collapse.text()) * 60.0 * 60.0
-            self.updateField(self.d, 'collapseTime', v)
             v = int(self.dialog.failedCardMax.text())
             self.updateField(self.d, 'failedCardMax', v)
+            v = int(self.dialog.newCardsPerDay.text())
+            self.updateField(self.d, 'newCardsPerDay', v)
         except ValueError:
             pass
+        self.updateField(self.d, 'collapseTime',
+                         self.dialog.collapse.isChecked() and 1 or 0)
         self.updateField(self.d,
                          "highPriority",
                          unicode(self.dialog.highPriority.text()))
@@ -180,8 +182,9 @@ class DeckProperties(QDialog):
         # new card order
         self.updateField(self.d, "newCardOrder",
                          self.dialog.newCardOrder.currentIndex())
+        self.updateField(self.d, "newCardSpacing",
+                         self.dialog.newCardScheduling.currentIndex())
         # mark deck dirty and close
-        self.alreadyClosed = True
-        self.close()
         if self.origMod != self.d.modified:
             self.parent.reset()
+        QDialog.reject(self)

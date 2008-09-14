@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Miscellaneous utilities
@@ -27,7 +26,7 @@ def fmtTimeSpan(time, pad=0, point=0):
     "Return a string representing a time span (eg '2 days')."
     (type, point) = optimalPeriod(time, point)
     time = convertSecondsTo(time, type)
-    fmt = timeTable[type](_pluralCount(time))
+    fmt = timeTable[type](_pluralCount(round(time, point)))
     timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
     return ("%" + (fmt % timestr)) % time
 
@@ -118,6 +117,30 @@ def stripHTML(s):
     s = s.replace("&lt;", "<")
     s = s.replace("&gt;", ">")
     return s
+
+def tidyHTML(html):
+    "Remove cruft like body tags and return just the important part."
+    # contents of body - no head or html tags
+    html = re.sub(".*<body.*?>(.*)</body></html>",
+                  "\\1", html.replace("\n", u""))
+    # strip superfluous Qt formatting
+    html = re.sub("margin-top:\d+px; margin-bottom:\d+px; margin-left:\d+px; "
+                  "margin-right:\d+px; -qt-block-indent:0; "
+                  "text-indent:0px;", "", html)
+    html = re.sub("-qt-paragraph-type:empty;", "", html)
+    # collapse multiple spaces into one
+    html = re.sub("  +", " ", html)
+    # strip leading space in style statements, and remove if no contents
+    html = re.sub('style=" ', 'style="', html)
+    html = re.sub(' style=""', "", html)
+    # convert P tags into SPAN and/or BR
+    html = re.sub('<p( style=.+?)>(.*?)</p>', u'<span\\1>\\2</span><br>', html)
+    html = re.sub('<p>(.*?)</p>', u'\\1<br>', html)
+    html = re.sub('<br>$', u'', html)
+    # remove leading or trailing whitespace
+    html = re.sub('^ +', u'', html)
+    html = re.sub(' +$', u'', html)
+    return html
 
 def genID(static=[]):
     "Generate a random, unique 64bit ID."

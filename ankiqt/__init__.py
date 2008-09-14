@@ -1,17 +1,16 @@
-#!/usr/bin/env python
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import os, sys, optparse, re
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.5"
+appVersion="0.9.7.8"
 appWebsite="http://ichi2.net/anki/download/"
 appHelpSite="http://ichi2.net/anki/wiki/Documentation"
-appIssueTracker="http://repose.ath.cx/tracker/anki/"
-appForum="http://sourceforge.net/forum/forum.php?forum_id=701801"
+appIssueTracker="http://code.google.com/p/anki/issues/list"
+appForum="http://groups.google.com/group/ankisrs/topics"
 modDir=os.path.dirname(os.path.abspath(__file__))
 runningDir=os.path.split(modDir)[0]
 # py2exe
@@ -88,7 +87,8 @@ def run():
         pass
 
     import platform
-    if platform.processor() != "powerpc":
+    if (platform.processor() != "powerpc" and
+        platform.architecture()[0] == "32bit"):
         try:
             import psyco
             psyco.profile()

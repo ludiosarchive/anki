@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import copy, sys
 from PyQt4.QtGui import *
@@ -24,10 +24,10 @@ class Preferences(QDialog):
         self.supportedLanguages = [
             (_("English"), "en_US"),
             (_("Czech"), "cs_CZ"),
-            (_("Dutch (the Netherlands)"), "nl_NL"),
             (_("French"), "fr_FR"),
             (_("German"), "de_DE"),
             (_("Japanese"), "ja_JP"),
+            (_("Korean"), "ko_KR"),
             (_("Spanish"), "es_ES"),
             ]
         self.setupLang()
@@ -161,6 +161,11 @@ class Preferences(QDialog):
             self.config['easeButtonStyle'] != 'standard')
         self.dialog.tallButtons.setChecked(
             self.config['easeButtonHeight'] != 'standard')
+        self.dialog.suppressEstimates.setChecked(self.config['suppressEstimates'])
+        self.dialog.suppressLastCardInterval.setChecked(self.config['suppressLastCardInterval'])
+        self.dialog.suppressLastCardContent.setChecked(self.config['suppressLastCardContent'])
+        self.dialog.showTray.setChecked(self.config['showTray'])
+        self.dialog.editCurrentOnly.setChecked(self.config['editCurrentOnly'])
 
     def updateAdvanced(self):
         self.config['showToolbar'] = self.dialog.showToolbar.isChecked()
@@ -172,6 +177,11 @@ class Preferences(QDialog):
             self.config['easeButtonHeight'] = 'tall'
         else:
             self.config['easeButtonHeight'] = 'standard'
+        self.config['suppressLastCardInterval'] = self.dialog.suppressLastCardInterval.isChecked()
+        self.config['suppressLastCardContent'] = self.dialog.suppressLastCardContent.isChecked()
+        self.config['showTray'] = self.dialog.showTray.isChecked()
+        self.config['suppressEstimates'] = self.dialog.suppressEstimates.isChecked()
+        self.config['editCurrentOnly'] = self.dialog.editCurrentOnly.isChecked()
 
     def codeToIndex(self, code):
         n = 0

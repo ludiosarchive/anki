@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -100,18 +100,25 @@ class AddCards(QDialog):
         self.maybeSave()
 
     def closeEvent(self, evt):
+        if self.onClose():
+            evt.accept()
+        else:
+            evt.ignore()
+
+    def reject(self):
+        if self.onClose():
+            QDialog.reject(self)
+
+    def onClose(self):
         if (self.editor.fieldsAreBlank() or
             ui.utils.askUser(_("Close and lose current input?"),
                             self)):
             ui.dialogs.close("AddCards")
             self.parent.deck.s.flush()
             self.parent.moveToState("auto")
-            evt.accept()
+            return True
         else:
-            evt.ignore()
-
-    def reject(self):
-        self.close()
+            return False
 
     def maybeSave(self):
         "Increment added count and maybe save deck."

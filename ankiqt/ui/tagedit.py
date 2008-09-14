@@ -1,5 +1,5 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -26,7 +26,11 @@ class TagEdit(QLineEdit):
         if evt.key() in (Qt.Key_Enter,
                          Qt.Key_Return):
             evt.accept()
-            self.setText(self.completer.currentCompletion())
+            cur = self.completer.currentCompletion()
+            if cur and not str(cur).strip().endswith(","):
+                self.setText(self.completer.currentCompletion())
+            else:
+                self.completer.popup().close()
         else:
             QLineEdit.keyPressEvent(self, evt)
 
@@ -38,7 +42,9 @@ class TagCompleter(QCompleter):
 
     def splitPath(self, str):
         self.tags = parseTags(unicode(str))
-        return QStringList(self.tags[-1])
+        if self.tags:
+            return QStringList(self.tags[-1])
+        return QStringList("")
 
     def pathFromIndex(self, idx):
         ret = QCompleter.pathFromIndex(self, idx)

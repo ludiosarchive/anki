@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# License: GNU GPL, version 2 or later; http://www.gnu.org/copyleft/gpl.html
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 """\
 Importing Anki 0.9+ decks
@@ -31,13 +30,17 @@ class Anki10Importer(Importer):
         self.deck.s.flush()
         # set up a custom change list and sync
         lsum = client.summary(0)
+        self._clearDeleted(lsum)
         rsum = server.summary(0)
+        self._clearDeleted(rsum)
         payload = client.genPayload(lsum, rsum)
         # no need to add anything to src
         payload['added-models'] = []
         payload['added-cards'] = []
         payload['added-facts'] = {'facts': [], 'fields': []}
-        assert not payload['deleted-facts']
+        assert payload['deleted-facts'] == []
+        assert payload['deleted-cards'] == []
+        assert payload['deleted-models'] == []
         res = server.applyPayload(payload)
         client.applyPayloadReply(res)
         # add tags
@@ -46,3 +49,8 @@ class Anki10Importer(Importer):
         self.total = len(res['added-facts']['facts'])
         src.s.rollback()
         self.deck.flushMod()
+
+    def _clearDeleted(self, sum):
+        sum['delcards'] = []
+        sum['delfacts'] = []
+        sum['delmodels'] = []

@@ -1,3 +1,0 @@
-?package(anki):needs="X11" section="Applications/Education"\
-  title="Anki" command="/usr/bin/anki"\
-  icon="/usr/share/pixmaps/anki.xpm"
