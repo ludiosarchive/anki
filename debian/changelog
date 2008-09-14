@@ -1,3 +1,14 @@
+anki (0.9.7.8-1) unstable; urgency=low
+
+  * New upstream release (closes: #496475)
+  * Deck properties scheduling settings bug fixed with new upstream version
+    (closes: #497093)
+  * Add script for repackaging source
+  * debian/rules: remove commands to move upstream debian/ files out of the
+    way, upstream releases without debian/ now
+
+ -- Andreas Bombe <aeb@debian.org>  Sun, 14 Sep 2008 04:08:20 +0200
+
 anki (0.9.6-1) unstable; urgency=low
 
   * New upstream release
