@@ -6,7 +6,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.7.9"
+appVersion="0.9.8"
 appWebsite="http://ichi2.net/anki/download/"
 appHelpSite="http://ichi2.net/anki/wiki/Documentation"
 appIssueTracker="http://code.google.com/p/anki/issues/list"

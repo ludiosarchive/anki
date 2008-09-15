@@ -1,5 +1,15 @@
-changeset:   767:bf971ef03af9
+changeset:   769:a69f2aeae74b
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 05:11:47 2008 +0900
+summary:     bump version number
+
+changeset:   768:90440fcb1702
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 05:11:23 2008 +0900
+summary:     catch img uses, not just audio uses
+
+changeset:   767:bf971ef03af9
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Sep 15 02:15:13 2008 +0900
 summary:     fix for previous dailyStats fix

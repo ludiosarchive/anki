@@ -90,7 +90,8 @@ from cards, facts where cards.factId = facts.id and facts.id in (%s)"""
 
 def optimizeMediaDir(deck, deleteReferences=False):
     "Delete references to missing files, delete unused files."
-    regexp = "\[sound:([^]]+)\]"
+    regexp1 = "\[sound:([^]]+)\]"
+    regexp2 = "<img src=[\"']?([^\"'>]+)[\"']? ?/?>"
     localFiles = {}
     missingFiles = 0
     unusedFiles = 0
@@ -108,7 +109,13 @@ def optimizeMediaDir(deck, deleteReferences=False):
     # now look through all fields, and update references to files
     for (id, fid, val) in deck.s.all(
         "select id, factId, value from fields"):
-        m = re.search(regexp, val)
+        m = re.search(regexp1, val)
+        if m:
+            type = 1
+        else:
+            m = re.search(regexp2, val)
+            if m:
+                type = 2
         if m:
             oldFile = m.group(1)
             oldPath = os.path.join(deck.mediaDir(), oldFile)
@@ -116,7 +123,10 @@ def optimizeMediaDir(deck, deleteReferences=False):
             if os.path.exists(oldPath):
                 newBase = copyToMedia(deck, oldPath)
                 if newBase != oldFile:
-                    newVal = re.sub(regexp, "[sound:%s]" % newBase, val)
+                    if type == 1:
+                        newVal = re.sub(regexp1, "[sound:%s]" % newBase, val)
+                    elif type == 2:
+                        newVal = re.sub(regexp2, "<img src=\"%s\">" % newBase, val)
                     modifiedFacts[fid] = 1
                     os.unlink(oldPath)
                 seenFiles[newBase] = 1
@@ -124,7 +134,10 @@ def optimizeMediaDir(deck, deleteReferences=False):
                 missingFiles += 1
                 modifiedFacts[fid] = 1
                 if deleteReferences:
-                    newVal = re.sub(regexp, "", val)
+                    if type == 1:
+                        newVal = re.sub(regexp1, "", val)
+                    elif type == 2:
+                        newVal = re.sub(regexp2, "", val)
             if newVal is not None:
                 updateFields.append({'id': id, 'val': newVal})
     # update modified fields, and optionally tag
@@ -133,7 +146,7 @@ def optimizeMediaDir(deck, deleteReferences=False):
         if not deleteReferences:
             for id in modifiedFacts.keys():
                 fact = deck.s.query(Fact).get(id)
-                fact.tags = addTags(fact.tags, "Audio Missing")
+                fact.tags = addTags(fact.tags, "Media Missing")
                 fact.setModified()
         deck.flushMod()
     # look through the media dir for any unused files, and delete

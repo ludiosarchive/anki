@@ -1,5 +1,10 @@
-changeset:   795:5a0aef4d8b4a
+changeset:   796:a6110bb3d2ad
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 05:12:03 2008 +0900
+summary:     bump version number
+
+changeset:   795:5a0aef4d8b4a
 user:        Damien Elmes <hg@repose.cx>
 date:        Mon Sep 15 02:12:16 2008 +0900
 summary:     prefs dialog tweak
