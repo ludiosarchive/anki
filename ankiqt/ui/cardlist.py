@@ -425,6 +425,7 @@ class EditDeck(QDialog):
         self.connect(self.dialog.actionDelete_Fact, SIGNAL("triggered()"), self.deleteFacts)
         self.connect(self.dialog.actionResetCardProgress, SIGNAL("triggered()"), self.resetCardProgress)
         self.connect(self.dialog.actionResetFactProgress, SIGNAL("triggered()"), self.resetFactProgress)
+        self.parent.runHook('editor.setupButtons', self)
 
     def factsMenu(self):
         menu = QMenu(self)
@@ -435,6 +436,7 @@ class EditDeck(QDialog):
         menu.addSeparator()
         menu.addAction(self.dialog.actionResetFactProgress)
         menu.addAction(self.dialog.actionDelete_Fact)
+        self.parent.runHook('editor.factsMenu', self, menu)
         menu.exec_(self.dialog.factsButton.mapToGlobal(QPoint(0,0)))
 
     def cardsMenu(self):
@@ -444,6 +446,7 @@ class EditDeck(QDialog):
         menu.addSeparator()
         menu.addAction(self.dialog.actionResetCardProgress)
         menu.addAction(self.dialog.action_Delete_card)
+        self.parent.runHook('editor.cardsMenu', self, menu)
         menu.exec_(self.dialog.cardsButton.mapToGlobal(QPoint(0,0)))
 
     def deleteCards(self):

@@ -15,6 +15,16 @@ transaction.
 """
 __docformat__ = 'restructuredtext'
 
+
+try:
+    from pysqlite2 import dbapi2 as sqlite
+except ImportError:
+    try:
+        from sqlite3 import dbapi2 as sqlite
+    except:
+        raise "Please install pysqlite2 or python2.5"
+sqlite.enable_shared_cache(True)
+
 from sqlalchemy import (Table, Integer, Float, Column, MetaData,
                         ForeignKey, Boolean, String, Date, UniqueConstraint)
 from sqlalchemy import create_engine

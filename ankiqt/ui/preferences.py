@@ -165,6 +165,7 @@ class Preferences(QDialog):
         self.dialog.suppressLastCardInterval.setChecked(self.config['suppressLastCardInterval'])
         self.dialog.suppressLastCardContent.setChecked(self.config['suppressLastCardContent'])
         self.dialog.showTray.setChecked(self.config['showTray'])
+        self.dialog.showTimer.setChecked(self.config['showTimer'])
         self.dialog.editCurrentOnly.setChecked(self.config['editCurrentOnly'])
 
     def updateAdvanced(self):
@@ -180,6 +181,7 @@ class Preferences(QDialog):
         self.config['suppressLastCardInterval'] = self.dialog.suppressLastCardInterval.isChecked()
         self.config['suppressLastCardContent'] = self.dialog.suppressLastCardContent.isChecked()
         self.config['showTray'] = self.dialog.showTray.isChecked()
+        self.config['showTimer'] = self.dialog.showTimer.isChecked()
         self.config['suppressEstimates'] = self.dialog.suppressEstimates.isChecked()
         self.config['editCurrentOnly'] = self.dialog.editCurrentOnly.isChecked()
 

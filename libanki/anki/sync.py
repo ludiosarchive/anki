@@ -172,12 +172,12 @@ class SyncTools(object):
     ##########################################################################
 
     def sync(self):
-        "Sync two decks locally."
+        "Sync two decks locally. Reimplement this for finer control."
         self.localTime = self.modified()
         self.remoteTime = self.server.modified()
         l = self._lastSync(); r = self.server._lastSync()
         if l != r:
-            self.lastSync = 0
+            self.lastSync = min(l, r) - 600
         else:
             self.lastSync = l
         lsum = self.summary(self.lastSync)
@@ -237,9 +237,11 @@ class SyncTools(object):
             self.updateStats(reply['stats'])
             self.updateHistory(reply['history'])
         self.postSyncRefresh()
-        # the client needs to rebuild the priorities
-        # (the server does so when the deck is loaded to apply noweb/nophone)
-        self.deck.updateAllPriorities()
+        # the client needs to rebuild the priorities of cards received from
+        # the server, since the server may use extra tags like noweb/nophone
+        cardIds = [x[0] for x in reply['added-cards']]
+        where = "and cards.id in (%s)" % ",".join([str(id) for id in cardIds])
+        self.deck.updateAllPriorities(where=where)
 
     def postSyncRefresh(self):
         "Flush changes to DB, and reload object associations."

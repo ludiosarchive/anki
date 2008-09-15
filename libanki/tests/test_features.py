@@ -22,7 +22,7 @@ def test_chinese():
     f = deck.newFact()
     f['Expression'] = u'食べる'
     f.onKeyPress(f.fields[0], f.fields[0].value)
-    assert f['Reading'] == u"{SHI2,SI4,YI4}"
+    assert f['Reading'] == u"{shí,sì,yì}"
     deck = DeckStorage.Deck()
     deck.addModel(CantoneseModel())
     f = deck.newFact()

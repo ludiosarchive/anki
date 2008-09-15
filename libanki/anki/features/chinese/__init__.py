@@ -31,10 +31,10 @@ class UnihanController(object):
         s = SessionHelper(self.session())
         for c in text:
             n = ord(c)
-            ret = s.column0("select %s from unihan where id = :id"
-                            % self.type, id=n)
+            ret = s.scalar("select %s from unihan where id = :id"
+                           % self.type, id=n)
             if ret:
-                result.append(self.formatMatch(ret[0]))
+                result.append(self.formatMatch(ret))
         return u" ".join(result)
 
     def formatMatch(self, match):

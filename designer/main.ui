@@ -26,9 +26,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>55</y>
+     <y>57</y>
      <width>555</width>
-     <height>216</height>
+     <height>212</height>
     </rect>
    </property>
    <property name="sizePolicy" >
@@ -358,7 +358,7 @@
      <x>0</x>
      <y>0</y>
      <width>555</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp" >
@@ -397,6 +397,10 @@
      <property name="title" >
       <string>Open &amp;Recent</string>
      </property>
+     <property name="icon" >
+      <iconset resource="../icons.qrc" >
+       <normaloff>:/icons/document-open-recent.png</normaloff>:/icons/document-open-recent.png</iconset>
+     </property>
     </widget>
     <addaction name="actionNew" />
     <addaction name="actionOpen" />
@@ -420,6 +424,10 @@
     <widget class="QMenu" name="menu_Lookup" >
      <property name="title" >
       <string>&amp;Lookup</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="../icons.qrc" >
+       <normaloff>:/icons/edit-find.png</normaloff>:/icons/edit-find.png</iconset>
      </property>
      <addaction name="actionLookup_expr" />
      <addaction name="actionLookup_mean" />
@@ -448,6 +456,8 @@
     </property>
     <addaction name="actionMergeModels" />
     <addaction name="separator" />
+    <addaction name="actionCheckMediaDatabase" />
+    <addaction name="separator" />
     <addaction name="actionCheckDatabaseIntegrity" />
     <addaction name="actionOptimizeDatabase" />
    </widget>
@@ -461,9 +471,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>271</y>
+     <y>269</y>
      <width>555</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
@@ -474,7 +484,7 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>21</y>
+     <y>23</y>
      <width>555</width>
      <height>34</height>
     </rect>
@@ -828,6 +838,9 @@
    <property name="text" >
     <string>Repeat las&amp;t audio</string>
    </property>
+   <property name="shortcut" >
+    <string>Ctrl+R</string>
+   </property>
   </action>
   <action name="actionUndoAnswer" >
    <property name="enabled" >
@@ -878,8 +891,21 @@
    </property>
   </action>
   <action name="actionMergeModels" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/khtml_kget.png</normaloff>:/icons/khtml_kget.png</iconset>
+   </property>
    <property name="text" >
     <string>Merge Models..</string>
+   </property>
+  </action>
+  <action name="actionCheckMediaDatabase" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/text-speak.png</normaloff>:/icons/text-speak.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Check Media Database..</string>
    </property>
   </action>
  </widget>

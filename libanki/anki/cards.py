@@ -74,6 +74,8 @@ class Card(object):
         # new cards start as new & due
         self.type = 2
         self.isDue = True
+        self.timerStarted = False
+        self.timerStopped = False
         if fact:
             self.fact = fact
         if cardModel:
@@ -91,15 +93,14 @@ class Card(object):
         self.modified = time.time()
 
     def startTimer(self):
-        self.lastShown = time.time()
-        self._thinkingTime = None
+        self.timerStarted = time.time()
+
+    def stopTimer(self):
+        self.timerStopped = time.time()
 
     def thinkingTime(self):
-        "End the timer if it's running, and return the last delay."
-        if self._thinkingTime:
-            return self._thinkingTime
-        self._thinkingTime = time.time() - self.lastShown
-        return self._thinkingTime
+        "Return the time this card's been shown."
+        return (self.timerStopped or time.time()) - self.timerStarted
 
     def css(self):
         return self.cardModel.css() + self.fact.css()
@@ -184,7 +185,6 @@ class Card(object):
          self.isDue,
          self.type,
          self.combinedDue) = r
-        self._thinkingTime = time.time()
 
     def toDB(self, s):
         "Write card to DB. Note that isDue assumes card is not spaced."

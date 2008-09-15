@@ -1,5 +1,65 @@
-changeset:   783:f2e1209c1f2e
+changeset:   795:5a0aef4d8b4a
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 02:12:16 2008 +0900
+summary:     prefs dialog tweak
+
+changeset:   794:164d195a23ea
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 01:58:31 2008 +0900
+summary:     fix timer bug, improve colours
+
+changeset:   793:39d95e3e2636
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 00:59:56 2008 +0900
+summary:     bump version
+
+changeset:   792:b4e396f318ee
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 23:52:14 2008 +0900
+summary:     add new icons, revert add cards and font buttons
+
+changeset:   791:487b12bb790a
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 22:37:56 2008 +0900
+summary:     add shortcuts to tooltips in fact editor
+
+changeset:   790:0a4bccd3c008
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 22:22:16 2008 +0900
+summary:     update translations
+
+changeset:   789:76a01432b26c
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 22:13:42 2008 +0900
+summary:     add shortcut key for repeating audio
+
+changeset:   788:9781fee21d27
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 22:04:53 2008 +0900
+summary:     implement timer
+
+changeset:   787:9fe8ad6c18bc
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 15:20:15 2008 +0900
+summary:     add media dir optimization support
+
+changeset:   786:d222970fd673
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Sep 12 22:30:34 2008 +0900
+summary:     merge daily & global stats, remove mode indicator, remove distracted time
+
+changeset:   785:617724d51e53
+user:        Damien Elmes <hg@repose.cx>
+date:        Fri Sep 12 22:28:02 2008 +0900
+summary:     add hooks to editor
+
+changeset:   784:006188aeaf53
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 10 00:06:10 2008 +0900
+summary:     update 'no problems found' message, don't warn about failed fixes
+
+changeset:   783:f2e1209c1f2e
 user:        Damien Elmes <hg@repose.cx>
 date:        Sun Sep 07 01:04:26 2008 +0900
 summary:     add debian diff

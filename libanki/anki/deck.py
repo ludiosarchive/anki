@@ -8,15 +8,6 @@ The Deck
 """
 __docformat__ = 'restructuredtext'
 
-try:
-    from pysqlite2 import dbapi2 as sqlite
-except ImportError:
-    try:
-        from sqlite3 import dbapi2 as sqlite
-    except:
-        raise "Please install pysqlite2 or python2.5"
-sqlite.enable_shared_cache(True)
-
 import tempfile, time, os, random, sys, re, stat, shutil, types
 from heapq import heapify, heappush, heappop
 
@@ -30,7 +21,8 @@ from anki.models import Model, CardModel
 from anki.stats import dailyStats, globalStats
 
 # ensure all the metadata in other files is loaded before proceeding
-import anki.models, anki.facts, anki.cards, anki.stats, anki.history
+import anki.models, anki.facts, anki.cards, anki.stats
+import anki.history, anki.media
 
 PRIORITY_HIGH = 4
 PRIORITY_MED = 3
@@ -58,7 +50,7 @@ decksTable = Table(
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
     Column('description', UnicodeText, nullable=False, default=u""),
-    Column('version', Integer, nullable=False, default=7),
+    Column('version', Integer, nullable=False, default=8),
     Column('currentModelId', Integer, ForeignKey("models.id")),
     # syncing
     Column('syncName', UnicodeText),
@@ -118,15 +110,18 @@ class Deck(object):
     def modifiedSinceSave(self):
         return self.modified > self.lastLoaded
 
-    # Asking & answering
+    # Getting the next card
     ##########################################################################
 
     def getCard(self, orm=True):
+        "Return the next card object, or None."
         id = self.getCardId()
         if id:
             return self.cardFromId(id, orm)
 
     def getCards(self, limit=1, orm=True):
+        """Return LIMIT number of new card objects.
+Caller must ensure multiple cards of the same fact are not shown."""
         ids = self.getCardIds(limit)
         return [self.cardFromId(x, orm) for x in ids]
 
@@ -147,7 +142,7 @@ class Deck(object):
         # distribute new cards?
         if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
             if self._timeForNewCard():
-                id = self._getNewCard()
+                id = self._maybeGetNewCard()
                 if id:
                     return id
         # card due for review?
@@ -156,38 +151,14 @@ class Deck(object):
             return id
         # new card last?
         if self.newCardSpacing == NEW_CARDS_LAST:
-            id = self._getNewCard()
+            id = self._maybeGetNewCard()
             if id:
                 return id
         if self.collapseTime:
-            # final review
+            # display failed cards early
             id = self.s.scalar(
                 "select id from failedCardsSoon limit 1")
             return id
-
-    def _timeForNewCard(self):
-        # no cards for review, so force new
-        if not self.reviewCount:
-            return True
-        # force old if there are very high priority cards
-        if self.s.scalar(
-            "select 1 from cards where type = 1 and isDue = 1 "
-            "and priority = 4 limit 1"):
-            return False
-        if self.newCardModulus:
-            return self._dailyStats.reps % self.newCardModulus == 0
-        else:
-            return False
-
-    def _getNewCard(self):
-        if self.newCardsPerDay - self.newCardsToday() <= 0:
-            return
-        if self.newCardOrder == 0:
-            return self.s.scalar(
-                "select id from acqCardsRandom limit 1")
-        else:
-            return self.s.scalar(
-                "select id from acqCardsOrdered limit 1")
 
     def getCardIds(self, limit):
         """Return limit number of cards.
@@ -205,16 +176,53 @@ Caller is responsible for ensuring cards are not spaced."""
                 break
         return arr
 
+    # Get card: helper functions
+    ##########################################################################
+
+    def _timeForNewCard(self):
+        "True if it's time to display a new card when distributing."
+        # no cards for review, so force new
+        if not self.reviewCount:
+            return True
+        # force old if there are very high priority cards
+        if self.s.scalar(
+            "select 1 from cards where type = 1 and isDue = 1 "
+            "and priority = 4 limit 1"):
+            return False
+        if self.newCardModulus:
+            return self._dailyStats.reps % self.newCardModulus == 0
+        else:
+            return False
+
+    def _maybeGetNewCard(self):
+        "Get a new card, provided daily new card limit not exceeded."
+        if not self.newCountLeftToday:
+            return
+        return self._getNewCard()
+
+    def _getNewCard(self):
+        "Return the next new card id, if exists."
+        if self.newCardOrder == 0:
+            return self.s.scalar(
+                "select id from acqCardsRandom limit 1")
+        else:
+            return self.s.scalar(
+                "select id from acqCardsOrdered limit 1")
+
     def cardFromId(self, id, orm=False):
+        "Given a card ID, return a card, and start the card timer."
         if orm:
             card = self.s.query(anki.cards.Card).get(id)
-            card.genFuzz()
-            card.startTimer()
+            card.timerStopped = False
         else:
             card = anki.cards.Card()
             card.fromDB(self.s, id)
-            card.genFuzz()
+        card.genFuzz()
+        card.startTimer()
         return card
+
+    # Answering a card
+    ##########################################################################
 
     def answerCard(self, card, ease):
         now = time.time()
@@ -271,7 +279,7 @@ where id != :id and factId = :factId""",
     ##########################################################################
 
     def rebuildTypes(self, where=""):
-        "Rebuild the type cache. Done on upgrade or priority change."
+        "Rebuild the type cache. Only necessary on upgrade."
         self.s.statement("""
 update cards
 set type = (case
@@ -306,16 +314,18 @@ where isDue = 1""")
         self._countsDirty = True
         # determine new card distribution
         if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
-            remainingNew = self.newCardsPerDay - self.newCardsToday()
-            newCount = min(self.newCount, remainingNew)
-            if newCount:
-                self.newCardModulus = (newCount + self.reviewCount) / newCount
-                # if there are cards to review, ensure that modulo doesn't go
-                # under 2
+            if self.newCountLeftToday:
+                self.newCardModulus = ((self.newCountLeftToday + self.reviewCount)
+                                       / self.newCountLeftToday)
+                # if there are cards to review, ensure modulo >= 2
                 if self.reviewCount:
                     self.newCardModulus = max(2, self.newCardModulus)
             else:
                 self.newCardModulus = 0
+        # determine starting factor for new cards
+        self.averageFactor = (self.s.scalar(
+            "select avg(factor) from cards where reps > 0")
+                               or Deck.initialFactor)
 
     # Interval management
     ##########################################################################
@@ -369,6 +379,9 @@ where isDue = 1""")
     def updateFactor(self, card, ease):
         "Update CARD's factor based on EASE."
         card.lastFactor = card.factor
+        if not card.reps:
+            # card is new, inherit beginning factor
+            card.factor = self.averageFactor
         if self.cardIsBeingLearnt(card) and ease in [0, 1, 2]:
             # only penalize failures after success when starting
             if card.successive and ease != 2:
@@ -491,11 +504,14 @@ suspended</a> cards.''') % {
     # Priorities
     ##########################################################################
 
-    def updateAllPriorities(self, extraExcludes=[]):
+    def updateAllPriorities(self, extraExcludes=[], where=""):
         "Update all card priorities if changed."
         now = time.time()
+        t = time.time()
         newPriorities = []
-        tagsList = self.tagsList()
+        tagsList = self.tagsList(where)
+        if not tagsList:
+            return
         tagCache = self.genTagCache()
         for e in extraExcludes:
             tagCache['suspended'][e] = 1
@@ -507,7 +523,6 @@ suspended</a> cards.''') % {
         self.s.execute(text(
             "update cards set priority = :pri where cards.id = :id"),
             newPriorities)
-        self.rebuildTypes()
         self.s.execute("update cards set isDue = 0 where priority = 0")
 
     def updatePriority(self, card):
@@ -521,7 +536,6 @@ suspended</a> cards.''') % {
             if p == 0:
                 card.isDue = 0
             self.s.flush()
-            self.rebuildTypes(" where id = %d" % card.id)
 
     def priorityFromTagString(self, tagString, tagCache):
         tags = parseTags(tagString.lower())
@@ -596,6 +610,10 @@ select count(id) from failedCardsNow""")
                 "select count(isDue) from cards where isDue = 1 and type = 1")
             self._newCount = self.s.scalar(
                 "select count(isDue) from cards where isDue = 1 and type = 2")
+            if getattr(self, '_dailyStats', None):
+                self._newCountLeftToday = max(min(
+                    self._newCount, self.newCardsPerDay -
+                    self.newCardsToday()), 0)
             self._countsDirty = False
 
     def _getFailedCount(self):
@@ -617,6 +635,11 @@ select count(id) from failedCardsNow""")
         self.updateCounts()
         return self._newCount
     newCount = property(_getNewCount)
+
+    def _getNewCountLeftToday(self):
+        self.updateCounts()
+        return self._newCountLeftToday
+    newCountLeftToday = property(_getNewCountLeftToday)
 
     def spacedCardCount(self):
         return self.s.scalar("""
@@ -670,14 +693,17 @@ priority != 0 and due < :now and spaceUntil > :now""",
         "Return some commonly needed stats."
         stats = anki.stats.getStats(self.s, self._globalStats, self._dailyStats)
         # add scheduling related stats
-        stats['new'] = self.newCount
+        stats['new'] = self.newCountLeftToday
         stats['failed'] = self.failedCount
         stats['successive'] = self.reviewCount
         #stats['old'] = stats['failed'] + stats['successive']
         if stats['dAverageTime']:
+            if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
+                count = stats['successive'] + stats['new']
+            elif self.newCardSpacing == NEW_CARDS_LAST:
+                count = stats['successive'] or stats['new']
             stats['timeLeft'] = anki.utils.fmtTimeSpan(
-                stats['dAverageTime'] * (stats['successive'] or stats['new']),
-                pad=0, point=1)
+                stats['dAverageTime'] * count, pad=0, point=1)
         else:
             stats['timeLeft'] = _("Unknown")
         return stats
@@ -1031,24 +1057,30 @@ cardModelId = :id""", id=cardModel.id)
     def updateCardsFromModel(self, cardModel):
         "Update all card question/answer when model changes."
         ids = self.s.all("""
-select cards.id, cards.factId from cards, facts, cardmodels
-where
+select cards.id, cards.cardModelId, cards.factId from
+cards, facts, cardmodels where
 cards.factId = facts.id and
 facts.modelId = cardModels.modelId and
 cards.cardModelId = :id""", id=cardModel.id)
         if not ids:
             return
-        pend = [{'q': cardModel.renderQASQL('q', fid),
-                 'a': cardModel.renderQASQL('a', fid),
-                 'id': cid}
-                for (cid, fid) in ids]
-        self.s.execute("""
-update cards
-set
-question = :q,
-answer = :a,
-modified = %f
-where id = :id""" % time.time(), pend)
+        self.updateCardQACache(ids)
+
+    def updateCardQACache(self, ids):
+        "Given a list of (cardId, cardModelId, factId), update q/a cache."
+        cms = self.s.query(CardModel).all()
+        for cm in cms:
+            pend = [{'q': cm.renderQASQL('q', fid),
+                     'a': cm.renderQASQL('a', fid),
+                     'id': cid}
+                    for (cid, cmid, fid) in ids if cmid == cm.id]
+            if pend:
+                self.s.execute("""
+    update cards set
+    question = :q,
+    answer = :a,
+    modified = %f
+    where id = :id""" % time.time(), pend)
 
     def rebuildCardOrdinals(self, ids):
         "Update all card models in IDS. Caller must update model modtime."
@@ -1064,13 +1096,13 @@ where cardModelId in (%s)""" % strids, now=time.time())
     # Tags
     ##########################################################################
 
-    def tagsList(self):
+    def tagsList(self, where=""):
         "Return a list of (cardId, allTags, priority)"
         return self.s.all("""
 select cards.id, cards.tags || "," || facts.tags || "," || models.tags || "," ||
 cardModels.name, cards.priority from cards, facts, models, cardModels where
 cards.factId == facts.id and facts.modelId == models.id
-and cards.cardModelId = cardModels.id""")
+and cards.cardModelId = cardModels.id %s""" % where)
 
     def allTags(self):
         "Return a hash listing tags in model, fact and cards."
@@ -1163,26 +1195,10 @@ where id = :id""" % table, pending)
             return None
         return dir
 
-    def _fileSize(self, file):
-        st = os.stat(file)
-        return st[stat.ST_SIZE]
-
     def addMedia(self, path):
         """Add PATH to the media directory.
-Rename for uniqueness if not the same. Return the new name."""
-        file = os.path.basename(path)
-        dir = self.mediaDir()
-        location = os.path.join(dir, file)
-        location = location.replace('"', "")
-        if os.path.exists(location):
-            if self._fileSize(location) != self._fileSize(path):
-                (location, exists) = self.uniquifyMediaLocation(
-                    dir, location, self._fileSize(path))
-                if not exists:
-                    shutil.copy2(path, location)
-        else:
-            shutil.copy2(path, location)
-        return os.path.basename(location)
+Return new path, relative to media dir."""
+        return anki.media.copyToMedia(self, path)
 
     def renameMediaDir(self, oldPath):
         "Copy oldPath to our current media dir. "
@@ -1191,16 +1207,6 @@ Rename for uniqueness if not the same. Return the new name."""
         # copytree doesn't want the dir to exist
         os.rmdir(newPath)
         shutil.copytree(oldPath, newPath)
-
-    def uniquifyMediaLocation(self, dir, location, fileSize):
-        n = 0
-        while 1:
-            new = re.sub("^(.*)\.(.*?)$", "\\1_%d.\\2" % n, location)
-            if not os.path.exists(new):
-                return (new, True)
-            if self._fileSize(new) == fileSize:
-                return (new, False)
-            n += 1
 
     # DB helpers
     ##########################################################################
@@ -1305,6 +1311,9 @@ Rename for uniqueness if not the same. Return the new name."""
         "Responsibility of caller to call rebuildQueue()"
         if self.s.scalar("pragma integrity_check") != "ok":
             return _("Database file damaged. Restore from backup.")
+        # ensure correct views and indexes are available
+        DeckStorage._addViews(self)
+        DeckStorage._addIndices(self)
         problems = []
         # does the user have a model?
         if not self.s.scalar("select count(id) from models"):
@@ -1350,7 +1359,7 @@ select id from cards where cardModelId not in
 select id from fields where factId not in (select id from facts)""")
         if ids:
             self.s.statement(
-                "delete from fields where id in (%s)",
+                "delete from fields where id in (%s)" %
                 ",".join([str(id) for id in ids]))
             problems.append(_("Deleted %d dangling fields") % len(ids))
         self.s.flush()
@@ -1653,15 +1662,15 @@ order by priority desc, due""")
             # rebuild with new file format
             deck.s.execute("pragma legacy_file_format = off")
             deck.s.execute("vacuum")
-            # bump version
-            deck.version = 1
-            deck.s.commit()
             # add views/indices
             DeckStorage._addViews(deck)
             DeckStorage._addIndices(deck)
             # rebuild type and delay cache
             deck.rebuildTypes()
             deck.rebuildQueue()
+            deck.s.commit()
+            # bump version
+            deck.version = 1
             deck.s.commit()
             # optimize indices
             deck.s.statement("analyze")
@@ -1715,6 +1724,13 @@ order by priority desc, due""")
             # removed 'new cards first' option, so order has changed
             deck.newCardSpacing = NEW_CARDS_DISTRIBUTE
             deck.version = 7
+            deck.s.commit()
+        if deck.version == 7:
+            shutil.copytree(deck.mediaDir(create=True),
+                           deck.path.lower().replace(
+               ".anki", ".media-backup-0.9.7.8"))
+            anki.media.optimizeMediaDir(deck)
+            deck.version = 8
             deck.s.commit()
         return deck
     _upgradeDeck = staticmethod(_upgradeDeck)

@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="/" >
+    <file>icons/document-open-recent.png</file>
+    <file>icons/khtml_kget.png</file>
+    <file>icons/edit-find.png</file>
     <file>icons/colors.png</file>
     <file>icons/anki.png</file>
     <file>icons/Anki_Add_Tag.png</file>
@@ -24,7 +27,6 @@
     <file>icons/fileclose.png</file>
     <file>icons/folder_image.png</file>
     <file>icons/folder_sound.png</file>
-    <file>icons/fonts.png</file>
     <file>icons/format-stroke-color.png</file>
     <file>icons/games-solve.png</file>
     <file>icons/go-home.png</file>

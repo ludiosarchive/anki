@@ -51,6 +51,7 @@ class Config(dict):
             'suppressLastCardInterval': False,
             'suppressLastCardContent': False,
             'showTray': False,
+            'showTimer': True,
             'editCurrentOnly': True,
             'showSuspendedCards': True,
             }

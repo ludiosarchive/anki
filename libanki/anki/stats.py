@@ -29,6 +29,7 @@ statsTable = Table(
     Column('reps', Integer, nullable=False, default=0),
     Column('averageTime', Float, nullable=False, default=0),
     Column('reviewTime', Float, nullable=False, default=0),
+    # next two columns no longer used
     Column('distractedTime', Float, nullable=False, default=0),
     Column('distractedReps', Integer, nullable=False, default=0),
     Column('newEase0', Integer, nullable=False, default=0),
@@ -119,8 +120,6 @@ day=:day,
 reps=:reps,
 averageTime=:averageTime,
 reviewTime=:reviewTime,
-distractedTime=:distractedTime,
-distractedReps=:distractedReps,
 newEase0=:newEase0,
 newEase1=:newEase1,
 newEase2=:newEase2,
@@ -151,12 +150,10 @@ def updateStats(s, stats, card, ease, oldState):
     if delay >= 60:
         # make a guess as to the time spent answering
         stats.reviewTime += stats.averageTime
-        stats.distractedTime += delay - 60
-        stats.distractedReps += 1
     else:
         stats.reviewTime += delay
         stats.averageTime = (
-            stats.reviewTime / float(stats.reps - stats.distractedReps))
+            stats.reviewTime / float(stats.reps))
     # update eases
     attr = oldState + "Ease%d" % ease
     setattr(stats, attr, getattr(stats, attr) + 1)
@@ -229,7 +226,6 @@ def summarizeStats(stats, pre=""):
         setPercentage(h, pre + answer.capitalize() + "Total", pre)
     h[pre + 'AverageTime'] = stats.averageTime
     h[pre + 'ReviewTime'] = stats.reviewTime
-    h[pre + 'DistractedTime'] = stats.distractedTime
     return h
 
 def setPercentage(h, a, b):

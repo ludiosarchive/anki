@@ -1,5 +1,105 @@
-changeset:   747:a52a2a8d5102
+changeset:   767:bf971ef03af9
 tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 02:15:13 2008 +0900
+summary:     fix for previous dailyStats fix
+
+changeset:   766:607ed6876ee4
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 02:06:25 2008 +0900
+summary:     only build 'newCountLeftToday' if building queue
+
+changeset:   765:0bc83189a028
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 01:16:38 2008 +0900
+summary:     fix div by zero error
+
+changeset:   764:30f16e91c869
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 01:08:12 2008 +0900
+summary:     enable upgrade
+
+changeset:   763:77bdb561bcdb
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 01:00:13 2008 +0900
+summary:     bump version
+
+changeset:   762:7068d1cb2ad5
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 00:48:56 2008 +0900
+summary:     revert importing changes
+
+changeset:   761:f7ad4f6130dd
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 00:36:25 2008 +0900
+summary:     support adding tags to cards, update chinese tests
+
+changeset:   760:71fbab934ae2
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 00:25:31 2008 +0900
+summary:     new unihan db
+
+changeset:   759:c5ccbd1927f6
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 00:25:16 2008 +0900
+summary:     fix save_unihan to support multiple readings
+
+changeset:   758:b8f797202f95
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 23:19:29 2008 +0900
+summary:     check average factor on startup, set new cards to average factor
+
+changeset:   757:5b5c9b7830fe
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 22:21:05 2008 +0900
+summary:     update translations
+
+changeset:   756:be99b4ba4a28
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 22:19:58 2008 +0900
+summary:     improve timer
+
+changeset:   755:cdcee481960e
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 20:28:27 2008 +0900
+summary:     fix bug in unihan gen, use real pinyin readings thanks to patch by daniel chai
+
+changeset:   754:3f5f57d21fe0
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 19:48:54 2008 +0900
+summary:     don't stop timer when calling thinkingTime()
+
+changeset:   753:40b99029d15f
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 16:14:19 2008 +0900
+summary:     improve media upgrade, backup all files
+
+changeset:   752:5204c80a9a50
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 14 15:19:20 2008 +0900
+summary:     new media support, scheduling changes
+
+changeset:   751:a39c3a8fa613
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 10 13:32:22 2008 +0900
+summary:     fix statement call in fixIntegrity()
+
+changeset:   750:ea41a60e9bfb
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 10 00:05:45 2008 +0900
+summary:     change order of version bump on version 0 upgrade
+
+changeset:   749:c989e349c6c7
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 10 00:03:12 2008 +0900
+summary:     add views and indices on check integrity. should fix some upgrade bugs
+
+changeset:   748:5ef19bdc5dc1
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 08 23:43:34 2008 +0900
+summary:     only rebuild types on upgrade, optimise syncing
+
+changeset:   747:a52a2a8d5102
 user:        Damien Elmes <hg@repose.cx>
 date:        Sun Sep 07 00:05:58 2008 +0900
 summary:     update spanish translations

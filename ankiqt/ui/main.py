@@ -16,6 +16,7 @@ from anki import DeckStorage
 from anki.errors import *
 from anki.sound import hasSound, playFromText
 from anki.utils import addTags, deleteTags
+from anki.media import optimizeMediaDir
 import anki.lang
 import ankiqt
 ui = ankiqt.ui
@@ -188,6 +189,7 @@ class AnkiQt(QMainWindow):
             self.updateMarkAction()
             self.runHook('showQuestion')
         elif state == "showAnswer":
+            self.currentCard.stopTimer()
             self.resetButtons()
             self.showEaseButtons()
             self.enableCardMenuItems()
@@ -458,13 +460,9 @@ class AnkiQt(QMainWindow):
             except:
                 ui.utils.showWarning(_(
                     "Error building queue. Attempting recovery.."))
-                if self.onCheckDB():
-                    ui.utils.showWarning(
-                        _("Couldn't find the problem. Please open an "
-                          "issue on the issue tracker."))
-                else:
-                    # try again
-                    self.rebuildQueue()
+                self.onCheckDB()
+                # try again
+                self.rebuildQueue()
         return True
 
     def importOldDeck(self, deckPath):
@@ -1114,6 +1112,7 @@ class AnkiQt(QMainWindow):
         self.connect(self.mainWin.actionCheckDatabaseIntegrity, SIGNAL("triggered()"), self.onCheckDB)
         self.connect(self.mainWin.actionOptimizeDatabase, SIGNAL("triggered()"), self.onOptimizeDB)
         self.connect(self.mainWin.actionMergeModels, SIGNAL("triggered()"), self.onMergeModels)
+        self.connect(self.mainWin.actionCheckMediaDatabase, SIGNAL("triggered()"), self.onCheckMediaDB)
 
     def enableDeckMenuItems(self, enabled=True):
         "setEnabled deck-related items."
@@ -1135,7 +1134,6 @@ class AnkiQt(QMainWindow):
                 deckpath += "*"
             title = _("%(path)s (%(facts)d facts, %(cards)d cards)"
                       " - %(title)s") % {
-                # FIXME: safe to assume filesystem is utf-8?
                 "path": deckpath,
                 "title": title,
                 "cards": self.deck.cardCount(),
@@ -1263,7 +1261,10 @@ class AnkiQt(QMainWindow):
         "True if no problems"
         ret = self.deck.fixIntegrity()
         if ret == "ok":
-            ret = _("No problems found")
+            ret = _("""\
+No problems found. Some data structures have been rebuilt in case
+they were causing problems. On the next sync, all cards will be
+sent to the server.""")
             ui.utils.showInfo(ret)
             ret = True
         else:
@@ -1293,3 +1294,27 @@ class AnkiQt(QMainWindow):
             ui.utils.showWarning(_("""%s.
 Anki can only merge models if they have exactly
 the same field count and card count.""") % ret[1])
+
+    def onCheckMediaDB(self):
+        mb = QMessageBox(self)
+        mb.setText(_("""\
+Would you like to remove unused files from the media directory, and
+tag or delete references to missing files?"""))
+        bTag = QPushButton("Tag facts missing media")
+        mb.addButton(bTag, QMessageBox.RejectRole)
+        bDelete = QPushButton("Delete references to missing media")
+        mb.addButton(bDelete, QMessageBox.RejectRole)
+        bCancel = QPushButton("Cancel")
+        mb.addButton(bCancel, QMessageBox.RejectRole)
+        mb.exec_()
+        if mb.clickedButton() == bTag:
+            (missing, unused) = optimizeMediaDir(self.deck, False)
+        elif mb.clickedButton() == bDelete:
+            (missing, unused) = optimizeMediaDir(self.deck, True)
+        else:
+            return
+        ui.utils.showInfo(_(
+                "%(a)d missing references.\n"
+                "%(b)d unused files removed.") % {
+            'a': missing,
+            'b': unused})
