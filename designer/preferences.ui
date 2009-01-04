@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>532</width>
-    <height>531</height>
+    <width>322</width>
+    <height>417</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -15,6 +15,9 @@
   <layout class="QVBoxLayout" name="verticalLayout_2" >
    <item>
     <widget class="QTabWidget" name="tabWidget" >
+     <property name="focusPolicy" >
+      <enum>Qt::StrongFocus</enum>
+     </property>
      <property name="currentIndex" >
       <number>0</number>
      </property>
@@ -23,14 +26,17 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>510</width>
-        <height>449</height>
+        <width>306</width>
+        <height>351</height>
        </rect>
       </property>
       <attribute name="title" >
-       <string>Language, Fonts and Colours</string>
+       <string>Display</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout" >
+       <property name="spacing" >
+        <number>6</number>
+       </property>
        <item>
         <layout class="QVBoxLayout" >
          <property name="spacing" >
@@ -42,7 +48,7 @@
          <item>
           <widget class="QLabel" name="label" >
            <property name="text" >
-            <string>&lt;h1>Interface language&lt;/h1>The language for the user interface: dialogs, menus, etc.</string>
+            <string>&lt;h1>Language&lt;/h1></string>
            </property>
            <property name="wordWrap" >
             <bool>false</bool>
@@ -67,8 +73,11 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="focusPolicy" >
+            <enum>Qt::TabFocus</enum>
+           </property>
            <property name="text" >
-            <string>&lt;h1>Standard fonts&lt;/h1>See 'display properties' for deck specific font preferences.</string>
+            <string>&lt;h1>Main Window&lt;/h1></string>
            </property>
            <property name="wordWrap" >
             <bool>false</bool>
@@ -83,115 +92,14 @@
            <property name="spacing" >
             <number>6</number>
            </property>
-           <item row="0" column="2" >
-            <widget class="QSpinBox" name="interfaceSize" >
-             <property name="maximum" >
-              <number>300</number>
+           <item row="0" column="0" >
+            <widget class="QLabel" name="label_8" >
+             <property name="text" >
+              <string>Interface font</string>
              </property>
             </widget>
            </item>
            <item row="1" column="0" >
-            <widget class="QLabel" name="label_9" >
-             <property name="text" >
-              <string>Last card</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1" >
-            <widget class="QFontComboBox" name="interfaceFamily" >
-             <property name="maximumSize" >
-              <size>
-               <width>170</width>
-               <height>16777215</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1" >
-            <widget class="QFontComboBox" name="lastCardFamily" >
-             <property name="maximumSize" >
-              <size>
-               <width>170</width>
-               <height>16777215</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0" >
-            <widget class="QLabel" name="label_8" >
-             <property name="text" >
-              <string>Interface</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2" >
-            <widget class="QSpinBox" name="lastCardSize" >
-             <property name="maximum" >
-              <number>300</number>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" >
-            <widget class="QLabel" name="label_10" >
-             <property name="text" >
-              <string>Card editor</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1" >
-            <widget class="QFontComboBox" name="editFamily" >
-             <property name="maximumSize" >
-              <size>
-               <width>170</width>
-               <height>16777215</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2" >
-            <widget class="QSpinBox" name="editSize" >
-             <property name="minimum" >
-              <number>6</number>
-             </property>
-             <property name="maximum" >
-              <number>20</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_3" >
-           <property name="sizePolicy" >
-            <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text" >
-            <string>&lt;h1>Standard colours&lt;/h1>These colours are used for all decks.</string>
-           </property>
-           <property name="wordWrap" >
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QGridLayout" >
-           <property name="margin" >
-            <number>0</number>
-           </property>
-           <property name="spacing" >
-            <number>6</number>
-           </property>
-           <item row="0" column="1" >
-            <widget class="QPushButton" name="interfaceColour" >
-             <property name="text" >
-              <string/>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0" >
             <widget class="QLabel" name="label_13" >
              <property name="text" >
               <string>Interface colour</string>
@@ -199,16 +107,9 @@
             </widget>
            </item>
            <item row="1" column="1" >
-            <widget class="QPushButton" name="lastCardColour" >
+            <widget class="QPushButton" name="interfaceColour" >
              <property name="text" >
               <string/>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" >
-            <widget class="QLabel" name="label_14" >
-             <property name="text" >
-              <string>Last card colour</string>
              </property>
             </widget>
            </item>
@@ -226,9 +127,61 @@
              </property>
             </widget>
            </item>
+           <item row="0" column="1" >
+            <layout class="QHBoxLayout" name="horizontalLayout_2" >
+             <item>
+              <widget class="QFontComboBox" name="interfaceFamily" >
+               <property name="maximumSize" >
+                <size>
+                 <width>140</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="interfaceSize" >
+               <property name="maximum" >
+                <number>300</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QGridLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>6</number>
+           </property>
           </layout>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="showDivider" >
+         <property name="text" >
+          <string>Show divider between question and answer</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="splitQA" >
+         <property name="text" >
+          <string>Put space between question and answer</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="suppressEstimates" >
+         <property name="text" >
+          <string>Don't show next time before answer</string>
+         </property>
+        </widget>
        </item>
        <item>
         <spacer name="verticalSpacer" >
@@ -250,12 +203,12 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>453</width>
-        <height>443</height>
+        <width>306</width>
+        <height>351</height>
        </rect>
       </property>
       <attribute name="title" >
-       <string>Autosave and Synchronisation</string>
+       <string>Save &amp;&amp; Sync</string>
       </attribute>
       <layout class="QVBoxLayout" >
        <property name="spacing" >
@@ -275,7 +228,7 @@
          <item>
           <layout class="QVBoxLayout" >
            <property name="spacing" >
-            <number>12</number>
+            <number>6</number>
            </property>
            <property name="margin" >
             <number>0</number>
@@ -283,7 +236,17 @@
            <item>
             <widget class="QLabel" name="label_4" >
              <property name="text" >
-              <string>&lt;h1>Autosaving&lt;/h1>Anki can save your progress automatically.</string>
+              <string>&lt;h1>Autosaving&lt;/h1></string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="saveWhenClosing" >
+             <property name="text" >
+              <string>Save when closing</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -307,16 +270,6 @@
              </item>
              <item row="1" column="1" >
               <widget class="QSpinBox" name="saveAfterEveryNum" />
-             </item>
-             <item row="0" column="0" >
-              <widget class="QCheckBox" name="saveWhenClosing" >
-               <property name="text" >
-                <string>Save when closing</string>
-               </property>
-               <property name="checked" >
-                <bool>true</bool>
-               </property>
-              </widget>
              </item>
              <item row="1" column="2" >
               <widget class="QLabel" name="label_5" >
@@ -350,7 +303,7 @@
            <item>
             <widget class="QLabel" name="label_16" >
              <property name="text" >
-              <string>&lt;h1>Synchronisation&lt;/h1>Synchronisation enables you to access your deck from the web and your mobile phone. You can &lt;a href="http://anki.ichi2.net/">create a free account&lt;/a>.</string>
+              <string>&lt;h1>Synchronisation&lt;/h1>&lt;a href="http://anki.ichi2.net/">Create a free account&lt;/a>.</string>
              </property>
              <property name="wordWrap" >
               <bool>true</bool>
@@ -419,7 +372,7 @@
         </layout>
        </item>
        <item>
-        <spacer>
+        <spacer name="verticalSpacer_2" >
          <property name="orientation" >
           <enum>Qt::Vertical</enum>
          </property>
@@ -438,88 +391,119 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>453</width>
-        <height>443</height>
+        <width>306</width>
+        <height>351</height>
        </rect>
       </property>
       <attribute name="title" >
-       <string>Advanced Settings</string>
+       <string>Advanced</string>
       </attribute>
       <layout class="QVBoxLayout" >
        <item>
         <layout class="QGridLayout" >
-         <item row="1" column="0" >
-          <widget class="QCheckBox" name="showToolbar" >
+         <item row="3" column="0" >
+          <widget class="QCheckBox" name="simpleToolbar" >
            <property name="text" >
-            <string>Show toolbar on startup</string>
+            <string>Simple toolbar</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" >
-          <widget class="QCheckBox" name="compactEaseButtons" >
-           <property name="text" >
-            <string>Use compact answer button style</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0" >
           <widget class="QLabel" name="label_6" >
            <property name="text" >
             <string>&lt;h1>Advanced settings&lt;/h1></string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0" >
+         <item row="4" column="0" >
+          <widget class="QCheckBox" name="showTimer" >
+           <property name="text" >
+            <string>Show timer</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" >
+          <widget class="QCheckBox" name="showLastCardContent" >
+           <property name="text" >
+            <string>Show last card's question/answer</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0" >
+          <widget class="QCheckBox" name="showLastCardInterval" >
+           <property name="text" >
+            <string>Show last card's interval</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0" >
+          <widget class="QCheckBox" name="showToolbar" >
+           <property name="text" >
+            <string>Show toolbar on startup</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0" >
           <widget class="QCheckBox" name="tallButtons" >
            <property name="text" >
             <string>Tall buttons (for touchscreen)</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="0" >
-          <widget class="QCheckBox" name="editCurrentOnly" >
-           <property name="text" >
-            <string>Start Edit Deck with only current card selected</string>
-           </property>
-           <property name="checked" >
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0" >
-          <widget class="QCheckBox" name="suppressEstimates" >
-           <property name="text" >
-            <string>Hide next interval when showing answer buttons</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0" >
-          <widget class="QCheckBox" name="suppressLastCardInterval" >
-           <property name="text" >
-            <string>Hide interval of last card</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="0" >
-          <widget class="QCheckBox" name="suppressLastCardContent" >
-           <property name="text" >
-            <string>Hide question/answer of last card</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0" >
+         <item row="9" column="0" >
           <widget class="QCheckBox" name="showTray" >
            <property name="text" >
             <string>Show tray icon</string>
            </property>
           </widget>
          </item>
-         <item row="9" column="0" >
-          <widget class="QCheckBox" name="showTimer" >
+         <item row="10" column="0" >
+          <widget class="QCheckBox" name="scrollToAnswer" >
            <property name="text" >
-            <string>Show timer</string>
+            <string>Scroll down to the answer when showing answer</string>
            </property>
           </widget>
+         </item>
+         <item row="11" column="0" >
+          <widget class="QCheckBox" name="addZeroSpace" >
+           <property name="text" >
+            <string>Add hidden char to text (fixes Thai on OSX)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="0" >
+          <widget class="QCheckBox" name="alternativeTheme" >
+           <property name="text" >
+            <string>Alternative theme</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout" >
+         <item>
+          <widget class="QLabel" name="label_11" >
+           <property name="text" >
+            <string>Toolbar icon size</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0" >
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="toolbarIconSize" />
          </item>
         </layout>
        </item>
@@ -546,7 +530,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons" >
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Close|QDialogButtonBox::Help</set>
      </property>
     </widget>
    </item>
@@ -555,15 +539,14 @@
  <tabstops>
   <tabstop>tabWidget</tabstop>
   <tabstop>interfaceLang</tabstop>
+  <tabstop>label_2</tabstop>
   <tabstop>interfaceFamily</tabstop>
   <tabstop>interfaceSize</tabstop>
-  <tabstop>lastCardFamily</tabstop>
-  <tabstop>lastCardSize</tabstop>
-  <tabstop>editFamily</tabstop>
-  <tabstop>editSize</tabstop>
   <tabstop>interfaceColour</tabstop>
-  <tabstop>lastCardColour</tabstop>
   <tabstop>backgroundColour</tabstop>
+  <tabstop>showDivider</tabstop>
+  <tabstop>splitQA</tabstop>
+  <tabstop>suppressEstimates</tabstop>
   <tabstop>saveWhenClosing</tabstop>
   <tabstop>saveAfterEvery</tabstop>
   <tabstop>saveAfterEveryNum</tabstop>
@@ -573,6 +556,17 @@
   <tabstop>syncPass</tabstop>
   <tabstop>syncOnOpen</tabstop>
   <tabstop>syncOnClose</tabstop>
+  <tabstop>simpleToolbar</tabstop>
+  <tabstop>showTimer</tabstop>
+  <tabstop>showLastCardContent</tabstop>
+  <tabstop>showLastCardInterval</tabstop>
+  <tabstop>showToolbar</tabstop>
+  <tabstop>tallButtons</tabstop>
+  <tabstop>showTray</tabstop>
+  <tabstop>scrollToAnswer</tabstop>
+  <tabstop>addZeroSpace</tabstop>
+  <tabstop>alternativeTheme</tabstop>
+  <tabstop>toolbarIconSize</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>
@@ -584,8 +578,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>266</x>
-     <y>476</y>
+     <x>270</x>
+     <y>412</y>
     </hint>
     <hint type="destinationlabel" >
      <x>157</x>
@@ -600,8 +594,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>334</x>
-     <y>476</y>
+     <x>317</x>
+     <y>412</y>
     </hint>
     <hint type="destinationlabel" >
      <x>286</x>
@@ -616,12 +610,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>94</x>
-     <y>157</y>
+     <x>113</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel" >
-     <x>235</x>
-     <y>160</y>
+     <x>116</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -632,12 +626,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>80</x>
-     <y>178</y>
+     <x>99</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel" >
-     <x>174</x>
-     <y>176</y>
+     <x>116</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>

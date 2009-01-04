@@ -17,7 +17,7 @@ import time
 from anki.cards import cardsTable
 from anki.facts import factsTable, fieldsTable
 from anki.lang import _
-from anki.utils import genID
+from anki.utils import genID, canonifyTags
 from anki.errors import *
 
 # Base importer
@@ -121,8 +121,9 @@ all but one card model."""))
         factIds = [genID() for n in range(len(cards))]
         self.deck.s.execute(factsTable.insert(),
             [{'modelId': self.model.id,
-              'tags': self.tagsToAdd,
+              'tags': canonifyTags(self.tagsToAdd + "," + cards[n].tags),
               'id': factIds[n]} for n in range(len(cards))])
+        self.deck.factCount += len(factIds)
         self.deck.s.execute("""
 delete from factsDeleted
 where factId in (%s)""" % ",".join([str(s) for s in factIds]))
@@ -151,11 +152,13 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                     'factId': factIds[m],
                     'cardModelId': cm.id,
                     'ordinal': cm.ordinal,
-                    'question': cm.renderQASQL('q', factIds[m]),
-                    'answer': cm.renderQASQL('a', factIds[m]),
-                         }, cards[m]) for m in range(len(cards))]
+                    'question': u"",
+                    'answer': u"",
+                    'type': 2},cards[m]) for m in range(len(cards))]
                 self.deck.s.execute(cardsTable.insert(),
                                     data)
+        self.deck.updateCardsFromModel(self.model)
+        self.deck.cardCount += len(cards)
         self.total = len(factIds)
 
     def addMeta(self, data, card):
@@ -167,6 +170,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         data['due'] = self._now
         self._now += .00001
         data.update(card.__dict__)
+        data['combinedDue'] = data['due']
         return data
 
     def stripInvalid(self, cards):
@@ -224,8 +228,8 @@ from anki.importing.mnemosyne10 import Mnemosyne10Importer
 from anki.importing.wcu import WCUImporter
 
 Importers = (
-    (_("TAB/semicolon-separated file (*.*)"), TextImporter),
+    (_("TAB/semicolon-separated file (*)"), TextImporter),
     (_("Anki 1.0 deck (*.anki)"), Anki10Importer),
-    (_("Mnemosyne 1.0 deck (*.mem)"), Mnemosyne10Importer),
+    (_("Mnemosyne 1.x deck (*.mem)"), Mnemosyne10Importer),
     (_("CueCard deck (*.wcu)"), WCUImporter),
     )

@@ -3,10 +3,11 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import os, types, socket, time
+import os, types, socket, time, traceback
 import ankiqt
 import anki
-from anki.sync import SyncClient, HttpSyncServerProxy
+from anki.sync import SyncClient, HttpSyncServerProxy, BulkMediaSyncerProxy
+from anki.sync import BulkMediaSyncer
 from anki.errors import *
 from anki import DeckStorage
 import ankiqt.forms
@@ -16,7 +17,8 @@ import ankiqt.forms
 
 class Sync(QThread):
 
-    def __init__(self, parent, user, pwd, interactive, create, onlyMerge):
+    def __init__(self, parent, user, pwd, interactive, create,
+                 onlyMerge, sourcesToCheck):
         QThread.__init__(self)
         self.parent = parent
         self.interactive = interactive
@@ -25,6 +27,7 @@ class Sync(QThread):
         self.create = create
         self.ok = True
         self.onlyMerge = onlyMerge
+        self.sourcesToCheck = sourcesToCheck
 
     def setStatus(self, msg, timeout=5000):
         self.emit(SIGNAL("setStatus"), msg, timeout)
@@ -33,7 +36,8 @@ class Sync(QThread):
         self.syncDeck()
 
     def error(self, error):
-        self.setStatus(self.getErrorMessage(error))
+        error = self.getErrorMessage(error)
+        self.emit(SIGNAL("showWarning"), error)
         if self.onlyMerge:
             # new file needs cleaning up
             self.emit(SIGNAL("cleanNewDeck"))
@@ -54,11 +58,12 @@ class Sync(QThread):
     def connect(self, *args):
         # connect, check auth
         proxy = HttpSyncServerProxy(self.user, self.pwd)
+        proxy.sourcesToCheck = self.sourcesToCheck
         proxy.connect("ankiqt-" + ankiqt.appVersion)
         return proxy
 
     def syncDeck(self):
-        self.setStatus(_("Connecting.."), 0)
+        self.setStatus(_("Connecting..."), 0)
         try:
             proxy = self.connect()
         except SyncError, e:
@@ -71,70 +76,99 @@ class Sync(QThread):
                 except SyncError, e:
                     return self.error(e)
             else:
-                self.emit(SIGNAL("noMatchingDeck"), proxy.decks.keys(),
-                          not self.onlyMerge)
+                keys = [k for (k,v) in proxy.decks.items() if v[1] != -1]
+                self.emit(SIGNAL("noMatchingDeck"), keys, not self.onlyMerge)
                 self.setStatus("")
-                #self.emit(SIGNAL("moveToState"), "initial")
                 return
+        timediff = abs(proxy.timestamp - time.time())
+        if timediff > 60:
+            self.emit(SIGNAL("syncClockOff"), timediff)
+            return
         # reconnect
         try:
-            self.deck = DeckStorage.Deck(self.parent.deckPath, rebuild=False,
-                                         backup=False, lock=True)
-            # need to do anything?
-            proxy.deckName = self.parent.syncName
-            if self.deck.modified == proxy.modified():
-                self.setStatus(_("Sync: nothing to do"))
-                self.deck.close()
-                self.emit(SIGNAL("syncFinished"))
-                return
-            # start syncing
+            self.deck = DeckStorage.Deck(self.parent.deckPath, backup=False)
             client = SyncClient(self.deck)
             client.setServer(proxy)
-            # handle the sync manually so we can give more feedback
-            client.localTime = client.modified()
-            client.remoteTime = proxy.modified()
-            l = self.parent.lastSync; r = proxy._lastSync()
-            if l == r:
-                self.lastSync = l
+            proxy.deckName = self.parent.syncName
+            # need to do anything?
+            start = time.time()
+            if client.prepareSync():
+                # summary
+                self.setStatus(_("Fetching summary from server..."), 0)
+                sums = client.summaries()
+                # diff
+                self.setStatus(_("Determining differences..."), 0)
+                payload = client.genPayload(sums)
+                # send payload
+                pr = client.payloadChangeReport(payload)
+                self.setStatus("<br>" + pr + "<br>", 0)
+                self.setStatus(_("Transferring payload..."), 0)
+                res = client.server.applyPayload(payload)
+                # apply reply
+                self.setStatus(_("Applying reply..."), 0)
+                client.applyPayloadReply(res)
+                if client.mediaSyncPending:
+                    self.doBulkDownload(proxy.deckName)
+                # finished. save deck, preserving mod time
+                self.setStatus(_("Sync complete."))
+                self.deck.lastLoaded = self.deck.modified
+                self.deck.s.flush()
+                self.deck.s.commit()
             else:
-                self.lastSync = 0
-            self.setStatus(_("Fetching summary from server.."), 0)
-            lsum = client.summary(self.lastSync)
-            rsum = proxy.summary(self.lastSync)
-
-            self.setStatus(_("Determining differences.."), 0)
-            oldCount = self.deck.cardCount()
-            payload = client.genPayload(lsum, rsum)
-            ladd = len(payload['added-cards'])
-            radd = len(payload['missing-cards'])
-            rdel = len(payload['deleted-cards'])
-            ldel = max(0, oldCount - self.deck.cardCount())
-            stats = {"a": ladd, "b": ldel, "c": radd, "d": rdel}
-
-            self.setStatus(_("Sending payload (local +%(a)d/-%(b)d, "
-                             "remote +%(c)d/-%(d)d cards)..") % stats, 0)
-            res = proxy.applyPayload(payload)
-            self.setStatus(_("Applying reply.."), 0)
-            client.applyPayloadReply(res)
-
-            self.setStatus(_("Syncing..done. Local +%(a)d/-%(b)d, "
-                             "remote +%(c)d/-%(d)d cards.")
-                           % stats)
-            # finished. save deck, preserving mod time
-            self.deck.lastLoaded = self.deck.modified
-            self.deck.s.flush()
-            self.deck.s.commit()
+                self.setStatus(_("No changes found."))
+            # check sources
+            if self.sourcesToCheck:
+                start = time.time()
+                self.setStatus(_("<br><br>Checking deck subscriptions..."))
+                for source in self.sourcesToCheck:
+                    proxy.deckName = str(source)
+                    msg = "%s:" % client.syncOneWayDeckName()
+                    if not proxy.hasDeck(str(source)):
+                        self.setStatus(_(" * %s no longer exists.") % msg)
+                        continue
+                    if not client.prepareOneWaySync():
+                        self.setStatus(_(" * %s no changes found.") % msg)
+                        continue
+                    self.setStatus(_(" * %s fetching payload...") % msg)
+                    payload = proxy.genOneWayPayload(client.deck.lastSync)
+                    self.setStatus(msg + _(" applied %d modified cards.") %
+                                   len(payload['cards']))
+                    client.applyOneWayPayload(payload)
+                    if client.mediaSyncPending:
+                        self.doBulkDownload("")
+                self.setStatus(_("Check complete."))
+                self.deck.s.flush()
+                self.deck.s.commit()
             # close and send signal to main thread
             self.deck.close()
+            taken = time.time() - start
+            if taken < 2.5:
+                time.sleep(2.5 - taken)
             self.emit(SIGNAL("syncFinished"))
         except Exception, e:
+            traceback.print_exc()
             self.deck.close()
             # cheap hack to ensure message is displayed
-            time.sleep(1)
             err = `getattr(e, 'data', None) or e`
             self.setStatus(_("Syncing failed: %(a)s") % {
                 'a': err})
+            time.sleep(3)
             self.emit(SIGNAL("syncFinished"))
+
+    def doBulkDownload(self, deckname):
+        self.emit(SIGNAL("openSyncProgress"))
+        client = BulkMediaSyncer(self.deck)
+        client.server = BulkMediaSyncerProxy(self.user, self.pwd)
+        client.server.deckName = deckname
+        client.progressCallback = self.bulkCallback
+        try:
+            client.sync()
+        except:
+            self.emit(SIGNAL("bulkSyncFailed"))
+        self.emit(SIGNAL("closeSyncProgress"))
+
+    def bulkCallback(self, *args):
+        self.emit(SIGNAL("updateSyncProgress"), args)
 
 # Choosing a deck to sync to
 ##########################################################################
@@ -154,7 +188,11 @@ class DeckChooser(QDialog):
         self.decks.sort()
         for name in decks:
             name = os.path.splitext(name)[0]
-            item = QListWidgetItem(_("Merge with '%s' on server") % name)
+            if self.create:
+                msg = _("Merge with '%s' on server") % name
+            else:
+                msg = _("Copy '%s' from server") % name
+            item = QListWidgetItem(msg)
             self.dialog.decks.addItem(item)
         self.dialog.decks.setCurrentRow(0)
         # the list widget will swallow the enter key
@@ -177,4 +215,3 @@ class DeckChooser(QDialog):
         else:
             self.name = self.decks[self.dialog.decks.currentRow() - offset]
         self.close()
-

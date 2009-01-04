@@ -4,10 +4,13 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import re, os, sys
-from anki.utils import parseTags, stripHTML, tidyHTML
+import re, os, sys, tempfile, urllib
+from anki.utils import stripHTML, tidyHTML, canonifyTags
+from anki.sound import playFromText
 import anki.sound
 from ankiqt import ui
+import ankiqt
+from ankiqt.ui.utils import mungeQA, saveGeom, restoreGeom
 
 class FactEditor(object):
     """An editor for new/existing facts.
@@ -23,30 +26,43 @@ class FactEditor(object):
         self.fact = None
         self.fontChanged = False
         self.setupFields()
-        self.checkTimer = None
         self.onChange = None
         self.onFactValid = None
         self.onFactInvalid = None
         self.lastFocusedEdit = None
+        self.changeTimer = None
 
     def setFact(self, fact, noFocus=False, check=False):
         "Make FACT the current fact."
         self.fact = fact
         self.factState = None
+        if self.changeTimer:
+            self.changeTimer.stop()
+            self.changeTimer = None
         if self.needToRedraw():
-            self.drawFields(noFocus, check)
+            if self.fact:
+                self.drawFields(noFocus, check)
+            else:
+                self.widget.hide()
+                return
         else:
-            self.updateFields(check)
+            self.loadFields(check)
+        self.widget.show()
         if not noFocus:
             # update focus to first field
             self.fields[self.fact.fields[0].name][1].setFocus()
         self.fontChanged = False
+        self.deck.setUndoBarrier()
+
+    def initMedia(self):
+        os.chdir(self.deck.mediaDir(create=True))
 
     def setupFields(self):
+        # init for later
         self.fields = {}
         # top level vbox
         self.fieldsBox = QVBoxLayout(self.widget)
-        self.fieldsBox.setMargin(5)
+        self.fieldsBox.setMargin(0)
         self.fieldsBox.setSpacing(3)
         # icons
         self.iconsBox = QHBoxLayout()
@@ -62,6 +78,7 @@ class FactEditor(object):
         self.iconsBox.addItem(QSpacerItem(20,20, QSizePolicy.Expanding))
         # button styles for mac
         self.plastiqueStyle = QStyleFactory.create("plastique")
+        self.widget.setStyle(self.plastiqueStyle)
         # bold
         self.bold = QPushButton()
         self.bold.setCheckable(True)
@@ -107,30 +124,41 @@ class FactEditor(object):
         self.foregroundFrame.setAutoFillBackground(True)
         hbox = QHBoxLayout()
         hbox.addWidget(self.foregroundFrame)
-        hbox.setMargin(5)
+        hbox.setMargin(1)
         self.foreground.setLayout(hbox)
         self.iconsBox.addWidget(self.foreground)
         self.foreground.setStyle(self.plastiqueStyle)
+        # preview
+        self.preview = QPushButton(self.widget)
+        self.preview.connect(self.preview, SIGNAL("clicked()"),
+                                  self.onPreview)
+        self.preview.setToolTip(_("Preview (F2)"))
+        self.preview.setShortcut(_("F2"))
+        self.preview.setIcon(QIcon(":/icons/document-preview.png"))
+        self.preview.setFocusPolicy(Qt.NoFocus)
+        self.preview.setEnabled(False)
+        self.iconsBox.addWidget(self.preview)
+        self.preview.setStyle(self.plastiqueStyle)
         # pictures
         spc = QSpacerItem(10,10)
         self.iconsBox.addItem(spc)
         self.addPicture = QPushButton(self.widget)
         self.addPicture.connect(self.addPicture, SIGNAL("clicked()"), self.onAddPicture)
         self.addPicture.setFocusPolicy(Qt.NoFocus)
-        self.addPicture.setShortcut(_("Ctrl+p"))
+        self.addPicture.setShortcut(_("F3"))
         self.addPicture.setIcon(QIcon(":/icons/colors.png"))
         self.addPicture.setEnabled(False)
-        self.addPicture.setToolTip(_("Add a picture (Ctrl+p)"))
+        self.addPicture.setToolTip(_("Add a picture (F3)"))
         self.iconsBox.addWidget(self.addPicture)
         self.addPicture.setStyle(self.plastiqueStyle)
         # sounds
         self.addSound = QPushButton(self.widget)
         self.addSound.connect(self.addSound, SIGNAL("clicked()"), self.onAddSound)
         self.addSound.setFocusPolicy(Qt.NoFocus)
-        self.addSound.setShortcut(_("Ctrl+s"))
+        self.addSound.setShortcut(_("F4"))
         self.addSound.setEnabled(False)
         self.addSound.setIcon(QIcon(":/icons/text-speak.png"))
-        self.addSound.setToolTip(_("Add audio (Ctrl+s)"))
+        self.addSound.setToolTip(_("Add audio (F4)"))
         self.iconsBox.addWidget(self.addSound)
         self.addSound.setStyle(self.plastiqueStyle)
         # latex
@@ -138,8 +166,8 @@ class FactEditor(object):
         self.iconsBox.addItem(spc)
         self.latex = QPushButton(self.widget)
         self.latex.connect(self.latex, SIGNAL("clicked()"), self.insertLatex)
-        self.latex.setToolTip(_("Latex (Ctrl+l)"))
-        self.latex.setShortcut(_("Ctrl+l"))
+        self.latex.setToolTip(_("Latex (Ctrl+l, l)"))
+        self.latex.setShortcut(_("Ctrl+l, l"))
         self.latex.setIcon(QIcon(":/icons/tex.png"))
         self.latex.setFocusPolicy(Qt.NoFocus)
         self.latex.setEnabled(False)
@@ -148,8 +176,8 @@ class FactEditor(object):
         # latex eqn
         self.latexEqn = QPushButton(self.widget)
         self.latexEqn.connect(self.latexEqn, SIGNAL("clicked()"), self.insertLatexEqn)
-        self.latexEqn.setToolTip(_("Latex equation (Ctrl+e)"))
-        self.latexEqn.setShortcut(_("Ctrl+e"))
+        self.latexEqn.setToolTip(_("Latex equation (Ctrl+l, e)"))
+        self.latexEqn.setShortcut(_("Ctrl+l, e"))
         self.latexEqn.setIcon(QIcon(":/icons/math_sqrt.png"))
         self.latexEqn.setFocusPolicy(Qt.NoFocus)
         self.latexEqn.setEnabled(False)
@@ -159,23 +187,31 @@ class FactEditor(object):
         self.latexMathEnv = QPushButton(self.widget)
         self.latexMathEnv.connect(self.latexMathEnv, SIGNAL("clicked()"),
                                   self.insertLatexMathEnv)
-        self.latexMathEnv.setToolTip(_("Latex math environment (Ctrl+m)"))
-        self.latexMathEnv.setShortcut(_("Ctrl+m"))
+        self.latexMathEnv.setToolTip(_("Latex math environment (Ctrl+l, m)"))
+        self.latexMathEnv.setShortcut(_("Ctrl+l, m"))
         self.latexMathEnv.setIcon(QIcon(":/icons/math_matrix.png"))
         self.latexMathEnv.setFocusPolicy(Qt.NoFocus)
         self.latexMathEnv.setEnabled(False)
         self.iconsBox.addWidget(self.latexMathEnv)
         self.latexMathEnv.setStyle(self.plastiqueStyle)
+        # html
+        self.htmlEdit = QPushButton(self.widget)
+        self.htmlEdit.connect(self.htmlEdit, SIGNAL("clicked()"),
+                                  self.onHtmlEdit)
+        self.htmlEdit.setToolTip(_("HTML Editor (F9)"))
+        self.htmlEdit.setShortcut(_("F9"))
+        self.htmlEdit.setIcon(QIcon(":/icons/text-xml.png"))
+        self.htmlEdit.setFocusPolicy(Qt.NoFocus)
+        self.htmlEdit.setEnabled(False)
+        self.iconsBox.addWidget(self.htmlEdit)
+        self.htmlEdit.setStyle(self.plastiqueStyle)
 
         self.fieldsFrame = None
         self.widget.setLayout(self.fieldsBox)
-        self.updatingFields = False
 
     def _makeGrid(self):
         "Rebuild the grid to avoid trigging QT bugs."
-        self.fieldsFrame = QFrame()
-        self.fieldsFrame.setFrameStyle(0)
-        self.fieldsFrame.setLineWidth(0)
+        self.fieldsFrame = QWidget()
         self.fieldsGrid = QGridLayout(self.fieldsFrame)
         self.fieldsFrame.setLayout(self.fieldsGrid)
         self.fieldsGrid.setMargin(0)
@@ -186,6 +222,7 @@ class FactEditor(object):
         # add entries for each field
         fields = self.fact.fields
         self.fields = {}
+        self.widgets = {}
         n = 0
         first = None
         for field in fields:
@@ -201,32 +238,31 @@ class FactEditor(object):
             w.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             self.fieldsGrid.addWidget(w, n, 1)
             self.fields[field.name] = (field, w)
+            self.widgets[w] = field
             # catch changes
+            w.connect(w, SIGNAL("lostFocus"),
+                      lambda w=w: self.onFocusLost(w))
             w.connect(w, SIGNAL("textChanged()"),
-                      lambda f=field, w=w: self.fieldChanged(f, w))
+                      self.onTextChanged)
             w.connect(w, SIGNAL("currentCharFormatChanged(QTextCharFormat)"),
                       lambda w=w: self.formatChanged(w))
             n += 1
         # tags
         self.fieldsGrid.addWidget(QLabel(_("Tags")), n, 0)
         self.tags = ui.tagedit.TagEdit(self.parent)
-        self.tags.connect(self.tags, SIGNAL("textChanged(QString)"),
+        self.tags.connect(self.tags, SIGNAL("lostFocus"),
                           self.onTagChange)
         # update available tags
         self.tags.setDeck(self.deck)
         self.fieldsGrid.addWidget(self.tags, n, 1)
-        # status warning
-        n += 1
-        self.warning = QLabel()
-        self.warning.setFixedHeight(20)
-        self.warning.setOpenExternalLinks(True)
-        self.fieldsGrid.addWidget(self.warning, n, 1)
         # update fields
-        self.updateFields(check)
+        self.loadFields(check)
         self.parent.setUpdatesEnabled(True)
         self.fieldsScroll.setWidget(self.fieldsFrame)
 
     def needToRedraw(self):
+        if self.fact is None:
+            return True
         if len(self.fact.fields) != len(self.fields):
             return True
         for field in self.fact.fields:
@@ -234,16 +270,18 @@ class FactEditor(object):
                 return True
         return self.fontChanged
 
-    def updateFields(self, check=True, font=True):
+    def loadFields(self, check=True, font=True):
         "Update field text (if changed) and font/colours."
-        self.updatingFields = True
         # text
-        for (name, (field, w)) in self.fields.items():
-            new = self.fact[name]
+        for field in self.fact.fields:
+            w = self.fields[field.name][1]
+            self.fields[field.name] = (field, w)
+            self.widgets[w] = field
+            new = self.fact[field.name]
             old = tidyHTML(unicode(w.toHtml()))
             # only update if something has changed, to preserve the cursor
             if new != old:
-                w.setHtml(new)
+                w.setHtml('<meta name="qrichtext" content="1"/>' + new)
             if font:
                 # apply fonts
                 font = QFont()
@@ -261,40 +299,69 @@ class FactEditor(object):
         self.tags.blockSignals(True)
         self.tags.setText(self.fact.tags)
         self.tags.blockSignals(False)
-        self.updatingFields = False
         if check:
             self.checkValid()
 
-    def fieldChanged(self, field, widget):
-        if self.updatingFields:
-            return
-        value = tidyHTML(unicode(widget.toHtml()))
-        if value and not value.strip():
-            widget.setText("")
-            value = u""
-        self.fact[field.name] = value
-        self.fact.setModified(textChanged=True)
-        self.deck.setModified()
-        self.fact.onKeyPress(field, value)
-        # the keypress handler may have changed something, so update all
-        self.updateFields(font=False)
-        if self.onChange:
-            self.onChange(field)
-        self.scheduleCheck()
-        self.formatChanged(None)
+    def saveFields(self):
+        "Save field text into fact."
+        modified = False
+        n = _("Edit")
+        self.deck.setUndoStart(n, merge=True)
+        for (w, f) in self.widgets.items():
+            v = tidyHTML(unicode(w.toHtml())).strip()
+            if self.fact[f.name] != v:
+                self.fact[f.name] = v
+                modified = True
+        if modified:
+            self.fact.setModified(textChanged=True)
+            self.deck.setModified()
+        self.deck.setUndoEnd(n)
 
-    def scheduleCheck(self):
-        if not self.deck:
+    def onFocusLost(self, widget):
+        if self.fact is None:
+            # editor closed
             return
-        interval = 200
-        if self.checkTimer:
-            self.checkTimer.setInterval(interval)
+        self.saveFields()
+        field = self.widgets[widget]
+        self.fact.focusLost(field)
+        self.loadFields(font=False)
+
+    def onTextChanged(self):
+        interval = 250
+        if self.changeTimer:
+            self.changeTimer.setInterval(interval)
         else:
-            self.checkTimer = QTimer(self.parent)
-            self.checkTimer.setSingleShot(True)
-            self.checkTimer.start(interval)
-            self.parent.connect(self.checkTimer, SIGNAL("timeout()"),
-                                self.checkValid)
+            self.changeTimer = QTimer(self.parent)
+            self.changeTimer.setSingleShot(True)
+            self.changeTimer.start(interval)
+            self.parent.connect(self.changeTimer,
+                                SIGNAL("timeout()"),
+                                self.onChangeTimer)
+
+    def onChangeTimer(self):
+        self.saveFields()
+        self.checkValid()
+        if self.onChange:
+            self.onChange()
+        self.changeTimer = None
+
+    def saveFieldsNow(self):
+        "Must call this before adding cards, closing dialog, etc."
+        if not self.fact:
+            return
+        # disable timer
+        if self.changeTimer:
+            self.changeTimer.stop()
+            self.changeTimer = None
+            if self.onChange:
+                self.onChange()
+        # save fields and run features
+        w = self.focusedEdit()
+        if w:
+            self.onFocusLost(w)
+        self.onTagChange()
+        # ensure valid
+        self.checkValid()
 
     def checkValid(self):
         empty = []
@@ -313,7 +380,6 @@ class FactEditor(object):
             else:
                 p.setColor(QPalette.Base, QColor("#ffffff"))
                 self.fields[field.name][1].setPalette(p)
-        self.checkTimer = None
         # call relevant hooks
         invalid = len(empty+dupe)
         if self.factState != "valid" and not invalid:
@@ -324,22 +390,17 @@ class FactEditor(object):
             if self.onFactInvalid:
                 self.onFactInvalid(self.fact)
             self.factState = "invalid"
-        if invalid:
-            self.warning.setText(_(
-                "Some fields are "
-                "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
-                "#head-6ba367d55922a618ab147debfbac98635d1a4dc2>missing</a>"
-                " or not "
-                "<a href=http://ichi2.net/anki/wiki/Key_Terms_and_Concepts"
-                "#head-0c33560cb828fde1c19af1cd260388457b57812a>unique</a>."))
-        else:
-            self.warning.setText(_("All fields valid"))
 
-    def onTagChange(self, text):
-        if not self.updatingFields:
-            self.fact.tags = unicode(text)
+    def onTagChange(self):
+        if not self.fact:
+            return
+        self.fact.tags = canonifyTags(unicode(self.tags.text()))
         if self.onChange:
-            self.onChange(None)
+            self.onChange()
+        self.deck.s.flush()
+        self.deck.updatePriorities([c.id for c in self.fact.cards])
+        self.fact.setModified(textChanged=True)
+        self.deck.flushMod()
 
     def focusField(self, fieldName):
         self.fields[fieldName][1].setFocus()
@@ -353,6 +414,8 @@ class FactEditor(object):
             self.italic.setChecked(w.fontItalic())
             self.underline.setChecked(w.fontUnderline())
             self.foregroundFrame.setPalette(QPalette(w.textColor()))
+            self.foregroundFrame.setStyleSheet("* {background-color: %s}" %
+                                               unicode(w.textColor().name()))
 
     def resetFormatButtons(self):
         self.bold.setChecked(False)
@@ -369,6 +432,8 @@ class FactEditor(object):
         self.latex.setEnabled(val)
         self.latexEqn.setEnabled(val)
         self.latexMathEnv.setEnabled(val)
+        self.preview.setEnabled(val)
+        self.htmlEdit.setEnabled(val)
 
     def disableButtons(self):
         self.enableButtons(False)
@@ -440,6 +505,28 @@ class FactEditor(object):
             w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
 
+    def onPreview(self):
+        PreviewDialog(self.parent, self.deck, self.fact)
+
+    def onHtmlEdit(self):
+        def helpRequested():
+            QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                          "HtmlEditor"))
+        w = self.focusedEdit()
+        if w:
+            self.saveFields()
+            d = QDialog(self.parent)
+            form = ankiqt.forms.edithtml.Ui_Dialog()
+            form.setupUi(d)
+            d.connect(form.buttonBox, SIGNAL("helpRequested()"),
+                     helpRequested)
+            form.textEdit.setPlainText(self.widgets[w].value)
+            form.textEdit.moveCursor(QTextCursor.End)
+            d.exec_()
+            w.setHtml(unicode(form.textEdit.toPlainText()).\
+                      replace("\n", ""))
+            self.saveFields()
+
     def fieldsAreBlank(self):
         for (field, widget) in self.fields.values():
             value = tidyHTML(unicode(widget.toHtml()))
@@ -448,20 +535,25 @@ class FactEditor(object):
         return True
 
     def onAddPicture(self):
-        if not self.hasMediaDir():
-            return
+        self.initMedia()
         # get this before we open the dialog
         w = self.focusedEdit()
         key = _("Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)")
         file = ui.utils.getFile(self.parent, _("Add an image"), "picture", key)
         if not file:
             return
+        self._addPicture(file, widget=w)
+
+    def _addPicture(self, file, widget=None):
+        if widget:
+            w = widget
+        else:
+            w = self.focusedEdit()
         path = self.deck.addMedia(file)
         w.insertHtml('<img src="%s">' % path)
 
     def onAddSound(self):
-        if not self.hasMediaDir():
-            return
+        self.initMedia()
         # get this before we open the dialog
         w = self.focusedEdit()
         key = _("Sounds (*.mp3 *.ogg *.wav)")
@@ -472,23 +564,46 @@ class FactEditor(object):
         path = self.deck.addMedia(file)
         w.insertHtml('[sound:%s]' % path)
 
-    def hasMediaDir(self):
-        if self.deck.mediaDir(create=True):
-            return True
-        ui.utils.showInfo("Please save your deck first.", self.parent)
-        return False
-
 class FactEdit(QTextEdit):
 
     def __init__(self, parent, *args):
         QTextEdit.__init__(self, *args)
         self.parent = parent
 
+    def canInsertFromMimeData(self, src):
+        return (src.hasUrls() or
+                src.hasText() or
+                src.hasImage() or
+                src.hasHtml())
+
     def insertFromMimeData(self, source):
         if source.hasText():
-            self.insertPlainText(source.text())
-        elif source.hasHtml():
-            self.insertHtml(self.simplyHTML(unicode(source.html())))
+            if not (unicode(source.text()).lower().startswith("http://") and
+                    source.hasImage()):
+                # choose text unless this is a link with an image
+                self.insertPlainText(source.text())
+                return
+        if source.hasImage():
+            im = QImage(source.imageData())
+            (fd, name) = tempfile.mkstemp(suffix=".jpg")
+            uname = unicode(name, sys.getfilesystemencoding())
+            im.save(uname, None, 95)
+            self.parent._addPicture(uname, widget=self)
+            return
+        if source.hasHtml():
+            self.insertHtml(self.simplifyHTML(unicode(source.html())))
+            return
+        if source.hasUrls():
+            for url in source.urls():
+                url = unicode(url.toString())
+                ext = url.split(".")[-1]
+                if ext in ("jpg", "jpeg", "png", "tif", "tiff", "gif"):
+                    url = url.encode(sys.getfilesystemencoding())
+                    (file, headers) = urllib.urlretrieve(url)
+                    self.parent._addPicture(
+                        unicode(file, sys.getfilesystemencoding()),
+                        widget=self)
+            return
 
     def simplifyHTML(self, html):
         "Remove all style information and P tags."
@@ -498,7 +613,7 @@ class FactEdit(QTextEdit):
         html = re.sub('<style type="text/css">.*?</style>', "", html)
         html = stripHTML(html)
         html = html.replace("\n", "<br>")
-        html = re.sub("\s\s+", " ", html).strip()
+        html = html.strip()
         return html
 
     def focusOutEvent(self, evt):
@@ -506,6 +621,7 @@ class FactEdit(QTextEdit):
         self.parent.lastFocusedEdit = self
         self.parent.resetFormatButtons()
         self.parent.disableButtons()
+        self.emit(SIGNAL("lostFocus"))
 
     # this shouldn't be necessary if/when we move away from kakasi
     def mouseDoubleClickEvent(self, evt):
@@ -558,3 +674,44 @@ class FactEdit(QTextEdit):
         QTextEdit.focusInEvent(self, evt)
         self.parent.formatChanged(None)
         self.parent.enableButtons()
+
+class PreviewDialog(QDialog):
+
+    def __init__(self, parent, deck, fact, *args):
+        QDialog.__init__(self, parent, *args)
+        self.deck = deck
+        self.fact = fact
+        cards = self.deck.previewFact(self.fact)
+        if not cards:
+            ui.utils.showInfo(_("No cards to preview."),
+                              parent=parent)
+            return
+        self.cards = cards
+        self.currentCard = 0
+        self.dialog = ankiqt.forms.previewcards.Ui_Dialog()
+        self.dialog.setupUi(self)
+        self.dialog.comboBox.addItems(QStringList(
+            [c.cardModel.name for c in self.cards]))
+        self.connect(self.dialog.comboBox, SIGNAL("activated(int)"),
+                     self.onChange)
+        self.updateCard()
+        restoreGeom(self, "preview")
+        self.exec_()
+
+    def updateCard(self):
+        c = self.cards[self.currentCard]
+        self.dialog.webView.setHtml(
+            "<style>" + self.deck.css + "</style>" +
+            mungeQA(self.deck, c.htmlQuestion()) +
+            "<br><br><hr><br><br>" +
+            mungeQA(self.deck, c.htmlAnswer()))
+        playFromText(c.question)
+        playFromText(c.answer)
+
+    def onChange(self, idx):
+        self.currentCard = idx
+        self.updateCard()
+
+    def reject(self):
+        saveGeom(self, "preview")
+        QDialog.reject(self)

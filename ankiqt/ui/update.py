@@ -23,8 +23,8 @@ class LatestVersionFinder(QThread):
         self.config = main.config
         # calculate stats before we start a new thread
         if self.main.deck != None:
-            deckSize = self.main.deck.cardCount()
-            stats = anki.stats.globalStats(self.main.deck.s)
+            deckSize = self.main.deck.cardCount
+            stats = anki.stats.globalStats(self.main.deck)
             deckRecall = "%0.2f" % (
                 (stats.matureEase3 + stats.matureEase4) /
                 float(stats.matureEase0 +
@@ -33,7 +33,7 @@ class LatestVersionFinder(QThread):
                       stats.matureEase3 +
                       stats.matureEase4 + 0.000001) * 100)
             pending = "(%d, %d)" % (self.main.deck.seenCardCount(),
-                                    self.main.deck.newCardCount())
+                                    self.main.deck.newCount)
             ct = self.main.deck.created
             if ct:
                 ol = anki.lang.getLang()
@@ -46,7 +46,7 @@ class LatestVersionFinder(QThread):
             plat=sys.platform
             pver=sys.version
         else:
-            deckSize = "nodeck"
+            deckSize = "noDeck"
             deckRecall = ""
             pending = ""
             age = ""
@@ -85,8 +85,8 @@ class Updater(QThread):
 
     filename = "anki-update.exe"
     # FIXME: get when checking version number
-    chunkSize = 428027
-    percChange = 5
+    chunkSize = 131018
+    percChange = 1
 
     def __init__(self):
         QThread.__init__(self)
@@ -109,9 +109,9 @@ class Updater(QThread):
             self.setStatus(_("Unable to open file"))
             return
         perc = 0
+        self.emit(SIGNAL("updateStarted"), perc)
         while 1:
-            self.setStatus(
-                _("Downloading anki updater - %d%% complete.") % perc)
+            self.emit(SIGNAL("updateDownloading"), perc)
             resp = f.read(self.chunkSize)
             if not resp:
                 break
@@ -120,7 +120,7 @@ class Updater(QThread):
             if perc > 99:
                 perc = 99
         newfile.close()
-        self.setStatus(_("Updating.."))
+        self.emit(SIGNAL("updateFinished"), perc)
         os.chdir(os.path.dirname(filename))
         os.system(os.path.basename(filename))
         self.setStatus(_("Update complete. Please restart Anki."))
@@ -129,7 +129,10 @@ class Updater(QThread):
 def askAndUpdate(parent, version=None):
     version = version['latestVersion']
     baseStr = (
-        _("""<h1>Anki updated</h1>Anki %s has been released.<br>""") %
+        _('''<h1>Anki updated</h1>Anki %s has been released.<br>
+The release notes are
+<a href="http://ichi2.net/anki/download/index.html#changes">here</a>.
+<br><br>''') %
         version)
     msg = QMessageBox(parent)
     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
@@ -147,6 +150,15 @@ def askAndUpdate(parent, version=None):
             parent.connect(parent.autoUpdate,
                            SIGNAL("statusChanged"),
                            parent.setStatus)
+            parent.connect(parent.autoUpdate,
+                           SIGNAL("updateStarted"),
+                           parent.updateStarted)
+            parent.connect(parent.autoUpdate,
+                           SIGNAL("updateDownloading"),
+                           parent.updateDownloading)
+            parent.connect(parent.autoUpdate,
+                           SIGNAL("updateFinished"),
+                           parent.updateFinished)
             parent.autoUpdate.start()
         else:
             QDesktopServices.openUrl(QUrl(ankiqt.appWebsite))

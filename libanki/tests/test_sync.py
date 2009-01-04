@@ -1,6 +1,6 @@
 # coding: utf-8
 
-import nose, os
+import nose, os, tempfile, shutil, time
 from tests.shared import assertException
 
 from anki.errors import *
@@ -12,6 +12,7 @@ from anki.stats import dailyStats, globalStats
 from anki.facts import Fact
 from anki.cards import Card
 from anki.models import FieldModel
+from anki.media import rebuildMediaDir
 
 #import psyco; psyco.profile()
 
@@ -23,23 +24,26 @@ deck2=None
 client=None
 server=None
 
-def setup_local():
+def setup_local(loadDecks=None):
     global deck1, deck2, client, server
-    deck1 = DeckStorage.Deck()
-    deck1.addModel(BasicModel())
-    deck1.currentModel.cardModels[1].active = True
-    deck1.newCardOrder = 1
-    f = deck1.newFact()
-    f['Front'] = u"foo"; f['Back'] = u"bar"
-    deck1.addFact(f)
-    deck2 = DeckStorage.Deck()
-    deck2.addModel(BasicModel())
-    deck2.currentModel.cardModels[1].active = True
-    f = deck2.newFact()
-    f['Front'] = u"baz"; f['Back'] = u"qux"
-    deck2.addFact(f)
-    # ensure a defined order in getCard()
-    deck2.newCardOrder = 1
+    if loadDecks:
+        deck1 = DeckStorage.Deck(loadDecks[0])
+        deck2 = DeckStorage.Deck(loadDecks[1])
+    else:
+        deck1 = DeckStorage.Deck()
+        deck1.addModel(BasicModel())
+        deck1.currentModel.cardModels[1].active = True
+        deck1.newCardOrder = 1
+        f = deck1.newFact()
+        f['Front'] = u"foo"; f['Back'] = u"bar"
+        deck1.addFact(f)
+        deck2 = DeckStorage.Deck()
+        deck2.addModel(BasicModel())
+        deck2.currentModel.cardModels[1].active = True
+        f = deck2.newFact()
+        f['Front'] = u"baz"; f['Back'] = u"qux"
+        deck2.addFact(f)
+        deck2.newCardOrder = 1
     client = SyncClient(deck1)
     server = SyncServer(deck2)
     client.setServer(server)
@@ -49,8 +53,8 @@ def teardown():
 
 @nose.with_setup(setup_local, teardown)
 def test_localsync_diffing():
-    assert deck1.cardCount() == 2
-    assert deck2.cardCount() == 2
+    assert deck1.cardCount == 2
+    assert deck2.cardCount == 2
     lsum = client.summary(deck1.lastSync)
     rsum = server.summary(deck1.lastSync)
     result = client.diffSummary(lsum, rsum, 'cards')
@@ -97,8 +101,8 @@ def test_localsync_deck():
     c = deck1.getCard()
     deck1.answerCard(c, 4)
     client.sync()
-    assert dailyStats(deck2.s).reps == 1
-    assert globalStats(deck2.s).reps == 1
+    assert dailyStats(deck2).reps == 1
+    assert globalStats(deck2).reps == 1
     assert deck2.s.scalar("select count(id) from reviewHistory") == 1
 
 @nose.with_setup(setup_local, teardown)
@@ -160,11 +164,11 @@ def test_localsync_models():
 
 @nose.with_setup(setup_local, teardown)
 def test_localsync_factsandcards():
-    assert deck1.factCount() == 1 and deck1.cardCount() == 2
-    assert deck2.factCount() == 1 and deck2.cardCount() == 2
+    assert deck1.factCount == 1 and deck1.cardCount == 2
+    assert deck2.factCount == 1 and deck2.cardCount == 2
     client.sync()
-    assert deck1.factCount() == 2 and deck1.cardCount() == 4
-    assert deck2.factCount() == 2 and deck2.cardCount() == 4
+    assert deck1.factCount == 2 and deck1.cardCount == 4
+    assert deck2.factCount == 2 and deck2.cardCount == 4
     # ensure the fact was copied across
     f1 = deck1.s.query(Fact).first()
     f2 = deck1.s.query(Fact).get(f1.id)
@@ -192,65 +196,65 @@ def test_localsync_threeway():
     # add a new question
     f = deck1.newFact()
     f['Front'] = u"a"; f['Back'] = u"b"
-    cards = deck1.addFact(f)
-    card = cards[0]
+    f = deck1.addFact(f)
+    card = f.cards[0]
     client.sync()
-    assert deck1.cardCount() == 6
-    assert deck2.cardCount() == 6
+    assert deck1.cardCount == 6
+    assert deck2.cardCount == 6
     # check it propagates from server to deck3
     client2.sync()
-    assert deck3.cardCount() == 6
+    assert deck3.cardCount == 6
     # delete a card on deck1
     deck1.deleteCard(card.id)
     client.sync()
-    assert deck1.cardCount() == 5
-    assert deck2.cardCount() == 5
+    assert deck1.cardCount == 5
+    assert deck2.cardCount == 5
     # make sure the delete is now propagated from the server to deck3
     client2.sync()
-    assert deck3.cardCount() == 5
+    assert deck3.cardCount == 5
 
-# @nose.with_setup(setup_local, teardown)
-# def test_localsync_upgradeAndSync():
-#     base = "/home/resolve/tango-test.anki"
-#     d1n = "/home/resolve/tango-test1.anki"
-#     d2n = "/home/resolve/tango-test2.anki"
-#     import shutil
-#     from anki.importing import anki03
-#     for i in (d1n, d2n):
-#         try:
-#             os.unlink(i)
-#         except OSError:
-#             pass
-#         shutil.copy2(base, i)
-#     # upgrade each deck
-#     d1 = DeckStorage.Deck()
-#     d2 = DeckStorage.Deck()
-#     i = anki03.Anki03Importer(d1, d1n)
-#     i.doImport()
-#     i = anki03.Anki03Importer(d2, d2n)
-#     i.doImport()
+def test_localsync_media():
+    tmpdir = "/tmp/media-tests"
+    try:
+        shutil.rmtree(tmpdir)
+    except OSError:
+        pass
+    shutil.copytree(os.path.join(os.getcwd(),
+                                 "tests/syncing/media-tests"),
+                    tmpdir)
+    deck1anki = os.path.join(tmpdir, "1.anki")
+    deck2anki = os.path.join(tmpdir, "2.anki")
+    deck1media = os.path.join(tmpdir, "1.media")
+    deck2media = os.path.join(tmpdir, "2.media")
+    setup_local((deck1anki, deck2anki))
+    assert len(os.listdir(deck1media)) == 2
+    assert len(os.listdir(deck2media)) == 1
+    client.sync()
+    assert len(os.listdir(deck1media)) == 3
+    assert len(os.listdir(deck2media)) == 3
+    assert deck1.s.scalar("select count(1) from media") == 3
+    assert deck2.s.scalar("select count(1) from media") == 3
+    # check delete
+    os.unlink(os.path.join(deck1media, "22161b29b0c18e068038021f54eee1ee.png"))
+    time.sleep(0.1)
+    rebuildMediaDir(deck1)
+    client.sync()
+    assert deck1.s.scalar("select count(1) from media") == 2
+    assert deck2.s.scalar("select count(1) from media") == 2
 
-#     client = SyncClient(d1)
-#     server = SyncServer(d2)
-#     client.setServer(server)
+# One way syncing
+##########################################################################
 
-#     lsum = client.summary(d1.lastSync)
-#     rsum = server.summary(d1.lastSync)
-#     for key in ("models", "facts", "cards"):
-#         diff = client.diffSummary(lsum, rsum, key)
-#         print diff
-
-#     d1.setModified()
-#     d1.currentModel.setModified()
-#     client.sync()
-
-#     lsum = client.summary(d1.lastSync)
-#     rsum = server.summary(d1.lastSync)
-#     for key in ("models", "facts", "cards"):
-#         diff = client.diffSummary(lsum, rsum, key)
-#         print diff
-
-#     client.sync()
+@nose.with_setup(setup_local, teardown)
+def test_oneway_simple():
+    assert deck1.s.scalar("select count(1) from cards") == 2
+    assert deck2.s.scalar("select count(1) from cards") == 2
+    server.deckName = "dummy"
+    client.syncOneWay(0)
+    assert deck1.s.scalar("select count(1) from cards") == 4
+    assert deck2.s.scalar("select count(1) from cards") == 2
+    # should be a noop
+    client.syncOneWay(0)
 
 # Remote tests
 ##########################################################################

@@ -1,49 +1,29 @@
 <ui version="4.0" >
- <class>Sort</class>
- <widget class="QDialog" name="Sort" >
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog" >
   <property name="geometry" >
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>425</width>
-    <height>358</height>
+    <width>248</width>
+    <height>268</height>
    </rect>
   </property>
   <property name="windowTitle" >
-   <string>Anki</string>
+   <string>Active Tags</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
-    <number>20</number>
-   </property>
+  <layout class="QVBoxLayout" name="verticalLayout" >
    <item>
     <widget class="QLabel" name="label" >
      <property name="text" >
-      <string>Please choose a field to sort by.</string>
-     </property>
-     <property name="alignment" >
-      <set>Qt::AlignCenter</set>
-     </property>
-     <property name="wordWrap" >
-      <bool>true</bool>
+      <string>&lt;h1>Select tags to suspend&lt;/h1></string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QListWidget" name="fields" >
-     <property name="font" >
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
-     <property name="editTriggers" >
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="tabKeyNavigation" >
-      <bool>true</bool>
+    <widget class="QListWidget" name="list" >
+     <property name="selectionMode" >
+      <enum>QAbstractItemView::MultiSelection</enum>
      </property>
     </widget>
    </item>
@@ -53,7 +33,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons" >
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::NoButton|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Help|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
@@ -64,7 +44,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Sort</receiver>
+   <receiver>Dialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel" >
@@ -80,7 +60,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Sort</receiver>
+   <receiver>Dialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel" >

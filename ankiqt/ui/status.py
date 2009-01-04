@@ -5,6 +5,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki
 import sys, time
+from ankiqt import ui
 
 class QClickableLabel(QLabel):
     url = "http://ichi2.net/anki/wiki/TheTimerAndShortQuestions"
@@ -77,7 +78,7 @@ class StatusView(object):
         self.addWidget(self.vertSep(), 0)
         vbox = QVBoxLayout()
         vbox.setSpacing(0)
-        vbox.setContentsMargins(0,0,0,0)
+        vbox.setMargin(0)
         self.progressBar = QProgressBar()
         self.progressBar.setFixedSize(*progressBarSize)
         self.progressBar.setMaximum(100)
@@ -95,14 +96,12 @@ class StatusView(object):
         self.addWidget(self.vertSep(), 0)
         self.timer = QClickableLabel()
         self.timer.setText("00:00")
-        self.timer.setFixedWidth(40)
-        self.addWidget(self.timer)
-        # mac
         if sys.platform.startswith("darwin"):
-            # we don't want non-coloured, throbbing widgets
-            self.plastiqueStyle = QStyleFactory.create("plastique")
-            self.progressBar.setStyle(self.plastiqueStyle)
-            self.retentionBar.setStyle(self.plastiqueStyle)
+            self.timer.setFixedWidth(40)
+        self.addWidget(self.timer)
+        self.plastiqueStyle = QStyleFactory.create("plastique")
+        self.progressBar.setStyle(self.plastiqueStyle)
+        self.retentionBar.setStyle(self.plastiqueStyle)
         self.redraw()
 
     def addWidget(self, w, stretch=0, perm=True):
@@ -141,29 +140,28 @@ class StatusView(object):
         else:
             # remaining string, bolded depending on current card
             if not self.main.currentCard:
-                remStr += "%(failed1)s + %(successive1)s + %(new1)s"
+                remStr += "%(failed1)s + %(rev1)s + %(new1)s"
             else:
                 q = self.main.deck.queueForCard(self.main.currentCard)
                 if q == "failed":
-                    remStr += "<u>%(failed1)s</u>&nbsp;&nbsp;%(successive1)s&nbsp;&nbsp;%(new1)s"
+                    remStr += "<u>%(failed1)s</u>&nbsp;&nbsp;%(rev1)s&nbsp;&nbsp;%(new1)s"
                 elif q == "rev":
-                    remStr += "%(failed1)s&nbsp;&nbsp;<u>%(successive1)s</u>&nbsp;&nbsp;%(new1)s"
+                    remStr += "%(failed1)s&nbsp;&nbsp;<u>%(rev1)s</u>&nbsp;&nbsp;%(new1)s"
                 else:
-                    remStr += "%(failed1)s&nbsp;&nbsp;%(successive1)s&nbsp;&nbsp;<u>%(new1)s</u>"
+                    remStr += "%(failed1)s&nbsp;&nbsp;%(rev1)s&nbsp;&nbsp;<u>%(new1)s</u>"
         stats['failed1'] = '<font color=#990000>%s</font>' % stats['failed']
-        stats['successive1'] = '<font color=#000000>%s</font>' % stats['successive']
+        stats['rev1'] = '<font color=#000000>%s</font>' % stats['rev']
         stats['new1'] = '<font color=#0000ff>%s</font>' % stats['new']
         self.remText.setText(remStr % stats)
-        stats['suspended'] = self.main.deck.suspendedCardCount()
         stats['spaced'] = self.main.deck.spacedCardCount()
+        stats['new2'] = self.main.deck.newCount
         self.remText.setToolTip(_(
             "<h1>Remaining cards</h1>"
-            "The number of cards left to answer."
             "<p/>There are <b>%(failed)d</b> failed cards due soon.<br>"
-            "There are <b>%(successive)d</b> cards awaiting review.<br>"
-            "There are <b>%(new)d</b> new cards.<br>"
-            "There are <b>%(spaced)d</b> spaced cards.<br>"
-            "There are <b>%(suspended)d</b> suspended cards.") % stats)
+            "There are <b>%(rev)d</b> cards awaiting review.<br>"
+            "There are <b>%(new)d</b> new cards due today.<br><br>"
+            "There are <b>%(new2)d</b> new cards in total.<br>"
+            "There are <b>%(spaced)d</b> spaced cards.") % stats)
         # eta
         self.etaText.setText(_("ETA: <b>%(timeLeft)s</b>") % stats)
         # retention & progress bars
@@ -232,15 +230,12 @@ You should aim to answer each question within<br>
             return
         if not self.timer:
             return
-        if self.main.currentCard:
-            t = self.main.currentCard.thinkingTime()
-            if t < 60:
-                if t < StatusView.warnTime:
-                    col="#000000"
+        if self.main.state in ("showQuestion", "showAnswer"):
+            if self.main.currentCard:
+                t = self.main.currentCard.thinkingTime()
+                if t < 60:
+                    self.timer.setText('00:%02d' % t)
                 else:
-                    col="#FF3300"
-                self.timer.setText('<font color="%s">00:%02d</font>' % (col, t))
-            else:
-                self.timer.setText('<font color="#FF0000"><b>01:00</b></font>')
-        else:
-            self.timer.setText("00:00")
+                    self.timer.setText('01:00')
+                return
+        self.timer.setText("00:00")

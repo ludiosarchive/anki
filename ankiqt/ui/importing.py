@@ -48,6 +48,9 @@ class ImportDialog(QDialog):
         self.parent = parent
         self.dialog = ankiqt.forms.importing.Ui_ImportDialog()
         self.dialog.setupUi(self)
+        self.tags = ui.tagedit.TagEdit(parent)
+        self.tags.setDeck(parent.deck)
+        self.dialog.topGrid.addWidget(self.tags,2,1,1,1)
         self.setupMappingFrame()
         self.setupOptions()
         self.exec_()
@@ -111,19 +114,26 @@ class ImportDialog(QDialog):
                 # windows sometimes has pending events permanently?
                 break
         self.importer.mapping = self.mapping
-        self.importer.tagsToAdd = unicode(self.dialog.tags.text())
+        self.importer.tagsToAdd = unicode(self.tags.text())
         self.importer.tagDuplicates = self.dialog.tagDuplicates.isChecked()
         try:
-            self.importer.doImport()
-        except ImportFormatError, e:
-            msg = _("Importing failed.\n")
-            msg += e.data['info']
-            self.dialog.status.setText(msg)
-            return
-        except DeckWrongFormatError, e:
-            msg = _("Import failed: %s") % `e.data`
-            self.dialog.status.setText(msg)
-            return
+            n = _("Import")
+            self.parent.deck.setUndoStart(n)
+            try:
+                self.importer.doImport()
+            except ImportFormatError, e:
+                msg = _("Importing failed.\n")
+                msg += e.data['info']
+                self.dialog.status.setText(msg)
+                return
+            except Exception, e:
+                msg = _("Import failed: %s\n") % `e`
+                if hasattr(e, "data"):
+                    msg += e.data
+                self.dialog.status.setText(msg)
+                return
+        finally:
+            self.parent.deck.setUndoEnd(n)
         txt = (
             _("Importing complete. %(num)d cards imported from %(file)s.\n") %
             {"num": self.importer.total, "file": os.path.basename(self.file)})
@@ -134,7 +144,7 @@ class ImportDialog(QDialog):
         self.file = None
         self.maybePreview()
         self.parent.deck.updateAllPriorities()
-        self.parent.rebuildQueue()
+        self.parent.reset()
 
     def setupMappingFrame(self):
         # qt seems to have a bug with adding/removing from a grid, so we add

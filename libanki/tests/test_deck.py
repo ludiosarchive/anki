@@ -1,6 +1,6 @@
 # coding: utf-8
 
-import nose, os
+import nose, os, re
 from tests.shared import assertException
 
 from anki.errors import *
@@ -44,11 +44,11 @@ def test_attachOld():
 
 def test_attachReadOnly():
     # non-writeable dir
-    assertException(DeckAccessError,
+    assertException(Exception,
                     lambda: DeckStorage.Deck("/attachroot"))
     # reuse tmp file from before, test non-writeable file
     os.chmod(newPath, 0)
-    assertException(DeckAccessError,
+    assertException(Exception,
                     lambda: DeckStorage.Deck(newPath))
     os.chmod(newPath, 0666)
     os.unlink(newPath)
@@ -67,7 +67,7 @@ def test_saveAs():
     deck.addFact(f)
     # save in new deck
     newDeck = deck.saveAs(path)
-    assert newDeck.cardCount() == 1
+    assert newDeck.cardCount == 1
     newDeck.close()
     deck.close()
 
@@ -85,23 +85,23 @@ def test_factAddDelete():
     assert e.data['type'] == 'fieldEmpty'
     # add a fact
     f['Front'] = u"one"; f['Back'] = u"two"
-    deck.addFact(f)
+    f = deck.addFact(f)
     assert len(f.cards) == 1
     deck.rollback()
     # try with two cards
     f = deck.newFact()
     f['Front'] = u"one"; f['Back'] = u"two"
     f.model.cardModels[1].active = True
-    deck.addFact(f)
+    f = deck.addFact(f)
     assert len(f.cards) == 2
     # ensure correct order
     c0 = [c for c in f.cards if c.ordinal == 0][0]
-    assert c0.question == u"one"
+    assert re.sub("</?.+?>", "", c0.question) == u"one"
     # now let's make a duplicate
     f2 = deck.newFact()
     f2['Front'] = u"one"; f2['Back'] = u"three"
     try:
-        deck.addFact(f2)
+        f2 = deck.addFact(f2)
     except Exception, e:
         pass
     assert e.data['type'] == 'fieldNotUnique'
@@ -118,12 +118,8 @@ def test_cardOrder():
     f['Meaning'] = u'2'
     deck.addFact(f)
     card = deck.getCard()
-    # production should come first
-    assert card.cardModel.name == u"Production"
-    # if we rebuild the queue, it should be the same
-    deck.rebuildQueue()
-    card = deck.getCard()
-    assert card.cardModel.name == u"Production"
+    # recognition should come first
+    assert card.cardModel.name == u"Recognition"
 
 def test_modelAddDelete():
     deck = DeckStorage.Deck()
@@ -133,7 +129,7 @@ def test_modelAddDelete():
     f['Expression'] = u'1'
     f['Meaning'] = u'2'
     deck.addFact(f)
-    assert deck.cardCount() == 2
+    assert deck.cardCount == 1
     deck.deleteModel(deck.currentModel)
-    assert deck.cardCount() == 0
+    assert deck.cardCount == 0
     deck.s.refresh(deck)

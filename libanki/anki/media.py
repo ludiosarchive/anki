@@ -8,24 +8,23 @@ Media support
 """
 __docformat__ = 'restructuredtext'
 
-try:
-    import hashlib
-    md5 = hashlib.md5
-except ImportError:
-    import md5
-    md5 = md5.new
-
-import os, stat, time, shutil, re
+import os, stat, time, shutil, re, sys
 from anki.db import *
 from anki.facts import Fact
-from anki.utils import addTags, genID
+from anki.utils import addTags, genID, ids2str, checksum
+from anki.lang import _
+
+regexps = (("(\[sound:([^]]+)\])",
+            "[sound:%s]"),
+           ("(<img src=[\"']?([^\"'>]+)[\"']? ?/?>)",
+            "<img src=\"%s\">"))
 
 # Tables
 ##########################################################################
 
 mediaTable = Table(
     'media', metadata,
-    Column('id', Integer, primary_key=True),
+    Column('id', Integer, primary_key=True, nullable=False),
     Column('filename', UnicodeText, nullable=False),
     Column('size', Integer, nullable=False),
     Column('created', Float, nullable=False),
@@ -39,120 +38,170 @@ mapper(Media, mediaTable)
 
 mediaDeletedTable = Table(
     'mediaDeleted', metadata,
-    Column('mediaId', Integer, ForeignKey("media.id"),
+    Column('mediaId', Integer, ForeignKey("cards.id"),
            nullable=False),
     Column('deletedTime', Float, nullable=False))
 
 # Helper functions
 ##########################################################################
 
-def copyToMedia(deck, path):
+def mediaFilename(path):
+    "Return checksum.ext for path"
+    new = checksum(open(path, "rb").read())
+    ext = os.path.splitext(path)[1].lower()
+    return "%s%s" % (new, ext)
+
+def copyToMedia(deck, path, latex=None):
     """Copy PATH to MEDIADIR, and return new filename.
-If file already exists, don't copy.
-Update media table, too."""
-    new = md5(open(path, "rb").read()).hexdigest()
-    ext = os.path.splitext(path)[1]
-    new = os.path.join(deck.mediaDir(create=True),
-                       "%s%s" % (new, ext))
-    newBase = os.path.basename(new)
+Update media table. If file already exists, don't copy."""
+    if latex:
+        origPath = latex
+        description = "latex"
+    else:
+        origPath = path
+        description = os.path.splitext(os.path.basename(path))[0]
+    newBase = mediaFilename(path)
+    new = os.path.join(deck.mediaDir(create=True), newBase)
     # copy if not existing
     if not os.path.exists(new):
-        shutil.copy2(path, new)
-        newSize = os.stat(new)[stat.ST_SIZE]
-        # add to DB
+        if new.lower() == path.lower():
+            # case insensitive filesystems suck
+            pass
+        else:
+            shutil.copy2(path.encode(sys.getfilesystemencoding()),
+                         new.encode(sys.getfilesystemencoding()))
+    newSize = os.stat(new)[stat.ST_SIZE]
+    if not deck.s.scalar(
+        "select 1 from media where filename = :f",
+        f=newBase):
+        try:
+            path = unicode(path, sys.getfilesystemencoding())
+        except TypeError:
+            pass
         deck.s.statement("""
-delete from media where filename = :fname""", fname=newBase)
-        deck.s.statement("""
-insert into media (id, filename, size, created, originalPath, description)
-values (:id, :filename, :size, :created, :originalPath, :description)""",
+insert into media (id, filename, size, created, originalPath,
+description)
+values (:id, :filename, :size, :created, :originalPath,
+:description)""",
                          id=genID(),
                          filename=newBase,
                          size=newSize,
                          created=time.time(),
-                         originalPath=path,
-                         description=os.path.splitext(
-            os.path.basename(path))[0])
+                         originalPath=origPath,
+                         description=description)
+    deck.flushMod()
     return newBase
 
-def _modifyFields(deck, fieldsToUpdate, modifiedFacts):
-    factIds = ",".join([str(id) for id in modifiedFacts.keys()])
+def _modifyFields(deck, fieldsToUpdate, modifiedFacts, dirty):
+    factIds = ids2str(modifiedFacts.keys())
     if fieldsToUpdate:
         deck.s.execute("update fields set value = :val where id = :id",
                        fieldsToUpdate)
     deck.s.statement(
-        "update facts set modified = :time where id in (%s)" %
+        "update facts set modified = :time where id in %s" %
         factIds, time=time.time())
-    ids = deck.s.all("""select cards.id, cards.cardModelId, facts.id
-from cards, facts where cards.factId = facts.id and facts.id in (%s)"""
+    ids = deck.s.all("""select cards.id, cards.cardModelId, facts.id,
+facts.modelId from cards, facts where
+cards.factId = facts.id and facts.id in %s"""
                      % factIds)
-    deck.updateCardQACache(ids)
+    deck.updateCardQACache(ids, dirty)
     deck.flushMod()
 
-def optimizeMediaDir(deck, deleteReferences=False):
+def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
     "Delete references to missing files, delete unused files."
-    regexp1 = "\[sound:([^]]+)\]"
-    regexp2 = "<img src=[\"']?([^\"'>]+)[\"']? ?/?>"
     localFiles = {}
-    missingFiles = 0
-    unusedFiles = 0
     modifiedFacts = {}
+    unmodifiedFacts = {}
+    renamedFiles = {}
+    existingFiles = {}
+    factsMissingMedia = {}
     updateFields = []
-    seenFiles = {}
+    usedFiles = {}
+    unusedFileCount = 0
+    missingFileCount = 0
     deck.mediaDir(create=True)
-    # first, copy all files into their checksum versions, in case the deck was
-    # modified elsewhere. this means we generate the checksum twice, but
-    # allows the user to upgrade a deck when there's no media directory. it
-    # may make sense to remove this in the future
-    for f in os.listdir(unicode(deck.mediaDir())):
-        oldPath = os.path.join(deck.mediaDir(), f)
-        copyToMedia(deck, oldPath)
+    # rename all files to checksum versions, note non-renamed ones
+    for oldBase in os.listdir(unicode(deck.mediaDir())):
+        oldPath = os.path.join(deck.mediaDir(), oldBase)
+        if oldBase.startswith("."):
+            continue
+        if os.path.isdir(oldPath):
+            continue
+        newBase = copyToMedia(deck, oldPath)
+        if oldBase.lower() == newBase.lower():
+            existingFiles[oldBase] = 1
+        else:
+            renamedFiles[oldBase] = newBase
     # now look through all fields, and update references to files
     for (id, fid, val) in deck.s.all(
         "select id, factId, value from fields"):
-        m = re.search(regexp1, val)
-        if m:
-            type = 1
-        else:
-            m = re.search(regexp2, val)
-            if m:
-                type = 2
-        if m:
-            oldFile = m.group(1)
-            oldPath = os.path.join(deck.mediaDir(), oldFile)
-            newVal = None
-            if os.path.exists(oldPath):
-                newBase = copyToMedia(deck, oldPath)
-                if newBase != oldFile:
-                    if type == 1:
-                        newVal = re.sub(regexp1, "[sound:%s]" % newBase, val)
-                    elif type == 2:
-                        newVal = re.sub(regexp2, "<img src=\"%s\">" % newBase, val)
-                    modifiedFacts[fid] = 1
-                    os.unlink(oldPath)
-                seenFiles[newBase] = 1
+        oldval = val
+        for (full, fname, repl) in mediaRefs(val):
+            if fname in renamedFiles:
+                # renamed
+                newBase = renamedFiles[fname]
+                val = re.sub(re.escape(full), repl % newBase, val)
+                usedFiles[newBase] = 1
+            elif fname in existingFiles:
+                # used & current
+                usedFiles[fname] = 1
             else:
-                missingFiles += 1
-                modifiedFacts[fid] = 1
-                if deleteReferences:
-                    if type == 1:
-                        newVal = re.sub(regexp1, "", val)
-                    elif type == 2:
-                        newVal = re.sub(regexp2, "", val)
-            if newVal is not None:
-                updateFields.append({'id': id, 'val': newVal})
-    # update modified fields, and optionally tag
+                # missing
+                missingFileCount += 1
+                if deleteRefs:
+                    val = re.sub(re.escape(full), "", val)
+                else:
+                    factsMissingMedia[fid] = 1
+        if val != oldval:
+            updateFields.append({'id': id, 'val': val})
+            modifiedFacts[fid] = 1
+        else:
+            unmodifiedFacts[fid] = 1
+    # update modified fields
     if modifiedFacts:
-        _modifyFields(deck, updateFields, modifiedFacts)
-        if not deleteReferences:
-            for id in modifiedFacts.keys():
-                fact = deck.s.query(Fact).get(id)
-                fact.tags = addTags(fact.tags, "Media Missing")
-                fact.setModified()
-        deck.flushMod()
+        _modifyFields(deck, updateFields, modifiedFacts, dirty)
+    # fix tags
+    if dirty:
+        if deleteRefs:
+            deck.deleteTags(modifiedFacts.keys(), _("Media Missing"))
+        else:
+            deck.addTags(modifiedFacts.keys(), _("Media Missing"))
+        deck.deleteTags(unmodifiedFacts.keys(), _("Media Missing"))
+    # build cache of db records
+    mediaIds = dict(deck.s.all("select filename, id from media"))
+    # assume latex files exist
+    for f in deck.s.column0(
+        "select filename from media where description = 'latex'"):
+        usedFiles[f] = 1
     # look through the media dir for any unused files, and delete
     for f in os.listdir(unicode(deck.mediaDir())):
-        if f not in seenFiles:
-            unusedFiles += 1
-            fname = os.path.join(deck.mediaDir(), f)
-            os.unlink(fname)
-    return missingFiles, unusedFiles
+        if f.startswith("."):
+            continue
+        path = os.path.join(deck.mediaDir(), f)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+            continue
+        if f in usedFiles:
+            del mediaIds[f]
+        else:
+            os.unlink(path)
+            unusedFileCount += 1
+    for (fname, id) in mediaIds.items():
+        # maybe delete from db
+        if id:
+            deck.s.statement("delete from media where id = :id", id=id)
+            deck.s.statement("""
+insert into mediaDeleted (mediaId, deletedTime)
+values (:id, strftime('%s', 'now'))""", id=id)
+    # update deck and save
+    deck.flushMod()
+    deck.save()
+    return missingFileCount, unusedFileCount
+
+def mediaRefs(string):
+    "Return list of (fullMatch, filename, replacementString)."
+    l = []
+    for (reg, repl) in regexps:
+        for (full, fname) in re.findall(reg, string):
+            l.append((full, fname, repl))
+    return l

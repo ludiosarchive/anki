@@ -4,7 +4,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki, ankiqt
-from anki.exporting import Exporters
+from anki.exporting import exporters
 from anki.utils import parseTags
 from ankiqt import ui
 
@@ -22,7 +22,7 @@ class ExportDialog(QDialog):
 
     def setup(self):
         self.dialog.format.insertItems(
-            0, QStringList(list(zip(*Exporters)[0])))
+            0, QStringList(list(zip(*exporters())[0])))
         self.connect(self.dialog.format, SIGNAL("activated(int)"),
                      self.exporterChanged)
         self.exporterChanged(0)
@@ -39,7 +39,7 @@ class ExportDialog(QDialog):
         self.dialog.buttonBox.addButton(b, QDialogButtonBox.AcceptRole)
 
     def exporterChanged(self, idx):
-        self.exporter = Exporters[idx][1](self.deck)
+        self.exporter = exporters()[idx][1](self.deck)
         if hasattr(self.exporter, "includeSchedulingInfo"):
             self.dialog.includeScheduling.show()
         else:

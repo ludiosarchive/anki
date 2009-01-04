@@ -8,7 +8,8 @@ import ankiqt.forms
 import anki
 from anki.facts import Fact
 from anki.errors import *
-from anki.utils import stripHTML
+from anki.utils import stripHTML, parseTags
+from ankiqt.ui.utils import saveGeom, restoreGeom, saveSplitter, restoreSplitter
 from ankiqt import ui
 
 class AddCards(QDialog):
@@ -21,11 +22,12 @@ class AddCards(QDialog):
         self.dialog.setupUi(self)
         self.setupEditor()
         self.addChooser()
-        self.addHelp()
         self.addButtons()
         self.setupStatus()
         self.modelChanged(self.parent.deck.currentModel)
         self.addedItems = 0
+        restoreGeom(self, "add")
+        restoreSplitter(self.dialog.splitter, "add")
         self.show()
         ui.dialogs.open("AddCards", self)
 
@@ -33,8 +35,6 @@ class AddCards(QDialog):
         self.editor = ui.facteditor.FactEditor(self,
                                                self.dialog.fieldsArea,
                                                self.parent.deck)
-        self.editor.onFactValid = self.onValid
-        self.editor.onFactInvalid = self.onInvalid
 
     def addChooser(self):
         self.modelChooser = ui.modelchooser.ModelChooser(self,
@@ -43,29 +43,31 @@ class AddCards(QDialog):
                                                          self.modelChanged)
         self.dialog.modelArea.setLayout(self.modelChooser)
 
-    def addHelp(self):
-        self.help = ui.help.HelpArea(self.dialog.helpFrame,
-                                     self.config)
-        self.help.showHideableKey("add")
+    def helpRequested(self):
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki + "AddItems"))
 
     def addButtons(self):
-        self.addButton = QPushButton(_("&Add cards"))
+        self.addButton = QPushButton(_("Add"))
         self.dialog.buttonBox.addButton(self.addButton,
                                         QDialogButtonBox.ActionRole)
         self.addButton.setShortcut(_("Ctrl+Return"))
-        self.addButton.setDefault(True)
+        self.addButton.setAutoDefault(False)
         s = QShortcut(QKeySequence(_("Ctrl+Enter")), self)
-        s.connect(s, SIGNAL("activated()"), self.addButton, SLOT("click()"))
-        s = QShortcut(QKeySequence(_("Alt+A")), self)
         s.connect(s, SIGNAL("activated()"), self.addButton, SLOT("click()"))
         self.connect(self.addButton, SIGNAL("clicked()"), self.addCards)
         self.closeButton = QPushButton(_("Close"))
+        self.closeButton.setAutoDefault(False)
         self.dialog.buttonBox.addButton(self.closeButton,
                                         QDialogButtonBox.RejectRole)
+        self.helpButton = QPushButton(_("Help"))
+        self.helpButton.setAutoDefault(False)
+        self.dialog.buttonBox.addButton(self.helpButton,
+                                        QDialogButtonBox.HelpRole)
+        self.connect(self.helpButton, SIGNAL("clicked()"), self.helpRequested)
 
     def setupStatus(self):
         "Make the status background the same colour as the frame."
-        p = self.dialog.statusGroup.palette()
+        p = self.dialog.status.palette()
         c = unicode(p.color(QPalette.Window).name())
         self.dialog.status.setStyleSheet(
             "* { background: %s; color: #000000; }" % c)
@@ -74,29 +76,52 @@ class AddCards(QDialog):
         oldFact = self.editor.fact
         # create a new fact
         fact = self.parent.deck.newFact()
-        fact.tags = self.parent.deck.lastTags
+        # copy fields from old fact
+        if oldFact:
+            n = 0
+            for field in fact.fields:
+                try:
+                    field.value = oldFact.fields[n].value
+                except IndexError:
+                    break
+                n += 1
+            fact.tags = oldFact.tags
+        else:
+            fact.tags = self.parent.deck.lastTags
         # set the new fact
         self.editor.setFact(fact, check=True)
 
-    def onValid(self, fact):
-        self.addButton.setEnabled(True)
-
-    def onInvalid(self, fact):
-        self.addButton.setEnabled(False)
-
     def addCards(self):
+        # make sure updated
+        self.editor.saveFieldsNow()
         fact = self.editor.fact
-        cards = self.parent.deck.addFact(fact)
+        n = _("Add")
+        self.parent.deck.setUndoStart(n)
+        try:
+            fact = self.parent.deck.addFact(fact)
+        except FactInvalidError:
+            ui.utils.showInfo(_(
+                "Some fields are missing or not unique."),
+                              parent=self, help="AddItems#AddError")
+            return
+        if not fact:
+            ui.utils.showWarning(_("""\
+The input you have provided would make an empty
+question or answer on all cards."""), parent=self)
+            return
         self.dialog.status.append(_("Added %(num)d card(s) for '%(str)s'.") % {
-            "num": len(cards),
+            "num": len(fact.cards),
             # we're guaranteed that all fields will exist now
             "str": stripHTML(fact[fact.fields[0].name]),
             })
+        self.parent.deck.setUndoEnd(n)
         self.parent.updateTitleBar()
         # start a new fact
         f = self.parent.deck.newFact()
         f.tags = self.parent.deck.lastTags
         self.editor.setFact(f, check=True)
+        # let completer know our extra tags
+        self.editor.tags.addTags(parseTags(self.parent.deck.lastTags))
         self.maybeSave()
 
     def closeEvent(self, evt):
@@ -115,7 +140,10 @@ class AddCards(QDialog):
                             self)):
             ui.dialogs.close("AddCards")
             self.parent.deck.s.flush()
+            self.parent.deck.rebuildCSS()
             self.parent.moveToState("auto")
+            saveGeom(self, "add")
+            saveSplitter(self.dialog.splitter, "add")
             return True
         else:
             return False

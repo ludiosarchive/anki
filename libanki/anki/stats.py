@@ -17,6 +17,7 @@ import anki, anki.utils
 from datetime import date
 from anki.db import *
 from anki.lang import _
+from anki.utils import canonifyTags
 
 # Tracking stats on the DB
 ##########################################################################
@@ -25,7 +26,7 @@ statsTable = Table(
     'stats', metadata,
     Column('id', Integer, primary_key=True),
     Column('type', Integer, nullable=False),
-    Column('day', Date, nullable=False, default=date.today),
+    Column('day', Date, nullable=False),
     Column('reps', Integer, nullable=False, default=0),
     Column('averageTime', Float, nullable=False, default=0),
     Column('reviewTime', Float, nullable=False, default=0),
@@ -50,7 +51,7 @@ statsTable = Table(
 
 class Stats(object):
     def __init__(self):
-        self.day = date.today()
+        self.day = None
         self.reps = 0
         self.averageTime = 0
         self.reviewTime = 0
@@ -139,6 +140,10 @@ where id = :id""", self.__dict__)
 
 mapper(Stats, statsTable)
 
+def genToday(deck):
+    return datetime.datetime.utcfromtimestamp(
+        time.time() - deck.utcOffset).date()
+
 def updateAllStats(s, gs, ds, card, ease, oldState):
     "Update global and daily statistics."
     updateStats(s, gs, card, ease, oldState)
@@ -146,7 +151,7 @@ def updateAllStats(s, gs, ds, card, ease, oldState):
 
 def updateStats(s, stats, card, ease, oldState):
     stats.reps += 1
-    delay = card.thinkingTime()
+    delay = card.totalTime()
     if delay >= 60:
         # make a guess as to the time spent answering
         stats.reviewTime += stats.averageTime
@@ -159,9 +164,10 @@ def updateStats(s, stats, card, ease, oldState):
     setattr(stats, attr, getattr(stats, attr) + 1)
     stats.toDB(s)
 
-def globalStats(s):
+def globalStats(deck):
+    s = deck.s
     type = STATS_LIFE
-    today = date.today()
+    today = genToday(deck)
     id = s.scalar("select id from stats where type = :type",
                   type=type)
     stats = Stats()
@@ -173,9 +179,10 @@ def globalStats(s):
     stats.type = type
     return stats
 
-def dailyStats(s):
+def dailyStats(deck):
+    s = deck.s
     type = STATS_DAY
-    today = date.today()
+    today = genToday(deck)
     id = s.scalar("select id from stats where type = :type and day = :day",
                   type=type, day=today)
     stats = Stats()
@@ -252,46 +259,36 @@ class CardStats(object):
 
     def report(self):
         c = self.card
-        self.txt = "<table width=250>"
+        fmt = anki.utils.fmtTimeSpan
+        self.txt = "<table>"
         self.addLine(_("Added"), self.strTime(c.created))
         if c.firstAnswered:
-            self.addLine(_("First review"), self.strTime(c.firstAnswered))
+            self.addLine(_("First Review"), self.strTime(c.firstAnswered))
         self.addLine(_("Changed"), self.strTime(c.modified))
         next = time.time() - c.due
         if next > 0:
-            next = _("%s ago") % anki.utils.fmtTimeSpan(next)
+            next = _("%s ago") % fmt(next)
         else:
-            next = _("in %s") % anki.utils.fmtTimeSpan(abs(next))
-        self.addLine(_("Next due"), next)
-        self.addLine(_("Current interval"), "%0.2f days" % c.interval)
+            next = _("in %s") % fmt(abs(next))
+        self.addLine(_("Due"), next)
+        self.addLine(_("Interval"), fmt(c.interval * 86400))
+        self.addLine(_("Ease"), "%0.2f" % c.factor)
+        if c.lastDue:
+            last = _("%s ago") % fmt(time.time() - c.lastDue)
+            self.addLine(_("Last Due"), last)
         if c.interval != c.lastInterval:
             # don't show the last interval if it hasn't been updated yet
-            self.addLine(_("Last interval"), "%0.2f days" % c.lastInterval)
-        self.addLine(_("Current factor"), "%0.2f" % c.factor)
-        self.addLine(_("Last factor"), "%0.2f" % c.lastFactor)
-        self.addLine(_("Review count"), c.reps)
+            self.addLine(_("Last Interval"), fmt(c.lastInterval * 86400))
+        self.addLine(_("Last Ease"), "%0.2f" % c.lastFactor)
         if c.reps:
-            self.addLine(_("Correct count"), "%d (%0.2f%%)" % (
-                c.yesCount, (c.yesCount / float(c.reps))*100))
-        self.addLine(_("Repeatedly correct"), c.successive)
-        self.addLine(_("Average time"), _("%0.1f seconds") %
+            self.addLine(_("Reviews"), "%d/%d (s=%d)" % (
+                c.yesCount, c.reps, c.successive))
+        self.addLine(_("Average Time"), _("%0.1f seconds") %
                      c.averageTime)
-        self.addLine(_("Total time"), _("%0.1f seconds") %
+        self.addLine(_("Total Time"), _("%0.1f seconds") %
                      c.reviewTime)
-        if self.deck.cardIsNew(c):
-            state = _("First time")
-        elif self.deck.cardIsBeingLearnt(c):
-            state = _("Young")
-        else:
-            state = _("Mature")
-        self.addLine(_("State"), state)
-        if c.tags:
-            self.addLine(_("Card tags"), c.tags)
-        self.addLine(_("Card model tags"), c.cardModel.name)
-        if c.fact.model.tags:
-            self.addLine(_("Model tags"), c.fact.model.tags)
-        if c.fact.tags:
-            self.addLine(_("Fact tags"), c.fact.tags)
+        self.addLine(_("Model Tags") + "&nbsp;"*5, c.fact.model.tags)
+        self.addLine(_("Card Model"), c.cardModel.name)
         self.txt += "</table>"
         return self.txt
 
@@ -317,8 +314,8 @@ class DeckStats(object):
         d = self.deck
         html="<h1>" + _("Deck Statistics") + "</h1>"
         html += _("Deck created: <b>%s</b> ago<br>") % self.createdTimeStr()
-        total = d.cardCount()
-        new = d.newCardCount()
+        total = d.cardCount
+        new = d.newCountAll()
         young = d.youngCardCount()
         old = d.matureCardCount()
         newP = new / float(total) * 100
@@ -346,15 +343,39 @@ class DeckStats(object):
         html += _("First-seen cards: <b>%(gNewYes%)0.1f%%</b> "
                   "(<b>%(gNewYes)d</b> of <b>%(gNewTotal)d</b>)<br><br>") % stats
         # average pending time
-        existing = d.cardCount() - d.newCardCount()
+        existing = d.cardCount - d.newCountToday
         avgInt = self.getAverageInterval()
+        def tr(a, b):
+            return "<tr><td>%s</td><td align=right>%s</td></tr>" % (a, b)
         if existing and avgInt:
             html += _("<b>Averages</b><br>")
-            html += _("Interval: <b>%0.0f</b> days<br/>") % avgInt
-            html += _("Workload: <b>%0.1f</b> cards/day<br/>") % (
-                existing / float(avgInt))
-            html += _("Added: <b>%(a)d</b> a day, <b>%(b)d</b> a month<br>") % {
-                'a': self.newPerDay(), 'b': self.newPerDay()*30}
+            html += "<table width=200>"
+            html += tr(_("Interval"), _("<b>%0.0f</b> days") % avgInt)
+            html += tr(_("Average reps"), _("<b>%0.1f</b> cards/day") % (
+                self.getSumInverseRoundInterval()))
+            html += tr(_("Reps next week"), _("<b>%0.1f</b> cards/day") % (
+                self.getWorkloadPeriod(7)))
+            html += tr(_("Reps next month"), _("<b>%0.1f</b> cards/day") % (
+                self.getWorkloadPeriod(30)))
+            html += tr(_("Reps last week"), _("<b>%0.1f</b> cards/day") % (
+                self.getPastWorkloadPeriod(7)))
+            html += tr(_("Reps last month"), _("<b>%0.1f</b> cards/day") % (
+                self.getPastWorkloadPeriod(30)))
+            html += tr(_("Avg. added"), _("<b>%(a)d</b>/day, <b>%(b)d</b>/mon") % {
+                'a': self.newAverage(), 'b': self.newAverage()*30})
+            np = self.getNewPeriod(7)
+            html += tr(_("Added last week"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
+                {'a': np, 'b': np / float(7)}))
+            np = self.getNewPeriod(30)
+            html += tr(_("Added last month"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
+                {'a': np, 'b': np / float(30)}))
+            np = self.getFirstPeriod(7)
+            html += tr(_("First last week"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
+                {'a': np, 'b': np / float(7)}))
+            np = self.getFirstPeriod(30)
+            html += tr(_("First last month"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
+                {'a': np, 'b': np / float(30)}))
+            html += "</table>"
         return html
 
     def getAverageInterval(self):
@@ -386,9 +407,9 @@ class DeckStats(object):
             n += 1
         return boxes
 
-    def newPerDay(self):
+    def newAverage(self):
         "Average number of new cards added each day."
-        return self.deck.cardCount() / max(1, self.ageInDays())
+        return self.deck.cardCount / max(1, self.ageInDays())
 
     def createdTimeStr(self):
         return anki.utils.fmtTimeSpan(time.time() - self.deck.created)
@@ -396,6 +417,36 @@ class DeckStats(object):
     def ageInDays(self):
         return (time.time() - self.deck.created) / 86400.0
 
+    def getSumInverseRoundInterval(self):
+        return self.deck.s.scalar(
+            "select sum(1/round(max(interval, 1)+0.5)) from cards "
+            "where cards.reps > 0 "
+            "and priority > 0") or 0
+
+    def getWorkloadPeriod(self, period):
+        cutoff = time.time() + 86400 * period
+        return (self.deck.s.scalar("""
+select count(id) from cards
+where combinedDue < :cutoff
+and priority > 0""", cutoff=cutoff) or 0) / float(period)
+
+    def getPastWorkloadPeriod(self, period):
+        cutoff = time.time() - 86400 * period
+        return (self.deck.s.scalar("""
+select count(id) from reviewHistory
+where time > :cutoff""", cutoff=cutoff) or 0) / float(period)
+
+    def getNewPeriod(self, period):
+        cutoff = time.time() - 86400 * period
+        return (self.deck.s.scalar("""
+select count(id) from cards
+where created > :cutoff""", cutoff=cutoff) or 0)
+
+    def getFirstPeriod(self, period):
+        cutoff = time.time() - 86400 * period
+        return (self.deck.s.scalar("""
+select count(id) from reviewHistory
+where reps = 1 and time > :cutoff""", cutoff=cutoff) or 0)
 
 # Kanji stats
 ##########################################################################
@@ -467,7 +518,7 @@ cards.factId = fields.factId
                   for (name, all), found in zip(self.kanjiGrades, self.kanjiSets)]
         out = (_("<h1>Kanji statistics</h1>The %d seen cards in this deck "
                  "contain:") % self.deck.seenCardCount() +
-               "<br/><ul>" +
+               "<ul>" +
                # total kanji
                _("<li>%d total unique kanji.</li>") %
                sum([c[1] for c in counts]) +

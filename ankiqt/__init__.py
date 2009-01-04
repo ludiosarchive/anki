@@ -6,11 +6,15 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.8"
+appVersion="0.9.9.4"
 appWebsite="http://ichi2.net/anki/download/"
-appHelpSite="http://ichi2.net/anki/wiki/Documentation"
+appWiki="http://ichi2.net/anki/wiki/"
+appHelpSite="http://ichi2.net/anki/wiki/AnkiWiki"
 appIssueTracker="http://code.google.com/p/anki/issues/list"
 appForum="http://groups.google.com/group/ankisrs/topics"
+appReleaseNotes="http://ichi2.net/anki/download/index.html#changes"
+appMoreDecks="http://ichi2.net/anki/wiki/ExtraDecks"
+
 modDir=os.path.dirname(os.path.abspath(__file__))
 runningDir=os.path.split(modDir)[0]
 # py2exe
@@ -39,8 +43,6 @@ def run():
                 pass
 
     app = QApplication(sys.argv)
-    if not sys.platform.startswith("darwin"):
-        app.setStyle("plastique")
 
     # setup paths for forms, icons
     sys.path.append(modDir)
@@ -76,24 +78,33 @@ def run():
     DeckStorage.backupDir = os.path.join(conf.configPath,
                                          "backups")
 
+    # qt translations
+    translationPath = ''
+    if 'linux' in sys.platform or 'unix' in sys.platform:
+        translationPath = "/usr/share/qt4/translations/"
+    if translationPath:
+        long = conf['interfaceLang']
+        if long == "ja_JP":
+            # qt is inconsistent
+            long = long.lower()
+        short = long.split('_')[0]
+        qtTranslator = QTranslator()
+        if qtTranslator.load("qt_" + long, translationPath) or \
+               qtTranslator.load("qt_" + short, translationPath):
+            app.installTranslator(qtTranslator)
+
+    if conf['alternativeTheme']:
+        app.setStyle("plastique")
+
     # load main window
     ui.importAll()
     ui.dialogs.registerDialogs()
     mw = ui.main.AnkiQt(app, conf, args)
     try:
-        styleFile = open(opts.config + ".css")
+        styleFile = open(os.path.join(opts.config, "style.css"))
         mw.setStyleSheet(styleFile.read())
     except (IOError, OSError):
         pass
-
-    import platform
-    if (platform.processor() != "powerpc" and
-        platform.architecture()[0] == "32bit"):
-        try:
-            import psyco
-            psyco.profile()
-        except ImportError:
-            print "Installing python-psyco is strongly recommended."
 
     app.exec_()
 

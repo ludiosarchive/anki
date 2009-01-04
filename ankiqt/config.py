@@ -6,7 +6,7 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import os, sys, cPickle, locale, types
+import os, sys, cPickle, locale, types, shutil
 
 # compatability
 def unpickleWxFont(*args):
@@ -24,10 +24,23 @@ class Config(dict):
             if self.configPath.startswith("~"):
                 # windows sucks
                 self.configPath = "c:\\anki"
+        elif sys.platform.startswith("darwin"):
+            if self.configPath == os.path.expanduser("~/.anki"):
+                oldDb = self.getDbPath()
+                self.configPath = os.path.expanduser(
+                    "~/Library/Application Support/Anki")
+                # upgrade?
+                if (not os.path.exists(self.configPath) and
+                    os.path.exists(oldDb)):
+                    self.makeAnkiDir()
+                    newDb = self.getDbPath()
+                    shutil.copy2(oldDb, newDb)
+        self.makeAnkiDir()
         self.load()
 
     def defaults(self):
         fields = {
+            'iconSize': 32,
             'syncOnLoad': False,
             'syncOnClose': False,
             'checkForUpdates': True,
@@ -38,22 +51,26 @@ class Config(dict):
             'showToolbar': True,
             'recentDeckPaths': [],
             'saveAfterAnswer': True,
-            'saveAfterAnswerNum': 30,
+            'saveAfterAnswerNum': 10,
             'saveAfterAdding': True,
-            'saveAfterAddingNum': 10,
+            'saveAfterAddingNum': 3,
             'saveOnClose': True,
-            'mainWindowSize': QSize(550, 625),
-            'mainWindowPos': QPoint(100, 100),
-            'easeButtonStyle': 'standard',
+            'mainWindowGeom': None,
             'easeButtonHeight': 'standard',
             'suppressUpdate': False,
             'suppressEstimates': False,
-            'suppressLastCardInterval': False,
-            'suppressLastCardContent': False,
-            'showTray': False,
+            'showLastCardInterval': False,
+            'showLastCardContent': False,
+            'showTrayIcon': False,
             'showTimer': True,
-            'editCurrentOnly': True,
             'showSuspendedCards': True,
+            'simpleToolbar': True,
+            'scrollToAnswer': True,
+            'qaDivider': True,
+            'splitQA': True,
+            'sortIndex': 0,
+            'addZeroSpace': True,
+            'alternativeTheme': False,
             }
         for (k,v) in fields.items():
             if not self.has_key(k):
@@ -92,9 +109,13 @@ class Config(dict):
 
     def makeAnkiDir(self):
         base = self.configPath
-        os.mkdir(base)
-        os.mkdir(os.path.join(base, "plugins"))
-        os.mkdir(os.path.join(base, "backups"))
+        for x in (base,
+                  os.path.join(base, "plugins"),
+                  os.path.join(base, "backups")):
+            try:
+                os.mkdir(x)
+            except:
+                pass
 
     def save(self):
         path = self.getDbPath()
@@ -112,23 +133,6 @@ class Config(dict):
     def load(self):
         base = self.configPath
         db = self.getDbPath()
-        if not os.path.exists(base):
-            self.makeAnkiDir()
-        # maybe move .anki config file to .anki/config.db
-        if os.path.isfile(base):
-            oldfile = open(base)
-            contents = oldfile.read()
-            oldfile.close()
-            # write to a tempfile as a backup
-            from tempfile import mkstemp
-            (fd, tmpname) = mkstemp()
-            file = os.fdopen(fd, "w")
-            file.write(contents)
-            file.close()
-            os.unlink(base)
-            self.makeAnkiDir()
-            from shutil import copyfile
-            copyfile(tmpname, db)
         # load config
         try:
             f = open(db)
