@@ -1,3 +1,15 @@
+anki (0.9.9.4-1) unstable; urgency=low
+
+  * New upstream release (closes: #507825)
+  * Always grabbing sound device should be fixed with this upstream release
+    (closes: #502800)
+  * debian/watch: updated download URL
+  * debian/anki.install: ankiqt/icons_rc.py is now a symlink, install the file
+    from the new location
+  * debian/control: remove duplicate Section header from binary stanza
+
+ -- Andreas Bombe <aeb@debian.org>  Mon, 05 Jan 2009 01:01:56 +0100
+
 anki (0.9.7.8-1) unstable; urgency=low
 
   * New upstream release (closes: #496475)
