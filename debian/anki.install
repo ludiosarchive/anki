@@ -1,4 +1,6 @@
-ankiqt/*.py					usr/share/anki/ankiqt
+ankiqt/__init__.py				usr/share/anki/ankiqt
+ankiqt/config.py				usr/share/anki/ankiqt
+icons_rc.py					usr/share/anki/ankiqt
 ankiqt/forms/*.py				usr/share/anki/ankiqt/forms
 ankiqt/ui/*.py					usr/share/anki/ankiqt/ui
 libanki/anki/*.py				usr/share/anki/anki
