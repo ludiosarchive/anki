@@ -11,6 +11,10 @@ from anki.stdmodels import JapaneseModel
 from ankiqt import ui
 import ankiqt.forms
 
+tabs = ("Display",
+        "SaveAndSync",
+        "Advanced")
+
 class Preferences(QDialog):
 
     def __init__(self, parent, config):
@@ -28,8 +32,11 @@ class Preferences(QDialog):
             (_("German"), "de_DE"),
             (_("Japanese"), "ja_JP"),
             (_("Korean"), "ko_KR"),
+            (_("Finnish"), "fi_FI"),
             (_("Spanish"), "es_ES"),
+            (_("Italian"), "it_IT"),
             ]
+        self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"), self.helpRequested)
         self.setupLang()
         self.setupFont()
         self.setupColour()
@@ -50,9 +57,7 @@ class Preferences(QDialog):
         self.done(0)
 
     def reject(self):
-        self.origConfig['interfaceLang'] = self.origInterfaceLang
-        self.parent.setLang()
-        self.done(0)
+        self.accept()
 
     def setupLang(self):
         # interface lang
@@ -71,8 +76,6 @@ class Preferences(QDialog):
 
     fonts = (
         "interface",
-        "lastCard",
-        "edit",
         )
 
     def loadCurrentFonts(self):
@@ -110,13 +113,15 @@ class Preferences(QDialog):
         getattr(self.dialog, type + "Size").setFocus()
 
     def setupColour(self):
-        if sys.platform.startswith("darwin"):
+        self.plastiqueStyle = None
+        if (sys.platform.startswith("darwin") or
+            sys.platform.startswith("win32")):
             # mac widgets don't show colours
             self.plastiqueStyle = QStyleFactory.create("plastique")
-        for c in ("interface", "lastCard", "background"):
+        for c in ("interface", "background"):
             colour = c + "Colour"
             button = getattr(self.dialog, colour)
-            if sys.platform.startswith("darwin"):
+            if self.plastiqueStyle:
                 button.setStyle(self.plastiqueStyle)
             button.setPalette(QPalette(QColor(
                 self.config[colour])))
@@ -157,31 +162,44 @@ class Preferences(QDialog):
 
     def setupAdvanced(self):
         self.dialog.showToolbar.setChecked(self.config['showToolbar'])
-        self.dialog.compactEaseButtons.setChecked(
-            self.config['easeButtonStyle'] != 'standard')
         self.dialog.tallButtons.setChecked(
             self.config['easeButtonHeight'] != 'standard')
         self.dialog.suppressEstimates.setChecked(self.config['suppressEstimates'])
-        self.dialog.suppressLastCardInterval.setChecked(self.config['suppressLastCardInterval'])
-        self.dialog.suppressLastCardContent.setChecked(self.config['suppressLastCardContent'])
-        self.dialog.showTray.setChecked(self.config['showTray'])
-        self.dialog.editCurrentOnly.setChecked(self.config['editCurrentOnly'])
+        self.dialog.showLastCardInterval.setChecked(self.config['showLastCardInterval'])
+        self.dialog.showLastCardContent.setChecked(self.config['showLastCardContent'])
+        self.dialog.showTray.setChecked(self.config['showTrayIcon'])
+        self.dialog.showTimer.setChecked(self.config['showTimer'])
+        self.dialog.simpleToolbar.setChecked(self.config['simpleToolbar'])
+        self.dialog.scrollToAnswer.setChecked(self.config['scrollToAnswer'])
+        self.dialog.showDivider.setChecked(self.config['qaDivider'])
+        self.dialog.splitQA.setChecked(self.config['splitQA'])
+        self.dialog.addZeroSpace.setChecked(self.config['addZeroSpace'])
+        self.dialog.alternativeTheme.setChecked(self.config['alternativeTheme'])
+        self.dialog.toolbarIconSize.setText(str(self.config['iconSize']))
 
     def updateAdvanced(self):
         self.config['showToolbar'] = self.dialog.showToolbar.isChecked()
-        if self.dialog.compactEaseButtons.isChecked():
-            self.config['easeButtonStyle'] = 'compact'
-        else:
-            self.config['easeButtonStyle'] = 'standard'
         if self.dialog.tallButtons.isChecked():
             self.config['easeButtonHeight'] = 'tall'
         else:
             self.config['easeButtonHeight'] = 'standard'
-        self.config['suppressLastCardInterval'] = self.dialog.suppressLastCardInterval.isChecked()
-        self.config['suppressLastCardContent'] = self.dialog.suppressLastCardContent.isChecked()
-        self.config['showTray'] = self.dialog.showTray.isChecked()
+        self.config['showLastCardInterval'] = self.dialog.showLastCardInterval.isChecked()
+        self.config['showLastCardContent'] = self.dialog.showLastCardContent.isChecked()
+        self.config['showTrayIcon'] = self.dialog.showTray.isChecked()
+        self.config['showTimer'] = self.dialog.showTimer.isChecked()
         self.config['suppressEstimates'] = self.dialog.suppressEstimates.isChecked()
-        self.config['editCurrentOnly'] = self.dialog.editCurrentOnly.isChecked()
+        self.config['simpleToolbar'] = self.dialog.simpleToolbar.isChecked()
+        self.config['scrollToAnswer'] = self.dialog.scrollToAnswer.isChecked()
+        self.config['qaDivider'] = self.dialog.showDivider.isChecked()
+        self.config['splitQA'] = self.dialog.splitQA.isChecked()
+        self.config['addZeroSpace'] = self.dialog.addZeroSpace.isChecked()
+        self.config['alternativeTheme'] = self.dialog.alternativeTheme.isChecked()
+        i = 32
+        try:
+            i = int(self.dialog.toolbarIconSize.text())
+        except:
+            pass
+        self.config['iconSize'] = i
 
     def codeToIndex(self, code):
         n = 0
@@ -191,3 +209,9 @@ class Preferences(QDialog):
             n += 1
         # default to english
         return self.codeToIndex("en_US")
+
+    def helpRequested(self):
+        idx = self.dialog.tabWidget.currentIndex()
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "Preferences#" +
+                                      tabs[idx]))

@@ -1,11 +1,9 @@
-syntax: glob
-*.elc
 *.pyc
 *~
-.*.swp
 *.mo
 *\#
 build
 dist
 anki.egg-info
 samples
+unihan.db

@@ -8,10 +8,20 @@ Miscellaneous utilities
 """
 __docformat__ = 'restructuredtext'
 
-import re, os, random, time
+import re, os, random, time, types
+
+try:
+    import hashlib
+    md5 = hashlib.md5
+except ImportError:
+    import md5
+    md5 = md5.new
 
 from anki.db import *
 from anki.lang import _, ngettext
+
+# Time handling
+##############################################################################
 
 timeTable = {
     "years": lambda n: ngettext("%s year", "%s years", n),
@@ -22,20 +32,35 @@ timeTable = {
     "seconds": lambda n: ngettext("%s second", "%s seconds", n),
     }
 
-def fmtTimeSpan(time, pad=0, point=0):
+shortTimeTable = {
+    "years": "%sy",
+    "months": "%sm",
+    "days": "%sd",
+    "hours": "%sh",
+    "minutes": "%sm",
+    "seconds": "%ss",
+    }
+
+def fmtTimeSpan(time, pad=0, point=0, short=False):
     "Return a string representing a time span (eg '2 days')."
     (type, point) = optimalPeriod(time, point)
     time = convertSecondsTo(time, type)
-    fmt = timeTable[type](_pluralCount(round(time, point)))
+    if short:
+        fmt = shortTimeTable[type]
+    else:
+        fmt = timeTable[type](_pluralCount(round(time, point)))
     timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
     return ("%" + (fmt % timestr)) % time
 
-def fmtTimeSpanPair(time1, time2):
+def fmtTimeSpanPair(time1, time2, short=False):
     (type, point) = optimalPeriod(time1, 0)
     time1 = convertSecondsTo(time1, type)
     time2 = convertSecondsTo(time2, type)
     # a pair is always  should always be read as plural
-    fmt = timeTable[type](2)
+    if short:
+        fmt = shortTimeTable[type]
+    else:
+        fmt = timeTable[type](2)
     timestr = "%(a)d.%(b)df" % {'a': 0, 'b': point}
     finalstr = "%s-%s" % (
         ('%' + timestr) % time1,
@@ -80,37 +105,8 @@ def _pluralCount(time):
         return 1
     return 2
 
-def mergeTags(*args):
-    "Merge tag lists into a single string."
-    return ", ".join(set(parseTags(",".join(args))))
-
-def parseTags(tags):
-    "Parse a string and return a list of tags."
-    tags = tags.split(",")
-    tags = [tag.strip() for tag in tags if tag.strip()]
-    return tags
-
-def findTag(tag, tags):
-    "True if TAG is in TAGS. Ignore case."
-    return tag.lower() in [t.lower() for t in tags]
-
-def addTags(tagstr, tags):
-    "Add tag if doesn't exist."
-    currentTags = parseTags(tags)
-    for tag in parseTags(tagstr):
-        if not findTag(tag, currentTags):
-            currentTags.append(tag)
-    return u", ".join(currentTags)
-
-def deleteTags(tagstr, tags):
-    "Delete tag if exists."
-    currentTags = parseTags(tags)
-    for tag in parseTags(tagstr):
-        try:
-            currentTags.remove(tag)
-        except ValueError:
-            pass
-    return u", ".join(currentTags)
+# HTML
+##############################################################################
 
 def stripHTML(s):
     s = re.sub("<.*?>", "", s)
@@ -121,26 +117,24 @@ def stripHTML(s):
 def tidyHTML(html):
     "Remove cruft like body tags and return just the important part."
     # contents of body - no head or html tags
-    html = re.sub(".*<body.*?>(.*)</body></html>",
+    html = re.sub(u".*<body.*?>(.*)</body></html>",
                   "\\1", html.replace("\n", u""))
     # strip superfluous Qt formatting
-    html = re.sub("margin-top:\d+px; margin-bottom:\d+px; margin-left:\d+px; "
+    html = re.sub(u"margin-top:\d+px; margin-bottom:\d+px; margin-left:\d+px; "
                   "margin-right:\d+px; -qt-block-indent:0; "
-                  "text-indent:0px;", "", html)
-    html = re.sub("-qt-paragraph-type:empty;", "", html)
-    # collapse multiple spaces into one
-    html = re.sub("  +", " ", html)
+                  "text-indent:0px;", u"", html)
+    html = re.sub(u"-qt-paragraph-type:empty;", u"", html)
     # strip leading space in style statements, and remove if no contents
-    html = re.sub('style=" ', 'style="', html)
-    html = re.sub(' style=""', "", html)
+    html = re.sub(u'style=" ', u'style="', html)
+    html = re.sub(u' style=""', u"", html)
     # convert P tags into SPAN and/or BR
-    html = re.sub('<p( style=.+?)>(.*?)</p>', u'<span\\1>\\2</span><br>', html)
-    html = re.sub('<p>(.*?)</p>', u'\\1<br>', html)
-    html = re.sub('<br>$', u'', html)
-    # remove leading or trailing whitespace
-    html = re.sub('^ +', u'', html)
-    html = re.sub(' +$', u'', html)
+    html = re.sub(u'<p( style=.+?)>(.*?)</p>', u'<span\\1>\\2</span><br>', html)
+    html = re.sub(u'<p>(.*?)</p>', u'\\1<br>', html)
+    html = re.sub(u'<br>$', u'', html)
     return html
+
+# IDs
+##############################################################################
 
 def genID(static=[]):
     "Generate a random, unique 64bit ID."
@@ -163,3 +157,68 @@ def genID(static=[]):
     if x >= 9223372036854775808L:
         x -= 18446744073709551616L
     return x
+
+def hexifyID(id):
+    if id < 0:
+        id += 18446744073709551616L
+    return "%x" % id
+
+def dehexifyID(id):
+    id = int(id, 16)
+    if id >= 9223372036854775808L:
+        id -= 18446744073709551616L
+    return id
+
+def ids2str(ids):
+    """Given a list of integers, return a string '(int1,int2,.)'
+
+The caller is responsible for ensuring only integers are provided.
+This is safe if you use sqlite primary key columns, which are guaranteed
+to be integers."""
+    return "(%s)" % ",".join([str(i) for i in ids])
+
+# Tags
+##############################################################################
+
+def parseTags(tags):
+    "Parse a string and return a list of tags."
+    tags = tags.split(",")
+    tags = [tag.strip() for tag in tags if tag.strip()]
+    return tags
+
+def joinTags(tags):
+    return u", ".join(tags)
+
+def canonifyTags(tags):
+    "Strip leading/trailing/superfluous commas and duplicates."
+    return joinTags(sorted(set(parseTags(tags))))
+
+def findTag(tag, tags):
+    "True if TAG is in TAGS. Ignore case."
+    if not isinstance(tags, types.ListType):
+        tags = parseTags(tags)
+    return tag.lower() in [t.lower() for t in tags]
+
+def addTags(tagstr, tags):
+    "Add tags if they don't exist."
+    currentTags = parseTags(tags)
+    for tag in parseTags(tagstr):
+        if not findTag(tag, currentTags):
+            currentTags.append(tag)
+    return joinTags(currentTags)
+
+def deleteTags(tagstr, tags):
+    "Delete tags if they don't exists."
+    currentTags = parseTags(tags)
+    for tag in parseTags(tagstr):
+        try:
+            currentTags.remove(tag)
+        except ValueError:
+            pass
+    return joinTags(currentTags)
+
+# Misc
+##############################################################################
+
+def checksum(data):
+    return md5(data).hexdigest()

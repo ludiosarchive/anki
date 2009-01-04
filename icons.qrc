@@ -1,5 +1,18 @@
 <RCC>
   <qresource prefix="/" >
+    <file>icons/anki-tag.png</file>
+    <file>icons/edit-redo.png</file>
+    <file>icons/text-xml.png</file>
+    <file>icons/document-preview.png</file>
+    <file>icons/media-record.png</file>
+    <file>icons/edit-rename.png</file>
+    <file>icons/kblogger.png</file>
+    <file>icons/chronometer.png</file>
+    <file>icons/Anki_Card.png</file>
+    <file>icons/document-open-remote.png</file>
+    <file>icons/document-open-recent.png</file>
+    <file>icons/khtml_kget.png</file>
+    <file>icons/edit-find.png</file>
     <file>icons/colors.png</file>
     <file>icons/anki.png</file>
     <file>icons/Anki_Add_Tag.png</file>
@@ -24,7 +37,6 @@
     <file>icons/fileclose.png</file>
     <file>icons/folder_image.png</file>
     <file>icons/folder_sound.png</file>
-    <file>icons/fonts.png</file>
     <file>icons/format-stroke-color.png</file>
     <file>icons/games-solve.png</file>
     <file>icons/go-home.png</file>

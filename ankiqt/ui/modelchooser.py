@@ -20,10 +20,10 @@ class ModelChooser(QHBoxLayout):
         self.setMargin(0)
         self.setSpacing(6)
         self.shortcuts = []
-        label = QLabel(_("<b><u>M</u>odel</b>:"))
+        label = QLabel(_("<b>Model</b>:"))
         self.addWidget(label)
         self.models = QComboBox()
-        s = QShortcut(QKeySequence(_("Alt+M")), self.parent)
+        s = QShortcut(QKeySequence(_("Shift+Alt+m")), self.parent)
         s.connect(s, SIGNAL("activated()"),
                   lambda: self.models.showPopup())
         self.drawModels()
@@ -40,7 +40,7 @@ class ModelChooser(QHBoxLayout):
         self.connect(self.add, SIGNAL("clicked()"), self.onAdd)
         self.edit = QPushButton()
         self.edit.setIcon(QIcon(":/icons/edit.png"))
-        self.edit.setShortcut(_("Alt+E"))
+        self.edit.setShortcut(_("Shift+Alt+e"))
         self.edit.setToolTip(_("Edit the current model"))
         self.edit.setAutoDefault(False)
         self.addWidget(self.edit)
@@ -49,13 +49,11 @@ class ModelChooser(QHBoxLayout):
         self.handleCards = False
         if cards:
             self.handleCards = True
-            label = QLabel(_("<b><u>C</u>ards</b>:"))
+            label = QLabel(_("<b>Cards</b>:"))
             self.addWidget(label)
             self.cards = QPushButton()
+            self.cards.setAutoDefault(False)
             self.connect(self.cards, SIGNAL("clicked()"), self.onCardChange)
-            s = QShortcut(QKeySequence(_("Alt+C")), self.parent)
-            s.connect(s, SIGNAL("activated()"),
-                      self.onCardChange)
             self.addWidget(self.cards)
             self.drawCardModels()
 
@@ -85,6 +83,8 @@ class ModelChooser(QHBoxLayout):
             self.drawModels()
             self.changed(model)
             self.deck.setModified()
+            # check again
+            self.deck.haveJapanese = None
 
     def onChange(self, idx):
         model = self.deck.models[idx]
@@ -118,7 +118,7 @@ class ModelChooser(QHBoxLayout):
         self.cards.setText(txt)
         n = 1
         for c in m.cardModels:
-            s = QShortcut(QKeySequence("Alt+%d" % n), self.parent)
+            s = QShortcut(QKeySequence("Ctrl+%d" % n), self.parent)
             self.parent.connect(s, SIGNAL("activated()"),
                                 lambda c=c: self.toggleCard(c))
             self.shortcuts.append(s)
@@ -166,7 +166,7 @@ class ModelChooser(QHBoxLayout):
 
 class AddModel(QDialog):
 
-    def __init__(self, parent, main=None, online=False):
+    def __init__(self, parent, main=None):
         QDialog.__init__(self, parent)
         self.parent = parent
         if not main:
@@ -176,13 +176,9 @@ class AddModel(QDialog):
         self.dialog = ankiqt.forms.addmodel.Ui_AddModel()
         self.dialog.setupUi(self)
         self.models = {}
-        for name in (
-            "Japanese",
-            "English",
-            "Cantonese",
-            "Mandarin",
-            "Heisig"):
-            # hard code the order so that most common come first
+        names = stdmodels.models.keys()
+        names.sort()
+        for name in names:
             m = stdmodels.byName(name)
             item = QListWidgetItem(m.name)
             self.dialog.models.addItem(item)
@@ -191,20 +187,18 @@ class AddModel(QDialog):
         # the list widget will swallow the enter key
         s = QShortcut(QKeySequence("Return"), self)
         self.connect(s, SIGNAL("activated()"), self.accept)
-        if not online:
-            self.dialog.loadOnline.setShown(False)
+        # help
+        self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"), self.onHelp)
 
     def getModel(self):
         self.exec_()
         return self.model
 
     def accept(self):
-        if self.dialog.createTemplate.isChecked():
-            self.model = self.models[
-                unicode(self.dialog.models.currentItem().text())]
-        elif self.dialog.createBasic.isChecked():
-            self.model = stdmodels.byName("Basic")
-        else:
-            self.model = "online"
+        self.model = self.models[
+            unicode(self.dialog.models.currentItem().text())]
         QDialog.accept(self)
 
+    def onHelp(self):
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "AddModel"))

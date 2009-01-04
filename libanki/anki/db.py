@@ -15,8 +15,18 @@ transaction.
 """
 __docformat__ = 'restructuredtext'
 
+try:
+    from pysqlite2 import dbapi2 as sqlite
+except ImportError:
+    try:
+        from sqlite3 import dbapi2 as sqlite
+    except:
+        raise "Please install pysqlite2 or python2.5"
+sqlite.enable_shared_cache(True)
+
 from sqlalchemy import (Table, Integer, Float, Column, MetaData,
-                        ForeignKey, Boolean, String, Date, UniqueConstraint)
+                        ForeignKey, Boolean, String, Date,
+                        UniqueConstraint, Index, PrimaryKeyConstraint)
 from sqlalchemy import create_engine
 from sqlalchemy.orm import mapper, sessionmaker, relation, backref, \
      object_session as _object_session
@@ -30,22 +40,25 @@ except ImportError:
     from sqlalchemy import Unicode
     UnicodeText = Unicode
 
+# shared metadata
 metadata = MetaData()
 
+# this class assumes the provided session is called with transactional=False
 class SessionHelper(object):
     "Add some convenience routines to a session."
 
     def __init__(self, session, lock=False, transaction=True):
-        self.session = session
-        self.lock = lock
-        self.transaction = transaction
-        if self.transaction:
-            self.session.begin()
-        if self.lock:
-            self.lockDB()
+        self._session = session
+        self._lock = lock
+        self._transaction = transaction
+        if self._transaction:
+            self._session.begin()
+        if self._lock:
+            self._lockDB()
+        self._seen = True
 
     def __getattr__(self, k):
-        return getattr(self.__dict__['session'], k)
+        return getattr(self.__dict__['_session'], k)
 
     def scalar(self, sql, **args):
         return self.execute(text(sql), args).scalar()
@@ -61,25 +74,25 @@ class SessionHelper(object):
 
     def statement(self, sql, **kwargs):
         "Execute a statement without returning any results. Flush first."
-        self.execute(text(sql), kwargs)
+        return self.execute(text(sql), kwargs)
 
     def statements(self, sql, data):
         "Execute a statement across data. Flush first."
-        self.execute(text(sql), data)
+        return self.execute(text(sql), data)
 
     def __repr__(self):
-        return repr(self.session)
+        return repr(self._session)
 
     def commit(self):
-        self.session.commit()
-        if self.transaction:
-            self.session.begin()
-        if self.lock:
-            self.lockDB()
+        self._session.commit()
+        if self._transaction:
+            self._session.begin()
+        if self._lock:
+            self._lockDB()
 
-    def lockDB(self):
+    def _lockDB(self):
         "Take out a write lock."
-        self.session.execute(text("update decks set modified=modified"))
+        self._session.execute(text("update decks set modified=modified"))
 
 def object_session(*args):
     s = _object_session(*args)

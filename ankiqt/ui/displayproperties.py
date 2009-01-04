@@ -22,8 +22,9 @@ class DisplayProperties(QDialog):
         self.main = main
         self.deck = main.deck
         self.ignoreUpdate = False
-        if sys.platform.startswith("darwin"):
-            # mac widgets don't show colours
+        self.plastiqueStyle = None
+        if (sys.platform.startswith("darwin") or
+            sys.platform.startswith("win32")):
             self.plastiqueStyle = QStyleFactory.create("plastique")
         self.dialog = ankiqt.forms.displayproperties.Ui_DisplayProperties()
         self.dialog.setupUi(self)
@@ -31,7 +32,7 @@ class DisplayProperties(QDialog):
         self.setupChooser()
         self.setupCards()
         self.setupFields()
-        self.setupPreview()
+        self.setupButtons()
         self.show()
         ui.dialogs.open("DisplayProperties", self)
 
@@ -48,9 +49,11 @@ class DisplayProperties(QDialog):
         self.drawCards()
         self.drawFields()
 
-    def setupPreview(self):
+    def setupButtons(self):
         self.connect(self.dialog.preview, SIGNAL("clicked()"),
                      self.previewClicked)
+        self.connect(self.dialog.helpButton, SIGNAL("clicked()"),
+                     self.onHelp)
         if self.main.config['showFontPreview']:
             self.dialog.preview.setChecked(True)
         else:
@@ -80,7 +83,7 @@ class DisplayProperties(QDialog):
                          SIGNAL("valueChanged(int)"),
                          self.saveCard)
             w = self.cwidget("Colour", type)
-            if sys.platform.startswith("darwin"):
+            if self.plastiqueStyle:
                 w.setStyle(self.plastiqueStyle)
             self.connect(w,
                          SIGNAL("clicked()"),
@@ -102,7 +105,7 @@ class DisplayProperties(QDialog):
         for t in ("question", "answer"):
             self.cwidget("Align", t).clear()
             self.cwidget("Align", t).addItems(
-                QStringList(Alignment.values()))
+                QStringList(alignmentLabels().values()))
         self.cardChanged(0)
 
     def cardChanged(self, idx):
@@ -166,7 +169,7 @@ class DisplayProperties(QDialog):
                              SIGNAL("stateChanged(int)"),
                              self.saveField)
                 w = self.fwidget("fontColour", type)
-                if sys.platform.startswith("darwin"):
+                if self.plastiqueStyle:
                     w.setStyle(self.plastiqueStyle)
                 self.connect(w,
                              SIGNAL("clicked()"),
@@ -257,7 +260,7 @@ class DisplayProperties(QDialog):
                 else:
                     setattr(field, type + 'FontColour', None)
         field.model.setModified()
-        self.deck.setModified()
+        self.deck.flushMod()
         self.drawQuestionAndAnswer()
 
     def chooseColour(self, button, type):
@@ -268,20 +271,25 @@ class DisplayProperties(QDialog):
             self.saveCard()
 
     def drawQuestionAndAnswer(self):
+        self.deck.flushMod()
         f = self.deck.newFact()
         f.tags = u""
         for field in f.fields:
             f[field.name] = field.name
         f.model = self.model
         c = Card(f, self.card)
-        t = "<br><center>" + c.htmlQuestion + "</center>"
+        t = "<br><center>" + c.htmlQuestion() + "</center>"
         self.dialog.question.setText(
-            "<style>\n" + c.css() + "</style>\n" + t)
-        t = "<br><center>" + c.htmlAnswer + "</center>"
+            "<style>\n" + self.deck.rebuildCSS() + "</style>\n" + t)
+        t = "<br><center>" + c.htmlAnswer() + "</center>"
         self.dialog.answer.setText(
-            "<style>\n" + c.css() + "</style>\n" + t)
+            "<style>\n" + self.deck.rebuildCSS() + "</style>\n" + t)
         self.main.updateViews(self.main.state)
 
     def reject(self):
         ui.dialogs.close("DisplayProperties")
         QDialog.reject(self)
+
+    def onHelp(self):
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "DisplayProperties"))

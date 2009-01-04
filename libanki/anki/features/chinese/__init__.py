@@ -2,10 +2,15 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
-import sys, os, pickle
-from anki.features import Feature
-from anki.utils import findTag, parseTags, stripHTML
+import sys, os
+from anki.utils import findTag, stripHTML
+from anki.hooks import addHook
 from anki.db import *
+
+cantoneseTag = "Cantonese"
+mandarinTag = "Mandarin"
+srcField = "Expression"
+dstField = "Reading"
 
 class UnihanController(object):
 
@@ -31,10 +36,10 @@ class UnihanController(object):
         s = SessionHelper(self.session())
         for c in text:
             n = ord(c)
-            ret = s.column0("select %s from unihan where id = :id"
-                            % self.type, id=n)
+            ret = s.scalar("select %s from unihan where id = :id"
+                           % self.type, id=n)
             if ret:
-                result.append(self.formatMatch(ret[0]))
+                result.append(self.formatMatch(ret))
         return u" ".join(result)
 
     def formatMatch(self, match):
@@ -43,47 +48,37 @@ class UnihanController(object):
             return m[0]
         return "{%s}" % (",".join(m))
 
-class ChineseGenerator(Feature):
+# Hooks
+##########################################################################
+
+class ChineseGenerator(object):
 
     def __init__(self):
-        self.expressionField = "Expression"
-        self.readingField = "Reading"
+        self.unihan = None
 
-    def lazyInit(self):
-        pass
+    def toReading(self, type, val):
+        if not self.unihan:
+            self.unihan = UnihanController(type)
+        else:
+            self.unihan.type = type
+        return self.unihan.reading(val)
 
-    def onKeyPress(self, fact, field, value):
-        if findTag("Reading source", parseTags(field.fieldModel.features)):
-            dst = None
-            for field in fact.fields:
-                if findTag("Reading destination",
-                           parseTags(field.fieldModel.features)):
-                    dst = field
-                    break
-            if not dst:
-                return
-            self.lazyInit()
-            reading = self.unihan.reading(value)
-            fact[dst.name] = reading
+unihan = ChineseGenerator()
 
-class CantoneseGenerator(ChineseGenerator):
+def onFocusLost(fact, field):
+    if field.name != srcField:
+        return
+    if findTag(cantoneseTag, fact.model.tags):
+        type = "cantonese"
+    elif findTag(mandarinTag, fact.model.tags):
+        type = "mandarin"
+    else:
+        return
+    try:
+        if fact[dstField]:
+            return
+    except:
+        return
+    fact[dstField] = unihan.toReading(type, field.value)
 
-    def __init__(self):
-        ChineseGenerator.__init__(self)
-        self.tags = ["Cantonese"]
-        self.name = "Reading generation for Cantonese"
-
-    def lazyInit(self):
-        if 'unihan' not in self.__dict__:
-            self.unihan = UnihanController("cantonese")
-
-class MandarinGenerator(ChineseGenerator):
-
-    def __init__(self):
-        ChineseGenerator.__init__(self)
-        self.tags = ["Mandarin"]
-        self.name = "Reading generation for Mandarin"
-
-    def lazyInit(self):
-        if 'unihan' not in self.__dict__:
-            self.unihan = UnihanController("mandarin")
+addHook('fact.focusLost', onFocusLost)

@@ -3,8 +3,12 @@
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import sys, os
-from anki.features import Feature
-from anki.utils import findTag, parseTags, stripHTML
+from anki.utils import findTag, stripHTML
+from anki.hooks import addHook
+
+modelTag = "Japanese"
+srcField = "Expression"
+dstField = "Reading"
 
 class KakasiController(object):
     def __init__(self):
@@ -80,27 +84,27 @@ class KakasiController(object):
                 return True
         return False
 
-class FuriganaGenerator(Feature):
+# Hook
+##########################################################################
 
-    def __init__(self):
-        self.tags = ["Japanese"]
-        self.name = "Furigana generation based on kakasi."
-        self.kakasi = KakasiController()
-        if not self.kakasi.available():
-            self.kakasi = None
+kakasi = KakasiController()
+if not kakasi.available():
+    kakasi = None
 
-    def onKeyPress(self, fact, field, value):
-        if self.kakasi and findTag("Reading source",
-                                   parseTags(field.fieldModel.features)):
-            reading = self.kakasi.toFurigana(value)
-            dst = None
-            for field in fact.fields:
-                if findTag("Reading destination", parseTags(
-                    field.fieldModel.features)):
-                    dst = field
-                    break
-            if dst:
-                if self.kakasi.formatForKakasi(value) != reading:
-                    fact[dst.name] = reading
-                else:
-                    fact[dst.name] = u""
+def onFocusLost(fact, field):
+    if not kakasi:
+        return
+    if field.name != srcField:
+        return
+    if not findTag(modelTag, fact.model.tags):
+        return
+    try:
+        if fact[dstField]:
+            return
+    except:
+        return
+    tmp = kakasi.toFurigana(field.value)
+    if tmp != field.value:
+        fact[dstField] = tmp
+
+addHook('fact.focusLost', onFocusLost)

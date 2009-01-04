@@ -5,12 +5,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>555</width>
-    <height>292</height>
+    <width>655</width>
+    <height>487</height>
    </rect>
   </property>
   <property name="sizePolicy" >
-   <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+   <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -26,13 +26,13 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>55</y>
-     <width>555</width>
-     <height>216</height>
+     <y>69</y>
+     <width>655</width>
+     <height>398</height>
     </rect>
    </property>
    <property name="sizePolicy" >
-    <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
+    <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
      <horstretch>1</horstretch>
      <verstretch>1</verstretch>
     </sizepolicy>
@@ -122,49 +122,309 @@
       <property name="frameShadow" >
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QVBoxLayout" >
+      <layout class="QGridLayout" name="gridLayout" >
+       <property name="leftMargin" >
+        <number>4</number>
+       </property>
+       <property name="topMargin" >
+        <number>0</number>
+       </property>
+       <property name="rightMargin" >
+        <number>4</number>
+       </property>
+       <property name="bottomMargin" >
+        <number>6</number>
+       </property>
        <property name="spacing" >
         <number>0</number>
        </property>
-       <property name="margin" >
-        <number>5</number>
-       </property>
-       <item>
-        <widget class="QTextBrowser" name="mainText" >
+       <item row="0" column="0" >
+        <widget class="QStackedWidget" name="mainStack" >
          <property name="sizePolicy" >
-          <sizepolicy vsizetype="Expanding" hsizetype="MinimumExpanding" >
+          <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
            <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
+           <verstretch>99</verstretch>
           </sizepolicy>
          </property>
-         <property name="minimumSize" >
-          <size>
-           <width>0</width>
-           <height>100</height>
-          </size>
+         <property name="currentIndex" >
+          <number>0</number>
          </property>
-         <property name="focusPolicy" >
-          <enum>Qt::ClickFocus</enum>
-         </property>
-         <property name="frameShape" >
-          <enum>QFrame::NoFrame</enum>
-         </property>
-         <property name="tabChangesFocus" >
-          <bool>false</bool>
-         </property>
-         <property name="readOnly" >
-          <bool>true</bool>
-         </property>
-         <property name="textInteractionFlags" >
-          <set>Qt::TextBrowserInteraction</set>
-         </property>
-         <property name="openExternalLinks" >
-          <bool>false</bool>
-         </property>
+         <widget class="QWidget" name="blankPage" >
+          <property name="geometry" >
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>370</width>
+            <height>343</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QWidget" name="welcomePage" >
+          <property name="geometry" >
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>100</width>
+            <height>30</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5" >
+           <item>
+            <widget class="QTextBrowser" name="welcomeText" >
+             <property name="focusPolicy" >
+              <enum>Qt::ClickFocus</enum>
+             </property>
+             <property name="frameShape" >
+              <enum>QFrame::NoFrame</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="editPage" >
+          <property name="geometry" >
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>100</width>
+            <height>30</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2" >
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <property name="margin" >
+            <number>4</number>
+           </property>
+           <item>
+            <widget class="QWidget" native="1" name="fieldsArea" />
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
-       <item>
-        <widget class="QWidget" native="1" name="buttonWidget" />
+       <item row="1" column="0" >
+        <widget class="QStackedWidget" name="buttonStack" >
+         <property name="currentIndex" >
+          <number>3</number>
+         </property>
+         <widget class="QWidget" name="page1" >
+          <property name="geometry" >
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>100</width>
+            <height>30</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout" >
+           <item>
+            <spacer name="verticalSpacer" >
+             <property name="orientation" >
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0" >
+              <size>
+               <width>20</width>
+               <height>1</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="showAnswerButton" >
+             <property name="text" >
+              <string>Show Answer</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="page2" >
+          <property name="geometry" >
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>100</width>
+            <height>30</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3" >
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <property name="leftMargin" >
+            <number>0</number>
+           </property>
+           <property name="topMargin" >
+            <number>0</number>
+           </property>
+           <property name="rightMargin" >
+            <number>0</number>
+           </property>
+           <property name="bottomMargin" >
+            <number>6</number>
+           </property>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout" >
+             <property name="spacing" >
+              <number>0</number>
+             </property>
+             <item>
+              <spacer name="horizontalSpacer" >
+               <property name="orientation" >
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0" >
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <layout class="QGridLayout" name="gridLayout_2" >
+               <property name="horizontalSpacing" >
+                <number>6</number>
+               </property>
+               <property name="verticalSpacing" >
+                <number>0</number>
+               </property>
+               <item row="0" column="0" >
+                <widget class="QLabel" name="easeLabel1" >
+                 <property name="text" >
+                  <string/>
+                 </property>
+                 <property name="alignment" >
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1" >
+                <widget class="QLabel" name="easeLabel2" >
+                 <property name="text" >
+                  <string/>
+                 </property>
+                 <property name="alignment" >
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="2" >
+                <widget class="QLabel" name="easeLabel3" >
+                 <property name="text" >
+                  <string/>
+                 </property>
+                 <property name="alignment" >
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="3" >
+                <widget class="QLabel" name="easeLabel4" >
+                 <property name="text" >
+                  <string/>
+                 </property>
+                 <property name="alignment" >
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0" >
+                <widget class="QPushButton" name="easeButton1" >
+                 <property name="text" >
+                  <string>Again</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1" >
+                <widget class="QPushButton" name="easeButton2" >
+                 <property name="text" >
+                  <string>Hard</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="2" >
+                <widget class="QPushButton" name="easeButton3" >
+                 <property name="text" >
+                  <string>Good</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="3" >
+                <widget class="QPushButton" name="easeButton4" >
+                 <property name="text" >
+                  <string>Easy</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2" >
+               <property name="orientation" >
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0" >
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="page3" >
+          <property name="geometry" >
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>100</width>
+            <height>30</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4" >
+           <item>
+            <spacer name="verticalSpacer_2" >
+             <property name="orientation" >
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0" >
+              <size>
+               <width>20</width>
+               <height>1</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="saveEditorButton" >
+             <property name="text" >
+              <string>Close</string>
+             </property>
+             <property name="shortcut" >
+              <string>Esc</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="page4" >
+          <property name="geometry" >
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>370</width>
+            <height>49</height>
+           </rect>
+          </property>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -193,6 +453,12 @@
        </item>
        <item>
         <widget class="QFrame" name="innerHelpFrame" >
+         <property name="sizePolicy" >
+          <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="palette" >
           <palette>
            <active>
@@ -284,12 +550,6 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="minimumSize" >
-             <size>
-              <width>200</width>
-              <height>0</height>
-             </size>
-            </property>
             <property name="maximumSize" >
              <size>
               <width>300</width>
@@ -357,8 +617,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>555</width>
-     <height>21</height>
+     <width>655</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp" >
@@ -369,6 +629,8 @@
     <addaction name="separator" />
     <addaction name="actionReportbug" />
     <addaction name="actionForum" />
+    <addaction name="actionReleaseNotes" />
+    <addaction name="actionGetMoreDecks" />
     <addaction name="separator" />
     <addaction name="actionAbout" />
     <addaction name="separator" />
@@ -377,30 +639,34 @@
     <property name="title" >
      <string>&amp;Edit</string>
     </property>
-    <addaction name="actionUndoAnswer" />
+    <addaction name="actionUndo" />
+    <addaction name="actionRedo" />
     <addaction name="separator" />
     <addaction name="actionAddcards" />
+    <addaction name="actionEditCurrent" />
     <addaction name="actionEditdeck" />
     <addaction name="separator" />
-    <addaction name="actionDisplayProperties" />
-    <addaction name="actionModelProperties" />
-    <addaction name="actionDeckProperties" />
-    <addaction name="separator" />
-    <addaction name="actionPreferences" />
-    <addaction name="separator" />
+    <addaction name="actionMarkCard" />
+    <addaction name="actionSuspendCard" />
+    <addaction name="actionDelete" />
    </widget>
    <widget class="QMenu" name="menuDeck" >
     <property name="title" >
-     <string>&amp;Deck</string>
+     <string>&amp;File</string>
     </property>
     <widget class="QMenu" name="menuOpenRecent" >
      <property name="title" >
       <string>Open &amp;Recent</string>
      </property>
+     <property name="icon" >
+      <iconset resource="../icons.qrc" >
+       <normaloff>:/icons/document-open-recent.png</normaloff>:/icons/document-open-recent.png</iconset>
+     </property>
     </widget>
     <addaction name="actionNew" />
     <addaction name="actionOpen" />
     <addaction name="menuOpenRecent" />
+    <addaction name="actionOpenOnline" />
     <addaction name="actionImport" />
     <addaction name="separator" />
     <addaction name="actionSave" />
@@ -409,7 +675,6 @@
     <addaction name="actionExport" />
     <addaction name="separator" />
     <addaction name="actionClose" />
-    <addaction name="separator" />
     <addaction name="separator" />
     <addaction name="actionExit" />
    </widget>
@@ -421,6 +686,10 @@
      <property name="title" >
       <string>&amp;Lookup</string>
      </property>
+     <property name="icon" >
+      <iconset resource="../icons.qrc" >
+       <normaloff>:/icons/edit-find.png</normaloff>:/icons/edit-find.png</iconset>
+     </property>
      <addaction name="actionLookup_expr" />
      <addaction name="actionLookup_mean" />
      <addaction name="separator" />
@@ -428,42 +697,75 @@
      <addaction name="actionLookup_es" />
      <addaction name="actionLookup_esk" />
     </widget>
-    <addaction name="actionMarkCard" />
-    <addaction name="actionSuspendCard" />
-    <addaction name="separator" />
-    <addaction name="actionRepeatAudio" />
-    <addaction name="actionRepeatQuestionAudio" />
-    <addaction name="actionRepeatAnswerAudio" />
-    <addaction name="separator" />
+    <widget class="QMenu" name="menuAdvanced" >
+     <property name="title" >
+      <string>Ad&amp;vanced</string>
+     </property>
+     <addaction name="actionCheckDatabaseIntegrity" />
+     <addaction name="actionOptimizeDatabase" />
+     <addaction name="separator" />
+     <addaction name="actionCheckMediaDatabase" />
+     <addaction name="actionCacheLatex" />
+     <addaction name="actionUncacheLatex" />
+     <addaction name="separator" />
+     <addaction name="actionMergeModels" />
+     <addaction name="separator" />
+    </widget>
     <addaction name="actionGraphs" />
     <addaction name="actionDstats" />
     <addaction name="actionKstats" />
     <addaction name="actionCstats" />
     <addaction name="separator" />
+    <addaction name="actionRepeatAudio" />
     <addaction name="menu_Lookup" />
-   </widget>
-   <widget class="QMenu" name="menuAdvanced" >
-    <property name="title" >
-     <string>&amp;Advanced</string>
-    </property>
-    <addaction name="actionMergeModels" />
     <addaction name="separator" />
-    <addaction name="actionCheckDatabaseIntegrity" />
-    <addaction name="actionOptimizeDatabase" />
+    <addaction name="menuAdvanced" />
+    <addaction name="separator" />
+    <addaction name="actionCram" />
+   </widget>
+   <widget class="QMenu" name="menu_Settings" >
+    <property name="title" >
+     <string>&amp;Settings</string>
+    </property>
+    <widget class="QMenu" name="menuPlugins" >
+     <property name="title" >
+      <string>P&amp;lugins</string>
+     </property>
+     <widget class="QMenu" name="menuStartup" >
+      <property name="title" >
+       <string>Startup</string>
+      </property>
+      <addaction name="actionEnableAllPlugins" />
+      <addaction name="actionDisableAllPlugins" />
+      <addaction name="separator" />
+     </widget>
+     <addaction name="actionGetPlugins" />
+     <addaction name="actionOpenPluginFolder" />
+     <addaction name="separator" />
+     <addaction name="menuStartup" />
+    </widget>
+    <addaction name="actionActiveTags" />
+    <addaction name="separator" />
+    <addaction name="actionDisplayProperties" />
+    <addaction name="actionModelProperties" />
+    <addaction name="actionDeckProperties" />
+    <addaction name="separator" />
+    <addaction name="menuPlugins" />
+    <addaction name="actionPreferences" />
    </widget>
    <addaction name="menuDeck" />
    <addaction name="menuEdit" />
    <addaction name="menuTools" />
-   <addaction name="menuAdvanced" />
+   <addaction name="menu_Settings" />
    <addaction name="menuHelp" />
   </widget>
   <widget class="QStatusBar" name="statusbar" >
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>271</y>
-     <width>555</width>
-     <height>21</height>
+     <y>467</y>
+     <width>655</width>
+     <height>20</height>
     </rect>
    </property>
   </widget>
@@ -474,13 +776,19 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>21</y>
-     <width>555</width>
-     <height>34</height>
+     <y>23</y>
+     <width>655</width>
+     <height>46</height>
     </rect>
    </property>
    <property name="orientation" >
     <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="iconSize" >
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
    <attribute name="toolBarArea" >
     <enum>TopToolBarArea</enum>
@@ -494,6 +802,7 @@
    <addaction name="actionSyncdeck" />
    <addaction name="separator" />
    <addaction name="actionAddcards" />
+   <addaction name="actionEditCurrent" />
    <addaction name="actionEditdeck" />
    <addaction name="actionDisplayProperties" />
    <addaction name="separator" />
@@ -522,7 +831,7 @@
      <normaloff>:/icons/document-new.png</normaloff>:/icons/document-new.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;New..</string>
+    <string>&amp;New...</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+N</string>
@@ -534,7 +843,7 @@
      <normaloff>:/icons/document-open.png</normaloff>:/icons/document-open.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Open..</string>
+    <string>&amp;Open...</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+O</string>
@@ -582,13 +891,10 @@
      <normaloff>:/icons/list-add.png</normaloff>:/icons/list-add.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Add Facts..</string>
-   </property>
-   <property name="toolTip" >
-    <string>Add Cards</string>
+    <string>&amp;Add Items...</string>
    </property>
    <property name="shortcut" >
-    <string>Ctrl+A</string>
+    <string>Ctrl+D</string>
    </property>
   </action>
   <action name="actionEditdeck" >
@@ -597,10 +903,10 @@
      <normaloff>:/icons/view_text.png</normaloff>:/icons/view_text.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Edit Facts..</string>
+    <string>&amp;Edit All...</string>
    </property>
    <property name="shortcut" >
-    <string>Ctrl+E</string>
+    <string>Ctrl+F</string>
    </property>
   </action>
   <action name="actionPreferences" >
@@ -609,13 +915,16 @@
      <normaloff>:/icons/configure.png</normaloff>:/icons/configure.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Preferences..</string>
+    <string>&amp;Preferences</string>
    </property>
    <property name="statusTip" >
     <string>Application-wide preferences.</string>
    </property>
    <property name="shortcut" >
     <string>Ctrl+P</string>
+   </property>
+   <property name="menuRole" >
+    <enum>QAction::PreferencesRole</enum>
    </property>
   </action>
   <action name="actionLookup_expr" >
@@ -682,7 +991,7 @@
      <normaloff>:/icons/go-home.png</normaloff>:/icons/go-home.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Start Here..</string>
+    <string>&amp;Start Here...</string>
    </property>
   </action>
   <action name="actionReportbug" >
@@ -691,7 +1000,7 @@
      <normaloff>:/icons/kbugbuster.png</normaloff>:/icons/kbugbuster.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Report Bug..</string>
+    <string>&amp;Report Bug...</string>
    </property>
    <property name="whatsThis" >
     <string>Open the bug tracker.</string>
@@ -703,7 +1012,10 @@
      <normaloff>:/icons/anki.png</normaloff>:/icons/anki.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;About..</string>
+    <string>&amp;About...</string>
+   </property>
+   <property name="menuRole" >
+    <enum>QAction::AboutRole</enum>
    </property>
   </action>
   <action name="actionCstats" >
@@ -721,7 +1033,7 @@
      <normaloff>:/icons/contents.png</normaloff>:/icons/contents.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Deck Properties..</string>
+    <string>&amp;Deck Properties...</string>
    </property>
    <property name="statusTip" >
     <string>Customize syncing, scheduling, priorities and models.</string>
@@ -733,7 +1045,7 @@
      <normaloff>:/icons/document-import.png</normaloff>:/icons/document-import.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Import..</string>
+    <string>&amp;Import...</string>
    </property>
   </action>
   <action name="actionGraphs" >
@@ -742,7 +1054,7 @@
      <normaloff>:/icons/colorscm.png</normaloff>:/icons/colorscm.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Graphs..</string>
+    <string>&amp;Graphs...</string>
    </property>
   </action>
   <action name="actionExport" >
@@ -760,7 +1072,7 @@
      <normaloff>:/icons/preferences-desktop-font.png</normaloff>:/icons/preferences-desktop-font.png</iconset>
    </property>
    <property name="text" >
-    <string>Disp&amp;lay Properties..</string>
+    <string>&amp;Fonts and Colours...</string>
    </property>
    <property name="statusTip" >
     <string>Customize fonts, colours and alignment.</string>
@@ -780,7 +1092,10 @@
      <normaloff>:/icons/rating.png</normaloff>:/icons/rating.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Mark Card</string>
+    <string>&amp;Mark Fact</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+M</string>
    </property>
   </action>
   <action name="actionSuspendCard" >
@@ -789,7 +1104,7 @@
      <normaloff>:/icons/media-playback-pause.png</normaloff>:/icons/media-playback-pause.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Suspend fact</string>
+    <string>&amp;Suspend Fact</string>
    </property>
    <property name="statusTip" >
     <string>Stop reviewing this card until it's unsuspended in the editor.</string>
@@ -801,7 +1116,7 @@
      <normaloff>:/icons/kpersonalizer.png</normaloff>:/icons/kpersonalizer.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Model Properties..</string>
+    <string>Current &amp;Model...</string>
    </property>
    <property name="statusTip" >
     <string>Customize card layout, fields, etc.</string>
@@ -826,10 +1141,13 @@
      <normaloff>:/icons/media-playback-start.png</normaloff>:/icons/media-playback-start.png</iconset>
    </property>
    <property name="text" >
-    <string>Repeat las&amp;t audio</string>
+    <string>Repeat &amp;Audio</string>
+   </property>
+   <property name="shortcut" >
+    <string>F5</string>
    </property>
   </action>
-  <action name="actionUndoAnswer" >
+  <action name="actionUndo" >
    <property name="enabled" >
     <bool>false</bool>
    </property>
@@ -838,7 +1156,10 @@
      <normaloff>:/icons/edit-undo.png</normaloff>:/icons/edit-undo.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Undo last answer</string>
+    <string>&amp;Undo</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+Z</string>
    </property>
   </action>
   <action name="actionForum" >
@@ -847,7 +1168,7 @@
      <normaloff>:/icons/view-pim-news.png</normaloff>:/icons/view-pim-news.png</iconset>
    </property>
    <property name="text" >
-    <string>&amp;Forum..</string>
+    <string>&amp;Forum...</string>
    </property>
   </action>
   <action name="actionSaveAs" >
@@ -856,7 +1177,7 @@
      <normaloff>:/icons/document-save-as.png</normaloff>:/icons/document-save-as.png</iconset>
    </property>
    <property name="text" >
-    <string>Save &amp;As..</string>
+    <string>Save &amp;As...</string>
    </property>
   </action>
   <action name="actionCheckDatabaseIntegrity" >
@@ -865,7 +1186,7 @@
      <normaloff>:/icons/sqlitebrowser.png</normaloff>:/icons/sqlitebrowser.png</iconset>
    </property>
    <property name="text" >
-    <string>Check Database Integrity</string>
+    <string>Check Database...</string>
    </property>
   </action>
   <action name="actionOptimizeDatabase" >
@@ -878,8 +1199,141 @@
    </property>
   </action>
   <action name="actionMergeModels" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/khtml_kget.png</normaloff>:/icons/khtml_kget.png</iconset>
+   </property>
    <property name="text" >
-    <string>Merge Models..</string>
+    <string>Merge Models...</string>
+   </property>
+  </action>
+  <action name="actionCheckMediaDatabase" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/text-speak.png</normaloff>:/icons/text-speak.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Check Media Database...</string>
+   </property>
+  </action>
+  <action name="actionOpenOnline" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-open-remote.png</normaloff>:/icons/document-open-remote.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Open On&amp;line...</string>
+   </property>
+  </action>
+  <action name="actionCram" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/chronometer.png</normaloff>:/icons/chronometer.png</iconset>
+   </property>
+   <property name="text" >
+    <string>C&amp;ram...</string>
+   </property>
+  </action>
+  <action name="actionReleaseNotes" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/kblogger.png</normaloff>:/icons/kblogger.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Release Notes...</string>
+   </property>
+  </action>
+  <action name="actionGetPlugins" >
+   <property name="text" >
+    <string>&amp;Get Plugins...</string>
+   </property>
+  </action>
+  <action name="actionOpenPluginFolder" >
+   <property name="text" >
+    <string>&amp;Open Plugin Folder...</string>
+   </property>
+  </action>
+  <action name="actionEnableAllPlugins" >
+   <property name="text" >
+    <string>&amp;Enable All Plugins</string>
+   </property>
+  </action>
+  <action name="actionDisableAllPlugins" >
+   <property name="text" >
+    <string>&amp;Disable All Plugins</string>
+   </property>
+  </action>
+  <action name="actionA" >
+   <property name="text" >
+    <string>a</string>
+   </property>
+  </action>
+  <action name="actionActiveTags" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/anki-tag.png</normaloff>:/icons/anki-tag.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Active &amp;Tags...</string>
+   </property>
+  </action>
+  <action name="actionGetMoreDecks" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/khtml_kget.png</normaloff>:/icons/khtml_kget.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Get More Decks...</string>
+   </property>
+  </action>
+  <action name="actionEditCurrent" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/edit-rename.png</normaloff>:/icons/edit-rename.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Edit &amp;Current...</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="actionRedo" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/edit-redo.png</normaloff>:/icons/edit-redo.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Redo</string>
+   </property>
+  </action>
+  <action name="actionDelete" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/editdelete.png</normaloff>:/icons/editdelete.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Delete Card</string>
+   </property>
+  </action>
+  <action name="action123" >
+   <property name="text" >
+    <string>123</string>
+   </property>
+  </action>
+  <action name="action_Delete_Fact" >
+   <property name="text" >
+    <string>&amp;Delete Fact</string>
+   </property>
+  </action>
+  <action name="actionCacheLatex" >
+   <property name="text" >
+    <string>Cache LaTeX</string>
+   </property>
+  </action>
+  <action name="actionUncacheLatex" >
+   <property name="text" >
+    <string>Uncache LaTeX</string>
    </property>
   </action>
  </widget>
