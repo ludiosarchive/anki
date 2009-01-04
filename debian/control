@@ -10,7 +10,6 @@ Homepage: http://ichi2.net/anki
 
 Package: anki
 Architecture: all
-Section: misc
 Depends: ${python:Depends}, python-qt4 (>= 4.4), python-simplejson (>= 1.7.3),
 	python-sqlalchemy (>= 0.4.1), python-pysqlite2 (>= 2.3.0)
 Recommends: python-matplotlib, kakasi
