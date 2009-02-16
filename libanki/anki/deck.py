@@ -11,7 +11,7 @@ __docformat__ = 'restructuredtext'
 import tempfile, time, os, random, sys, re, stat, shutil, types, traceback
 
 from anki.db import *
-from anki.lang import _
+from anki.lang import _, ngettext
 from anki.errors import DeckAccessError
 from anki.stdmodels import BasicModel
 from anki.utils import parseTags, tidyHTML, genID, ids2str, hexifyID, \
@@ -23,6 +23,7 @@ from anki.fonts import toPlatformFont
 import anki.features
 from operator import itemgetter
 from itertools import groupby
+from anki.hooks import runHook
 
 # ensure all the metadata in other files is loaded before proceeding
 import anki.models, anki.facts, anki.cards, anki.stats
@@ -49,7 +50,7 @@ decksTable = Table(
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
     Column('description', UnicodeText, nullable=False, default=u""),
-    Column('version', Integer, nullable=False, default=18),
+    Column('version', Integer, nullable=False, default=22),
     Column('currentModelId', Integer, ForeignKey("models.id")),
     # syncing
     Column('syncName', UnicodeText),
@@ -83,8 +84,8 @@ decksTable = Table(
     # number of new cards to show per day
     Column('newCardsPerDay', Integer, nullable=False, default=20),
     # currently unused
-    Column('sessionRepLimit', Integer, nullable=False, default=100),
-    Column('sessionTimeLimit', Integer, nullable=False, default=1800),
+    Column('sessionRepLimit', Integer, nullable=False, default=0),
+    Column('sessionTimeLimit', Integer, nullable=False, default=600),
     # stats offset
     Column('utcOffset', Float, nullable=False, default=0),
     # count cache
@@ -113,9 +114,16 @@ class Deck(object):
         self.s = None
 
     def _initVars(self):
+        self.tmpMediaDir = None
         self.lastTags = u""
         self.lastLoaded = time.time()
         self.undoEnabled = False
+        self.sessionStartReps = 0
+        self.sessionStartTime = 0
+        self.lastSessionStart = 0
+        self.reviewedAheadCards = []
+        self.extraNewCards = 0
+        self.reviewEarly = False
 
     def modifiedSinceSave(self):
         return self.modified > self.lastLoaded
@@ -133,10 +141,10 @@ class Deck(object):
     def getCardId(self):
         "Return the next due card id, or None."
         # failed card due?
-        if self.failedNowCount:
+        if self.delay0 and self.failedNowCount:
             return self.s.scalar("select id from failedCards limit 1")
         # failed card queue too big?
-        if self.failedSoonCount >= self.failedCardMax:
+        if self.delay0 and self.failedSoonCount >= self.failedCardMax:
             return self.s.scalar(
                 "select id from failedCards limit 1")
         # distribute new cards?
@@ -151,11 +159,29 @@ class Deck(object):
         id = self._maybeGetNewCard()
         if id:
             return id
-        # display failed cards early
-        if self.collapseTime:
+        # review ahead?
+        if self.reviewEarly:
+            id = self.getCardIdAhead()
+            if id:
+                return id
+            else:
+                self.resetAfterReviewEarly()
+                self.checkDue()
+        # display failed cards early/last
+        if self._showFailedLast():
             id = self.s.scalar(
                 "select id from failedCards limit 1")
-            return id
+            if id:
+                return id
+
+    def getCardIdAhead(self):
+        "Return the first card that would become due."
+        id = self.s.scalar("""
+select id from cards
+where type = 1 and isDue = 0 and priority in (1,2,3,4)
+order by combinedDue
+limit 1""")
+        return id
 
     # Get card: helper functions
     ##########################################################################
@@ -201,6 +227,9 @@ class Deck(object):
         "Return the next review card id."
         return self.s.scalar(
             "select id from %s limit 1" % self.revCardTable())
+
+    def _showFailedLast(self):
+        return self.collapseTime or not self.delay0
 
     def cardFromId(self, id, orm=False):
         "Given a card ID, return a card, and start the card timer."
@@ -287,16 +316,24 @@ where factId in (select factId from %s limit 60))""" % (new, new))
         undoName = _("Answer Card")
         self.setUndoStart(undoName)
         now = time.time()
+        # old state
         oldState = self.cardState(card)
-        lastDelay = max(0, (time.time() - card.due) / 86400.0)
+        lastDelaySecs = time.time() - card.combinedDue
+        lastDelay = lastDelaySecs / 86400.0
+        oldSuc = card.successive
         # update card details
-        card.lastInterval = card.interval
+        last = card.interval
         card.interval = self.nextInterval(card, ease)
+        if lastDelay >= 0:
+            # keep last interval if reviewing early
+            card.lastInterval = last
         card.lastDue = card.due
         card.due = self.nextDue(card, ease, oldState)
         card.isDue = 0
         card.lastFactor = card.factor
-        self.updateFactor(card, ease)
+        if lastDelay >= 0:
+            # don't update factor if learning ahead
+            self.updateFactor(card, ease)
         # spacing
         (minSpacing, spaceFactor) = self.s.first("""
 select models.initialSpacing, models.spacing from
@@ -332,6 +369,11 @@ isDue = 0
 where id != :id and factId = :factId""",
                          id=card.id, space=space, now=now, factId=card.factId)
         card.spaceUntil = 0
+        # temp suspend if learning ahead
+        if lastDelay < 0:
+            if oldSuc or lastDelaySecs > self.delay0 or not self._showFailedLast():
+                card.priority = 0
+                self.reviewedAheadCards.append(card.id)
         # card stats
         anki.cards.Card.updateStats(card, ease, oldState)
         card.toDB(self.s)
@@ -343,6 +385,9 @@ where id != :id and factId = :factId""",
         entry.writeSQL(self.s)
         self.modified = now
         self.setUndoEnd(undoName)
+        # decrease new card boost
+        if self.extraNewCards:
+            self.extraNewCards -= 1
 
     # Interval management
     ##########################################################################
@@ -350,9 +395,17 @@ where id != :id and factId = :factId""",
     def nextInterval(self, card, ease):
         "Return the next interval for CARD given EASE."
         delay = self._adjustedDelay(card, ease)
-        return self._nextInterval(card.interval, card.factor, delay, ease)
+        return self._nextInterval(card, delay, ease)
 
-    def _nextInterval(self, interval, factor, delay, ease):
+    def _nextInterval(self, card, delay, ease):
+        interval = card.interval
+        factor = card.factor
+        # if shown early and not failed
+        if delay < 0 and card.successive:
+            interval = max(card.lastInterval, card.interval + delay)
+            if interval < self.midIntervalMin:
+                interval = 0
+            delay = 0
         # if interval is less than mid interval, use presets
         if ease == 1:
             interval *= self.delay2
@@ -425,7 +478,10 @@ where id != :id and factId = :factId""",
         "Return an adjusted delay value for CARD based on EASE."
         if self.cardIsNew(card):
             return 0
-        return max(0, (time.time() - card.due) / 86400.0)
+        if card.combinedDue <= time.time():
+            return (time.time() - card.due) / 86400.0
+        else:
+            return (time.time() - card.combinedDue) / 86400.0
 
     def resetCards(self, ids):
         "Reset progress on cards in IDS."
@@ -438,6 +494,30 @@ matureEase3 = 0,matureEase4 = 0, yesCount = 0, noCount = 0,
 spaceUntil = 0, isDue = 0, type = 2,
 combinedDue = created, modified = :now, due = created
 where id in %s""" % ids2str(ids), now=time.time(), new=0)
+        self.flushMod()
+
+    def rescheduleCards(self, ids, min, max):
+        "Reset cards and schedule with new interval in days (min, max)."
+        self.resetCards(ids)
+        vals = []
+        for id in ids:
+            r = random.uniform(min*86400, max*86400)
+            vals.append({
+                'id': id,
+                'due': r + time.time(),
+                'int': r / 86400.0
+                })
+        self.s.statements("""
+update cards set
+interval = :int,
+due = :due,
+combinedDue = :due,
+reps = 1,
+successive = 1,
+yesCount = 1,
+type = 1,
+isDue = 0
+where id = :id""", vals)
         self.flushMod()
 
     # Queue/cache management
@@ -497,7 +577,7 @@ type = 0 and isDue = 1 and combinedDue <= :now""", now=time.time())
             stmt % 2, now=time.time()).rowcount
         self.newCountToday = max(min(
             self.newCount, self.newCardsPerDay -
-            self.newCardsToday()), 0)
+            self.newCardsToday()), 0) + self.extraNewCards
 
     def rebuildQueue(self):
         "Update relative delays based on current time."
@@ -533,6 +613,17 @@ type = 0 and isDue = 1 and combinedDue <= :now""", now=time.time())
         if genToday(self) != self._dailyStats.day:
             self._dailyStats = dailyStats(self)
 
+    def cardsDueSoon(self, ratio=0.1, minInt=0, maxInt=0):
+        "Return ids of cards near their expiration date."
+        #FIXME: implement
+        pass
+
+    def resetAfterReviewEarly(self):
+        self.updatePriorities(self.reviewedAheadCards)
+        self.reviewedAheadCards = []
+        self.reviewEarly = False
+        self.flushMod()
+
     # Times
     ##########################################################################
 
@@ -540,17 +631,21 @@ type = 0 and isDue = 1 and combinedDue <= :now""", now=time.time())
         next = self.earliestTime()
         if next:
             newCardsTomorrow = min(self.newCount, self.newCardsPerDay)
+            cards = self.cardsDueBy(time.time() + 86400)
             msg = _('''\
 At the same time tomorrow:<br><br>
-- There will be <b>%(wait)d</b> cards waiting for review<br>
-- There will be <b>%(new)d</b>
-<a href="http://ichi2.net/anki/wiki/DeckProperties#NewCards">
-new cards</a> waiting''') % {
-                'new': newCardsTomorrow,
-                'wait': self.cardsDueBy(time.time() + 86400)
+%(wait)s<br>
+%(new)s''') % {
+                'new': ngettext("There will be <b>%d</b> new card waiting for review.",
+                          "There will be <b>%d</b> new cards waiting for review.",
+                          newCardsTomorrow) % newCardsTomorrow,
+                'wait': ngettext("There will be <b>%s</b> card waiting.",
+                          "There will be <b>%s</b> cards waiting.", cards) % cards,
                 }
-            if next - time.time() > 86400 and not newCardsTomorrow:
-                msg = (_("The next card will be shown in <b>%s</b>") %
+            if self.spacedCardCount():
+                msg = _("Spaced cards will be shown soon.")
+            elif next - time.time() > 86400 and not newCardsTomorrow:
+                msg = (_("The next card will be shown in <b>%s</b>.") %
                        self.earliestTimeStr())
         else:
             msg = _("No cards are due.")
@@ -581,20 +676,37 @@ select count(id) from cards where combinedDue < :time
 and priority in (1,2,3,4) and type in (0, 1)""", time=time)
 
     def deckFinishedMsg(self):
-        return _('''
-<div style="white-space: normal;">
-<h1>Congratulations!</h1>You have finished the deck for now.<br><br>
-%(next)s
-<br><br>
-- There are <b>%(waiting)d</b>
-<a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-59a81e35b6afb23930005e943068945214d194b3">
-spaced</a> cards.<br>
-- There are <b>%(suspended)d</b>
+        spaceSusp = ""
+        c = self.spacedCardCount()
+        if c:
+            spaceSusp += ngettext('''
+There is <b>%d</b>
+<a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-787faa3eb21d7962f7719dc2722d34b7d74035ae">
+spaced</a> card.''', '''
+There are <b>%d</b>
+<a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-787faa3eb21d7962f7719dc2722d34b7d74035ae">
+spaced</a> cards.''', c) % c
+        c2 = self.suspendedCardCount()
+        if c2:
+            if c:
+                spaceSusp += "<br>"
+            spaceSusp += ngettext('''
+There is <b>%d</b>
 <a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-37d2db274e6caa23aef55e29655a6b806901774b">
-suspended</a> cards.</div>''') % {
+suspended</a> card.''', '''
+There are <b>%d</b>
+<a href="http://ichi2.net/anki/wiki/Key_Terms_and_Concepts#head-37d2db274e6caa23aef55e29655a6b806901774b">
+suspended</a> cards.''', c) % c2
+        if spaceSusp:
+            spaceSusp = "<br><br>" + spaceSusp
+        return _('''\
+<div style="white-space: normal;">
+<h1>Congratulations!</h1>You have finished for now.<br><br>
+%(next)s
+%(spaceSusp)s
+</div>''') % {
     "next": self.nextDueMsg(),
-    "suspended": self.suspendedCardCount(),
-    "waiting": self.spacedCardCount()
+    "spaceSusp": spaceSusp,
     }
 
     # Priorities
@@ -1024,11 +1136,11 @@ select id from fieldModels where modelId = :id order by ordinal""", id=m[1])
                 for id in ids[1:]:
                     if len(id[1]) != cms:
                         msg = (_(
-                            "Model '%s' has wrong card model count") % name)
+                            "Model '%s' has wrong card template count") % name)
                         break
                     if len(id[2]) != fms:
                         msg = (_(
-                            "Model '%s' has wrong field model count") % name)
+                            "Model '%s' has wrong field count") % name)
                         break
                 toProcess.append((name, ids))
         if msg:
@@ -1036,6 +1148,7 @@ select id from fieldModels where modelId = :id order by ordinal""", id=m[1])
         return ("ok", toProcess)
 
     def mergeModels(self, toProcess):
+        "Merge models. Caller must call refresh()."
         for (name, ids) in toProcess:
             (id1, cms1, fms1) = ids[0]
             for (id2, cms2, fms2) in ids[1:]:
@@ -1097,6 +1210,20 @@ select id, answerFontFamily, answerFontSize, answerFontColour,
 answerAlign from cardModels""")])
         self.css = css
         return css
+
+    def copyModel(self, oldModel):
+        "Add a new model to DB based on MODEL."
+        m = Model(_("%s copy") % oldModel.name)
+        for f in oldModel.fieldModels:
+            f = f.copy()
+            m.addFieldModel(f)
+        for c in oldModel.cardModels:
+            c = c.copy()
+            m.addCardModel(c)
+        for attr in ("tags", "spacing", "initialSpacing"):
+            setattr(m, attr, getattr(oldModel, attr))
+        self.addModel(m)
+        return m
 
     # Fields
     ##########################################################################
@@ -1244,6 +1371,7 @@ order by fields.factId""" % ids2str([x[2] for x in ids])),
     question = :question, answer = :answer
     %s
     where id = :id""" % mod, pend)
+        self.flushMod()
 
     def rebuildCardOrdinals(self, ids):
         "Update all card models in IDS. Caller must update model modtime."
@@ -1254,6 +1382,13 @@ update cards set
 ordinal = (select ordinal from cardModels where id = cardModelId),
 modified = :now
 where cardModelId in %s""" % strids, now=time.time())
+        self.flushMod()
+
+    def changeCardModel(self, cardIds, newCardModelId):
+        self.s.statement("""
+update cards set cardModelId = :newId
+where id in %s""" % ids2str(cardIds), newId=newCardModelId)
+        self.updateCardQACacheFromIds(cardIds)
         self.flushMod()
 
     # Tags
@@ -1310,10 +1445,11 @@ update facts set
 tags = :tags,
 modified = :now
 where id = :id""", pending)
+        factIds = [c['id'] for c in pending]
         cardIds = self.s.column0(
             "select id from cards where factId in %s" %
-            ids2str(ids))
-        self.updateCardQACacheFromIds(ids, type="facts")
+            ids2str(factIds))
+        self.updateCardQACacheFromIds(factIds, type="facts")
         self.updatePriorities(cardIds)
         self.flushMod()
 
@@ -1338,39 +1474,83 @@ update facts set
 tags = :tags,
 modified = :now
 where id = :id""", pending)
+        factIds = [c['id'] for c in pending]
         cardIds = self.s.column0(
             "select id from cards where factId in %s" %
-            ids2str(ids))
-        self.updateCardQACacheFromIds(ids, type="facts")
+            ids2str(factIds))
+        self.updateCardQACacheFromIds(factIds, type="facts")
         self.updatePriorities(cardIds)
         self.flushMod()
+
+    # Progress info
+    ##########################################################################
+
+    def startProgress(self, max=100, min=0, title=None):
+        runHook("startProgress", max, min, title)
+
+    def updateProgress(self, label=None, value=None):
+        runHook("updateProgress", label, value)
+
+    def finishProgress(self):
+        runHook("updateProgress")
+        runHook("finishProgress")
 
     # File-related
     ##########################################################################
 
     def name(self):
+        if not self.path:
+            return u"untitled"
         n = os.path.splitext(os.path.basename(self.path))[0]
         assert '/' not in n
         assert '\\' not in n
         return n
+
+    # Session handling
+    ##########################################################################
+
+    def startSession(self):
+        self.lastSessionStart = self.sessionStartTime
+        self.sessionStartTime = time.time()
+        self.sessionStartReps = self.getStats()['dTotal']
+
+    def sessionLimitReached(self):
+        if not self.sessionStartTime:
+            # not started
+            return False
+        if (self.sessionTimeLimit and time.time() >
+            (self.sessionStartTime + self.sessionTimeLimit)):
+            return True
+        if (self.sessionRepLimit and self.sessionRepLimit <=
+            self.getStats()['dTotal'] - self.sessionStartReps):
+            return True
+        return False
 
     # Media
     ##########################################################################
 
     def mediaDir(self, create=False):
         "Return the media directory if exists. None if couldn't create."
-        if not self.path:
-            return None
-        dir = re.sub("(?i)\.(anki)$", ".media", self.path)
-        if not os.path.exists(dir) and create:
-            try:
-                os.mkdir(dir)
-                # change to the current dir
-                os.chdir(dir)
-            except OSError:
-                # permission denied
-                return None
-        if not os.path.exists(dir):
+        if self.path:
+            # file-backed
+            dir = re.sub("(?i)\.(anki)$", ".media", self.path)
+            if create == None:
+                # don't create, but return dir
+                return dir
+            if not os.path.exists(dir) and create:
+                try:
+                    os.mkdir(dir)
+                    # change to the current dir
+                    os.chdir(dir)
+                except OSError:
+                    # permission denied
+                    return None
+        else:
+            # memory-backed; need temp store
+            if not self.tmpMediaDir and create:
+                self.tmpMediaDir = tempfile.mkdtemp(prefix="anki")
+            dir = self.tmpMediaDir
+        if not dir or not os.path.exists(dir):
             return None
         return dir
 
@@ -1382,10 +1562,9 @@ Return new path, relative to media dir."""
     def renameMediaDir(self, oldPath):
         "Copy oldPath to our current media dir. "
         assert os.path.exists(oldPath)
-        newPath = self.mediaDir(create=True)
+        newPath = self.mediaDir(create=None)
         # copytree doesn't want the dir to exist
         try:
-            os.rmdir(newPath)
             shutil.copytree(oldPath, newPath)
         except:
             # FIXME: should really remove everything in old dir instead of
@@ -1408,6 +1587,7 @@ Return new path, relative to media dir."""
             self.s.clear()
             self.s.close()
         self.engine.dispose()
+        runHook("deckClosed")
 
     def rollback(self):
         "Roll back the current transaction and reset session state."
@@ -1449,40 +1629,39 @@ Return new path, relative to media dir."""
 
     def saveAs(self, newPath):
         oldMediaDir = self.mediaDir()
-        # flush old deck
         self.s.flush()
         # remove new deck if it exists
         try:
             os.unlink(newPath)
         except OSError:
             pass
-        # create new deck
+        # setup new db tables, then close
         newDeck = DeckStorage.Deck(newPath)
-        # attach current db to new
-        s = newDeck.s.statement
-        s("pragma read_uncommitted = 1")
-        s("attach database :path as old", path=self.path)
-        # copy all data
-        s("delete from decks")
-        s("delete from stats")
-        s("insert into decks select * from old.decks")
-        s("insert into fieldModels select * from old.fieldModels")
-        s("insert into modelsDeleted select * from old.modelsDeleted")
-        s("insert into cardModels select * from old.cardModels")
-        s("insert into facts select * from old.facts")
-        s("insert into fields select * from old.fields")
-        s("insert into cards select * from old.cards")
-        s("insert into factsDeleted select * from old.factsDeleted")
-        s("insert into reviewHistory select * from old.reviewHistory")
-        s("insert into cardsDeleted select * from old.cardsDeleted")
-        s("insert into models select * from old.models")
-        s("insert into stats select * from old.stats")
-        # detach old db and commit
-        s("detach database old")
+        newDeck.close()
+        # attach new db and copy everything in
+        s = self.s.statement
+        s("attach database :path as new", path=newPath)
+        s("delete from new.decks")
+        s("delete from new.stats")
+        s("insert into new.decks select * from decks")
+        s("insert into new.fieldModels select * from fieldModels")
+        s("insert into new.modelsDeleted select * from modelsDeleted")
+        s("insert into new.cardModels select * from cardModels")
+        s("insert into new.facts select * from facts")
+        s("insert into new.fields select * from fields")
+        s("insert into new.cards select * from cards")
+        s("insert into new.factsDeleted select * from factsDeleted")
+        s("insert into new.reviewHistory select * from reviewHistory")
+        s("insert into new.cardsDeleted select * from cardsDeleted")
+        s("insert into new.models select * from models")
+        s("insert into new.stats select * from stats")
+        s("insert into new.media select * from media")
+        s("detach database new")
+        # close ourselves
+        self.s.commit()
         self.close()
-        newDeck.s.commit()
-        newDeck.refresh()
-        newDeck.rebuildQueue()
+        # open new db
+        newDeck = DeckStorage.Deck(newPath)
         # move media
         if oldMediaDir:
             newDeck.renameMediaDir(oldMediaDir)
@@ -1494,13 +1673,18 @@ Return new path, relative to media dir."""
 
     def fixIntegrity(self):
         "Responsibility of caller to call rebuildQueue()"
+        self.startProgress(11)
+        self.updateProgress(_("Checking integrity..."))
         if self.s.scalar("pragma integrity_check") != "ok":
+            self.finishProgress()
             return _("Database file damaged. Restore from backup.")
         # ensure correct views and indexes are available
+        self.updateProgress()
         DeckStorage._addViews(self)
         DeckStorage._addIndices(self)
         problems = []
         # does the user have a model?
+        self.updateProgress(_("Checking schema..."))
         if not self.s.scalar("select count(id) from models"):
             self.addModel(BasicModel())
             problems.append(_("Deck was missing a model"))
@@ -1511,11 +1695,13 @@ decks.currentModelId = models.id"""):
             self.currentModelId = self.models[0].id
             problems.append(_("The current model didn't exist"))
         # forget all deletions (do this before deleting anything)
+        self.updateProgress()
         self.s.statement("delete from cardsDeleted")
         self.s.statement("delete from factsDeleted")
         self.s.statement("delete from modelsDeleted")
         self.s.statement("delete from mediaDeleted")
         # facts missing a field?
+        self.updateProgress()
         ids = self.s.column0("""
 select distinct facts.id from facts, fieldModels where
 facts.modelId = fieldModels.modelId and fieldModels.id not in
@@ -1537,7 +1723,7 @@ select id from cards where cardModelId not in
 (select id from cardModels)""")
         if ids:
             self.deleteCards(ids)
-            problems.append(_("Deleted %d cards with no card model" %
+            problems.append(_("Deleted %d cards with no card template" %
                               len(ids)))
         # facts missing a card?
         ids = self.deleteDanglingFacts()
@@ -1553,14 +1739,20 @@ select id from fields where factId not in (select id from facts)""")
             problems.append(_("Deleted %d dangling fields") % len(ids))
         self.s.flush()
         # fix problems with cards being scheduled when not due
+        self.updateProgress()
         self.s.statement("update cards set isDue = 0")
         # fix problems with conflicts on merge
         self.s.statement("update fields set id = random()")
-        # model sources null?
+        # these sometimes end up null on upgrade
         self.s.statement("update models set source = 0 where source is null")
+        self.s.statement(
+            "update cardModels set allowEmptyAnswer = 1, typeAnswer = '' "
+            "where allowEmptyAnswer is null or typeAnswer is null")
         # fix any priorities
+        self.updateProgress(_("Updating priorities..."))
         self.updateAllPriorities()
         # fix problems with stripping html
+        self.updateProgress(_("Rebuilding QA cache..."))
         fields = self.s.all("select id, value from fields")
         newFields = []
         for (id, value) in fields:
@@ -1577,14 +1769,18 @@ select id from fields where factId not in (select id from facts)""")
         self.s.statement("update facts set modified = :t", t=time.time())
         self.s.statement("update models set modified = :t", t=time.time())
         self.lastSync = 0
-        # update counts
+        # rebuild
+        self.updateProgress(_("Rebuilding types..."))
+        self.rebuildTypes()
+        self.updateProgress(_("Rebuilding counts..."))
         self.rebuildCounts()
         # update deck and save
         self.flushMod()
         self.save()
         self.refresh()
-        self.rebuildTypes()
+        self.updateProgress(_("Rebuilding queue..."))
         self.rebuildQueue()
+        self.finishProgress()
         if problems:
             return "\n".join(problems)
         return "ok"
@@ -1604,7 +1800,8 @@ select id from fields where factId not in (select id from facts)""")
         self.undoStack = []
         self.redoStack = []
         self.undoEnabled = True
-        self.s.statement("delete from undoLog")
+        self.s.statement(
+            "create temporary table undoLog (seq integer primary key, sql text)")
         tables = self.s.column0(
             "select name from sqlite_master where type = 'table'")
         for table in tables:
@@ -1693,7 +1890,7 @@ insert into undoLog values (null, 'insert into %(t)s (rowid""" % {'t': table}
             self.redoStack = []
 
     def _latestUndoRow(self):
-        return self.s.scalar("select coalesce(max(rowid), 0) from undoLog")
+        return self.s.scalar("select max(rowid) from undoLog") or 0
 
     def _undoredo(self, src, dst):
         self.s.flush()
@@ -1707,12 +1904,20 @@ insert into undoLog values (null, 'insert into %(t)s (rowid""" % {'t': table}
         sql = self.s.column0("""
 select sql from undoLog where
 seq > :s and seq <= :e order by seq desc""", s=start, e=end)
+        mod = len(sql) / 35
+        if mod:
+            self.startProgress(36)
+            self.updateProgress(_("Processing..."))
         newstart = self._latestUndoRow()
-        for s in sql:
+        for c, s in enumerate(sql):
+            if mod and not c % mod:
+                self.updateProgress()
             #print "--", s.encode("utf-8")[0:30]
-            self.s.statement(s)
+            self.engine.execute(s)
         newend = self._latestUndoRow()
         dst.append([u[0], newstart, newend])
+        if mod:
+            self.finishProgress()
 
     def undo(self):
         self._undoredo(self.undoStack, self.redoStack)
@@ -1754,92 +1959,49 @@ mapper(Deck, decksTable, properties={
 ##########################################################################
 
 numBackups = 30
-
-# anki dir
-if sys.platform.startswith("darwin"):
-    ankiDir = os.path.expanduser("~/Library/Application Support/Anki")
-else:
-    ankiDir = os.path.expanduser("~/.anki/")
-newDeckDir = ankiDir
-if not os.path.exists(ankiDir):
-    os.makedirs(ankiDir)
-# backup
-backupDir = os.path.join(ankiDir, "backups")
-if not os.path.exists(backupDir):
-    os.makedirs(backupDir)
+backupDir = os.path.expanduser("~/.anki/backups")
 
 class DeckStorage(object):
 
-    def newDeckPath():
-        n = 2
-        path = os.path.expanduser(
-            os.path.join(newDeckDir, "mydeck.anki"))
-        while os.path.exists(path):
-            path = os.path.expanduser(
-                os.path.join(newDeckDir, "mydeck%d.anki") % n)
-            n += 1
-        return path
-    newDeckPath = staticmethod(newDeckPath)
-
     def Deck(path=None, backup=True, lock=True):
         "Create a new deck or attach to an existing one."
-        # generate a temp name if necessary
-        if path is None:
-            path = DeckStorage.newDeckPath()
         create = True
-        if path != -1:
-            if isinstance(path, types.UnicodeType):
-                path = path.encode(sys.getfilesystemencoding())
+        if path is None:
+            sqlpath = None
+        else:
             path = os.path.abspath(path)
-            #print "using path", path
+            # check if we need to init
             if os.path.exists(path):
                 create = False
-        # attach and sync/fetch deck - first, to unicode
-        if not isinstance(path, types.UnicodeType):
-            path = unicode(path, sys.getfilesystemencoding())
-        try:
             # sqlite needs utf8
-            (engine, session) = DeckStorage._attach(path.encode("utf-8"), create)
+            sqlpath = path.encode("utf-8")
+        try:
+            (engine, session) = DeckStorage._attach(sqlpath, create)
             s = session()
             metadata.create_all(engine)
             if create:
                 deck = DeckStorage._init(s)
             else:
                 ver = s.scalar("select version from decks limit 1")
-                try:
-                    if ver < 5:
-                        # add missing deck fields
-                        s.execute("""
-alter table decks add column newCardsPerDay integer not null default 20""")
-                    if ver < 6:
-                        s.execute("""
-alter table decks add column sessionRepLimit integer not null default 100""")
-                        s.execute("""
-alter table decks add column sessionTimeLimit integer not null default 1800""")
-                    if ver < 11:
-                        s.execute("""
-alter table decks add column utcOffset numeric(10, 2) not null default 0""")
-                    if ver < 13:
-                        s.execute("""
-alter table decks add column cardCount integer not null default 0""")
-                        s.execute("""
-alter table decks add column factCount integer not null default 0""")
-                        s.execute("""
-alter table decks add column failedNowCount integer not null default 0""")
-                        s.execute("""
-alter table decks add column failedSoonCount integer not null default 0""")
-                        s.execute("""
-alter table decks add column revCount integer not null default 0""")
-                        s.execute("""
-alter table decks add column newCount integer not null default 0""")
-                    if ver < 17:
-                        s.execute("""
-alter table decks add column revCardOrder integer not null default 0""")
-                    if ver < 18:
-                        s.execute("""
-alter table cardModels add column allowEmptyAnswer integer not null default 1""")
-                except:
-                    pass
+                if ver < 19:
+                    for st in (
+                        "decks add column newCardsPerDay integer not null default 20",
+                        "decks add column sessionRepLimit integer not null default 100",
+                        "decks add column sessionTimeLimit integer not null default 1800",
+                        "decks add column utcOffset numeric(10, 2) not null default 0",
+                        "decks add column cardCount integer not null default 0",
+                        "decks add column factCount integer not null default 0",
+                        "decks add column failedNowCount integer not null default 0",
+                        "decks add column failedSoonCount integer not null default 0",
+                        "decks add column revCount integer not null default 0",
+                        "decks add column newCount integer not null default 0",
+                        "decks add column revCardOrder integer not null default 0",
+                        "cardModels add column allowEmptyAnswer boolean not null default 1",
+                        "cardModels add column typeAnswer text not null default ''"):
+                        try:
+                            s.execute("alter table " + st)
+                        except:
+                            pass
                 deck = s.query(Deck).get(1)
             # attach db vars
             deck.path = path
@@ -1874,6 +2036,9 @@ alter table cardModels add column allowEmptyAnswer integer not null default 1"""
                                       type="inuse")
             else:
                 raise e
+        # fix a bug with current model being unset
+        if not deck.currentModel and deck.models:
+            deck.currentModel = deck.models[0]
         oldc = deck.failedSoonCount + deck.revCount + deck.newCount
         deck.rebuildQueue()
         if oldc != deck.failedSoonCount + deck.revCount + deck.newCount:
@@ -1884,8 +2049,8 @@ alter table cardModels add column allowEmptyAnswer integer not null default 1"""
 
     def _attach(path, create):
         "Attach to a file, initializing DB"
-        if path == -1:
-            path = "sqlite:///:memory:"
+        if path is None:
+            path = "sqlite://"
         else:
             path = "sqlite:///" + path
         engine = create_engine(path,
@@ -1893,7 +2058,7 @@ alter table cardModels add column allowEmptyAnswer integer not null default 1"""
                                connect_args={'timeout': 0})
         session = sessionmaker(bind=engine,
                                autoflush=False,
-                               transactional=False)
+                               autocommit=True)
         return (engine, session)
     _attach = staticmethod(_attach)
 
@@ -1925,6 +2090,9 @@ create index if not exists ix_cards_randomOrder on cards
         deck.s.statement("""
 create index if not exists ix_cards_priorityDue on cards
 (type, isDue, priority desc, combinedDue)""")
+        deck.s.statement("""
+create index if not exists ix_cards_priorityDueReal on cards
+(type, isDue, priority desc, due)""")
         # card spacing
         deck.s.statement("""
 create index if not exists ix_cards_factId on cards (factId)""")
@@ -1987,7 +2155,7 @@ order by priority desc, interval""")
 create view revCardsDue as
 select * from cards
 where type = 1 and isDue = 1
-order by priority desc, combinedDue""")
+order by priority desc, due""")
         s.statement("""
 create view revCardsRandom as
 select * from cards
@@ -2003,7 +2171,7 @@ order by priority desc, factId, ordinal""")
 create view acqCardsOrdered as
 select * from cards
 where type = 2 and isDue = 1
-order by priority desc, combinedDue""")
+order by priority desc, due""")
     _addViews = staticmethod(_addViews)
 
     def _upgradeDeck(deck, path):
@@ -2165,7 +2333,6 @@ where interval < 1""")
             deck.delay2 = 0.0
             deck.version = 15
         if deck.version < 16:
-            #DeckStorage._addViews(deck)
             deck.version = 16
         if deck.version < 17:
             deck.s.statement("drop view if exists acqCards")
@@ -2189,6 +2356,28 @@ where interval < 1""")
             deck.s.commit()
             DeckStorage._addIndices(deck)
             deck.s.statement("analyze")
+        if deck.version < 19:
+            # permanent undo log causes various problems, revert to temp
+            deck.s.statement("drop table undoLog")
+            deck.sessionTimeLimit = 600
+            deck.sessionRepLimit = 0
+            deck.version = 19
+            deck.s.commit()
+        if deck.version < 20:
+            DeckStorage._addViews(deck)
+            DeckStorage._addIndices(deck)
+            deck.version = 20
+            deck.s.commit()
+        if deck.version < 21:
+            deck.s.statement("vacuum")
+            deck.s.statement("analyze")
+            deck.version = 21
+            deck.s.commit()
+        if deck.version < 22:
+            deck.s.statement(
+                'update cardModels set typeAnswer = ""')
+            deck.version = 22
+            deck.s.commit()
         return deck
     _upgradeDeck = staticmethod(_upgradeDeck)
 
@@ -2199,18 +2388,16 @@ where interval < 1""")
 
     def backup(modified, path):
         # need a non-unicode path
-        path = path.encode(sys.getfilesystemencoding())
-        bdir = backupDir.encode(sys.getfilesystemencoding())
         def backupName(path, num):
             path = os.path.abspath(path)
             path = path.replace("\\", "!")
             path = path.replace("/", "!")
             path = path.replace(":", "")
-            path = os.path.join(bdir, path)
+            path = os.path.join(backupDir, path)
             path = re.sub("\.anki$", ".backup-%d.anki" % num, path)
             return path
-        if not os.path.exists(bdir):
-            os.makedirs(bdir)
+        if not os.path.exists(backupDir):
+            os.makedirs(backupDir)
         # if the mod time is identical, don't make a new backup
         firstBack = backupName(path, 0)
         if os.path.exists(firstBack):

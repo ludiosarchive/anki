@@ -15,12 +15,12 @@ tabs = ("General",
 
 class ModelProperties(QDialog):
 
-    def __init__(self, parent, model, main=None, onFinish=None):
+    def __init__(self, parent, deck, model, main=None, onFinish=None):
         QDialog.__init__(self, parent, Qt.Window)
         if not main:
             main = parent
         self.parent = main
-        self.deck = main.deck
+        self.deck = deck
         self.origModTime = self.deck.modified
         self.m = model
         self.onFinish = onFinish
@@ -33,7 +33,7 @@ class ModelProperties(QDialog):
         self.readData()
         self.show()
         self.undoName = _("Model Properties")
-        self.parent.deck.setUndoStart(self.undoName)
+        self.deck.setUndoStart(self.undoName)
         self.exec_()
 
     def readData(self):
@@ -293,6 +293,20 @@ class ModelProperties(QDialog):
         self.dialog.cardAnswer.setPlainText(card.aformat.replace("<br>", "\n"))
         self.dialog.questionInAnswer.setChecked(card.questionInAnswer)
         self.dialog.allowEmptyAnswer.setChecked(card.allowEmptyAnswer)
+        self.dialog.typeAnswer.clear()
+        self.fieldNames = self.deck.s.column0("""
+select fieldModels.name as n from fieldModels, cardModels
+where cardModels.modelId = fieldModels.modelId
+and cardModels.id = :id
+order by n""", id=card.id)
+        s = [_("Don't ask me to type in the answer")]
+        s += [_("Compare with field '%s'") % f for f in self.fieldNames]
+        self.dialog.typeAnswer.insertItems(0, QStringList(s))
+        try:
+            idx = self.fieldNames.index(card.typeAnswer)
+        except ValueError:
+            idx = -1
+        self.dialog.typeAnswer.setCurrentIndex(idx + 1)
         self.updateToggleButtonText(card)
 
     def enableCardMoveButtons(self):
@@ -329,6 +343,11 @@ class ModelProperties(QDialog):
         changed = changed or changed2
         self.updateField(card, 'questionInAnswer', self.dialog.questionInAnswer.isChecked())
         self.updateField(card, 'allowEmptyAnswer', self.dialog.allowEmptyAnswer.isChecked())
+        idx = self.dialog.typeAnswer.currentIndex()
+        if not idx:
+            self.updateField(card, 'typeAnswer', u"")
+        else:
+            self.updateField(card, 'typeAnswer', self.fieldNames[idx-1])
         if changed:
             # need to generate all question/answers for this card
             self.deck.updateCardsFromModel(self.m)
@@ -472,10 +491,10 @@ class ModelProperties(QDialog):
             self.deck.setModified()
         # if changed, reset deck
         if self.origModTime != self.deck.modified:
-            self.parent.reset()
+            ankiqt.mw.reset()
         if self.onFinish:
             self.onFinish()
-        self.parent.deck.setUndoEnd(self.undoName)
+        self.deck.setUndoEnd(self.undoName)
         # check again
-        self.parent.deck.haveJapanese = None
+        self.deck.haveJapanese = None
         QDialog.reject(self)

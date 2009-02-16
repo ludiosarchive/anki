@@ -93,6 +93,7 @@ class Sync(QThread):
             # need to do anything?
             start = time.time()
             if client.prepareSync():
+                changes = True
                 # summary
                 self.setStatus(_("Fetching summary from server..."), 0)
                 sums = client.summaries()
@@ -115,11 +116,14 @@ class Sync(QThread):
                 self.deck.s.flush()
                 self.deck.s.commit()
             else:
+                changes = False
                 self.setStatus(_("No changes found."))
             # check sources
+            srcChanged = False
             if self.sourcesToCheck:
                 start = time.time()
                 self.setStatus(_("<br><br>Checking deck subscriptions..."))
+                srcChanged = False
                 for source in self.sourcesToCheck:
                     proxy.deckName = str(source)
                     msg = "%s:" % client.syncOneWayDeckName()
@@ -129,6 +133,7 @@ class Sync(QThread):
                     if not client.prepareOneWaySync():
                         self.setStatus(_(" * %s no changes found.") % msg)
                         continue
+                    srcChanged = True
                     self.setStatus(_(" * %s fetching payload...") % msg)
                     payload = proxy.genOneWayPayload(client.deck.lastSync)
                     self.setStatus(msg + _(" applied %d modified cards.") %
@@ -142,8 +147,10 @@ class Sync(QThread):
             # close and send signal to main thread
             self.deck.close()
             taken = time.time() - start
-            if taken < 2.5:
+            if (changes or srcChanged) and taken < 2.5:
                 time.sleep(2.5 - taken)
+            else:
+                time.sleep(0.25)
             self.emit(SIGNAL("syncFinished"))
         except Exception, e:
             traceback.print_exc()
@@ -165,6 +172,7 @@ class Sync(QThread):
             client.sync()
         except:
             self.emit(SIGNAL("bulkSyncFailed"))
+        time.sleep(0.1)
         self.emit(SIGNAL("closeSyncProgress"))
 
     def bulkCallback(self, *args):
@@ -176,12 +184,16 @@ class Sync(QThread):
 class DeckChooser(QDialog):
 
     def __init__(self, parent, decks, create):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.decks = decks
         self.dialog = ankiqt.forms.syncdeck.Ui_DeckChooser()
         self.dialog.setupUi(self)
         self.create = create
+        if self.create:
+            self.dialog.topLabel.setText(_("<h1>Synchronize</h1>"))
+        else:
+            self.dialog.topLabel.setText(_("<h1>Open Online Deck</h1>"))
         if self.create:
             self.dialog.decks.addItem(QListWidgetItem(
                 _("Create '%s' on server") % self.parent.syncName))
@@ -191,7 +203,7 @@ class DeckChooser(QDialog):
             if self.create:
                 msg = _("Merge with '%s' on server") % name
             else:
-                msg = _("Copy '%s' from server") % name
+                msg = name
             item = QListWidgetItem(msg)
             self.dialog.decks.addItem(item)
         self.dialog.decks.setCurrentRow(0)

@@ -12,30 +12,30 @@ from anki.stdmodels import JapaneseModel, BasicModel
 newPath = None
 newModified = None
 
+testDir = os.path.dirname(__file__)
+
 ## opening/closing
 
 def test_new():
     deck = DeckStorage.Deck()
-    assert deck.path
+    assert not deck.path
     assert deck.engine
     assert deck.modified
-    # for attachOld()
-    global newPath, newModified
-    newPath = deck.path
-    deck.save()
-    newModified = deck.modified
-    deck.close()
 
 def test_attachNew():
+    global newPath, newModified
     path = "/tmp/test_attachNew"
     try:
         os.unlink(path)
     except OSError:
         pass
     deck = DeckStorage.Deck(path)
+    # for attachOld()
+    newPath = deck.path
+    deck.save()
+    newModified = deck.modified
     deck.close()
     del deck
-    os.unlink(path)
 
 def test_attachOld():
     deck = DeckStorage.Deck(newPath)
@@ -106,9 +106,10 @@ def test_factAddDelete():
         pass
     assert e.data['type'] == 'fieldNotUnique'
     # try delete the first card
-    deck.deleteCard(f.cards[0].id)
+    id1 = f.cards[0].id; id2 = f.cards[1].id
+    deck.deleteCard(id1)
     # and the second should clear the fact
-    deck.deleteCard(f.cards[1].id)
+    deck.deleteCard(id2)
 
 def test_cardOrder():
     deck = DeckStorage.Deck()
@@ -133,3 +134,40 @@ def test_modelAddDelete():
     deck.deleteModel(deck.currentModel)
     assert deck.cardCount == 0
     deck.s.refresh(deck)
+
+def test_modelCopy():
+    deck = DeckStorage.Deck()
+    m = JapaneseModel()
+    assert len(m.fieldModels) == 3
+    assert len(m.cardModels) == 2
+    deck.addModel(m)
+    f = deck.newFact()
+    f['Expression'] = u'1'
+    deck.addFact(f)
+    m2 = deck.copyModel(m)
+    assert m2.name == "Japanese copy"
+    assert m2.id != m.id
+    assert m2.fieldModels[0].id != m.fieldModels[0].id
+    assert m2.cardModels[0].id != m.cardModels[0].id
+    assert len(m2.fieldModels) == 3
+    assert len(m.fieldModels) == 3
+    assert len(m2.fieldModels) == len(m.fieldModels)
+    assert len(m.cardModels) == 2
+    assert len(m2.cardModels) == 2
+
+def test_media():
+    deck = DeckStorage.Deck()
+    # create a media dir
+    deck.mediaDir(create=True)
+    # put a file into it
+    file = unicode(os.path.join(testDir, "deck/fake.png"))
+    deck.addMedia(file)
+    # make sure it gets copied on saveas
+    path = "/tmp/saveAs2.anki"
+    sum = "0bee89b07a248e27c83fc3d5951213c1.png"
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+    deck.saveAs(path)
+    assert os.path.exists("/tmp/saveAs2.media/%s" % sum)

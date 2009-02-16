@@ -145,7 +145,16 @@ class DeckModel(QAbstractTableModel):
                      " order by cards.ordinal, %s") % (fields, order)
         # run the query
         self.cards = self.deck.s.all(query)
+        if self.parent.config['editorReverseOrder']:
+            self.cards.reverse()
         self.reset()
+
+    def updateCard(self, index):
+        self.cards[index.row()] = self.deck.s.first("""
+select id, priority, question, answer, due, reps, factId
+from cards where id = :id""", id=self.cards[index.row()][0])
+        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+                  index, self.index(index.row(), 1))
 
     # Tools
     ######################################################################
@@ -192,6 +201,7 @@ class EditDeck(QMainWindow):
         self.deck = self.parent.deck
         self.config = parent.config
         self.origModTime = parent.deck.modified
+        self.currentRow = None
         self.dialog = ankiqt.forms.cardlist.Ui_MainWindow()
         self.dialog.setupUi(self)
         # flush all changes before we load
@@ -206,6 +216,8 @@ class EditDeck(QMainWindow):
         self.dialog.tableView.setFont(QFont(
             self.config['editFontFamily'],
             self.config['editFontSize']))
+        if self.parent.config['editorReverseOrder']:
+            self.dialog.actionReverseOrder.setChecked(True)
         self.setupMenus()
         self.setupFilter()
         self.setupSort()
@@ -220,6 +232,8 @@ class EditDeck(QMainWindow):
         restoreSplitter(self.dialog.splitter, "editor")
         self.show()
         self.updateSearch()
+        self.currentCard = self.parent.currentCard
+        self.focusCurrentCard()
 
     def findCardInDeckModel(self, model, card):
         for i, thisCard in enumerate(model.cards):
@@ -267,11 +281,11 @@ class EditDeck(QMainWindow):
         self.sortList = [
             _("Question"),
             _("Answer"),
-            _("Creation date"),
-            _("Modified date"),
-            _("Due date"),
+            _("Created"),
+            _("Modified"),
+            _("Due"),
             _("Interval"),
-            _("Answer count"),
+            _("Reps"),
             _("Ease"),
             ]
         self.sortFields = sorted(self.deck.allFields())
@@ -341,6 +355,9 @@ class EditDeck(QMainWindow):
             self.dialog.actionRedo.setEnabled(True)
         else:
             self.dialog.actionRedo.setEnabled(False)
+        # update list
+        if self.currentRow and self.model.cards:
+            self.model.updateCard(self.currentRow)
 
     def filterTextChanged(self):
         interval = 500
@@ -358,6 +375,7 @@ class EditDeck(QMainWindow):
         self.updateSearch()
 
     def updateSearch(self):
+        idx = self.dialog.tableView.currentIndex()
         self.model.searchStr = unicode(self.dialog.filterEdit.text())
         self.model.tag = self.currentTag
         self.model.showMatching()
@@ -373,19 +391,20 @@ class EditDeck(QMainWindow):
         else:
             self.dialog.cardInfoGroup.hide()
             self.dialog.fieldsArea.hide()
-        self.focusCurrentCard()
+        self.dialog.tableView.selectRow(idx.row())
+        self.dialog.tableView.scrollTo(idx, QAbstractItemView.PositionAtCenter)
 
     def focusCurrentCard(self):
-        if self.parent.currentCard:
+        if self.currentCard:
             currentCardIndex = self.findCardInDeckModel(
-                                 self.model, self.parent.currentCard)
+                                 self.model, self.currentCard)
             if currentCardIndex >= 0:
                 sm = self.dialog.tableView.selectionModel()
                 sm.clear()
                 self.dialog.tableView.selectRow(currentCardIndex)
                 self.dialog.tableView.scrollTo(
                               self.model.index(currentCardIndex,0),
-                              self.dialog.tableView.PositionAtTop)
+                              self.dialog.tableView.PositionAtCenter)
 
     def setupHeaders(self):
         if not sys.platform.startswith("win32"):
@@ -396,14 +415,25 @@ class EditDeck(QMainWindow):
         self.dialog.tableView.horizontalHeader().setResizeMode(2, QHeaderView.ResizeToContents)
 
     def setupMenus(self):
+        # actions
         self.connect(self.dialog.actionDelete, SIGNAL("triggered()"), self.deleteCards)
         self.connect(self.dialog.actionAddTag, SIGNAL("triggered()"), self.addTags)
         self.connect(self.dialog.actionDeleteTag, SIGNAL("triggered()"), self.deleteTags)
         self.connect(self.dialog.actionAddCards, SIGNAL("triggered()"), self.addCards)
-        self.connect(self.dialog.actionResetProgress, SIGNAL("triggered()"), self.resetProgress)
+        self.connect(self.dialog.actionChangeTemplate, SIGNAL("triggered()"), self.onChangeTemplate)
+        self.connect(self.dialog.actionReschedule, SIGNAL("triggered()"), self.reschedule)
         self.connect(self.dialog.actionSelectFacts, SIGNAL("triggered()"), self.selectFacts)
+        self.connect(self.dialog.actionInvertSelection, SIGNAL("triggered()"), self.invertSelection)
+        self.connect(self.dialog.actionReverseOrder, SIGNAL("triggered()"), self.reverseOrder)
         self.connect(self.dialog.actionUndo, SIGNAL("triggered()"), self.onUndo)
         self.connect(self.dialog.actionRedo, SIGNAL("triggered()"), self.onRedo)
+        # jumps
+        self.connect(self.dialog.actionFirstCard, SIGNAL("triggered()"), self.onFirstCard)
+        self.connect(self.dialog.actionLastCard, SIGNAL("triggered()"), self.onLastCard)
+        self.connect(self.dialog.actionPreviousCard, SIGNAL("triggered()"), self.onPreviousCard)
+        self.connect(self.dialog.actionNextCard, SIGNAL("triggered()"), self.onNextCard)
+        self.connect(self.dialog.actionFind, SIGNAL("triggered()"), self.onFind)
+        self.connect(self.dialog.actionFact, SIGNAL("triggered()"), self.onFact)
         runHook('editor.setupMenus', self)
 
     def onClose(self):
@@ -545,11 +575,30 @@ where id in (%s)""" % ",".join([
             self.deck.setUndoEnd(n)
         self.updateAfterCardChange()
 
-    def resetProgress(self):
-        n = _("Reset Progress")
+    def reschedule(self):
+        n = _("Reschedule")
+        d = QDialog(self)
+        frm = ankiqt.forms.reschedule.Ui_Dialog()
+        frm.setupUi(d)
+        if not d.exec_():
+            return
         self.deck.setUndoStart(n)
-        self.deck.resetCards(self.selectedCards())
-        self.deck.setUndoEnd(n)
+        try:
+            if frm.asNew.isChecked():
+                self.deck.resetCards(self.selectedCards())
+            else:
+                try:
+                    min = float(str(frm.rangeMin.text()))
+                    max = float(str(frm.rangeMax.text()))
+                except ValueError:
+                    ui.utils.showInfo(
+                        _("Please enter a valid start and end range."),
+                        parent=self)
+                    return
+                self.deck.rescheduleCards(self.selectedCards(), min, max)
+        finally:
+            self.deck.rebuildQueue()
+            self.deck.setUndoEnd(n)
         self.updateAfterCardChange(reset=True)
 
     def addCards(self):
@@ -561,7 +610,7 @@ where id in (%s)""" % ",".join([
         d = AddCardChooser(self, cms)
         if not d.exec_():
             return
-        n = _("Add Cards")
+        n = _("Generate Cards")
         self.deck.setUndoStart(n)
         for id in sf:
             self.deck.addCards(self.deck.s.query(Fact).get(id),
@@ -572,6 +621,28 @@ where id in (%s)""" % ",".join([
         self.updateSearch()
         self.updateAfterCardChange()
 
+    def onChangeTemplate(self):
+        sc = self.selectedCards()
+        models = self.deck.s.column0("""
+select distinct modelId from cards, facts where
+cards.id in %s and cards.factId = facts.id""" % ids2str(sc))
+        if not len(models) == 1:
+            ui.utils.showInfo(
+                _("Can only change templates in a single model."),
+                parent=self)
+            return
+        cms = [x.id for x in
+               self.currentCard.fact.model.cardModels]
+        d = ChangeTemplateDialog(self, cms)
+        d.exec_()
+        n = _("Change Template")
+        if d.newId:
+            self.deck.setUndoStart(n)
+            self.deck.changeCardModel(sc, d.newId)
+            self.deck.setUndoEnd(n)
+            self.updateSearch()
+            self.updateAfterCardChange()
+
     def selectFacts(self):
         sm = self.dialog.tableView.selectionModel()
         cardIds = dict([(x, 1) for x in self.selectedFactsAsCards()])
@@ -579,6 +650,22 @@ where id in (%s)""" % ",".join([
             if card.id in cardIds:
                 sm.select(self.model.index(i, 0),
                           QItemSelectionModel.Select | QItemSelectionModel.Rows)
+
+    def invertSelection(self):
+        sm = self.dialog.tableView.selectionModel()
+        items = sm.selection()
+        self.dialog.tableView.selectAll()
+        sm.select(items, QItemSelectionModel.Deselect | QItemSelectionModel.Rows)
+
+    def reverseOrder(self):
+        if self.parent.config['editorReverseOrder']:
+            self.parent.config['editorReverseOrder'] = False;
+        else:
+            self.parent.config['editorReverseOrder'] = True;
+
+        self.model.cards.reverse()
+        self.model.reset()
+        self.focusCurrentCard()
 
     # Undo/Redo
     ######################################################################
@@ -595,10 +682,47 @@ where id in (%s)""" % ",".join([
         self.updateSearch()
         self.updateAfterCardChange()
 
+    # Jumping
+    ######################################################################
+
+    def onFirstCard(self):
+        if not self.model.cards:
+            return
+        self.dialog.tableView.selectionModel().clear()
+        self.dialog.tableView.selectRow(0)
+
+    def onLastCard(self):
+        if not self.model.cards:
+            return
+        self.dialog.tableView.selectionModel().clear()
+        self.dialog.tableView.selectRow(len(self.model.cards) - 1)
+
+    def onPreviousCard(self):
+        if not self.model.cards:
+            return
+        row = self.dialog.tableView.currentIndex().row()
+        row = max(0, row - 1)
+        self.dialog.tableView.selectionModel().clear()
+        self.dialog.tableView.selectRow(row)
+
+    def onNextCard(self):
+        if not self.model.cards:
+            return
+        row = self.dialog.tableView.currentIndex().row()
+        row = min(len(self.model.cards) - 1, row + 1)
+        self.dialog.tableView.selectionModel().clear()
+        self.dialog.tableView.selectRow(row)
+
+    def onFind(self):
+        self.dialog.filterEdit.setFocus()
+
+    def onFact(self):
+        self.editor.focusFirst()
+
 class AddCardChooser(QDialog):
 
     def __init__(self, parent, cms):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.cms = cms
         self.dialog = ankiqt.forms.addcardmodels.Ui_Dialog()
@@ -636,5 +760,43 @@ order by ordinal""" % ids2str(self.cms))
 
     def onHelp(self):
         QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
-                                      "Editor#AddCards"))
+                                      "Editor#GenerateCards"))
 
+class ChangeTemplateDialog(QDialog):
+
+    def __init__(self, parent, cms):
+        QDialog.__init__(self, parent, Qt.Window)
+        self.parent = parent
+        self.cms = cms
+        self.newId = None
+        self.dialog = ankiqt.forms.addcardmodels.Ui_Dialog()
+        self.dialog.setupUi(self)
+        self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"),
+                     self.onHelp)
+        self.setWindowTitle(_("Change Template"))
+        self.dialog.list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.displayCards()
+        restoreGeom(self, "changeTemplate")
+
+    def displayCards(self):
+        self.cms = self.parent.deck.s.all("""
+select id, name from cardModels
+where id in %s
+order by ordinal""" % ids2str(self.cms))
+        self.items = []
+        for cm in self.cms:
+            item = QListWidgetItem(cm[1], self.dialog.list)
+            self.dialog.list.addItem(item)
+            self.items.append(item)
+
+    def accept(self):
+        ret = None
+        r = self.dialog.list.selectionModel().selectedRows()
+        if r:
+            self.newId = self.cms[r[0].row()][0]
+        saveGeom(self, "changeTemplate")
+        QDialog.accept(self)
+
+    def onHelp(self):
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "Editor#ChangeTemplate"))

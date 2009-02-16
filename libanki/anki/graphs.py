@@ -10,6 +10,7 @@ __docformat__ = 'restructuredtext'
 
 import os, sys, time
 import anki.stats
+from anki.lang import _
 
 import datetime
 
@@ -21,6 +22,7 @@ dueCumulC = "#ff8080"
 reviewNewC = "#80b3ff"
 reviewYoungC = "#5555ff"
 reviewMatureC = "#0f5aff"
+reviewTimeC = "#0fcaff"
 
 easesNewC = "#80b3ff"
 easesYoungC = "#5555ff"
@@ -99,18 +101,29 @@ from cards where type = 1 and priority in (1,2,3,4) and interval > 21""")
             self.stats['lowestInDay'] = lowestInDay
 
             dayReps = self.deck.s.all("""
-select day, 
+select day,
        matureEase0+matureEase1+matureEase2+matureEase3+matureEase4 as matureReps,
        reps-(newEase0+newEase1+newEase2+newEase3+newEase4) as combinedYoungReps,
        reps as combinedNewReps
 from stats
 where type = 1""")
 
+            dayTimes = self.deck.s.all("""
+select day, reviewTime / 60.0 as reviewTime
+from stats
+where type = 1""")
+
             todaydt = datetime.datetime(*list(time.localtime(time.time())[:3]))
-            for dest, source in [("dayRepsNew", "combinedNewReps"), ("dayRepsYoung", "combinedYoungReps"), ("dayRepsMature", "matureReps")]:
+            for dest, source in [("dayRepsNew", "combinedNewReps"),
+                                 ("dayRepsYoung", "combinedYoungReps"),
+                                 ("dayRepsMature", "matureReps")]:
                 self.stats[dest] = dict(
                     map(lambda dr: (-(todaydt -datetime.datetime(
                     *(int(x)for x in dr["day"].split("-")))).days, dr[source]), dayReps))
+
+            self.stats['dayTimes'] = dict(
+                map(lambda dr: (-(todaydt -datetime.datetime(
+                *(int(x)for x in dr["day"].split("-")))).days, dr["reviewTime"]/60.0), dayTimes))
 
     def nextDue(self, days=30):
         self.calcStats()
@@ -141,7 +154,8 @@ where type = 1""")
         return fig
 
     def workDone(self, days=30):
-        
+        self.calcStats()
+
         for type in ["dayRepsNew", "dayRepsYoung", "dayRepsMature"]:
             self.addMissing(self.stats[type], -days, 0)
 
@@ -151,7 +165,7 @@ where type = 1""")
         args = sum((self.unzip(self.stats[type].items(), limit=days, reverseLimit=True) for type in ["dayRepsMature", "dayRepsYoung", "dayRepsNew"][::-1]), [])
 
         self.filledGraph(graph, days, [reviewNewC, reviewYoungC, reviewMatureC], *args)
-        
+
         cheat = fig.add_subplot(111)
         b1 = cheat.bar(-3, 0, color = reviewNewC)
         b2 = cheat.bar(-4, 0, color = reviewYoungC)
@@ -161,10 +175,22 @@ where type = 1""")
             _("New"),
             _("Young"),
             _("Mature")], loc='upper left')
-        
+
         graph.set_xlim(xmin=-days, xmax=0)
         graph.set_ylim(ymax=max(max(a for a in args[1::2])) + 10)
-        
+
+        return fig
+
+    def timeSpent(self, days=30):
+        self.calcStats()
+        fig = Figure(figsize=(self.width, self.height), dpi=self.dpi)
+        times = self.stats['dayTimes']
+        self.addMissing(times, -days, 0)
+        times = self.unzip(times.items())
+        graph = fig.add_subplot(111)
+        self.filledGraph(graph, days, reviewTimeC, *times)
+        graph.set_xlim(xmin=-days, xmax=0)
+        graph.set_ylim(ymax=max(a for a in times[1]) + 0.1)
         return fig
 
     def cumulativeDue(self, days=30):

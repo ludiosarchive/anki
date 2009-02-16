@@ -17,10 +17,10 @@ class Ui_DeckChooser(object):
         self.vboxlayout.setSpacing(6)
         self.vboxlayout.setMargin(9)
         self.vboxlayout.setObjectName("vboxlayout")
-        self.label = QtGui.QLabel(DeckChooser)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setObjectName("label")
-        self.vboxlayout.addWidget(self.label)
+        self.topLabel = QtGui.QLabel(DeckChooser)
+        self.topLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.topLabel.setObjectName("topLabel")
+        self.vboxlayout.addWidget(self.topLabel)
         self.decks = QtGui.QListWidget(DeckChooser)
         font = QtGui.QFont()
         font.setPointSize(12)
@@ -29,7 +29,7 @@ class Ui_DeckChooser(object):
         self.vboxlayout.addWidget(self.decks)
         self.buttonBox = QtGui.QDialogButtonBox(DeckChooser)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.NoButton|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.vboxlayout.addWidget(self.buttonBox)
 
@@ -40,5 +40,5 @@ class Ui_DeckChooser(object):
 
     def retranslateUi(self, DeckChooser):
         DeckChooser.setWindowTitle(_("Anki"))
-        self.label.setText(_("<h1>Where should we synchronize to?</h1>"))
+        self.topLabel.setText(_("toplabel"))
 

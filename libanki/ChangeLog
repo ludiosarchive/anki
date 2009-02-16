@@ -1,3 +1,583 @@
+commit 26272cba651580556900947c781c155c479760d2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 21:34:30 2009 +0900
+
+    update translations
+
+commit 94184cbdf5264c0edd3f26f5b619d2e717fded6d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 21:23:08 2009 +0900
+
+    unset typeanswer on upgrade
+
+commit 8ae88b49d021d67c3367cae263f9c691f7538a16
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 21:17:58 2009 +0900
+
+    bump version
+
+commit 2a0f22348d12a6df5fb52580ea23dbb21d5da2d8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 18:36:58 2009 +0900
+
+    ignore sqlalchemy 0.5 deprecation warnings for now
+
+commit ded420dd9e4a8ccd1f2df354599f4697fd1223f0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 16:20:42 2009 +0900
+
+    fix allow empty answer problem in sync
+
+commit f1397fcd8612a9505398b025322dfe50da54f2ef
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 15:58:59 2009 +0900
+
+    fix warning on creating new deck
+
+commit 913fe96c07c8d3dd0436d7ff75096b18149c937a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 15:48:09 2009 +0900
+
+    ignore priority when reviewing early
+
+commit 222503ea8f8f029993bc58ed082e4c6e1b5e5866
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 01:43:23 2009 +0900
+
+    store field to compare against in type answer
+
+commit 28b0a7b8d3c1902f38b287ae1b3be2d297bdc04c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 21 00:27:04 2009 +0900
+
+    rescheduling support
+
+commit 098cc984717e504c917d99b02395c212b4c42c70
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 20 23:33:50 2009 +0900
+
+    translation patches from Piotr
+
+commit bebac3081100dc4a6b4229f9d362c2a409ada885
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 20 23:31:50 2009 +0900
+
+    hide status if deck integrity bad
+
+commit e50ccf22e55c8e6e93852ea85aec5e739964df56
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 20 02:16:15 2009 +0900
+
+    canonify tags when importing
+
+commit 9fe28df5dc5cb0e1599032c837956697d89c496b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 20 00:52:20 2009 +0900
+
+    add start of chinese traditional translations
+
+commit fdb32ecbfc8b59c5396aac184c7c665514e5de35
+Author: Niklas Laxström <niklas.laxstrom@gmail.com>
+Date:   Sun Jan 18 17:43:48 2009 +0100
+
+    New Finnish translations from Niklas Laxström.
+
+commit 1da037ba90709fc1bb3199b3c380f43105ca0cd6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 18 14:48:07 2009 +0900
+
+    more polish translations and bugfixes from Piotr Kubowicz
+
+commit 2792d22bf549f1e97afd689678ef61242098ef79
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 18 00:49:23 2009 +0900
+
+    win32/mac fixes for audio
+
+commit f3368d3c1eece9d1c5f4444e5eaadbdcb627a7b7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 23:57:08 2009 +0900
+
+    fix recording, remove debugging
+
+commit f5feaaa782ed9f56a11efad51b6b49f1f1c06313
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 23:00:51 2009 +0900
+
+    change wording
+
+commit cfc458e45f792d61f7272e87e154b4b85fb574a6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 22:45:00 2009 +0900
+
+    fix exporting re
+
+commit ff4cc7b0af1b9f73fd07dc8538577d5ee9afbb20
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 22:32:40 2009 +0900
+
+    add importing tag support, fix audio
+
+commit 835b4b5969d9d9d0dc677c3411f972adf3932314
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 19:04:26 2009 +0900
+
+    make sure learn ahead only looks at review cards
+
+commit f636b71b8c4b67da9839be11e89e95aa8b49c1e9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 17:37:07 2009 +0900
+
+    strip field model html on text card export
+
+commit c1d778971f292c355e0d6089a744392de3a9af79
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 16:41:10 2009 +0900
+
+    always fix current model problem
+
+commit 75d6123dc3fee09d57bfce6d0babaf960af2765e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 16:29:45 2009 +0900
+
+    identify temp files as anki, quiet lame
+
+commit d4ac87bc199505bd840f89e36a5fe017b1accf18
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 14:14:28 2009 +0900
+
+    add pyaudio recorder, remove external recorder
+
+commit 97359df499351933f1f9f514fbca3f0bc31b252c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 14:12:05 2009 +0900
+
+    add _ to anki10
+
+commit e010abd2d38c05a93cba2205e8a224ad74593e55
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 01:27:42 2009 +0900
+
+    give the fade a little more time
+
+commit 334d126237bba450bf6c299cda267113d0cb2108
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 17 01:05:39 2009 +0900
+
+    recording & noise profile support on linux
+
+commit f515a6c5f90d7dab4db2b254d1e30d536bc66fa5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 21:24:26 2009 +0900
+
+    more precision on undo progress
+
+commit 1fa7466dd9086b52f32cb4e3abdd1be0dcdcaf33
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 20:22:46 2009 +0900
+
+    progress for importing
+
+commit 6015dbec0421705908a175ab6d2d2baa7d739612
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 19:23:23 2009 +0900
+
+    add progress to export, speed up export, tweak undo progress
+
+commit 87fbd896fce229e3ad472f361fa540f162987030
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 18:54:32 2009 +0900
+
+    fix undo bugs, add progress, improve progress of check media db
+
+commit 8bdb1b8c26cf95b6d02ef727463f775c130a76ee
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 18:18:19 2009 +0900
+
+    remove debug info
+
+commit 240d311ca094e8803a59dddfcb23f53284091835
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 18:17:36 2009 +0900
+
+    optimize add/deleteTag(), add progress callbacks and check (media) db
+
+commit 8bd84d4dfe4cd6ab460c0172815142ebfce183ec
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 16:24:38 2009 +0900
+
+    better learn-ahead handling
+
+commit fe17d6c53e1ef90ab0d24ceb0f190a6a5a8068e4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 16 13:14:40 2009 +0900
+
+    improve upgrade code
+
+commit 3670a0cb7bdb16ee7eb53c7b0f8b1f40dbbca3f0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 15 04:37:27 2009 +0900
+
+    review early, learn more, tweak finished msg
+
+commit 9ac39267865386a4f95f57a38ff4c6315f713546
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 15 02:57:03 2009 +0900
+
+    save priority too
+
+commit dd5e7c45b445c701d2f4c9944f569d2bd65500fc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 14 15:35:16 2009 +0900
+
+    make sure field & card models are not duplicated
+
+commit 93332079b534946afe0cbfcc20730dd1240649da
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 14 15:28:27 2009 +0900
+
+    add model copy support
+
+commit 8e71b5fbbf23bc16f9ba2d74219e17650780ef2a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 14 14:10:07 2009 +0900
+
+    add change card model, fix bug in check db
+
+commit 39810aa3d07e384185b4570b74a5f39cd8277028
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 13 00:38:52 2009 +0900
+
+    make sure reps >= 0 in mnemosyne
+
+commit ff2ca5a56729f0ced766923792ea2ba4f3be4ff9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 13 00:31:52 2009 +0900
+
+    set factor based on easiness in mnemosyne import
+
+commit eca41e5ec7d7a1b0e665c5ec58bd16c43f54693b
+Merge: 5d23568... 314f6c9...
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 10 16:54:34 2009 +0900
+
+    Merge branch 'master' of git://github.com/scout/libanki
+
+commit 314f6c9b1f8dbf91dd87d06ee36ce2f6b2677598
+Author: Samson Melamed <samson.melamed@gmail.com>
+Date:   Sat Jan 10 00:00:48 2009 -0500
+
+    fixes media sync progress bar not reaching 100%
+
+commit 5d2356804e374872c12864375cd42ace232038ec
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 10 13:53:14 2009 +0900
+
+    graph review time in hours, not minutes
+
+commit 8c6647f1d5d9abffe891a350247a23e9b3b07a0f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 9 12:11:45 2009 +0900
+
+    fix graph translations, update polish translations
+
+commit 8c05ffa60cbb30513eb6e4b964deb1f10ee25573
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 9 10:22:27 2009 +0900
+
+    don't ignore build files
+
+commit 2251d0bd3766fc6fd43a6df14275d0bb23922902
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 9 10:18:44 2009 +0900
+
+    add chinese package too
+
+commit d11cf41cbab983e1f0ea86b0b51e125b8661e410
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 9 10:06:57 2009 +0900
+
+    make sure importing and features are installed
+
+commit 4b6dcf6f6c8268372e14359c278ec049186dcf87
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 8 11:18:38 2009 +0900
+
+    fix db.py for ankiweb
+
+commit 5f0716aa5f139d81c76b00173e098bf5743b9c8a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 8 10:01:22 2009 +0900
+
+    update translations, bump version
+
+commit 6e63bdfc7c2378c507b9e406d4768c01fbbd20eb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 18:49:12 2009 +0900
+
+    make sure runHook is imported
+
+commit f87c02f7a4fb2e5f3b7d0d8ef28339efd210f12f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 12:48:44 2009 +0900
+
+    run deck closed hook in libanki
+
+commit 8dfeb01de6492bbb77dc6ab8d60ec59e537e0261
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 12:32:26 2009 +0900
+
+    remove superfluous statement
+
+commit 7c764763d2da75e0f66c9ef1aa66fb3b9bebc294
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 11:37:01 2009 +0900
+
+    sqlalchemy 0.5 compat
+
+commit 2b3057861511a1516d0f6010a5b0b040cd6d92cc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 10:56:32 2009 +0900
+
+    make sure to commit lastSync on summary, don't force table size
+
+commit afa9565d125afb8b6d396380d7e25645f9d7e540
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 09:47:54 2009 +0900
+
+    make sure to copy media table on saveas
+
+commit 57a49e9b080831b2d0a3380f0bac969c461cdaef
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 09:25:32 2009 +0900
+
+    fix ordering, add index
+
+commit f60a53615934279137b1c14373ab48f929933cf5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 7 08:51:27 2009 +0900
+
+    record last session start
+
+commit 7ad0e99b598b7501bad9c173eff82b95b2c5e0e4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 6 12:16:32 2009 +0900
+
+    fix problem with null card model props
+
+commit 8ab3e3250dd8d4f0440b00f0d80dd5e8ba30a2e3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 6 10:31:51 2009 +0900
+
+    new polish translations
+
+commit 36ae6df933480c3b58adee569b1f3a92713d1c60
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 6 09:15:57 2009 +0900
+
+    default to a ten minute session
+
+commit 68b7991492dac60ec3b30c1aaee6b95d6974035e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 17:06:56 2009 +0900
+
+    fix default session limits
+
+commit a44c7c33331306c99e2a310cef30c83e67d09c1a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 16:25:00 2009 +0900
+
+    rebuild translations
+
+commit 36a715fd17934a7ff68567299c80bf55f6eb5eab
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 15:38:26 2009 +0900
+
+    add type in answer support
+
+commit 86e3c19ad608af9582399c12fa66f0a2238e14c6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 14:57:28 2009 +0900
+
+    add review time graph
+
+commit 8bb063c22656d952c4799e00ff4f4a7622e903bd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 14:40:22 2009 +0900
+
+    strip some trailing whitespace in graphs
+
+commit 3e7d3bbf284704f32e4669cabffd518f280e5ae8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 14:38:15 2009 +0900
+
+    add support for clearing audio queue
+
+commit 2319cbcc7126ff119dbfa6e7d2a2b7b9101cd381
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 13:41:19 2009 +0900
+
+    timeboxing, delay lapsed
+
+commit cdc37fa7c0190623dab03be0c2e408fce3a8edd4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 08:28:13 2009 +0900
+
+    strip commented pygame from sound.py
+
+commit da6211b9ef9fc576105a9ee3086c5d33315a9226
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 08:25:18 2009 +0900
+
+    don't use full path to audio, as the working directory will do
+
+commit 7e74fe38447ad0da607369a3cabd46756b49e440
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 08:20:49 2009 +0900
+
+    fix media dir problem on win32, fix unicode issues with media
+
+commit 2aecbffafe9b826dba7af7d1d07d9b43d3295f56
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 06:51:47 2009 +0900
+
+    fix backup on win32
+
+commit 8750b9bbbb5687f5e1365a5a296ebbe6bc87b19c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 06:40:08 2009 +0900
+
+    don't convert to system encoding prior to converting to utf8
+
+commit 9c226d5b4fd0b35c5bd78f33165c8604daa589ad
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 06:14:00 2009 +0900
+
+    fix spacing in card stats
+
+commit 91e90d8092ffefac0248fd96a90db6d54ed9a5e9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 5 06:10:10 2009 +0900
+
+    card model > card template
+
+commit e3feff6ca6973585ffe99635d659f3a1c09e6c76
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 13:48:48 2009 +0900
+
+    revert undo log to temporary table, fix slowdown on big undo log
+
+commit 73767124d83fec371685b021ee0a0442939c9133
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 13:13:53 2009 +0900
+
+    fail gracefully if unihan.db is not available
+
+commit 6ce63b4889c9605cababfb1fe852bf03abd6993f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 11:57:41 2009 +0900
+
+    fix plural definition
+
+commit be5c162e6af6e97b374f31bb737a0f096cd78f53
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 11:47:14 2009 +0900
+
+    polish translations from Piotr Kubowicz
+
+commit a9c04a69d1be04f82de4f2757c4fee4fe74f58ab
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 10:03:32 2009 +0900
+
+    fix tagging in check media db
+
+commit 7adbad0ffa9733fefb824a1e6d3684b000fc92f5
+Merge: 5efb691... 3a2fd8b...
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 09:28:03 2009 +0900
+
+    Merge branch 'master' of git://github.com/timo/libanki
+
+commit 3a2fd8b5ada44e713289899579a763e15b2880e5
+Author: Timo Paulssen <timonator@perpetuum-immobile.de>
+Date:   Sun Jan 4 01:26:46 2009 +0100
+
+    fixed "unsubscriptable object" when disabling all the graphs before workDone.
+
+commit 5efb6910ef46c84e3fc9cd3adca71a730f2d4fa3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 08:05:42 2009 +0900
+
+    fix name() on in-memory db
+
+commit 0f129f7aead001760aecdddc7f99ca43b58975fd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 07:43:45 2009 +0900
+
+    fix saveas with no media dir
+
+commit 9765fdae73cd1d73f77b00fe284b813754755d6f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 07:40:05 2009 +0900
+
+    support media for memory backed files
+
+commit c973c1eb4f5dd26edc0b8f1e3a117ba8d6c35b9e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 07:13:30 2009 +0900
+
+    new decks now default to in-memory storage until saveas
+    - undo needs fixing
+    - media support needs to be changed to work with in-memory db
+
+commit 4a22f5b6e7da9e9a55a67d8c0a53c4a1f2efbcf2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 05:41:28 2009 +0900
+
+    fix a unit test now that back is not required/unique
+
+commit cfa1789e7639b8e5167a5d9077c54aa51f5218e0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 05:36:58 2009 +0900
+
+    don't install tests, only anki
+
+commit a5d64aaa7f084b63e2a3fa87e9a1ecbae5a84321
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 05:30:15 2009 +0900
+
+    make sure allowEmptyAnswer is a bool
+
+commit ee71c66cdbc7d0bc268baf83a4646c7ad565a6a9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 4 05:17:58 2009 +0900
+
+    document need to call refresh after merging models
+
+commit dee4ee3e8a8ead112819dd08ebab1bdec4d981d9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 3 07:29:39 2009 +0900
+
+    new translations from Christian Rusche
+
+commit 429e4252cb21d8281ea19c348cfdd4c0acd41235
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 27 16:14:43 2008 +0900
+
+    delete undo log outside of session
+
+commit c0f49f13732ee7074edec8e3ba6e6891d8a964d0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 27 15:57:30 2008 +0900
+
+    delete undo log and vacuum on close
+
+commit 559b6c6cb71964437260c9c3f409fdeb5ddc817a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 26 14:30:32 2008 +0900
+
+    new spanish translations from pcsl
+
 commit fe58ca679393acc81894e73ddef26c73a758ea36
 Author: Damien Elmes <git@ichi2.net>
 Date:   Thu Dec 25 19:36:33 2008 +0900

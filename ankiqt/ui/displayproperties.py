@@ -68,8 +68,7 @@ class DisplayProperties(QDialog):
             self.main.config['showFontPreview'] = True
         else:
             self.dialog.previewGroup.hide()
-            self.setMinimumWidth(350)
-            self.setMaximumWidth(350)
+            self.setFixedWidth(340)
             self.main.config['showFontPreview'] = False
 
     def setupCards(self):
@@ -91,11 +90,6 @@ class DisplayProperties(QDialog):
             self.connect(self.cwidget("Align", type),
                          SIGNAL("activated(int)"),
                          self.saveCard)
-        # set the background colour to the current system-wide background colour
-        p = QPalette()
-        p.setColor(QPalette.Base, QColor(self.main.config['backgroundColour']))
-        self.dialog.question.setPalette(p)
-        self.dialog.answer.setPalette(p)
         self.drawCards()
 
     def drawCards(self):
@@ -210,26 +204,29 @@ class DisplayProperties(QDialog):
                 self.fwidget("useFamily", type).setCheckState(Qt.Checked)
                 self.fwidget("fontFamily", type).setCurrentFont(QFont(
                     getattr(field, type + 'FontFamily')))
+                self.fwidget("fontFamily", type).setEnabled(True)
             else:
                 self.fwidget("useFamily", type).setCheckState(Qt.Unchecked)
-                self.fwidget("fontFamily", type).hide()
+                self.fwidget("fontFamily", type).setEnabled(False)
             # size
             if getattr(field, type + 'FontSize'):
                 self.fwidget("useSize", type).setCheckState(Qt.Checked)
                 self.fwidget("fontSize", type).setValue(
                     getattr(field, type + 'FontSize'))
+                self.fwidget("fontSize", type).setEnabled(True)
             else:
                 self.fwidget("useSize", type).setCheckState(Qt.Unchecked)
-                self.fwidget("fontSize", type).hide()
+                self.fwidget("fontSize", type).setEnabled(False)
             # colour
             if type == "quiz":
                 if getattr(field, type + 'FontColour'):
                     self.fwidget("useColour", type).setCheckState(Qt.Checked)
                     self.fwidget("fontColour", type).setPalette(QPalette(QColor(
                         getattr(field, type + 'FontColour'))))
+                    self.fwidget("fontColour", type).setEnabled(True)
                 else:
                     self.fwidget("useColour", type).setCheckState(Qt.Unchecked)
-                    self.fwidget("fontColour", type).hide()
+                    self.fwidget("fontColour", type).setEnabled(False)
         self.currentField = field
 
     def saveField(self, *args):

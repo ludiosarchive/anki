@@ -6,21 +6,13 @@
     <x>0</x>
     <y>0</y>
     <width>599</width>
-    <height>602</height>
+    <height>462</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Edit Items</string>
   </property>
   <widget class="QWidget" name="centralwidget" >
-   <property name="geometry" >
-    <rect>
-     <x>0</x>
-     <y>23</y>
-     <width>599</width>
-     <height>579</height>
-    </rect>
-   </property>
    <layout class="QVBoxLayout" name="verticalLayout" >
     <property name="spacing" >
      <number>0</number>
@@ -170,7 +162,7 @@
      <x>0</x>
      <y>0</y>
      <width>599</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuEdit" >
@@ -182,6 +174,8 @@
     <addaction name="separator" />
     <addaction name="actionSelectAll" />
     <addaction name="actionSelectFacts" />
+    <addaction name="actionInvertSelection" />
+    <addaction name="actionReverseOrder" />
    </widget>
    <widget class="QMenu" name="menuActions" >
     <property name="title" >
@@ -191,12 +185,26 @@
     <addaction name="actionDeleteTag" />
     <addaction name="separator" />
     <addaction name="actionAddCards" />
+    <addaction name="actionChangeTemplate" />
     <addaction name="separator" />
-    <addaction name="actionResetProgress" />
+    <addaction name="actionReschedule" />
     <addaction name="actionDelete" />
+   </widget>
+   <widget class="QMenu" name="menuJump" >
+    <property name="title" >
+     <string>&amp;Go</string>
+    </property>
+    <addaction name="actionFind" />
+    <addaction name="actionFact" />
+    <addaction name="separator" />
+    <addaction name="actionFirstCard" />
+    <addaction name="actionPreviousCard" />
+    <addaction name="actionNextCard" />
+    <addaction name="actionLastCard" />
    </widget>
    <addaction name="menuActions" />
    <addaction name="menuEdit" />
+   <addaction name="menuJump" />
   </widget>
   <action name="actionDelete" >
    <property name="icon" >
@@ -234,16 +242,16 @@
      <normaloff>:/icons/Anki_Card.png</normaloff>:/icons/Anki_Card.png</iconset>
    </property>
    <property name="text" >
-    <string>Add &amp;Cards...</string>
+    <string>Generate &amp;Cards...</string>
    </property>
   </action>
-  <action name="actionResetProgress" >
+  <action name="actionReschedule" >
    <property name="icon" >
     <iconset resource="../icons.qrc" >
      <normaloff>:/icons/edit-undo.png</normaloff>:/icons/edit-undo.png</iconset>
    </property>
    <property name="text" >
-    <string>Reset Progress</string>
+    <string>&amp;Reschedule...</string>
    </property>
   </action>
   <action name="actionSelectAll" >
@@ -272,6 +280,96 @@
    </property>
    <property name="text" >
     <string>&amp;Redo</string>
+   </property>
+  </action>
+  <action name="actionInvertSelection" >
+   <property name="text" >
+    <string>&amp;Invert Selection</string>
+   </property>
+  </action>
+  <action name="actionFind" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/document-preview.png</normaloff>:/icons/document-preview.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Find</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionFact" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/Anki_Fact.png</normaloff>:/icons/Anki_Fact.png</iconset>
+   </property>
+   <property name="text" >
+    <string>F&amp;act</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+Shift+F</string>
+   </property>
+  </action>
+  <action name="actionNextCard" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/go-next.png</normaloff>:/icons/go-next.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Next Card</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionPreviousCard" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/go-previous.png</normaloff>:/icons/go-previous.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Previous Card</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionFirstCard" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/go-first.png</normaloff>:/icons/go-first.png</iconset>
+   </property>
+   <property name="text" >
+    <string>F&amp;irst Card</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+Home</string>
+   </property>
+  </action>
+  <action name="actionLastCard" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/go-last.png</normaloff>:/icons/go-last.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Last Card</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+End</string>
+   </property>
+  </action>
+  <action name="actionChangeTemplate" >
+   <property name="text" >
+    <string>Change &amp;Template...</string>
+   </property>
+  </action>
+  <action name="actionReverseOrder" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="text" >
+    <string>Reverse &amp;Order</string>
    </property>
   </action>
  </widget>

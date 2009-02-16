@@ -31,5 +31,5 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(_("Add Cards"))
+        Dialog.setWindowTitle(_("Generate Cards"))
 

@@ -6,7 +6,8 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import os, sys, cPickle, locale, types, shutil
+import os, sys, cPickle, locale, types, shutil, time
+from anki.utils import genID
 
 # compatability
 def unpickleWxFont(*args):
@@ -47,7 +48,7 @@ class Config(dict):
             'interfaceLang': "",
             'syncUsername': "",
             'syncPassword': "",
-            'showFontPreview': True,
+            'showFontPreview': False,
             'showToolbar': True,
             'recentDeckPaths': [],
             'saveAfterAnswer': True,
@@ -56,7 +57,6 @@ class Config(dict):
             'saveAfterAddingNum': 3,
             'saveOnClose': True,
             'mainWindowGeom': None,
-            'easeButtonHeight': 'standard',
             'suppressUpdate': False,
             'suppressEstimates': False,
             'showLastCardInterval': False,
@@ -69,8 +69,19 @@ class Config(dict):
             'qaDivider': True,
             'splitQA': True,
             'sortIndex': 0,
-            'addZeroSpace': True,
+            'addZeroSpace': False,
             'alternativeTheme': False,
+            'showStudyScreen': True,
+            'showStudyOptions': False,
+            'showStudyStats': True,
+            'showCardTimer': True,
+            'extraNewCards': 5,
+            'randomizeOnCram': True,
+            'created': time.time(),
+            'id': genID(),
+            'editorReverseOrder': False,
+            'editFontFamily': 'Arial',
+            'editFontSize': 12,
             }
         for (k,v) in fields.items():
             if not self.has_key(k):
@@ -79,30 +90,6 @@ class Config(dict):
             # guess interface and target languages
             (lang, enc) = locale.getdefaultlocale()
             self['interfaceLang'] = lang
-        self.initFonts()
-
-    def initFonts(self):
-        defaultColours = {
-                'lastCard': "#0077FF",
-                'background': "#FFFFFF",
-                'interface': "#000000",
-            }
-        defaultSizes = {
-                'interface': 12,
-                'lastCard': 14,
-                'edit': 12,
-                'other': 24,
-            }
-        # fonts
-        for n in ("interface", "lastCard", "edit"):
-            if not self.get(n + "FontFamily", None):
-                self[n + "FontFamily"] = "Arial"
-                self[n + "FontSize"] = defaultSizes.get(n, defaultSizes['other'])
-        # colours
-        for n in ("interface", "lastCard", "background"):
-            color = n + "Colour"
-            if not color in self:
-                self[color] = defaultColours[n]
 
     def getDbPath(self):
         return os.path.join(self.configPath, self.configDbName)

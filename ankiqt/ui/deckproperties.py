@@ -13,26 +13,20 @@ from anki.deck import revCardOrderLabels
 from anki.utils import hexifyID, dehexifyID
 from anki.lang import ngettext
 
-tabs = ("Scheduling",
+tabs = ("ModelsAndPriorities",
         "Synchronization",
-        "Models",
         "Advanced")
 
 class DeckProperties(QDialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent, deck, onFinish=None):
         QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
-        self.d = parent.deck
+        self.d = deck
+        self.onFinish = onFinish
         self.origMod = self.d.modified
         self.dialog = ankiqt.forms.deckproperties.Ui_DeckProperties()
         self.dialog.setupUi(self)
-        self.dialog.newCardOrder.insertItems(
-            0, QStringList(newCardOrderLabels().values()))
-        self.dialog.newCardScheduling.insertItems(
-            0, QStringList(newCardSchedulingLabels().values()))
-        self.dialog.revCardOrder.insertItems(
-            0, QStringList(revCardOrderLabels().values()))
         self.readData()
         self.connect(self.dialog.modelsAdd, SIGNAL("clicked()"), self.onAdd)
         self.connect(self.dialog.modelsEdit, SIGNAL("clicked()"), self.onEdit)
@@ -40,7 +34,6 @@ class DeckProperties(QDialog):
         self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"), self.helpRequested)
         self.connect(self.dialog.addSource, SIGNAL("clicked()"), self.onAddSource)
         self.connect(self.dialog.deleteSource, SIGNAL("clicked()"), self.onDeleteSource)
-
         self.show()
 
     def readData(self):
@@ -69,10 +62,6 @@ class DeckProperties(QDialog):
         self.dialog.collapse.setCheckState(self.d.collapseTime
                                            and Qt.Checked or Qt.Unchecked)
         self.dialog.failedCardMax.setText(unicode(self.d.failedCardMax))
-        self.dialog.newCardsPerDay.setText(unicode(self.d.newCardsPerDay))
-        self.dialog.newCardOrder.setCurrentIndex(self.d.newCardOrder)
-        self.dialog.newCardScheduling.setCurrentIndex(self.d.newCardSpacing)
-        self.dialog.revCardOrder.setCurrentIndex(self.d.revCardOrder)
         # sources
         self.sources = self.d.s.all("select id, name from sources")
         self.sourcesToRemove = []
@@ -126,7 +115,7 @@ class DeckProperties(QDialog):
                 self.dialog.modelsList.setCurrentItem(item)
 
     def onAdd(self):
-        m = ui.modelchooser.AddModel(self, self.parent).getModel()
+        m = ui.modelchooser.AddModel(self, self.parent, self.d).getModel()
         if m:
             self.d.addModel(m)
             self.updateModelsList()
@@ -137,8 +126,8 @@ class DeckProperties(QDialog):
             return
         # set to current
         self.d.currentModel = model
-        ui.modelproperties.ModelProperties(self, model, self.parent, onFinish=
-                                           self.updateModelsList)
+        ui.modelproperties.ModelProperties(self, self.d, model, self.parent,
+                                           onFinish=self.updateModelsList)
 
     def onDelete(self):
         model = self.selectedModel()
@@ -209,7 +198,7 @@ class DeckProperties(QDialog):
 
     def reject(self):
         n = _("Deck Properties")
-        self.parent.deck.setUndoStart(n)
+        self.d.setUndoStart(n)
         # syncing
         if self.dialog.doSync.checkState() == Qt.Checked:
             self.updateField(self.d, 'syncName',
@@ -240,8 +229,6 @@ class DeckProperties(QDialog):
             self.updateField(self.d, 'delay2', v)
             v = int(self.dialog.failedCardMax.text())
             self.updateField(self.d, 'failedCardMax', max(v, 5))
-            v = int(self.dialog.newCardsPerDay.text())
-            self.updateField(self.d, 'newCardsPerDay', v)
         except ValueError:
             pass
         # hour shift
@@ -265,13 +252,6 @@ class DeckProperties(QDialog):
         self.updateField(self.d,
                          "suspended",
                          unicode(self.dialog.postponing.text()))
-        # new card order
-        self.updateField(self.d, "newCardOrder",
-                         self.dialog.newCardOrder.currentIndex())
-        self.updateField(self.d, "newCardSpacing",
-                         self.dialog.newCardScheduling.currentIndex())
-        self.updateField(self.d, "revCardOrder",
-                         self.dialog.revCardOrder.currentIndex())
         # sources
         d = {}
         d.update(self.sources)
@@ -304,6 +284,8 @@ insert into sources values
             self.d.setModified()
         # mark deck dirty and close
         if self.origMod != self.d.modified:
-            self.parent.reset()
-        self.parent.deck.setUndoEnd(n)
+            ankiqt.mw.reset()
+        self.d.setUndoEnd(n)
+        if self.onFinish:
+            self.onFinish()
         QDialog.reject(self)

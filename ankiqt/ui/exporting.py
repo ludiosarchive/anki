@@ -11,7 +11,7 @@ from ankiqt import ui
 class ExportDialog(QDialog):
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.deck = parent.deck
         self.dialog = ankiqt.forms.exporting.Ui_ExportDialog()
@@ -52,6 +52,7 @@ class ExportDialog(QDialog):
     def accept(self):
         file = ui.utils.getSaveFile(self, _("Choose file to export to"), "export",
                                     self.exporter.key, self.exporter.ext)
+        self.hide()
         if file:
             self.exporter.includeSchedulingInfo = (
                 self.dialog.includeScheduling.isChecked())

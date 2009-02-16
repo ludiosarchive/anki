@@ -15,11 +15,6 @@ class Ui_AddModel(object):
         AddModel.resize(285,269)
         self.vboxlayout = QtGui.QVBoxLayout(AddModel)
         self.vboxlayout.setObjectName("vboxlayout")
-        self.label = QtGui.QLabel(AddModel)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setWordWrap(True)
-        self.label.setObjectName("label")
-        self.vboxlayout.addWidget(self.label)
         self.groupBox = QtGui.QGroupBox(AddModel)
         self.groupBox.setObjectName("groupBox")
         self.vboxlayout1 = QtGui.QVBoxLayout(self.groupBox)
@@ -45,6 +40,5 @@ class Ui_AddModel(object):
         QtCore.QMetaObject.connectSlotsByName(AddModel)
 
     def retranslateUi(self, AddModel):
-        AddModel.setWindowTitle(_("Anki"))
-        self.label.setText(_("<h1>Please choose a template</h1>"))
+        AddModel.setWindowTitle(_("Add Model"))
 

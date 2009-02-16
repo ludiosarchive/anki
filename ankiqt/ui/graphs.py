@@ -170,9 +170,14 @@ def intervalGraph(parent, deck):
     widgets.append(nextDue)
 
     workload = AdjustableFigure(parent.config, 'reps', dg.workDone, range)
-    workload.addWidget(QLabel(_("<h1>Reviews</h1>")))
+    workload.addWidget(QLabel(_("<h1>Reps</h1>")))
     vbox.addWidget(workload)
     widgets.append(workload)
+
+    times = AdjustableFigure(parent.config, 'times', dg.timeSpent, range)
+    times.addWidget(QLabel(_("<h1>Review Time</h1>")))
+    vbox.addWidget(times)
+    widgets.append(times)
 
     added = AdjustableFigure(parent.config, 'added', dg.addedRecently, range)
     added.addWidget(QLabel(_("<h1>Added</h1>")))
@@ -205,9 +210,12 @@ def intervalGraph(parent, deck):
     hbox = QHBoxLayout()
 
     def showHideAll():
+        deck.startProgress(len(widgets))
         for w in widgets:
+            deck.updateProgress(_("Processing..."))
             w.showHide()
         frame.adjustSize()
+        deck.finishProgress()
 
     def onShowHideToggle(b, w):
         key = 'graphs.shown.' + w.name
@@ -222,7 +230,8 @@ def intervalGraph(parent, deck):
             'added': _("Added"),
             'answered': _("First Answered"),
             'eases': _("Eases"),
-            'reps': _("Reviews"),
+            'reps': _("Reps"),
+            'times': _("Review Time"),
             }
         m = QMenu(parent)
         for graph in widgets:
@@ -241,9 +250,12 @@ def intervalGraph(parent, deck):
         QDesktopServices.openUrl(QUrl(ankiqt.appWiki + "Graphs"))
 
     def onRefresh():
+        deck.startProgress(len(widgets))
         dg.stats = None
         for w in widgets:
-            w.scheduleUpdate()
+            deck.updateProgress(_("Processing..."))
+            w.updateFigure()
+        deck.finishProgress()
 
     showhide = QPushButton(_("Show/Hide"))
     hbox.addWidget(showhide)

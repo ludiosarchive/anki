@@ -68,8 +68,7 @@ Update media table. If file already exists, don't copy."""
             # case insensitive filesystems suck
             pass
         else:
-            shutil.copy2(path.encode(sys.getfilesystemencoding()),
-                         new.encode(sys.getfilesystemencoding()))
+            shutil.copy2(path, new)
     newSize = os.stat(new)[stat.ST_SIZE]
     if not deck.s.scalar(
         "select 1 from media where filename = :f",
@@ -120,8 +119,14 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
     unusedFileCount = 0
     missingFileCount = 0
     deck.mediaDir(create=True)
+    deck.startProgress(16, 0, _("Check Media DB"))
     # rename all files to checksum versions, note non-renamed ones
-    for oldBase in os.listdir(unicode(deck.mediaDir())):
+    deck.updateProgress(_("Checksum files..."))
+    files = os.listdir(unicode(deck.mediaDir()))
+    mod = len(files) / 10
+    for c, oldBase in enumerate(files):
+        if mod and not c % mod:
+            deck.updateProgress()
         oldPath = os.path.join(deck.mediaDir(), oldBase)
         if oldBase.startswith("."):
             continue
@@ -132,7 +137,9 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
             existingFiles[oldBase] = 1
         else:
             renamedFiles[oldBase] = newBase
+    deck.updateProgress(value=10)
     # now look through all fields, and update references to files
+    deck.updateProgress(_("Scan fields..."))
     for (id, fid, val) in deck.s.all(
         "select id, factId, value from fields"):
         oldval = val
@@ -156,18 +163,22 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
             updateFields.append({'id': id, 'val': val})
             modifiedFacts[fid] = 1
         else:
-            unmodifiedFacts[fid] = 1
+            if fid not in factsMissingMedia:
+                unmodifiedFacts[fid] = 1
     # update modified fields
+    deck.updateProgress(_("Modify fields..."))
     if modifiedFacts:
         _modifyFields(deck, updateFields, modifiedFacts, dirty)
     # fix tags
+    deck.updateProgress(_("Update tags..."))
     if dirty:
         if deleteRefs:
             deck.deleteTags(modifiedFacts.keys(), _("Media Missing"))
         else:
-            deck.addTags(modifiedFacts.keys(), _("Media Missing"))
+            deck.addTags(factsMissingMedia.keys(), _("Media Missing"))
         deck.deleteTags(unmodifiedFacts.keys(), _("Media Missing"))
     # build cache of db records
+    deck.updateProgress(_("Delete unused files..."))
     mediaIds = dict(deck.s.all("select filename, id from media"))
     # assume latex files exist
     for f in deck.s.column0(
@@ -186,6 +197,7 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
         else:
             os.unlink(path)
             unusedFileCount += 1
+    deck.updateProgress(_("Delete stale references..."))
     for (fname, id) in mediaIds.items():
         # maybe delete from db
         if id:
@@ -196,6 +208,7 @@ values (:id, strftime('%s', 'now'))""", id=id)
     # update deck and save
     deck.flushMod()
     deck.save()
+    deck.finishProgress()
     return missingFileCount, unusedFileCount
 
 def mediaRefs(string):

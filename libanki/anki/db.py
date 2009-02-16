@@ -28,10 +28,16 @@ from sqlalchemy import (Table, Integer, Float, Column, MetaData,
                         ForeignKey, Boolean, String, Date,
                         UniqueConstraint, Index, PrimaryKeyConstraint)
 from sqlalchemy import create_engine
-from sqlalchemy.orm import mapper, sessionmaker, relation, backref, \
-     object_session as _object_session
+from sqlalchemy.orm import mapper, sessionmaker as _sessionmaker, relation, backref, \
+     object_session as _object_session, class_mapper
 from sqlalchemy.sql import select, text, and_
 from sqlalchemy.exceptions import DBAPIError, OperationalError
+import sqlalchemy
+
+# some users are still on 0.4.x..
+import warnings
+warnings.filterwarnings('ignore', 'Use session.add()')
+warnings.filterwarnings('ignore', 'Use session.expunge_all()')
 
 # sqlalchemy didn't handle the move to unicodetext nicely
 try:
@@ -100,3 +106,9 @@ def object_session(*args):
         return SessionHelper(s, transaction=False)
     return None
 
+def sessionmaker(*args, **kwargs):
+    if sqlalchemy.__version__ < "0.5":
+        if 'autocommit' in kwargs:
+            kwargs['transactional'] = not kwargs['autocommit']
+            del kwargs['autocommit']
+    return _sessionmaker(*args, **kwargs)
