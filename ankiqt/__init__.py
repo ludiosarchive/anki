@@ -6,14 +6,15 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.9.4"
+appVersion="0.9.9.6"
 appWebsite="http://ichi2.net/anki/download/"
 appWiki="http://ichi2.net/anki/wiki/"
 appHelpSite="http://ichi2.net/anki/wiki/AnkiWiki"
 appIssueTracker="http://code.google.com/p/anki/issues/list"
 appForum="http://groups.google.com/group/ankisrs/topics"
 appReleaseNotes="http://ichi2.net/anki/download/index.html#changes"
-appMoreDecks="http://ichi2.net/anki/wiki/ExtraDecks"
+appMoreDecks="http://ichi2.net/anki/wiki/PreMadeDecks"
+appDonate="http://ichi2.net/anki/donate.html"
 
 modDir=os.path.dirname(os.path.abspath(__file__))
 runningDir=os.path.split(modDir)[0]
@@ -24,14 +25,14 @@ if hasattr(sys, "frozen"):
 
 # we bundle icons_rc as part of the anki source
 sys.path.append(os.path.dirname(__file__))
-import forms
-import config
-import ui
 
 # App initialisation
 ##########################################################################
 
 def run():
+    import forms
+    import config
+    import ui
     # put anki home in c:\anki on win32 if not available
     if sys.platform == "win32":
         path = os.path.expanduser("~")

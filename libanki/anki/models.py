@@ -58,6 +58,14 @@ class FieldModel(object):
         self.unique = unique
         self.id = genID()
 
+    def copy(self):
+        new = FieldModel()
+        for p in class_mapper(FieldModel).iterate_properties:
+            setattr(new, p.key, getattr(self, p.key))
+        new.id = genID()
+        new.model = None
+        return new
+
 mapper(FieldModel, fieldModelsTable)
 
 # Card models
@@ -96,7 +104,8 @@ cardModelsTable = Table(
     Column('editAnswerFontFamily', UnicodeText, default=None),
     Column('editAnswerFontSize', Integer, default=None),
     # empty answer
-    Column('allowEmptyAnswer', Integer, default=True))
+    Column('allowEmptyAnswer', Boolean, nullable=False, default=True),
+    Column('typeAnswer', UnicodeText, nullable=False, default=u""))
 
 class CardModel(object):
     """Represents how to generate the front and back of a card."""
@@ -106,6 +115,14 @@ class CardModel(object):
         self.aformat = aformat
         self.active = active
         self.id = genID()
+
+    def copy(self):
+        new = CardModel()
+        for p in class_mapper(CardModel).iterate_properties:
+            setattr(new, p.key, getattr(self, p.key))
+        new.id = genID()
+        new.model = None
+        return new
 
 mapper(CardModel, cardModelsTable)
 

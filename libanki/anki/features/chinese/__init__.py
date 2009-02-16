@@ -27,7 +27,7 @@ class UnihanController(object):
                                     echo=False, strategy='threadlocal')
         self.session = sessionmaker(bind=self.engine,
                                     autoflush=False,
-                                    transactional=True)
+                                    autocommit=True)
         self.type = target
 
     def reading(self, text):
@@ -57,11 +57,14 @@ class ChineseGenerator(object):
         self.unihan = None
 
     def toReading(self, type, val):
-        if not self.unihan:
-            self.unihan = UnihanController(type)
-        else:
-            self.unihan.type = type
-        return self.unihan.reading(val)
+        try:
+            if not self.unihan:
+                self.unihan = UnihanController(type)
+            else:
+                self.unihan.type = type
+            return self.unihan.reading(val)
+        except:
+            return u""
 
 unihan = ChineseGenerator()
 

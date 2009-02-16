@@ -8,10 +8,16 @@ import anki, anki.utils
 from anki.sound import playFromText, stripSounds
 from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
+from anki.hooks import runHook
 import types, time, re, os, urllib, sys
 from ankiqt import ui
 from ankiqt.ui.utils import mungeQA
+from anki.utils import fmtTimeSpan
 from PyQt4.QtWebKit import QWebPage, QWebView
+
+failedCharColour = "#FF0000"
+passedCharColour = "#00FF00"
+futureWarningColour = "#FF0000"
 
 # Views - define the way a user is prompted for questions, etc
 ##########################################################################
@@ -44,13 +50,13 @@ class View(object):
 
     def redisplay(self):
         "Idempotently display the current state (prompt for question, etc)"
-        if self.state == "noDeck":
+        if self.state == "noDeck" or self.state == "studyScreen":
             return
         self.clearWindow()
-        self.setBackgroundColour()
         self.haveTop = (self.main.lastCard and (
             self.main.config['showLastCardContent'] or
-            self.main.config['showLastCardInterval']))
+            self.main.config['showLastCardInterval'])) or (
+            self.main.currentCard and self.main.currentCard.due > time.time())
         self.drawRule = (self.main.config['qaDivider'] and
                          self.main.currentCard and
                          not self.main.currentCard.cardModel.questionInAnswer)
@@ -78,16 +84,6 @@ class View(object):
         s = "<style>\n"
         if self.main.deck:
             s += self.main.deck.css
-        # last card
-        for base in ("lastCard", "interface"):
-            family = self.main.config[base + "FontFamily"]
-            size = self.main.config[base + "FontSize"]
-            color = ("; color: " + self.main.config[base + "Colour"])
-            s += ('.%s {font-family: "%s"; font-size: %spx%s}\n' %
-                            (base, family, size, color))
-        s += ("body { background-color: " +
-              self.main.config["backgroundColour"] +
-              ";}\n")
         s += "div { white-space: pre-wrap; }"
         s += "</style>"
         return s
@@ -101,34 +97,27 @@ class View(object):
 
     def flush(self):
         "Write the current HTML buffer to the screen."
-        txt = (self.addStyles() + '''
-<div class="interface">''' +
-               self.buffer + '</div>')
-        self.body.setHtml(txt)
+        self.buffer = self.addStyles() + self.buffer
+        # hook for user css
+        runHook("preFlushHook")
+        #print self.buffer.encode("utf-8")
+        self.body.setHtml(self.buffer)
 
     def write(self, text):
         if type(text) != types.UnicodeType:
             text = unicode(text, "utf-8")
         self.buffer += text
 
-    def setBackgroundColour(self):
-        p = QPalette()
-        p.setColor(QPalette.Base, QColor(self.main.config['backgroundColour']))
-        self.body.setPalette(p)
-        if self.frame:
-            p.setColor(QPalette.Background, QColor(self.main.config['backgroundColour']))
-            self.frame.setPalette(p)
-
     # Question and answer
     ##########################################################################
 
     def center(self, str, height=40):
         if not self.main.config['splitQA']:
-            return str
-        return '''
-<div style="display: table; height: %s%%; width:100%%; overflow: hidden;">\
+            return "<center>" + str + "</center>"
+        return '''\
+<center><div style="display: table; height: %s%%; width:100%%; overflow: hidden;">\
 <div style="display: table-cell; vertical-align: middle;">\
-<div style="">%s</div></div></div>''' % (height, str)
+<div style="">%s</div></div></div></center>''' % (height, str)
 
     def drawQuestion(self, nosound=False):
         "Show the question."
@@ -138,7 +127,7 @@ class View(object):
         if self.haveTop:
             height = 35
         else:
-            height = 40
+            height = 45
         self.write(self.center(self.mungeQA(self.main.deck, q), height))
         if self.state != self.oldState and not nosound:
             playFromText(q)
@@ -146,6 +135,33 @@ class View(object):
     def drawAnswer(self):
         "Show the answer."
         a = self.main.currentCard.htmlAnswer()
+        if self.main.currentCard.cardModel.typeAnswer:
+            try:
+                cor = stripHTML(self.main.currentCard.fact[
+                    self.main.currentCard.cardModel.typeAnswer])
+            except KeyError:
+                cor = ""
+            if cor:
+                given = unicode(self.main.typeAnswerField.text())
+                res = []
+                if len(given) < len(cor):
+                    given += " " * (len(cor) - len(given))
+                sz = self.main.currentCard.cardModel.answerFontSize
+                ok = "background: %s; color: #000; font-size: %dpx" % (
+                    passedCharColour, sz)
+                bad = "background: %s; color: #000; font-size: %dpx;" % (
+                    failedCharColour, sz)
+                for (i, c) in enumerate(given):
+                    try:
+                        yes = c == cor[i]
+                    except IndexError:
+                        yes = False
+                    if yes:
+                        res.append(
+                            "<span style='%s'>%s</span>" % (ok, c))
+                    else:
+                        res.append("<span style='%s'>%s</span>" % (bad, c))
+                a = "".join(res) + "<br>" + a
         self.write(self.center('<span id=answer />' +
                                self.mungeQA(self.main.deck, a)))
         if self.state != self.oldState:
@@ -170,8 +186,21 @@ class View(object):
     def drawTopSection(self):
         "Show previous card, next scheduled time, and stats."
         self.buffer += "<center>"
+        self.drawFutureWarning()
         self.drawLastCard()
         self.buffer += "</center>"
+
+    def drawFutureWarning(self):
+        if not self.main.currentCard:
+            return
+        if self.main.currentCard.due <= time.time():
+            return
+        if self.main.currentCard.due - time.time() <= self.main.deck.delay0:
+            return
+        self.write("<span style='color: %s'>" % futureWarningColour +
+                   _("This card was due in %s.") % fmtTimeSpan(
+            self.main.currentCard.due - time.time()) +
+                   "</span>")
 
     def drawLastCard(self):
         "Show the last card if not the current one, and next time."
@@ -196,9 +225,7 @@ class View(object):
                             "<b>%(next)s</b>.") % \
                             {"next":self.main.lastScheduledTime}
                 else:
-                    msg = _("This card will appear again in less than "
-                            "<b>%(next)s</b>.") % \
-                            {"next":self.main.lastScheduledTime}
+                    msg = _("This card will appear again later.")
                 self.write(msg)
             self.write("<br>")
 
@@ -256,9 +283,14 @@ Start adding your own material.</td>
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."
-        self.write(self.main.deck.deckFinishedMsg())
+        self.main.mainWin.congratsLabel.setText(
+            self.main.deck.deckFinishedMsg())
 
 class AnkiWebView(QWebView):
+
+    def __init__(self, *args):
+        QWebView.__init__(self, *args)
+        self.setObjectName("mainText")
 
     def keyPressEvent(self, evt):
         if evt.matches(QKeySequence.Copy):

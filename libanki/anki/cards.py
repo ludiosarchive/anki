@@ -254,7 +254,8 @@ spaceUntil = :spaceUntil,
 isDue = :isDue,
 type = :type,
 combinedDue = max(:spaceUntil, :due),
-relativeDelay = 0
+relativeDelay = 0,
+priority = :priority
 where id=:id""", self.__dict__)
 
 mapper(Card, cardsTable, properties={
@@ -265,7 +266,7 @@ mapper(Card, cardsTable, properties={
 
 mapper(Fact, factsTable, properties={
     'model': relation(Model),
-    'fields': relation(Field, backref="fact", order_by=Field.c.ordinal),
+    'fields': relation(Field, backref="fact", order_by=Field.ordinal),
     })
 
 

@@ -16,6 +16,7 @@ __all__ = [
 	"modelproperties",
 	"preferences",
 	"previewcards",
+	"reschedule",
 	"syncdeck",
 ]
 import about
@@ -34,4 +35,5 @@ import main
 import modelproperties
 import preferences
 import previewcards
+import reschedule
 import syncdeck

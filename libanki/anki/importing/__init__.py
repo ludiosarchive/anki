@@ -8,8 +8,8 @@ Importing support
 
 To import, a mapping is created of the form: [FieldModel, ...]. The mapping
 may be extended by calling code if a file has more fields. To ignore a
-particular FieldModel, replace it with None. The same field model should not
-occur more than once."""
+particular FieldModel, replace it with None. A special number 0 donates a tags
+field. The same field model should not occur more than once."""
 
 __docformat__ = 'restructuredtext'
 
@@ -19,6 +19,7 @@ from anki.facts import factsTable, fieldsTable
 from anki.lang import _
 from anki.utils import genID, canonifyTags
 from anki.errors import *
+from anki.utils import canonifyTags
 
 # Base importer
 ##########################################################################
@@ -46,8 +47,13 @@ class Importer(object):
 
     def doImport(self):
         "Import."
+        self.deck.startProgress(6)
+        self.deck.updateProgress(_("Importing..."))
         c = self.foreignCards()
         self.importCards(c)
+        self.deck.updateProgress()
+        self.deck.updateAllPriorities()
+        self.deck.finishProgress()
         if c:
             self.deck.setModified()
 
@@ -65,6 +71,7 @@ class Importer(object):
         m = []
         [m.append(f) for f in self.model.fieldModels if f.required]
         [m.append(f) for f in self.model.fieldModels if not f.required]
+        m.append(0)
         rem = max(0, self.fields() - len(m))
         m += [None] * rem
         del m[numFields:]
@@ -107,8 +114,8 @@ class Importer(object):
         if active > 1 and not self.multipleCardsAllowed:
             raise ImportFormatError(type="tooManyCards",
                 info=_("""
-The current importer only supports a single active card model. Please disable
-all but one card model."""))
+The current importer only supports a single active card template. Please disable
+all but one card template."""))
         # strip invalid cards
         cards = self.stripInvalid(cards)
         cards = self.stripOrTagDupes(cards)
@@ -117,7 +124,15 @@ all but one card model."""))
 
     def addCards(self, cards):
         "Add facts in bulk from foreign cards."
+        # map tags field to attr
+        try:
+            idx = self.mapping.index(0)
+            for c in cards:
+                c.tags = c.fields[idx]
+        except ValueError:
+            pass
         # add facts
+        self.deck.updateProgress()
         factIds = [genID() for n in range(len(cards))]
         self.deck.s.execute(factsTable.insert(),
             [{'modelId': self.model.id,
@@ -128,6 +143,7 @@ all but one card model."""))
 delete from factsDeleted
 where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         # add all the fields
+        self.deck.updateProgress()
         for fm in self.model.fieldModels:
             try:
                 index = self.mapping.index(fm)
@@ -143,6 +159,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
             self.deck.s.execute(fieldsTable.insert(),
                                 data)
         # and cards
+        self.deck.updateProgress()
         now = time.time()
         for cm in self.model.cardModels:
             self._now = now
@@ -157,6 +174,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                     'type': 2},cards[m]) for m in range(len(cards))]
                 self.deck.s.execute(cardsTable.insert(),
                                     data)
+        self.deck.updateProgress()
         self.deck.updateCardsFromModel(self.model)
         self.deck.cardCount += len(cards)
         self.total = len(factIds)
@@ -171,6 +189,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         self._now += .00001
         data.update(card.__dict__)
         data['combinedDue'] = data['due']
+        data['isDue'] = data['combinedDue'] < time.time()
         return data
 
     def stripInvalid(self, cards):
@@ -215,8 +234,9 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                 else:
                     self.uniqueCache[self.mapping[n].id][card.fields[n]] = 1
         if fields:
-            card.tags += u"Import: duplicate, Duplicate: " + (
+            card.tags += u",Import: duplicate, Duplicate: " + (
                 "+".join(fields))
+            card.tags = canonifyTags(card.tags)
         return True
 
 # Export modules
@@ -228,7 +248,7 @@ from anki.importing.mnemosyne10 import Mnemosyne10Importer
 from anki.importing.wcu import WCUImporter
 
 Importers = (
-    (_("TAB/semicolon-separated file (*)"), TextImporter),
+    (_("Text separated by tabs or semicolons (*)"), TextImporter),
     (_("Anki 1.0 deck (*.anki)"), Anki10Importer),
     (_("Mnemosyne 1.x deck (*.mem)"), Mnemosyne10Importer),
     (_("CueCard deck (*.wcu)"), WCUImporter),

@@ -4,13 +4,15 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import re, os, sys, tempfile, urllib
+import re, os, sys, tempfile, urllib2
 from anki.utils import stripHTML, tidyHTML, canonifyTags
 from anki.sound import playFromText
+from ankiqt.ui.sound import getAudio
 import anki.sound
 from ankiqt import ui
 import ankiqt
 from ankiqt.ui.utils import mungeQA, saveGeom, restoreGeom
+from anki.hooks import addHook
 
 class FactEditor(object):
     """An editor for new/existing facts.
@@ -31,6 +33,7 @@ class FactEditor(object):
         self.onFactInvalid = None
         self.lastFocusedEdit = None
         self.changeTimer = None
+        addHook("deckClosed", self.deckClosedHook)
 
     def setFact(self, fact, noFocus=False, check=False):
         "Make FACT the current fact."
@@ -53,9 +56,18 @@ class FactEditor(object):
             self.fields[self.fact.fields[0].name][1].setFocus()
         self.fontChanged = False
         self.deck.setUndoBarrier()
+        if self.deck.mediaDir(create=False):
+            self.initMedia()
+
+    def focusFirst(self):
+        if self.focusTarget:
+            self.focusTarget.setFocus()
 
     def initMedia(self):
         os.chdir(self.deck.mediaDir(create=True))
+
+    def deckClosedHook(self):
+        self.fact = None
 
     def setupFields(self):
         # init for later
@@ -161,6 +173,16 @@ class FactEditor(object):
         self.addSound.setToolTip(_("Add audio (F4)"))
         self.iconsBox.addWidget(self.addSound)
         self.addSound.setStyle(self.plastiqueStyle)
+        # sounds
+        self.recSound = QPushButton(self.widget)
+        self.recSound.connect(self.recSound, SIGNAL("clicked()"), self.onRecSound)
+        self.recSound.setFocusPolicy(Qt.NoFocus)
+        self.recSound.setShortcut(_("F5"))
+        self.recSound.setEnabled(False)
+        self.recSound.setIcon(QIcon(":/icons/media-record.png"))
+        self.recSound.setToolTip(_("Record audio (F5)"))
+        self.iconsBox.addWidget(self.recSound)
+        self.recSound.setStyle(self.plastiqueStyle)
         # latex
         spc = QSpacerItem(10,10)
         self.iconsBox.addItem(spc)
@@ -224,7 +246,7 @@ class FactEditor(object):
         self.fields = {}
         self.widgets = {}
         n = 0
-        first = None
+        first = True
         for field in fields:
             # label
             l = QLabel(field.name)
@@ -246,6 +268,9 @@ class FactEditor(object):
                       self.onTextChanged)
             w.connect(w, SIGNAL("currentCharFormatChanged(QTextCharFormat)"),
                       lambda w=w: self.formatChanged(w))
+            if first:
+                self.focusTarget = w
+                first = False
             n += 1
         # tags
         self.fieldsGrid.addWidget(QLabel(_("Tags")), n, 0)
@@ -279,9 +304,11 @@ class FactEditor(object):
             self.widgets[w] = field
             new = self.fact[field.name]
             old = tidyHTML(unicode(w.toHtml()))
-            # only update if something has changed, to preserve the cursor
+            # only update if something has changed
             if new != old:
+                cur = w.textCursor()
                 w.setHtml('<meta name="qrichtext" content="1"/>' + new)
+                w.setTextCursor(cur)
             if font:
                 # apply fonts
                 font = QFont()
@@ -319,7 +346,7 @@ class FactEditor(object):
 
     def onFocusLost(self, widget):
         if self.fact is None:
-            # editor closed
+            # editor or deck closed
             return
         self.saveFields()
         field = self.widgets[widget]
@@ -339,6 +366,8 @@ class FactEditor(object):
                                 self.onChangeTimer)
 
     def onChangeTimer(self):
+        if not self.fact:
+            return
         self.saveFields()
         self.checkValid()
         if self.onChange:
@@ -434,6 +463,7 @@ class FactEditor(object):
         self.latexMathEnv.setEnabled(val)
         self.preview.setEnabled(val)
         self.htmlEdit.setEnabled(val)
+        self.recSound.setEnabled(val)
 
     def disableButtons(self):
         self.enableButtons(False)
@@ -535,7 +565,6 @@ class FactEditor(object):
         return True
 
     def onAddPicture(self):
-        self.initMedia()
         # get this before we open the dialog
         w = self.focusedEdit()
         key = _("Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)")
@@ -545,6 +574,7 @@ class FactEditor(object):
         self._addPicture(file, widget=w)
 
     def _addPicture(self, file, widget=None):
+        self.initMedia()
         if widget:
             w = widget
         else:
@@ -553,16 +583,38 @@ class FactEditor(object):
         w.insertHtml('<img src="%s">' % path)
 
     def onAddSound(self):
-        self.initMedia()
         # get this before we open the dialog
         w = self.focusedEdit()
         key = _("Sounds (*.mp3 *.ogg *.wav)")
         file = ui.utils.getFile(self.parent, _("Add audio"), "audio", key)
         if not file:
             return
-        anki.sound.play(file)
+        self._addSound(file, widget=w)
+
+    def _addSound(self, file, widget=None):
+        self.initMedia()
+        if widget:
+            w = widget
+        else:
+            w = self.focusedEdit()
         path = self.deck.addMedia(file)
+        anki.sound.play(path)
         w.insertHtml('[sound:%s]' % path)
+
+    def onRecSound(self):
+        self.initMedia()
+        w = self.focusedEdit()
+        try:
+            file = getAudio(self.parent)
+        except:
+            if sys.platform.startswith("darwin"):
+                ui.utils.showInfo(_('''\
+Please install <a href="http://www.thalictrum.com/software/lame-3.97.dmg.gz">lame</a>
+to enable recording.'''), parent=self.parent)
+                return
+            raise
+        if file:
+            self._addSound(unicode(file), widget=w)
 
 class FactEdit(QTextEdit):
 
@@ -570,22 +622,45 @@ class FactEdit(QTextEdit):
         QTextEdit.__init__(self, *args)
         self.parent = parent
 
-    def canInsertFromMimeData(self, src):
-        return (src.hasUrls() or
-                src.hasText() or
-                src.hasImage() or
-                src.hasHtml())
+    def canInsertFromMimeData(self, source):
+        return (source.hasUrls() or
+                source.hasText() or
+                source.hasImage() or
+                source.hasHtml())
 
     def insertFromMimeData(self, source):
+        pics = ("jpg", "jpeg", "png", "tif", "tiff", "gif")
+        audio =  ("wav", "mp3", "ogg", "flac")
+        errtxt = _("An error occured while opening %s")
+        if source.hasHtml() and "qrichtext" in unicode(source.html()):
+            self.insertHtml(source.html())
+            return
         if source.hasText():
-            if not (unicode(source.text()).lower().startswith("http://") and
-                    source.hasImage()):
-                # choose text unless this is a link with an image
+            txt = unicode(source.text())
+            l = txt.lower()
+            if l.startswith("http://") or l.startswith("file://"):
+                if not source.hasImage():
+                    # firefox on linux just gives us a url
+                    ext = txt.split(".")[-1].lower()
+                    try:
+                        if ext in pics:
+                            name = self._retrieveURL(txt, ext)
+                            self.parent._addPicture(name, widget=self)
+                        elif ext in audio:
+                            name = self._retrieveURL(txt, ext)
+                            self.parent._addSound(name, widget=self)
+                        else:
+                            # not image or sound, treat as plain text
+                            self.insertPlainText(source.text())
+                    except urllib2.URLError, e:
+                        ui.utils.showWarning(errtxt % e)
+                    return
+            else:
                 self.insertPlainText(source.text())
                 return
         if source.hasImage():
             im = QImage(source.imageData())
-            (fd, name) = tempfile.mkstemp(suffix=".jpg")
+            (fd, name) = tempfile.mkstemp(prefix="anki", suffix=".jpg")
             uname = unicode(name, sys.getfilesystemencoding())
             im.save(uname, None, 95)
             self.parent._addPicture(uname, widget=self)
@@ -596,14 +671,29 @@ class FactEdit(QTextEdit):
         if source.hasUrls():
             for url in source.urls():
                 url = unicode(url.toString())
-                ext = url.split(".")[-1]
-                if ext in ("jpg", "jpeg", "png", "tif", "tiff", "gif"):
-                    url = url.encode(sys.getfilesystemencoding())
-                    (file, headers) = urllib.urlretrieve(url)
-                    self.parent._addPicture(
-                        unicode(file, sys.getfilesystemencoding()),
-                        widget=self)
+                ext = url.split(".")[-1].lower()
+                try:
+                    if ext in pics:
+                        name = self._retrieveURL(url, ext)
+                        self.parent._addPicture(name, widget=self)
+                    elif ext in audio:
+                        name = self._retrieveURL(url, ext)
+                        self.parent._addSound(name, widget=self)
+                except urllib2.URLError, e:
+                    ui.utils.showWarning(errtxt % e)
             return
+
+    def _retrieveURL(self, url, ext):
+        req = urllib2.Request(url, None, {
+            'User-Agent': 'Mozilla/5.0 (compatible; Anki/%s)' %
+            ankiqt.appVersion })
+        filecontents = urllib2.urlopen(req).read()
+        (fd, name) = tempfile.mkstemp(prefix="anki", suffix=".%s" %
+                                      ext.encode("ascii"))
+        file = os.fdopen(fd, "wb")
+        file.write(filecontents)
+        file.flush()
+        return unicode(name, sys.getfilesystemencoding())
 
     def simplifyHTML(self, html):
         "Remove all style information and P tags."

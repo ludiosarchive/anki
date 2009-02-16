@@ -12,7 +12,7 @@ from ankiqt import ui
 
 class ChangeMap(QDialog):
     def __init__(self, parent, model, current):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.model = model
         self.dialog = ankiqt.forms.changemap.Ui_ChangeMap()
@@ -24,6 +24,7 @@ class ChangeMap(QDialog):
             if current == field.name:
                 self.dialog.fields.setCurrentRow(n)
             n += 1
+        self.dialog.fields.addItem(QListWidgetItem(_("Map to Tags")))
         self.dialog.fields.addItem(QListWidgetItem(_("Discard field")))
         if current is None:
             self.dialog.fields.setCurrentRow(n)
@@ -37,14 +38,16 @@ class ChangeMap(QDialog):
         row = self.dialog.fields.currentRow()
         if row < len(self.model.fieldModels):
             self.field = self.model.fieldModels[row]
-        else:
+        elif row == self.dialog.fields.count() - 1:
             self.field = None
+        else:
+            self.field = 0
         QDialog.accept(self)
 
 class ImportDialog(QDialog):
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.dialog = ankiqt.forms.importing.Ui_ImportDialog()
         self.dialog.setupUi(self)
@@ -106,13 +109,8 @@ class ImportDialog(QDialog):
         self.maybePreview()
 
     def doImport(self):
-        self.dialog.status.setText(_("Importing. Anki will freeze for a while.."))
+        self.dialog.status.setText(_("Importing..."))
         t = time.time()
-        while self.parent.app.hasPendingEvents():
-            self.parent.app.processEvents()
-            if time.time() - t > 1:
-                # windows sometimes has pending events permanently?
-                break
         self.importer.mapping = self.mapping
         self.importer.tagsToAdd = unicode(self.tags.text())
         self.importer.tagDuplicates = self.dialog.tagDuplicates.isChecked()
@@ -128,11 +126,10 @@ class ImportDialog(QDialog):
                 return
             except Exception, e:
                 msg = _("Import failed: %s\n") % `e`
-                if hasattr(e, "data"):
-                    msg += e.data
                 self.dialog.status.setText(msg)
                 return
         finally:
+            self.parent.deck.finishProgress()
             self.parent.deck.setUndoEnd(n)
         txt = (
             _("Importing complete. %(num)d cards imported from %(file)s.\n") %
@@ -143,7 +140,6 @@ class ImportDialog(QDialog):
         self.dialog.status.setText(txt)
         self.file = None
         self.maybePreview()
-        self.parent.deck.updateAllPriorities()
         self.parent.reset()
 
     def setupMappingFrame(self):
@@ -192,6 +188,8 @@ class ImportDialog(QDialog):
             self.grid.addWidget(QLabel(text), num, 0)
             if self.mapping[num]:
                 text = _("mapped to <b>%s</b>") % self.mapping[num].name
+            elif self.mapping[num] is 0:
+                text = _("mapped to <b>Tags</b>")
             else:
                 text = _("<ignored>")
             self.grid.addWidget(QLabel(text), num, 1)

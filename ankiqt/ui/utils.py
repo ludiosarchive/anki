@@ -8,7 +8,7 @@ from anki.sound import playFromText, stripSounds
 from anki.latex import renderLatex, stripLatex
 from ankiqt import ui
 
-import re, os, sys, urllib
+import re, os, sys, urllib, time
 import ankiqt
 
 def openLink(link):
@@ -66,7 +66,7 @@ def askUser(text, parent=None):
 class GetTextDialog(QDialog):
 
     def __init__(self, parent, question, help=None, edit=None):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.setWindowTitle("Anki")
         self.question = question
         self.help = help
@@ -185,3 +185,42 @@ def mungeQA(deck, txt):
         return 'img src="%s"' % src
     txt = re.sub('img src="(.*?)"', quote, txt)
     return txt
+
+class ProgressWin(object):
+
+    def __init__(self, parent, max=100, min=0, title=None):
+        if not title:
+            title = "Anki"
+        self.diag = QProgressDialog("", "", min, max, parent)
+        self.diag.setWindowTitle(title)
+        self.diag.setCancelButton(None)
+        self.diag.setAutoClose(False)
+        self.diag.setAutoReset(False)
+        self.diag.setMinimumDuration(0)
+        self.counter = min
+        self.min = min
+        self.max = max
+        self.lastTime = time.time()
+        self.app = QApplication.instance()
+        self.diag.show()
+        self.app.processEvents()
+
+    def update(self, label=None, value=None):
+        self.app.processEvents()
+        #print self.min, self.counter, self.max, label, time.time() - self.lastTime
+        self.lastTime = time.time()
+        if label:
+            self.diag.setLabelText(label)
+        if value is None:
+            value = self.counter
+            self.counter += 1
+        else:
+            self.counter = value + 1
+        self.diag.setValue(value)
+        self.app.processEvents()
+
+    def finish(self):
+        self.diag.setValue(self.max)
+        self.app.processEvents()
+        time.sleep(0.1)
+        self.diag.cancel()

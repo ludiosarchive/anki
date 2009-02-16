@@ -8,7 +8,7 @@ Exporting support
 """
 __docformat__ = 'restructuredtext'
 
-import itertools, time
+import itertools, time, re
 from operator import itemgetter
 from anki import DeckStorage
 from anki.cards import Card
@@ -28,9 +28,10 @@ class Exporter(object):
         file.close()
 
     def escapeText(self, text):
-        "Escape newlines and tabs."
+        "Escape newlines and tabs, and strip Anki HTML."
         text = text.replace("\n", "<br>")
         text = text.replace("\t", " " * 8)
+        text = re.sub('<span class="fm.*?">(.*?)</span>', '\\1', text)
         return text
 
     def cardIds(self):
@@ -59,6 +60,11 @@ class AnkiExporter(Exporter):
         self.includeSchedulingInfo = False
 
     def exportInto(self, path):
+        n = 3
+        if not self.includeSchedulingInfo:
+            n += 1
+        self.deck.startProgress(n)
+        self.deck.updateProgress(_("Exporting..."))
         self.newDeck = DeckStorage.Deck(path)
         client = SyncClient(self.deck)
         server = SyncServer(self.newDeck)
@@ -69,10 +75,12 @@ class AnkiExporter(Exporter):
         # set up a custom change list and sync
         lsum = self.localSummary()
         rsum = server.summary(0)
+        self.deck.updateProgress()
         payload = client.genPayload((lsum, rsum))
+        self.deck.updateProgress()
         res = server.applyPayload(payload)
-        client.applyPayloadReply(res)
         if not self.includeSchedulingInfo:
+            self.deck.updateProgress()
             self.newDeck.s.statement("""
 delete from reviewHistory""")
             self.newDeck.s.statement("""
@@ -118,6 +126,7 @@ delete from stats""")
         self.exportedCards = self.newDeck.cardCount
         self.newDeck.s.commit()
         self.newDeck.close()
+        self.deck.finishProgress()
 
     def localSummary(self):
         cardIds = self.cardIds()

@@ -24,7 +24,7 @@ setup(name='anki',
       author_email='anki@ichi2.net',
       url='http://ichi2.net/anki/index.html',
       license='GPLv3',
-      packages=find_packages(),
+      packages=["anki", "anki.features", "anki.features.chinese", "anki.importing"],
       package_data={'anki':
                     ['samples/*','locale/*/*/*']},
       include_package_data=True,

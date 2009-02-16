@@ -6,6 +6,7 @@ from PyQt4.QtCore import *
 import anki
 import sys, time
 from ankiqt import ui
+from anki.hooks import addHook
 
 class QClickableLabel(QLabel):
     url = "http://ichi2.net/anki/wiki/TheTimerAndShortQuestions"
@@ -26,11 +27,17 @@ class StatusView(object):
         self.shown = []
         self.hideBorders()
         self.setState("noDeck")
+        self.timer = None
+        self.timerFlashStart = 0
         self.thinkingTimer = QTimer(parent)
         self.thinkingTimer.start(1000)
-        self.timer = None
         parent.connect(self.thinkingTimer, SIGNAL("timeout()"),
                        self.drawTimer)
+        self.countTimer = QTimer(parent)
+        self.countTimer.start(60000)
+        parent.connect(self.countTimer, SIGNAL("timeout()"),
+                       self.updateCount)
+        addHook("showQuestion", self.flashTimer)
 
     # State control
     ##########################################################################
@@ -45,7 +52,8 @@ class StatusView(object):
             self.hideDeckStatus()
         elif self.state in ("showQuestion",
                             "deckFinished",
-                            "deckEmpty"):
+                            "deckEmpty",
+                            "studyScreen"):
             self.redraw()
 
     # Setup and teardown
@@ -137,10 +145,12 @@ class StatusView(object):
             remStr += "<b>0</b>"
         elif self.state == "deckEmpty":
             remStr += "<b>0</b>"
+        elif self.main.deck.reviewEarly:
+            remStr += "<b>0</b>"
         else:
             # remaining string, bolded depending on current card
             if not self.main.currentCard:
-                remStr += "%(failed1)s + %(rev1)s + %(new1)s"
+                remStr += "%(failed1)s&nbsp;&nbsp;%(rev1)s&nbsp;&nbsp;%(new1)s"
             else:
                 q = self.main.deck.queueForCard(self.main.currentCard)
                 if q == "failed":
@@ -230,12 +240,32 @@ You should aim to answer each question within<br>
             return
         if not self.timer:
             return
-        if self.main.state in ("showQuestion", "showAnswer"):
+        if self.main.deck and self.main.state in ("showQuestion", "showAnswer"):
             if self.main.currentCard:
+                if time.time() - self.timerFlashStart < 1:
+                    return
+                if not self.main.config['showCardTimer']:
+                    return
                 t = self.main.currentCard.thinkingTime()
-                if t < 60:
-                    self.timer.setText('00:%02d' % t)
-                else:
-                    self.timer.setText('01:00')
+                self.timer.setText('%02d:%02d' % (t/60, t%60))
                 return
         self.timer.setText("00:00")
+
+    def flashTimer(self):
+        if not (self.main.deck.sessionStartTime and
+                self.main.deck.sessionTimeLimit):
+            return
+        t = time.time() - self.main.deck.sessionStartTime
+        t = self.main.deck.sessionTimeLimit - t
+        if t < 0:
+            t = 0
+        self.timer.setText('<span style="color:#0000ff">%02d:%02d</span>' %
+                           (t/60, t%60))
+        self.timerFlashStart = time.time()
+
+    def updateCount(self):
+        if not self.main.deck:
+            return
+        if self.state in ("showQuestion", "showAnswer"):
+            self.main.deck.checkDue()
+            self.redraw()

@@ -1,5 +1,20 @@
 <RCC>
   <qresource prefix="/" >
+    <file>icons/media-playback-stop.png</file>
+    <file>icons/media-record.png</file>
+    <file>icons/view-calendar-tasks.png</file>
+    <file>icons/help-hint.png</file>
+    <file>icons/go-first.png</file>
+    <file>icons/go-jump-today.png</file>
+    <file>icons/go-last.png</file>
+    <file>icons/go-next.png</file>
+    <file>icons/go-previous.png</file>
+    <file>icons/player-time.png</file>
+    <file>icons/find.png</file>
+    <file>icons/editclear.png</file>
+    <file>icons/view-statistics.png</file>
+    <file>icons/emblem-favorite.png</file>
+    <file>icons/view-pim-calendar.png</file>
     <file>icons/anki-tag.png</file>
     <file>icons/edit-redo.png</file>
     <file>icons/text-xml.png</file>

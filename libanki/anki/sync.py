@@ -192,8 +192,9 @@ class SyncTools(object):
             p['media'] = (
                 "<tr><td>Media</td><td>off</td><td>off</td></tr>" % p)
         return _("""\
-<table width=500>
-<tr><td><b>Added/Changed</b></td><td><b>Here</b></td><td><b>Server</b></td></tr>
+<table>
+<tr><td><b>Added/Changed&nbsp;&nbsp;&nbsp;</b></td>
+<td><b>Here&nbsp;&nbsp;&nbsp;</b></td><td><b>Server</b></td></tr>
 <tr><td>Cards</td><td>%(lc)d</td><td>%(rc)d</td></tr>
 <tr><td>Facts</td><td>%(lf)d</td><td>%(rf)d</td></tr>
 <tr><td>Models</td><td>%(lm)d</td><td>%(rm)d</td></tr>
@@ -207,6 +208,7 @@ class SyncTools(object):
         "Generate a full summary of modtimes for two-way syncing."
         # client may have selected an earlier sync time
         self.deck.lastSync = lastSync
+        self.deck.s.commit()
         # ensure we're flushed first
         self.deck.s.flush()
         return {
@@ -377,6 +379,8 @@ class SyncTools(object):
         ids = []
         for cm in cms:
             local = self.getCardModel(model, cm)
+            if not 'allowEmptyAnswer' in cm or cm['allowEmptyAnswer'] is None:
+                cm['allowEmptyAnswer'] = True
             self.applyDict(local, cm)
             ids.append(cm['id'])
         for cm in model.cardModels:
@@ -1037,21 +1041,26 @@ class BulkMediaSyncer(SyncTools):
             total = len(missing)
             for n in range(total):
                 fname = missing[n]
-                data = self.getFile(fname)
                 self.progressCallback('up', n, total, fname)
+                data = self.getFile(fname)
                 if data:
                     self.server.addFile(fname, data)
                 n += 1
+            if total > 0:
+                self.progressCallback('up', total, total, missing[total-1])
+
         # download from server
         missing = self.missingMedia()
         total = len(missing)
         for n in range(total):
             fname = missing[n]
-            data = self.server.getFile(fname)
             self.progressCallback('down', n, total, fname)
+            data = self.server.getFile(fname)
             if data:
                 self.addFile(fname, data)
             n += 1
+        if total > 0:
+            self.progressCallback('down', total, total, missing[total-1])
 
     def getFile(self, fname):
         try:
