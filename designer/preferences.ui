@@ -22,14 +22,6 @@
       <number>0</number>
      </property>
      <widget class="QWidget" name="tab_1" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>304</width>
-        <height>333</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Display</string>
       </attribute>
@@ -98,6 +90,20 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="showProgress" >
+         <property name="text" >
+          <string>Show due count and progress during review</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="preventEdits" >
+         <property name="text" >
+          <string>Prevent edits until answer shown</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer" >
          <property name="orientation" >
           <enum>Qt::Vertical</enum>
@@ -110,17 +116,19 @@
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QLabel" name="label_3" >
+         <property name="text" >
+          <string>Some settings will take effect after you restart Anki.</string>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab_2" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>304</width>
-        <height>333</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Save &amp;&amp; Sync</string>
       </attribute>
@@ -301,14 +309,6 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_3" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>304</width>
-        <height>333</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Advanced</string>
       </attribute>
@@ -318,7 +318,7 @@
          <item row="2" column="0" >
           <widget class="QLabel" name="label_6" >
            <property name="text" >
-            <string>&lt;h1>Advanced settings&lt;/h1>Some settings require a restart.</string>
+            <string>&lt;h1>Advanced settings&lt;/h1></string>
            </property>
           </widget>
          </item>
@@ -355,7 +355,7 @@
          <item row="7" column="0" >
           <widget class="QCheckBox" name="showStudyOptions" >
            <property name="text" >
-            <string>Show welcome back screen on startup</string>
+            <string>Show study options on deck load</string>
            </property>
           </widget>
          </item>
@@ -388,6 +388,16 @@
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QLabel" name="label_8" >
+         <property name="text" >
+          <string>Some settings will take effect after you restart Anki.</string>
+         </property>
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -411,6 +421,8 @@
   <tabstop>showDivider</tabstop>
   <tabstop>splitQA</tabstop>
   <tabstop>showEstimates</tabstop>
+  <tabstop>showProgress</tabstop>
+  <tabstop>preventEdits</tabstop>
   <tabstop>saveWhenClosing</tabstop>
   <tabstop>saveAfterEvery</tabstop>
   <tabstop>saveAfterEveryNum</tabstop>
@@ -422,7 +434,9 @@
   <tabstop>syncOnClose</tabstop>
   <tabstop>alternativeTheme</tabstop>
   <tabstop>showTimer</tabstop>
+  <tabstop>showTray</tabstop>
   <tabstop>showStudyOptions</tabstop>
+  <tabstop>addZeroSpace</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>

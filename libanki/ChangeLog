@@ -1,3 +1,1477 @@
+commit 3de46f701b4b365fe156efa21e434b672743bbeb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 16:40:03 2009 +0900
+
+    type->is
+
+commit 29cd8aefc9e977c5bee3f1492496d74ef2db5b70
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 16:07:24 2009 +0900
+
+    bump version
+
+commit 2550d3ec084c4c9fb35e382e78a0fc31a2cab0e9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 15:45:15 2009 +0900
+
+    new 'learn more' handling
+
+commit f8b6d18dfff0380ab339f69c4abb2d7a0024cb16
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 13:47:57 2009 +0900
+
+    add search for delayed
+
+commit eac428f6b3ef2a420db6e25a39e63242f1bee675
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 13:40:49 2009 +0900
+
+    fail>failed
+
+commit 0b9df424001eca3b5bf597f7b873354d6ed70e42
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 13:32:00 2009 +0900
+
+    support searching for card type
+
+commit 91f06b31d67adaf158466d9166ee6ccbe980c66e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 12:45:55 2009 +0900
+
+    updated Polish and German from Piotr Kubowicz
+
+commit 992f7af50ebf38a248687f46d8967b926e0bc32b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 12:44:43 2009 +0900
+
+    make priorities sort better
+
+commit 3b7bf1f573b83af82e03d6fa7a0c92e9bc20fcbe
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 6 12:34:13 2009 +0900
+
+    updated mongolian translations from Charlene Barina
+
+commit ac5a92214e1a9b234cc1c167c06019c8beb5c8b9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon May 4 01:50:09 2009 +0900
+
+    don't include new cards in workload calculation
+
+commit f32f96fb539262ce870f664ed0bc8d817aed0e51
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri May 1 04:36:26 2009 +0900
+
+    if updating priorities results in a suspend, update due counts
+
+commit 961db76e638b05a4e4d91e2482e8115e7a8cac97
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Thu Apr 30 10:36:10 2009 +0200
+
+    Updated Swedish translation and reran translation.sh
+
+commit 4a59e9d5ae0b56be97d765e663f8014c93a0dc4a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 30 05:21:52 2009 +0900
+
+    patch to fix sync translation from piotr
+
+commit 2424151c9f7a9820da03729885ca2e0f03c9f1cc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 30 05:21:43 2009 +0900
+
+    update polish translations from piotr
+
+commit 9692041087cd06d0dbae7f30ee87c8234a9c55ae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 30 05:14:05 2009 +0900
+
+    bump version
+
+commit 796ad5962b3132b2c10052a0489e5a7d040a3ba8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 29 15:28:13 2009 +0900
+
+    rename instance var to avoid deprecation warning
+
+commit 1d24158f9078a428072292682378effef0859c59
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 29 12:44:28 2009 +0900
+
+    bump version
+
+commit 143a78dd2a5f6a5c1b00e326b9b0cf3c2d47967d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 29 12:12:07 2009 +0900
+
+    handle buried cards in deck load
+
+commit 32d5dccbc97edc987f51128ab9efeb2b7374059f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 29 11:51:33 2009 +0900
+
+    randomize after reset; refresh deck
+
+commit 54252afaf10c8643f481c0e03f1a40bbc00d3031
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 28 17:59:59 2009 +0900
+
+    more chinese translations from GUO Siliang
+
+commit de693dbc9100311aef22044e1770f7d3fb7a73b3
+Merge: 33c59a3... 5d0fb55...
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 28 17:59:27 2009 +0900
+
+    Merge branch 'master' of git://github.com/sanna/libanki
+
+commit 33c59a3006294308f11a63c035f3105eea40921a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 28 17:12:50 2009 +0900
+
+    new review early handling so that we can recover on load
+
+commit 5d0fb5579f27ece1c5cc2cb6b88b88489c0432da
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Mon Apr 27 20:11:16 2009 +0200
+
+    Updated Swedish translation and reran translation.sh
+
+commit 19c05259b45d629f9b7511d84963bfef42b518cd
+Merge: 3cf975e... c89d75b...
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Mon Apr 27 20:09:33 2009 +0200
+
+    Merge branch 'master' of git://ichi2.net/libanki
+
+commit c89d75b01cba859317aa6da18273f13ead515908
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 25 21:41:13 2009 +0900
+
+    bump version
+
+commit 90f726e63453c6a721010f7024b1e5c696bd3e72
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 25 03:57:56 2009 +0900
+
+    remove version numbers from import, as osx gets confused
+
+commit e51fec907be13d66f60cf927e2ab31eece08895b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 25 03:28:21 2009 +0900
+
+    bump version
+
+commit 169dc16ced8c834fb77074654fde8986d20b7fdb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 25 03:27:46 2009 +0900
+
+    remove deprecated popen call
+
+commit 61fc7b4430a5d0ecfd9a6ca82b13291206d76d98
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 25 03:04:52 2009 +0900
+
+    lower tags in python, as sqlite doesn't have full unicode tables
+
+commit 2944b8194bb5344b2efb47059ec2c71670f16ed4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 25 02:38:48 2009 +0900
+
+    if audio player fails to start, give better error
+
+commit c0c969d686eecf3a59e7ee93a53de0ffa0d18068
+Merge: 2c60151... 87d8656...
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 25 01:10:37 2009 +0900
+
+    Merge branch 'master' of git://github.com/sanna/libanki
+
+commit 2c60151a45e452964f55a3940f3cff9f8b5b6bd1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Apr 24 02:16:54 2009 +0900
+
+    ignore console input in mplayer
+
+commit 3cf975e32d779f955b0a3216a0082ca0822096a6
+Merge: 87d8656... bc2e9d9...
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Thu Apr 23 18:41:52 2009 +0200
+
+    Merge branch 'master' of git://ichi2.net/libanki
+
+commit 87d8656f4910e47397ecac69eb5e4a25bfab5314
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Thu Apr 23 18:13:32 2009 +0200
+
+    Updated Swedish translation and reran translation.sh
+
+commit bc2e9d9593f0c7b90985e29a50d29adb281c1164
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 16:49:55 2009 +0900
+
+    fix adding cards while in random mode
+
+commit 2393775f80f4b6d05910cc51acdbc9bedebf66b6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 04:05:37 2009 +0900
+
+    add type to factid index
+
+commit 94df742a590fa15c6ed99af2aafbc800fd082fe3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 02:00:52 2009 +0900
+
+    fix bug with zero imports, improve speed with zero imports
+
+commit 155de151015f9e6aaa913eadb97c53484bfc7aef
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 01:58:40 2009 +0900
+
+    greatly improve import speed on large decks, randomize too
+
+commit d1a44e308efb8effa0d96452de60ae71407216ed
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 01:57:54 2009 +0900
+
+    handle randomize progress in ankiqt, add helper for updating facts
+
+commit f4997f328cc5b664538464af401e0461e92c762d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 01:36:25 2009 +0900
+
+    don't randomize on upgrade, will cause sync problems
+
+commit 35837ef2139dd5d454b2514b2967dec13177d84c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 01:35:41 2009 +0900
+
+    mark cards modified when randomizing/ordering
+
+commit ae7047f5af31f9cbaabe116774925eb69f6bbe94
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 01:33:59 2009 +0900
+
+    add progress dialogs
+
+commit fbf31d60da53b3f2dffe90c3e432a17f22a0ebb8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 01:25:42 2009 +0900
+
+    new random handling
+
+commit a6827b8dd799ca18ce9b5b9bae012cece94e0409
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 23 00:32:40 2009 +0900
+
+    check if modified in setvar()
+
+commit 19584bd642823e32122573aade285144fcd22fa4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 22 21:57:25 2009 +0900
+
+    don't dirty cards on sync
+
+commit cd87adbe718bec1907783f51d6114e307dce9839
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 22 21:37:42 2009 +0900
+
+    fix new count where cards are suspended, highlight type in blue too
+
+commit bc8b7f45dac30df0dc24de1a5ffd24019440e95c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 22 21:34:38 2009 +0900
+
+    fix plural of suspended cards
+
+commit 09e158ac74acc28f5e315b9b22df7631b24bc7b2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 22 21:34:17 2009 +0900
+
+    update card priorities after fact tags updated
+
+commit 3c9ad98a44f1faf5410e300363018cb8fa3fd9bd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 22 18:10:54 2009 +0900
+
+    remove comma from delete tags
+
+commit c8731bc49ce93de2e99eb3b4597511f99a5c80ec
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 20 23:46:43 2009 +0900
+
+    add mongolian translation from Charlene Barina
+
+commit 013f3d00a8d1500dcbb683cd68e1c9de3be63102
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 20 21:50:29 2009 +0900
+
+    support * wildcard in normal text search too
+
+commit 5be89d13d7a8440bbe49bd4aa86711ebe3251e33
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 18 23:44:55 2009 +0900
+
+    bump version
+
+commit c0b46ff994e17fd6dcdf6efcc90b90effaf66c70
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 18 22:41:03 2009 +0900
+
+    mark cards modified when priority changed
+
+commit e1f505b853cc8efaac87f773dd5eaae21ba35acc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 18 22:00:49 2009 +0900
+
+    don't randomize field ids anymore
+
+commit 451c26659175405ab85aa2ad719688ea072a50ee
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 18 04:45:41 2009 +0900
+
+    make sure tag index is unique
+
+commit 541dd3e38e8bcd08b5d76ffb8411f7627aa80b6e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 18 02:39:18 2009 +0900
+
+    improve speed of tagIds()
+
+commit 19e597cbc924fe322291b689f3a3922f0f90ad9e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 18 02:32:03 2009 +0900
+
+    don't update tag for each card, we do it for the fact
+
+commit 1d4710b6d62b23fa8fa64759ac15e7d1fe02489f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Apr 17 23:18:05 2009 +0900
+
+    flush after startProgress() in case a lost focus has been triggered
+
+commit 099202c28f8393d99e89eb3a0858a5f7354e911f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 14 02:01:07 2009 +0900
+
+    trailing whitespace
+
+commit 06b1ee47f90d08cfbc44e2487fb9f5a8d339fee7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 14 00:08:56 2009 +0900
+
+    add support for turning off backups
+
+commit 5a912faeabec2b9cd0c9e68789bcd91684a10ff8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 13 12:40:51 2009 +0900
+
+    escape tags on mnemosyne import
+
+commit b9789cbd50ebfdd06b89470483b417da7a7bff58
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 11 23:17:50 2009 +0900
+
+    Chinese translation from Siliang GUO
+
+commit 3cb299a1d54dae78ef75032cfd58b953079b338f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 11 02:35:55 2009 +0900
+
+    bump version, remove debugging code
+
+commit b7a81f952ce3cf4b0a1aa2916b67a462ecbec525
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 11 02:15:52 2009 +0900
+
+    don't mark deck modified on upgrade, just commit
+
+commit 6a836e5680568eb08535cbf8fba06799bbfc55ee
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 11 01:08:04 2009 +0900
+
+    fix attachOld test
+
+commit 49089732c41835500e0897bcd52a8b7129cc1fff
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 11 01:05:51 2009 +0900
+
+    make sure to set progress handler envs before setting handler
+
+commit d4235aaa344a6840c23480db62cb661d7d7e6556
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 11 01:05:35 2009 +0900
+
+    parse lastSync as a float to fix problem with latest simplejson
+
+commit 51213784a821205124651330fc12e00eb25f8b29
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Apr 11 00:17:39 2009 +0900
+
+    init progress handle at start, tweaks for faster deck startup
+
+commit 09596894630959719e00d4feba6ac5fbdd93edf7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Apr 10 22:23:41 2009 +0900
+
+    use external player on mac too
+
+commit 56098f18a8fdc831ff60253a18e71cead38ca5be
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Fri Apr 10 14:46:29 2009 +0200
+
+    Updated Swedish translation and reran translation.sh
+
+commit 356d9365bbfb4b82e5d9e1293273ee1331082b57
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Fri Apr 10 14:45:27 2009 +0200
+
+    Clean up, removing commented out no longer needed lines
+
+commit f2db5c27d654f15f68ecbb23d23c1e17ec9c3337
+Merge: c3d67c9... 87b4e72...
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Fri Apr 10 14:43:21 2009 +0200
+
+    Merge branch 'newSpaced'
+
+commit 87b4e72f47aebe86c839267c3dae3b14398edd0e
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Fri Apr 10 10:57:49 2009 +0200
+
+    Experimenting with selecting cards that are both new and spaced
+
+commit c3d67c981800fcadc9a895a4e71009413aa79d04
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Apr 10 16:00:22 2009 +0900
+
+    add mark's latest taiwanese translations, run translate.sh
+
+commit 426eb204a4d6a7caa5506327df6e6a51f0b9913f
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Thu Apr 9 15:22:27 2009 +0200
+
+    Updated Swedish translation and reran translation.sh
+
+commit 2738ee9100370addecc14fb963ba38a47cfb705e
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Thu Apr 9 15:21:11 2009 +0200
+
+    Changed 'At the same time...' to 'At this time...'
+
+commit 6715f32237f73e7dd4d042ecd7bddd8cce93dde7
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Tue Apr 7 11:14:41 2009 +0200
+
+    Updated Swedish translation and reran translation.sh
+
+commit 8d9c1cf191eb4d7b871ff31373bd48bdce2f6abb
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Tue Apr 7 11:14:10 2009 +0200
+
+    Adding html comments to strings to allow them to be translated differently
+
+commit ac2213b89ba0eca77f694d3c3307c5eadfee3cf2
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Tue Apr 7 08:57:00 2009 +0200
+
+    Updated Swedish translation and reran translation.sh
+
+commit c4304fa1958c0a012bc3e342bc25074cf3d5cf16
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Tue Apr 7 08:56:35 2009 +0200
+
+    Plural support for some strings
+
+commit ba716e2066e890fa02637af3be438a7e6282c8ae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 7 12:22:35 2009 +0900
+
+    conditionally apply meta
+
+commit d9aa62d37020651d1ddc2161f3df47c48ca7b438
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 7 11:57:49 2009 +0900
+
+    bump version number
+
+commit c7f9cec6579a5c4b91431ed0de3b0a770c6819c0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 7 11:55:08 2009 +0900
+
+    add deck vars
+
+commit aed9fb1c618d5adc0715002a065e0e217fbb102f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 23:53:04 2009 +0900
+
+    update tag priorities when deck is bundled
+
+commit 1d6e3f0b97b3f861b750fc9c3ed17afb0e279e07
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 13:49:00 2009 +0900
+
+    bump version number
+
+commit 4e3e6d314811c60dd9a6c2c841b1c392719816a9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 13:30:28 2009 +0900
+
+    update translations
+
+commit d09709fb50f3795f136fa42251fdc63c95a13b7c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 12:16:09 2009 +0900
+
+    use tag cache for great speed increase in cram, allow card id limit
+
+commit 085fbf3bcc6c451bfcc821c18033cd9a7a4c35f4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 11:47:14 2009 +0900
+
+    add hack to prevent qt movie for now
+
+commit 10816ee5d7a5b79ad58f3530e40444a9dd22cedc
+Merge: 7e9453a... 78265fd...
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 11:43:32 2009 +0900
+
+    Merge branch 'master' of git://github.com/sanna/libanki
+
+commit 7e9453a43aa8edc0e899c03bd6a148c449b9d29f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 11:42:48 2009 +0900
+
+    new german translation
+
+commit 36825006d00aedc2bf25038a74af4d5c73c7bab9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 6 11:41:50 2009 +0900
+
+    new search interface, support negating tags, use tag: not t:
+
+commit 62375e37a322951fcfb4bdf74ff6e9e07f9cd19e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 2 04:29:11 2009 +0900
+
+    need to force a write lock even in explicit locking mode
+
+commit 78265fdc24ee758147ceefcd8a4b0b24e4fea44a
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Mon Mar 30 10:43:44 2009 +0200
+
+    Added back lost space in string
+
+commit 78ee6884f554bcf28f6e5660ae74939f0a614a18
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 30 08:23:21 2009 +0900
+
+    make sure to account for failed cards not due yet
+
+commit e25e8ff0edf89eac93993d73901fdc1bc2380bb5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 30 07:45:13 2009 +0900
+
+    fix rebuildCounts()
+
+commit 5ca9afa0dae91d5fc6a2cf042f6b93ae5accede9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 29 11:53:44 2009 +0900
+
+    update priorities on export
+
+commit 58044f858653240adedd531f9773ecdafb9a8841
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 29 11:33:40 2009 +0900
+
+    bump version number
+
+commit 4b3532f3eb4bbcef0703c7a70f3d66f2a6bbedc1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 29 03:52:49 2009 +0900
+
+    on python2.4, fall back to non-localized strings
+
+commit a958734f8b16abea944882772da5d8bd6a2897c4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 29 03:51:06 2009 +0900
+
+    strip trailing whitespace and wrap lines in stats
+
+commit 08eb6ac063b6281c204f456b9bb4d9e5786d9a46
+Merge: e9e5994... 4e81717...
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 29 03:45:39 2009 +0900
+
+    Merge branch 'master' of git://github.com/sanna/libanki
+
+commit 4e81717326651ce544237b417f83f32612f51d1c
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Sat Mar 28 09:08:02 2009 +0100
+
+    Reverting messed up german po-file
+
+commit ba42e3d3c11cd6449b262d0dc2b7753cdce77ff2
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Sat Mar 28 08:45:46 2009 +0100
+
+    Updated Swedish translation and ran translation.sh
+
+commit f156a9a436350213f92738486c5c5daaa54a23b1
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Sat Mar 28 08:40:25 2009 +0100
+
+    Remove extra <br> in next-day msg
+
+commit e9e5994248068e88ffc2d47a78152de5c0dfb8a8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 28 14:32:38 2009 +0900
+
+    make sure cards are tagged correctly when importing tags
+
+commit 19698d62566e9f95ffda212ff9fde334d101b910
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 28 10:14:43 2009 +0900
+
+    only warn on a mac, include \n
+
+commit 7886d498bd0b3e2b65bc61745b41475307a0e54c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 28 08:33:16 2009 +0900
+
+    warn about audio fallback
+
+commit 9fe5d88c0c14752e15a396d6f1f53a883be73248
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Wed Mar 25 17:34:06 2009 +0100
+
+    Minor tweaks to Swedish translation and ran translation.sh
+
+commit c442e1f460a9681df27961821a6d3bf5f42c242b
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Wed Mar 25 11:21:09 2009 +0100
+
+    Updated Swedish translation
+
+commit f4adc657bd13f0b59d0ae3b4a838eba25b09a64a
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Wed Mar 25 11:20:42 2009 +0100
+
+    Added fmtFloat def
+
+commit 57ca74ce34d711795a1dd19613253e5732ff6c24
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Wed Mar 25 11:15:04 2009 +0100
+
+    Use locale decimal point
+
+commit 7bbbc3bd65000e48ddbc47bd82f0d6c1fa422520
+Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
+Date:   Wed Mar 25 10:32:26 2009 +0100
+
+    Revert "taiwanese from mark"
+    
+    reverting binary update
+    This reverts commit 4370606fc18b7b6c2e431692e51294a21c6559af.
+
+commit e1379eba5d9916d16cca2d585c4c64484aef2150
+Author: Susanna Björverud <susanna.bjorverud@telia.com>
+Date:   Tue Mar 24 13:37:28 2009 +0100
+
+    Updated Swedish libanki translation
+
+commit dfb477ec4b7e83e8a4511ca7a08786a5cc3ac121
+Author: Susanna Björverud <susanna.bjorverud@telia.com>
+Date:   Tue Mar 24 13:31:19 2009 +0100
+
+    new def to format percentages with current locale decimal point
+
+commit 4370606fc18b7b6c2e431692e51294a21c6559af
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 25 10:38:13 2009 +0900
+
+    taiwanese from mark
+
+commit c2fb704c526941162f7be540d5e566c97a3a544b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 25 09:42:44 2009 +0900
+
+    assert undoLog primary key not null
+
+commit eed5df1038f2aab57cf7badfeb3dc533961e84cd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 24 09:05:35 2009 +0900
+
+    use format_string()
+
+commit 9fba248489aaf4dbed106e807a22d9e0f7951efe
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 24 08:52:53 2009 +0900
+
+    fix locale.format location
+
+commit 1648d254d6af0c37031602ec777d496a2cf66051
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 24 08:38:29 2009 +0900
+
+    format decimals using locale
+
+commit 0bf018fe025bfcc8116f07695bf6269bec774740
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 23 11:51:43 2009 +0900
+
+    update priorities when changing model
+
+commit 827afacaaa8193164898eb361cf92d8a16b227fa
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 23 11:47:02 2009 +0900
+
+    update tags on card gen, update card model on model, delete old tags
+
+commit 1098bb1c5c64c75f3e129d939227ada9a9dd3ec7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 23 10:48:28 2009 +0900
+
+    make fmtTimeSpan strings translatable
+
+commit caf91b287ef6322d6e433392c8efaebfb3b99384
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 23 10:45:20 2009 +0900
+
+    update finish translation, support importing/*
+
+commit da4461d48dcdc5c50a3d216b88be20a9411d4e49
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 23 10:29:26 2009 +0900
+
+    only split on space
+
+commit 80464ab4a53d487f6bd6c25c33124be683f518b4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 23 10:21:48 2009 +0900
+
+    delete unreferenced tags on update
+
+commit c7022fd37df6687c6b94091baa7537fa72f718e7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 23 09:54:45 2009 +0900
+
+    force a commit before integrity check
+
+commit aa430f15e0a3720c037ea5c8ae0099ad13bc96a2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 22 14:22:21 2009 +0900
+
+    bump version
+
+commit be3fabeee7f0726dac53aee2964100c9eb9cde01
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 21 13:36:02 2009 +0900
+
+    update translations
+
+commit 107217ca6fb8e3a2cd1fade54b94c5b205b2d737
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 21 12:15:30 2009 +0900
+
+    make sure to update priorities on upgrade
+
+commit 1be887872d89203b99e0f7bf95e0324ddc580620
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 21 03:55:24 2009 +0900
+
+    use utc offset of -1 instead
+
+commit 0bf59fa00bd7e865f891f0082c4d5d4e6e47595f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 21 03:50:43 2009 +0900
+
+    make sure to close cursor for first()
+
+commit cf459aee7d1543da3666b53e459dc95bc3f40dca
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 20 14:20:06 2009 +0900
+
+    spaced cards > delayed cards
+
+commit 1f56bc3ec0c989965d11e22916e7b935cb3a9c22
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 20 14:18:56 2009 +0900
+
+    support limiting to single field in find and replace
+
+commit cd44f3308bf28285d4c3e9897d385f365ab43884
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Mar 19 11:26:33 2009 +0900
+
+    add support for updating tags for a given model
+
+commit 6af560da9ac8a909abd173dfe2f8bacdda025d1f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Mar 19 11:06:53 2009 +0900
+
+    make sure to set ret if wait=False
+
+commit 93ca931f012c5b18e4066c076b7f09a5f4828d02
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Mar 19 10:42:12 2009 +0900
+
+    improve progress handler
+
+commit e2baf57744b1969d2f5cb46182e5ea2a5bdd4eca
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Mar 19 08:55:24 2009 +0900
+
+    Estonian from Meelis Vasser, Portuguese from Jo Nakashima
+
+commit 95b8d655e62d5723937c672a078c812a664c5911
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 18 22:45:43 2009 +0900
+
+    remove shared cache mode, it's not needed
+
+commit 34be5b47a7eba4e4627919953f380127ea388d01
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 07:27:44 2009 +0900
+
+    fix reviewHistory table by rebuilding it
+
+commit a111537c26e02699d8b1b1f36cdbf383b0e75f6f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 06:43:45 2009 +0900
+
+    fix refs to reviewHistory's id
+
+commit 66cda18a695393974b99709a56ce1231b9d267ba
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 06:41:53 2009 +0900
+
+    fix call()
+
+commit 64275642ba780bbfa4c217a9d749825b9236669f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 06:39:08 2009 +0900
+
+    pass unicode to simplejson.loads()
+
+commit df3185ab0f2cd3570c6fdc8583cbcdcf76537283
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 06:36:19 2009 +0900
+
+    add wait kwarg to call()
+
+commit af176921df6415b5fd1a3df959f0ecc069a06dea
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 02:12:14 2009 +0900
+
+    fix reviewHistory unit test
+
+commit dfd70ce4a1271f4d4261be194a8e9f13b760aa9c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 01:52:22 2009 +0900
+
+    commit before pragmas
+
+commit 11cd9af5caa64f1e0204ae41150329c38d147401
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 15 01:48:51 2009 +0900
+
+    commit before attempting to change page size
+
+commit bc7b4e4d18297014884cf7eaa34ba064eee3d42a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 14 11:11:02 2009 +0900
+
+    remove tag replace from find&replace
+
+commit fc66e909aeeb45dc639463d51c155a9703caa594
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 14 10:19:29 2009 +0900
+
+    make sure to copy tags on saveas
+
+commit b4b01f9fc463d95ea04a69737f487292dc8fc486
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 14 10:06:22 2009 +0900
+
+    fix initial tag setting when adding cards
+
+commit f14ad8521dc2cc41ecd6ec1637f4076440218995
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 14 10:02:25 2009 +0900
+
+    update initial tag priorities when creating deck
+
+commit 9eca0221f1322fff2f7fd2836447506e3b5b96dc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 14 09:42:42 2009 +0900
+
+    reset undo on check db
+
+commit 440321459afd93ea76dbaac34c2ef3731a85915e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 14 09:38:58 2009 +0900
+
+    take out an exclusive lock on the deck
+
+commit 52cfef6e6cf74e6a756b3d0f79864b02f0d64ea1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Mar 14 05:23:59 2009 +0900
+
+    remove trailing undo barrier on end
+
+commit 95447a23ec317127e152195727aa80b8d1f0c5c3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 13 07:06:21 2009 +0900
+
+    fix 10.3 audio
+
+commit 38cfd6e7db97549aadafcf3f660b9bf1d086a499
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 13 06:24:44 2009 +0900
+
+    new finnish translations from Niklas
+
+commit 0743f87187fd30678c4376e109aab482ee3848d7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 13 05:36:44 2009 +0900
+
+    add progress information to deck upgrade, fix legacy file format = 1
+
+commit b527d314993813fbfb41af325c7abded132c8931
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Mar 12 17:21:11 2009 +0900
+
+    fix the review history growing bug properly
+
+commit ba15b6d0c312a2cd377a66fab262b0e73bab425c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 11 05:39:56 2009 +0900
+
+    update translations
+
+commit 183f7461b48ed64ca9f8a6dea622e3413016b856
+Author: Susanna Björverud <susanna.bjorverud@telia.com>
+Date:   Tue Mar 10 17:25:35 2009 +0100
+
+    Updating Swedish translation
+
+commit 32f9f1952eae52ad09c8395f9b0a4064c38b231c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 11 05:28:53 2009 +0900
+
+    simplified chinese from nick
+
+commit 004030af0d08ebd4b1e4d4e3d368bfb70a330791
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 10 23:38:29 2009 +0900
+
+    don't fail if progress handler unavailable or tags table existing
+
+commit c266248edb971a249901c53b3d796d0621a5f81e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 10 12:28:36 2009 +0900
+
+    fix review early bug, update indices on deck load
+
+commit 343b76da052c2da89377a55ee090c16d0c6bd790
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 10 07:38:59 2009 +0900
+
+    if utc offset is 24, set new utc offset and rebuild
+
+commit 46451dbd4d48c28a7f536839559dcb78502a2d00
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 10 07:38:23 2009 +0900
+
+    remove sox hack
+
+commit 3bd9dd84944d0053d19daede3cf26d97b04e14ae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 6 06:35:43 2009 +0900
+
+    handle osx 10.3 audio
+
+commit e75036adde4946edb01dce9d21a1e1aebc32a795
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 6 05:09:24 2009 +0900
+
+    mention sox failure
+
+commit fa513cab726a1fc9895dc3e47e69ad37ecdde738
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 4 12:10:50 2009 +0900
+
+    remove duplicates from review history
+
+commit 4763e411807ef4e64ce76c7d40ba31da62cc9c9a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 4 11:59:34 2009 +0900
+
+    add/delete tags should update card ids, not fact ids
+
+commit da3d25e2d6fcf2d573a9fa5c6a7f621e473bac15
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 4 11:52:41 2009 +0900
+
+    bulk delete cards when template deleted, add progress info on field delete
+
+commit 9d16b89c7de1fbdff53c013c78afe19e266927b3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 4 11:45:54 2009 +0900
+
+    refresh after add/remove tags, don't use comma
+
+commit 32c621de32c41cdb2389332682145a677a10224d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 4 10:58:44 2009 +0900
+
+    fix low priority support
+
+commit 20ac55581afb0cc56df88d2bfb386537086bd0f4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 1 15:17:39 2009 +0900
+
+    update translations
+
+commit 27a152970330bdd325e12255d6252948114cb4df
+Author: Susanna Björverud <susanna.bjorverud@telia.com>
+Date:   Sat Feb 28 23:05:59 2009 +0100
+
+    Committed Swedish translation by Susanna Björverud.
+
+commit 1234420cb782792e9becfa0f5ba59cca028670b1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 28 16:57:11 2009 +0900
+
+    add tags based on user's priorities
+
+commit 36421cf166d8cf118b71bf991755ba4971412244
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 27 15:30:11 2009 +0900
+
+    use pure field model order when importing
+
+commit 97eb12e343bfc0b45029eeb5dff07aff74e747be
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 26 02:07:27 2009 +0900
+
+    new osx audio based on qtmovie
+
+commit 83e27a12cebf6db41dcce1f28ac6c94e9d9f14da
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 26 00:49:54 2009 +0900
+
+    fix extra suspend tags
+
+commit 0ffc63409485819851e52134dd51d342cebb4597
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 26 00:11:37 2009 +0900
+
+    update on openSession()
+
+commit f9ace0178ccedbc2d19b6e80a8d2e1a24f5010bd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 25 23:37:24 2009 +0900
+
+    update translations
+
+commit 14bb30becb0af59218d5cb38151a0b007fd518ac
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 24 13:03:27 2009 +0900
+
+    expire after delete
+
+commit 94f7775b7f27a46287139daa9794e8cecff9c12b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 24 01:23:47 2009 +0900
+
+    remove space from missing media tag
+
+commit 529ddef63a9eff944b04517f4f5eed0aba62e6c8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 24 01:12:37 2009 +0900
+
+    max=0 to progress support
+
+commit 7026ef9bd89dde4386051ce8f7edbc1bd2198566
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 24 00:13:32 2009 +0900
+
+    update card tags after model changed
+
+commit 7a12888eb2518108e200a091c16096a3adf30db9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 21 18:23:55 2009 +0900
+
+    report new cards as new always, make sure they come before vhp if 'show first'
+
+commit 12f73ef52af01e7ba430f9f05762b083f5ffffc2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 21 18:05:29 2009 +0900
+
+    fix priority rebuild
+
+commit 3878a3eef268e071e48da8636ab19bf8d2ea2af0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 20 17:25:41 2009 +0900
+
+    allow partial priority rebulid for activeTags, speed up db with cache/page size
+
+commit 0d2429bee88c89da05f24c181d6b62c83a6d600f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 20 00:14:04 2009 +0900
+
+    fix updatePriorities(), etc
+
+commit 0b1a135176be9100ebfd62474710733b74bbc6df
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 20 00:12:19 2009 +0900
+
+    update card tags after sync, new priority handling
+
+commit ebaa37fe55ff60856e709f24b73ea8155507c1a5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 20 00:11:44 2009 +0900
+
+    update tags when importing
+
+commit 780010ad68439281f3331348e20b2ca9e99bf712
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 19 17:27:13 2009 +0900
+
+    fix unit tests, turn off some debugging
+
+commit e4354181c4a62b390fb82028d5376ba9451dcb9e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 19 16:00:45 2009 +0900
+
+    db progress handler, work on tag cache
+
+commit deffd752c536232f21ededf57e2cd72b5b91c7a4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 17 23:20:05 2009 +0900
+
+    fix failed card policy being set as custom
+
+commit 9863bfe31804e0d9d80f42029ab2a354ed3fd042
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 17 12:26:10 2009 +0900
+
+    add brazillian portuguese translation from Jo Nakashima
+
+commit 0dfe83cd85b978333fd3f03104b3a1f98724d3cb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 15 20:33:07 2009 +0900
+
+    refresh deck after model change
+
+commit 58fd0f253c1c2e5fb5fe2e7eab6c5b1cfa72548a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 15 15:49:04 2009 +0900
+
+    add cloneFact() back, it's still used by previewing
+
+commit eac6324fcbf41ea7837b24f0592fa77434a79773
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 15 15:25:56 2009 +0900
+
+    raise keyerror(key) in facts
+
+commit e3805476afb7ede94e2329690ff183e42c05cfa1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 14 22:21:06 2009 +0900
+
+    remove obsolete cardsDueSoon
+
+commit deed322c5392ceb34531d329a8848c35792e2551
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 14 20:09:50 2009 +0900
+
+    only bump deck mod time if there were reviewed-ahead cards
+
+commit c81098c03749a26082fc64b207de16153089fd36
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 14 20:08:40 2009 +0900
+
+    check due after resetting early
+
+commit a4bbe27014ed272da7e67ffb85b5c6f8ab8e21f2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 14 19:51:44 2009 +0900
+
+    fix unihan.db installation (patch from Krause.Chr)
+
+commit 77a6488f6daa240b50b93f9308a12c2590e78055
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 14 03:03:42 2009 +0900
+
+    when importing, tag cards as new, add unit test
+
+commit 724c1354a83aab838605fb2143c3144993a1ec8d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 14 01:11:27 2009 +0900
+
+    return number of changed facts in find&replace
+
+commit 8892ad9f903f859297bcf2768b87d3db42ed12f0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 14 00:12:28 2009 +0900
+
+    expire instead of expunging
+
+commit f6b24b6d9afc51f20e492efe18b56bd01273c520
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 13 21:38:11 2009 +0900
+
+    find&replace
+
+commit 231b5fe9e7443cec8fd8e16df31a13fe6b8da630
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 10 13:22:45 2009 +0900
+
+    only use failedcardmax with 'soon' failed card setting, fix tag unit test
+
+commit a4e3badf8083e12f6800b30c3f765cac6cbff78b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 9 21:54:19 2009 +0900
+
+    update importing for new tag handling
+
+commit 55cf34e8eef9d19b042ceedac5f161a20f5a3724
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 9 20:21:34 2009 +0900
+
+    make sure card model tags are included in allTags(), fix upgrade code
+
+commit 6d7ef666401378762ba7ce6ca11650529c17666f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 8 04:54:59 2009 +0900
+
+    more upgrade fixes
+
+commit fa1713e9ee9b24ba44f4e3295feae2e991baa7f7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 8 04:36:27 2009 +0900
+
+    fix upgrade code
+
+commit 9b4da171fe3153fc9c798a47e0f2e05b1aec4665
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 8 03:21:16 2009 +0900
+
+    accept kwargs in tagslist
+
+commit d127ae4175dc72d983f1de424a79926969888a89
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 8 03:13:37 2009 +0900
+
+    separate tags with spaces
+
+commit 28f738f069b7a9a7d2d736b92e6c70011ffc2029
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 7 21:34:46 2009 +0900
+
+    tweak order of failed card options
+
+commit a342c73887918a0f6fce6a07c03a0fb23537d580
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 7 21:31:44 2009 +0900
+
+    improve failed card handling
+
+commit 3b2ba252cdcc1b4d5d6d1d6c162363ff4ee356bb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 7 16:21:25 2009 +0900
+
+    remove debugging code
+
+commit 50e9885c15dc32ac4cb65a3588214f745cd87b16
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 7 14:55:48 2009 +0900
+
+    faster allTags()
+
+commit 0bff47cce9c4d26d1eb477933246ce10cf2b95f7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 6 23:39:32 2009 +0900
+
+    only report kanji for models with japanese in the tags
+
+commit d35320364ad77c94d4d26ae5e0adb7f1d4057479
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 6 19:30:39 2009 +0900
+
+    add progress bar for deleting cards
+
+commit 4d4e7afcffb655400eed00964cdf6e38a49be74b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 6 19:12:03 2009 +0900
+
+    add undoredo hook
+
+commit 4fdaa1ec79fa49275111770817637aeb2af3a9c4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 6 18:56:29 2009 +0900
+
+    fix stats size on osx
+
+commit bde46a94f64b203dc600c6bb475f3469877cb522
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 6 18:34:35 2009 +0900
+
+    fix audio recording on osx
+
+commit 09dbbecf3a9ba1b574ca6f69840dfadee4f7cc73
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 6 15:59:35 2009 +0900
+
+    fix suspended card msg when review early term early, tweak fin msg
+
+commit 8c9803e638c4a8cfb0450119b3fc52c19d2796b8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 6 01:28:21 2009 +0900
+
+    dynamic index generation, sort new in rev order
+
+commit b91b458c6d36d92f2b3fb52550cf4f9a892db961
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 5 16:41:57 2009 +0900
+
+    Reverting "add 'make due now' option"
+
+commit 45829f9acc2fce62ae6a42f791f9a2fc813869c8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 5 11:58:10 2009 +0900
+
+    add 'make due now' option
+
+commit e807b35ce5a96d04143b1f0cab6476cd5853f058
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 5 11:35:22 2009 +0900
+
+    production->recall
+
+commit 3a1c79e1ce36ebf7e25293023ea7de8183ce8ba1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 5 00:52:05 2009 +0900
+
+    only update priorities on due cards
+
+commit d0fa667717037c7a436610c66754d7d69d913d27
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 4 22:33:49 2009 +0900
+
+    don't report deletions when renamed, assert checksum on client
+
+commit 89a31fdc9a5c99c855a5939f2c79e1e5420b0a79
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 4 22:24:54 2009 +0900
+
+    don't checksum media locally
+
+commit 608b899e586e813cd2f7fd6ec22986d40e0903ac
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 4 22:05:16 2009 +0900
+
+    bugfix for change model
+
+commit e2676c238fbe2b529c32a230e3ee677be705d948
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 4 21:55:51 2009 +0900
+
+    tweak review order wording
+
+commit ca8e5928409cdcfa35c0934f5abaffc4780552af
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 4 21:46:14 2009 +0900
+
+    handle x->y & y->x in card model rename, big speed increase for update qa
+
+commit d44c3792e9244124c8511ae5a6063823159e724a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 4 20:43:54 2009 +0900
+
+    model changing support
+
+commit b1835ff71bcae4b193119ee2e0d4ec23f162849b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 4 18:00:00 2009 +0900
+
+    no need to replace into, since we delete fields anyway
+
+commit d59ea678b3e2c3c0932096b42335cc556b3c719b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 2 15:53:12 2009 +0900
+
+    new spanish translations
+
+commit b2832b236343f96b35fb9117662d1dd16145c37b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 2 15:35:34 2009 +0900
+
+    get rid of spaces in congrats
+
+commit 40ed30b4eaa5dd721550a3f3812b3a03a8a16d57
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 31 03:58:58 2009 +0900
+
+    don't show spaced cards notice if no new cards are left
+
+commit 3b8df0c3377dbf025145f0f45398efd0fb77db57
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 31 03:39:55 2009 +0900
+
+    add reports for seen and non-jouyou kanji
+
+commit 479f38fab275741c742ee8237394aff29ec64e55
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 31 02:18:46 2009 +0900
+
+    background colour, reduce default spacing to a minute, tweak finished msg
+
+commit 275d962cb4ff7ad6f590796d08ded5f4a81240ff
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 27 03:09:12 2009 +0900
+
+    make sure not to create undo log on new deck
+
+commit ea89f1d587c8f13adb968f459ee478817542b07a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 27 01:48:16 2009 +0900
+
+    show # of facts in deck stats
+
+commit bf77ed1db7c443a2b588fd193dcd198a1f298e20
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 24 16:03:06 2009 +0900
+
+    update chinese translations, translate script
+
+commit c1e5e657b63df21a02cf9bb8ea4c7a93db59052b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 24 04:17:03 2009 +0900
+
+    cards>interval in docs
+
+commit 585ed7f7f747c91addee5750d8566ff583d24621
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 23 15:38:33 2009 +0900
+
+    new translations from mark
+
+commit a6b42524282dfdba806a67a8945aaf517198c1ea
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 22 23:47:31 2009 +0900
+
+    fix graph dividing, make sure to display 'x cards waiting' msg
+
+commit 5545f5f622128884127f9b2f4fcb7d71237cea67
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 22 17:18:01 2009 +0900
+
+    catch overflow errors during record
+
 commit 26272cba651580556900947c781c155c479760d2
 Author: Damien Elmes <git@ichi2.net>
 Date:   Wed Jan 21 21:34:30 2009 +0900

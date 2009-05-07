@@ -13,10 +13,20 @@ from ankiqt.ui.utils import saveGeom, restoreGeom, saveSplitter, restoreSplitter
 from ankiqt import ui
 from anki.sound import clearAudioQueue
 
+class FocusButton(QPushButton):
+    def focusInEvent(self, evt):
+        if evt.reason() == Qt.TabFocusReason:
+            self.emit(SIGNAL("tabIn"))
+        QPushButton.focusInEvent(self, evt)
+
 class AddCards(QDialog):
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent, Qt.Window)
+        if parent.config['standaloneWindows']:
+            windParent = None
+        else:
+            windParent = parent
+        QDialog.__init__(self, windParent, Qt.Window)
         self.parent = parent
         self.config = parent.config
         self.dialog = ankiqt.forms.addcards.Ui_AddCards()
@@ -27,6 +37,7 @@ class AddCards(QDialog):
         self.setupStatus()
         self.modelChanged(self.parent.deck.currentModel)
         self.addedItems = 0
+        self.forceClose = False
         restoreGeom(self, "add")
         restoreSplitter(self.dialog.splitter, "add")
         self.show()
@@ -52,7 +63,10 @@ class AddCards(QDialog):
         self.dialog.buttonBox.addButton(self.addButton,
                                         QDialogButtonBox.ActionRole)
         self.addButton.setShortcut(_("Ctrl+Return"))
-        self.addButton.setAutoDefault(False)
+        if sys.platform.startswith("darwin"):
+            self.addButton.setToolTip(_("Add (shortcut: command+return)"))
+        else:
+            self.addButton.setToolTip(_("Add (shortcut: ctrl+return)"))
         s = QShortcut(QKeySequence(_("Ctrl+Enter")), self)
         s.connect(s, SIGNAL("activated()"), self.addButton, SLOT("click()"))
         self.connect(self.addButton, SIGNAL("clicked()"), self.addCards)
@@ -91,6 +105,9 @@ class AddCards(QDialog):
             fact.tags = self.parent.deck.lastTags
         # set the new fact
         self.editor.setFact(fact, check=True)
+        self.setTabOrder(self.editor.tags, self.addButton)
+        self.setTabOrder(self.addButton, self.closeButton)
+        self.setTabOrder(self.closeButton, self.helpButton)
 
     def addCards(self):
         # make sure updated
@@ -122,10 +139,18 @@ question or answer on all cards."""), parent=self)
         # start a new fact
         f = self.parent.deck.newFact()
         f.tags = self.parent.deck.lastTags
-        self.editor.setFact(f, check=True)
+        self.editor.setFact(f, check=True, scroll=True)
         # let completer know our extra tags
         self.editor.tags.addTags(parseTags(self.parent.deck.lastTags))
         self.maybeSave()
+
+    def keyPressEvent(self, evt):
+        "Show answer on RET or register answer."
+        if (evt.key() in (Qt.Key_Enter, Qt.Key_Return)
+            and self.editor.tags.hasFocus()):
+            evt.accept()
+            return
+        return QDialog.keyPressEvent(self, evt)
 
     def closeEvent(self, evt):
         if self.onClose():
@@ -140,9 +165,10 @@ question or answer on all cards."""), parent=self)
     def onClose(self):
         # stop anything playing
         clearAudioQueue()
-        if (self.editor.fieldsAreBlank() or
+        if (self.forceClose or self.editor.fieldsAreBlank() or
             ui.utils.askUser(_("Close and lose current input?"),
                             self)):
+            self.editor.close()
             ui.dialogs.close("AddCards")
             self.parent.deck.s.flush()
             self.parent.deck.rebuildCSS()

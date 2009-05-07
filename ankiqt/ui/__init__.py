@@ -9,11 +9,11 @@ def importAll():
     import addcards
     import cardlist
     import deckproperties
+    import importing
     import displayproperties
     import exporting
     import facteditor
     import help
-    import importing
     import lookup
     import modelchooser
     import modelproperties
@@ -26,6 +26,7 @@ def importAll():
     import update
     import utils
     import view
+    import getshared
 
 class DialogManager(object):
 
@@ -55,7 +56,8 @@ class DialogManager(object):
     def closeAll(self):
         for (n, (klass, obj)) in self.modelessDialogs.items():
             if obj:
-                obj.hide()
+                obj.forceClose = True
+                obj.close()
                 self.close(n)
 
     # since we load the graphs dynamically, we need a proxy for this

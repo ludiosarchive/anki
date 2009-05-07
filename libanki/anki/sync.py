@@ -131,6 +131,7 @@ class SyncTools(object):
         self.postSyncRefresh()
         # rebuild priorities on server
         cardIds = [x[0] for x in payload['added-cards']]
+        self.deck.updateCardTags(cardIds)
         self.rebuildPriorities(cardIds, self.serverExcludedTags)
         # rebuild due counts
         self.deck.rebuildCounts(full=False)
@@ -150,14 +151,13 @@ class SyncTools(object):
         self.postSyncRefresh()
         # rebuild priorities on client
         cardIds = [x[0] for x in reply['added-cards']]
+        self.deck.updateCardTags(cardIds)
         self.rebuildPriorities(cardIds)
         # rebuild due counts
         self.deck.rebuildCounts(full=False)
 
-    def rebuildPriorities(self, cardIds, extraExcludes=[]):
-        where = "and cards.id in %s" % ids2str(cardIds)
-        self.deck.updateAllPriorities(extraExcludes=extraExcludes,
-                                      where=where)
+    def rebuildPriorities(self, cardIds, suspend=[]):
+        self.deck.updatePriorities(cardIds, suspend=suspend, dirty=False)
 
     def postSyncRefresh(self):
         "Flush changes to DB, and reload object associations."
@@ -181,16 +181,13 @@ class SyncTools(object):
         if self.mediaSupported():
             h['lM'] = len(payload['added-media'])
             h['rM'] = len(payload['missing-media'])
+        else:
+            h['lM'] = _("off")
+            h['rM'] = _("off")
         return h
 
     def payloadChangeReport(self, payload):
         p = self.payloadChanges(payload)
-        if self.mediaSupported():
-            p['media'] = (
-                "<tr><td>Media</td><td>%(lM)d</td><td>%(rM)d</td></tr>" % p)
-        else:
-            p['media'] = (
-                "<tr><td>Media</td><td>off</td><td>off</td></tr>" % p)
         return _("""\
 <table>
 <tr><td><b>Added/Changed&nbsp;&nbsp;&nbsp;</b></td>
@@ -198,7 +195,7 @@ class SyncTools(object):
 <tr><td>Cards</td><td>%(lc)d</td><td>%(rc)d</td></tr>
 <tr><td>Facts</td><td>%(lf)d</td><td>%(rf)d</td></tr>
 <tr><td>Models</td><td>%(lm)d</td><td>%(rm)d</td></tr>
-%(media)s
+<tr><td>Media</td><td>%(lM)s</td><td>%(rM)s</td></tr>
 </table>""") % p
 
     # Summaries
@@ -456,7 +453,7 @@ values
             ids2str([f[0] for f in facts]))
         # then update
         self.deck.s.execute("""
-insert or replace into fields
+insert into fields
 (id, factId, fieldModelId, ordinal, value)
 values
 (:id, :factId, :fieldModelId, :ordinal, :value)""", dlist)
@@ -544,7 +541,6 @@ values
             "delete from cardsDeleted where cardId in %s" %
             ids2str([c[0] for c in cards]))
 
-
     def deleteCards(self, ids):
         self.deck.deleteCards(ids)
 
@@ -562,11 +558,21 @@ values
         # these may be deleted before bundling
         if 'models' in d: del d['models']
         if 'currentModel' in d: del d['currentModel']
+        d['meta'] = self.realTuples(self.deck.s.all("select * from deckVars"))
         return d
 
     def updateDeck(self, deck):
+        if 'meta' in deck:
+            meta = deck['meta']
+            for (k,v) in meta:
+                self.deck.s.statement("""
+insert or replace into deckVars
+(key, value) values (:k, :v)""", k=k, v=v)
+            del deck['meta']
         self.applyDict(self.deck, deck)
         self.deck.lastSync = self.deck.modified
+        self.deck.updateTagPriorities()
+        self.deck.updateDynamicIndices()
 
     def bundleStats(self):
         def bundleStat(stat):
@@ -627,7 +633,7 @@ from reviewHistory where time > :ls""",
         if not dlist:
             return
         self.deck.s.statements("""
-insert into reviewHistory
+insert or ignore into reviewHistory
 (cardId, time, lastInterval, nextInterval, ease, delay,
 lastFactor, nextFactor, reps, thinkingTime, yesCount, noCount)
 values
@@ -843,7 +849,7 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
 
     def unstuff(self, data):
         "Uncompress and convert to unicode."
-        return simplejson.loads(zlib.decompress(data))
+        return simplejson.loads(unicode(zlib.decompress(data), "utf8"))
 
     def stuff(self, data):
         "Convert into UTF-8 and compress."
@@ -993,7 +999,7 @@ class HttpSyncServer(SyncServer):
 
     def summary(self, lastSync):
         return self.stuff(SyncServer.summary(
-            self, self.unstuff(lastSync)))
+            self, float(zlib.decompress(lastSync))))
 
     def applyPayload(self, payload):
         return self.stuff(SyncServer.applyPayload(self,
@@ -1074,9 +1080,10 @@ class BulkMediaSyncer(SyncTools):
         size = self.deck.s.scalar(
             "select size from media where filename = :f",
             f=fname)
-        assert size
-        assert size == len(data)
-        assert checksum(data) == os.path.splitext(fname)[0]
+        # don't bother checksumming locally
+        #assert size
+        #assert size == len(data)
+        #assert checksum(data) == os.path.splitext(fname)[0]
         open(path, "wb").write(data)
 
 class BulkMediaSyncerProxy(HttpSyncServerProxy):
@@ -1102,6 +1109,8 @@ class BulkMediaSyncerProxy(HttpSyncServerProxy):
         return ret
 
     def addFile(self, fname, data):
+        oldsum = os.path.splitext(fname)[0]
+        assert oldsum == checksum(data)
         return self.runCmd("addFile", fname=fname, data=data)
 
     def runCmd(self, action, **args):

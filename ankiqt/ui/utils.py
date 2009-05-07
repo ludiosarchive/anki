@@ -55,12 +55,20 @@ def showText(text, parent=None):
               SIGNAL("clicked()"), d.accept)
     d.exec_()
 
-def askUser(text, parent=None):
+def askUser(text, parent=None, help=""):
     "Show a yes/no question. Return true if yes."
     if not parent:
         parent = ankiqt.mw
-    r = QMessageBox.question(parent, "Anki", text,
-                             QMessageBox.Yes | QMessageBox.No)
+    sb = QMessageBox.Yes | QMessageBox.No
+    if help:
+        sb |= QMessageBox.Help
+    while 1:
+        r = QMessageBox.question(parent, "Anki", text, sb,
+                                 QMessageBox.Yes)
+        if r == QMessageBox.Help:
+            openWikiLink(help)
+        else:
+            break
     return r == QMessageBox.Yes
 
 class GetTextDialog(QDialog):
@@ -167,28 +175,36 @@ def restoreSplitter(widget, key):
     if ankiqt.mw.config.get(key):
         widget.restoreState(ankiqt.mw.config[key])
 
+def saveHeader(widget, key):
+    key += "Header"
+    ankiqt.mw.config[key] = widget.saveState()
+
+def restoreHeader(widget, key):
+    key += "Header"
+    if ankiqt.mw.config.get(key):
+        widget.restoreState(ankiqt.mw.config[key])
+
 def mungeQA(deck, txt):
     txt = renderLatex(deck, txt)
     txt = stripSounds(txt)
-    def quote(match):
-        match = unicode(match.group(1))
-        if match.lower().startswith("http"):
-            src = match
-        else:
-            if sys.platform.startswith("win32"):
-                prefix = u"file:///"
-            else:
-                prefix = u"file://"
-            src = prefix + unicode(
-                urllib.quote(os.path.join(deck.mediaDir(
-                create=True), match).encode("utf-8")), "utf-8")
-        return 'img src="%s"' % src
-    txt = re.sub('img src="(.*?)"', quote, txt)
     return txt
+
+def getBase(deck):
+    if deck and deck.mediaDir():
+        if sys.platform.startswith("win32"):
+            prefix = u"file:///"
+        else:
+            prefix = u"file://"
+        base = prefix + unicode(
+            urllib.quote(deck.mediaDir().encode("utf-8")),
+            "utf-8")
+        return '<base href="%s/">' % base
+    else:
+        return ""
 
 class ProgressWin(object):
 
-    def __init__(self, parent, max=100, min=0, title=None):
+    def __init__(self, parent, max=0, min=0, title=None):
         if not title:
             title = "Anki"
         self.diag = QProgressDialog("", "", min, max, parent)
@@ -197,12 +213,14 @@ class ProgressWin(object):
         self.diag.setAutoClose(False)
         self.diag.setAutoReset(False)
         self.diag.setMinimumDuration(0)
+        self.diag.show()
         self.counter = min
         self.min = min
         self.max = max
         self.lastTime = time.time()
         self.app = QApplication.instance()
-        self.diag.show()
+        if max == 0:
+            self.diag.setLabelText(_("Processing..."))
         self.app.processEvents()
 
     def update(self, label=None, value=None):
@@ -220,7 +238,8 @@ class ProgressWin(object):
         self.app.processEvents()
 
     def finish(self):
-        self.diag.setValue(self.max)
-        self.app.processEvents()
-        time.sleep(0.1)
+        if self.max:
+            self.diag.setValue(self.max)
+            self.app.processEvents()
+            time.sleep(0.1)
         self.diag.cancel()

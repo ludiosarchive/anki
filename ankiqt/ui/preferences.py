@@ -27,17 +27,23 @@ class Preferences(QDialog):
         self.dialog.setupUi(self)
         self.supportedLanguages = [
             (_("English"), "en_US"),
-            (_("Chinese Traditional"), "zh_TW"),
+            (_("Brazillian Portuguese"), "pt_BR"),
+            (_("Chinese - Simplified"), "zh_CN"),
+            (_("Chinese - Traditional"), "zh_TW"),
             (_("Czech"), "cs_CZ"),
+            (_("Estonian"), "ee_EE"),
             (_("Finnish"), "fi_FI"),
             (_("French"), "fr_FR"),
             (_("German"), "de_DE"),
             (_("Italian"), "it_IT"),
             (_("Japanese"), "ja_JP"),
             (_("Korean"), "ko_KR"),
+	    (_("Mongolian"),"mn_MN"),
             (_("Polish"), "pl_PL"),
             (_("Spanish"), "es_ES"),
+            (_("Swedish"), "sv_SE"),
             ]
+        self.supportedLanguages.sort()
         self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"), self.helpRequested)
         self.setupLang()
         self.setupSync()
@@ -109,9 +115,8 @@ class Preferences(QDialog):
         self.dialog.splitQA.setChecked(self.config['splitQA'])
         self.dialog.addZeroSpace.setChecked(self.config['addZeroSpace'])
         self.dialog.alternativeTheme.setChecked(self.config['alternativeTheme'])
-        if sys.platform.startswith("darwin"):
-            self.dialog.alternativeTheme.setChecked(False)
-            self.dialog.alternativeTheme.setShown(False)
+        self.dialog.showProgress.setChecked(self.config['showProgress'])
+        self.dialog.preventEdits.setChecked(self.config['preventEditUntilAnswer'])
 
     def updateAdvanced(self):
         self.config['showTrayIcon'] = self.dialog.showTray.isChecked()
@@ -122,6 +127,8 @@ class Preferences(QDialog):
         self.config['splitQA'] = self.dialog.splitQA.isChecked()
         self.config['addZeroSpace'] = self.dialog.addZeroSpace.isChecked()
         self.config['alternativeTheme'] = self.dialog.alternativeTheme.isChecked()
+        self.config['showProgress'] = self.dialog.showProgress.isChecked()
+        self.config['preventEditUntilAnswer'] = self.dialog.preventEdits.isChecked()
 
     def codeToIndex(self, code):
         n = 0

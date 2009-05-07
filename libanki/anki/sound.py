@@ -53,19 +53,12 @@ queue = []
 manager = None
 
 if sys.platform.startswith("win32"):
-    externalPlayer = ["mplayer.exe", "-ao", "win32", "-really-quiet"]
-    # bug in sox means we need tmp on the same drive
-    try:
-        p = os.path.join(os.path.splitdrive(
-            os.path.abspath(""))[0], "\\tmp")
-        os.mkdir(p)
-    except OSError:
-        pass
+    externalPlayer = ["mplayer.exe", "-ao", "win32", "-really-quiet", "-noconsolecontrols"]
     dir = os.path.dirname(os.path.abspath(sys.argv[0]))
     os.environ['PATH'] += ";" + dir
     os.environ['PATH'] += ";" + dir + "\\..\\dist" # for testing
 else:
-    externalPlayer = ["mplayer", "-really-quiet"]
+    externalPlayer = ["mplayer", "-really-quiet", "-noconsolecontrols"]
 
 # don't show box on windows
 if sys.platform == "win32":
@@ -73,6 +66,13 @@ if sys.platform == "win32":
     si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 else:
     si = None
+
+if sys.platform.startswith("darwin"):
+    # make sure lame, which is installed in /usr/local/bin, is in the path
+    os.environ['PATH'] += ":" + "/usr/local/bin"
+    dir = os.path.dirname(os.path.abspath(__file__))
+    dir = os.path.abspath(dir + "/../../../..")
+    os.environ['PATH'] += ":" + dir + "/audio"
 
 def retryWait(proc):
     # osx throws interrupted system call errors frequently
@@ -121,8 +121,11 @@ class QueueMonitor(threading.Thread):
             time.sleep(0.1)
             if queue:
                 path = queue.pop(0)
-                retryWait(subprocess.Popen(
-                    externalPlayer + [path], startupinfo=si))
+                try:
+                    retryWait(subprocess.Popen(
+                        externalPlayer + [path], startupinfo=si))
+                except OSError:
+                    raise Exception("Audio player not found")
             else:
                 return
 
@@ -149,9 +152,8 @@ try:
     PYAU_CHANNELS = 1
     PYAU_RATE = 44100
     PYAU_INPUT_INDEX = 0
-except ImportError:
+except:
     pass
-
 
 class _Recorder(object):
 
@@ -160,7 +162,13 @@ class _Recorder(object):
             #print c
             ret = retryWait(subprocess.Popen(c, startupinfo=si))
             if ret:
-                raise Exception("Problem with" + str(c))
+                raise Exception(_("""
+Error processing audio.
+
+If you're on Linux and don't have sox 14.1+, you
+need to disable normalization. See the wiki.
+
+Command was:\n""") + " ".join(c))
 
 class PyAudioThreadedRecorder(threading.Thread):
 
@@ -170,7 +178,10 @@ class PyAudioThreadedRecorder(threading.Thread):
 
     def run(self):
         chunk = 1024
-        p = pyaudio.PyAudio()
+        try:
+            p = pyaudio.PyAudio()
+        except NameError:
+            raise Exception("Recording not supported on OSX10.3.")
         stream = p.open(format=PYAU_FORMAT,
                         channels=PYAU_CHANNELS,
                         rate=PYAU_RATE,
@@ -179,8 +190,15 @@ class PyAudioThreadedRecorder(threading.Thread):
                         frames_per_buffer=chunk)
         all = []
         while not self.finish:
-            data = stream.read(chunk)
-            all.append(data)
+            try:
+                data = stream.read(chunk)
+            except IOError, e:
+                if e[1] == pyaudio.paInputOverflowed:
+                    data = None
+                else:
+                    raise
+            if data:
+                all.append(data)
         stream.close()
         p.terminate()
         data = ''.join(all)
@@ -211,64 +229,10 @@ class PyAudioRecorder(_Recorder):
     def file(self):
         return processingDst
 
-# Mac audio support
-##########################################################################
-
-try:
-    from AppKit import NSSound, NSObject
-
-    queue = []
-    current = None
-
-    class Sound(NSObject):
-
-        def init(self):
-            return self
-
-        def sound_didFinishPlaying_(self, sound, bool):
-            global current
-            while 1:
-                if not queue:
-                    break
-                next = queue.pop(0)
-                if play_(next):
-                    break
-
-    s = Sound.new()
-
-    def playOSX(path):
-        global current
-        if current:
-            if current.isPlaying():
-                queue.append(path)
-                return
-        # new handle
-        play_(path)
-
-    def clearQueueOSX():
-        global queue
-        queue = []
-
-    def play_(path):
-        global current
-        current = NSSound.alloc()
-        current = current.initWithContentsOfFile_byReference_(path, True)
-        if not current:
-            return False
-        current.setDelegate_(s)
-        current.play()
-        return True
-except ImportError:
-    pass
-
 # Default audio player
 ##########################################################################
 
-if sys.platform.startswith("darwin"):
-    play = playOSX
-    clearAudioQueue = clearQueueOSX
-else:
-    play = playExternal
-    clearAudioQueue = clearQueueExternal
+play = playExternal
+clearAudioQueue = clearQueueExternal
 
 Recorder = PyAudioRecorder

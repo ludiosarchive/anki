@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/syncdeck.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.2
+#      by: PyQt4 UI code generator 4.4.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_DeckChooser(object):
     def setupUi(self, DeckChooser):
         DeckChooser.setObjectName("DeckChooser")
-        DeckChooser.resize(484,320)
+        DeckChooser.resize(484, 320)
         self.vboxlayout = QtGui.QVBoxLayout(DeckChooser)
         self.vboxlayout.setSpacing(6)
         self.vboxlayout.setMargin(9)
@@ -34,8 +34,8 @@ class Ui_DeckChooser(object):
         self.vboxlayout.addWidget(self.buttonBox)
 
         self.retranslateUi(DeckChooser)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("accepted()"),DeckChooser.accept)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("rejected()"),DeckChooser.reject)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), DeckChooser.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), DeckChooser.reject)
         QtCore.QMetaObject.connectSlotsByName(DeckChooser)
 
     def retranslateUi(self, DeckChooser):

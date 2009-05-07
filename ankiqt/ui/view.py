@@ -9,9 +9,9 @@ from anki.sound import playFromText, stripSounds
 from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
 from anki.hooks import runHook
-import types, time, re, os, urllib, sys
+import types, time, re, os, urllib, sys, difflib
 from ankiqt import ui
-from ankiqt.ui.utils import mungeQA
+from ankiqt.ui.utils import mungeQA, getBase
 from anki.utils import fmtTimeSpan
 from PyQt4.QtWebKit import QWebPage, QWebView
 
@@ -56,7 +56,7 @@ class View(object):
         self.haveTop = (self.main.lastCard and (
             self.main.config['showLastCardContent'] or
             self.main.config['showLastCardInterval'])) or (
-            self.main.currentCard and self.main.currentCard.due > time.time())
+            self.needFutureWarning())
         self.drawRule = (self.main.config['qaDivider'] and
                          self.main.currentCard and
                          not self.main.currentCard.cardModel.questionInAnswer)
@@ -64,10 +64,12 @@ class View(object):
             if self.haveTop:
                 self.drawTopSection()
         if self.state == "showQuestion":
+            self.setBackground()
             self.drawQuestion()
             if self.drawRule:
                 self.write("<hr>")
         elif self.state == "showAnswer":
+            self.setBackground()
             if not self.main.currentCard.cardModel.questionInAnswer:
                 self.drawQuestion(nosound=True)
             if self.drawRule:
@@ -92,6 +94,10 @@ class View(object):
         self.body.setHtml("")
         self.buffer = ""
 
+    def setBackground(self):
+        col = self.main.currentCard.cardModel.lastFontColour
+        self.write("<style>html { background: %s;}</style>" % col)
+
     # Font properties & output
     ##########################################################################
 
@@ -100,6 +106,8 @@ class View(object):
         self.buffer = self.addStyles() + self.buffer
         # hook for user css
         runHook("preFlushHook")
+        self.buffer = '''<html><head>%s</head><body>%s</body></html>''' % (
+            getBase(self.main.deck), self.buffer)
         #print self.buffer.encode("utf-8")
         self.body.setHtml(self.buffer)
 
@@ -132,6 +140,31 @@ class View(object):
         if self.state != self.oldState and not nosound:
             playFromText(q)
 
+    def correct(self, a, b):
+        if b == "":
+            return "";
+
+        ret = "";
+        s = difflib.SequenceMatcher(None, b, a)
+
+        sz = self.main.currentCard.cardModel.answerFontSize
+        ok = "background: %s; color: #000; font-size: %dpx" % (
+            passedCharColour, sz)
+        bad = "background: %s; color: #000; font-size: %dpx;" % (
+            failedCharColour, sz)
+
+        for tag, i1, i2, j1, j2 in s.get_opcodes():
+            if tag == "equal":
+                ret += ("<span style='%s'>%s</span>" % (ok, b[i1:i2]))
+            elif tag == "replace":
+                ret += ("<span style='%s'>%s</span>"
+                        % (bad, b[i1:i2] + (" " * ((j2 - j1) - (i2 - i1)))))
+            elif tag == "delete":
+                ret += ("<span style='%s'>%s</span>" % (bad, b[i1:i2]))
+            elif tag == "insert":
+                ret += ("<span style='%s'>%s</span>" % (bad, " " * (j2 - j1)))
+        return ret
+
     def drawAnswer(self):
         "Show the answer."
         a = self.main.currentCard.htmlAnswer()
@@ -143,27 +176,10 @@ class View(object):
                 cor = ""
             if cor:
                 given = unicode(self.main.typeAnswerField.text())
-                res = []
-                if len(given) < len(cor):
-                    given += " " * (len(cor) - len(given))
-                sz = self.main.currentCard.cardModel.answerFontSize
-                ok = "background: %s; color: #000; font-size: %dpx" % (
-                    passedCharColour, sz)
-                bad = "background: %s; color: #000; font-size: %dpx;" % (
-                    failedCharColour, sz)
-                for (i, c) in enumerate(given):
-                    try:
-                        yes = c == cor[i]
-                    except IndexError:
-                        yes = False
-                    if yes:
-                        res.append(
-                            "<span style='%s'>%s</span>" % (ok, c))
-                    else:
-                        res.append("<span style='%s'>%s</span>" % (bad, c))
-                a = "".join(res) + "<br>" + a
-        self.write(self.center('<span id=answer />' +
-                               self.mungeQA(self.main.deck, a)))
+                res = self.correct(cor, given)
+                a = res + "<br>" + a
+        self.write(self.center('<span id=answer />'
+                               + self.mungeQA(self.main.deck, a)))
         if self.state != self.oldState:
             playFromText(a)
 
@@ -190,12 +206,17 @@ class View(object):
         self.drawLastCard()
         self.buffer += "</center>"
 
-    def drawFutureWarning(self):
+    def needFutureWarning(self):
         if not self.main.currentCard:
             return
         if self.main.currentCard.due <= time.time():
             return
         if self.main.currentCard.due - time.time() <= self.main.deck.delay0:
+            return
+        return True
+
+    def drawFutureWarning(self):
+        if not self.needFutureWarning():
             return
         self.write("<span style='color: %s'>" % futureWarningColour +
                    _("This card was due in %s.") % fmtTimeSpan(
@@ -233,8 +254,8 @@ class View(object):
     ##########################################################################
 
     def drawWelcomeMessage(self):
-        self.main.mainWin.welcomeText.setText(_("""
-<h1>Welcome to Anki!</h1>
+        self.main.mainWin.welcomeText.setText("""\
+<h1>%(welcome)s</h1>
 <p>
 <table>
 
@@ -242,8 +263,8 @@ class View(object):
 <td width=50>
 <a href="welcome:addfacts"><img src=":/icons/list-add.png"></a>
 </td>
-<td valign=middle><h1><a href="welcome:addfacts">Add material</a></h1>
-Start adding your own material.</td>
+<td valign=middle><h1><a href="welcome:addfacts">%(add)s</a></h1>
+%(start)s</td>
 </tr>
 
 </table>
@@ -255,31 +276,30 @@ Start adding your own material.</td>
 <td>
 <a href="welcome:open"><img src=":/icons/document-open.png"></a>
 </td>
-<td valign=middle><h2><a href="welcome:open">Open Local Deck</a></h2></td>
-</tr>
-
-<tr>
-<td>
-<a href="welcome:openrem"><img src=":/icons/document-open-remote.png"></a>
-</td>
-<td valign=middle><h2><a href="welcome:openrem">Open Online Deck</a></h2></td>
+<td valign=middle><h2><a href="welcome:open">%(local)s</a></h2></td>
 </tr>
 
 <tr>
 <td width=50>
 <a href="welcome:sample"><img src=":/icons/anki.png"></a>
 </td>
-<td valign=middle><h2><a href="welcome:sample">Open Sample Deck</a></h2></td>
+<td valign=middle><h2><a href="welcome:sample">%(dl_shared)s</a></h2></td>
 </tr>
 
 <tr>
-<td width=50>
-<a href="welcome:more"><img src=":/icons/khtml_kget.png"></a>
+<td>
+<a href="welcome:openrem"><img src=":/icons/document-open-remote.png"></a>
 </td>
-<td valign=middle><h2><a href="welcome:more">Get More Decks</a></h2></td>
+<td valign=middle><h2><a href="welcome:openrem">%(dl_personal)s</a></h2></td>
 </tr>
 
-</table>"""))
+</table>""" % \
+	{"welcome":_("Welcome to Anki!"),
+         "add":_("Add material"),
+         "start":_("Start adding your own material."),
+         "local":_("Open Local Deck"),
+         "dl_shared":_("Download Shared Deck"),
+         "dl_personal":_("Download Personal Deck")})
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."

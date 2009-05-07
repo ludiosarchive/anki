@@ -20,6 +20,7 @@ from anki.lang import _
 from anki.utils import genID, canonifyTags
 from anki.errors import *
 from anki.utils import canonifyTags
+from anki.deck import NEW_CARDS_RANDOM
 
 # Base importer
 ##########################################################################
@@ -47,12 +48,21 @@ class Importer(object):
 
     def doImport(self):
         "Import."
-        self.deck.startProgress(6)
+        random = self.deck.newCardOrder == NEW_CARDS_RANDOM
+        num = 7
+        if random:
+            num += 1
+        self.deck.startProgress(num)
         self.deck.updateProgress(_("Importing..."))
         c = self.foreignCards()
-        self.importCards(c)
-        self.deck.updateProgress()
-        self.deck.updateAllPriorities()
+        if self.importCards(c):
+            self.deck.updateProgress()
+            self.deck.updateCardTags(self.cardIds)
+            self.deck.updateProgress()
+            self.deck.updatePriorities(self.cardIds)
+            if random:
+                self.deck.updateProgress()
+                self.deck.randomizeNewCards(self.cardIds)
         self.deck.finishProgress()
         if c:
             self.deck.setModified()
@@ -68,9 +78,7 @@ class Importer(object):
     def resetMapping(self):
         "Reset mapping to default."
         numFields = self.fields()
-        m = []
-        [m.append(f) for f in self.model.fieldModels if f.required]
-        [m.append(f) for f in self.model.fieldModels if not f.required]
+        m = [f for f in self.model.fieldModels]
         m.append(0)
         rem = max(0, self.fields() - len(m))
         m += [None] * rem
@@ -119,8 +127,10 @@ all but one card template."""))
         # strip invalid cards
         cards = self.stripInvalid(cards)
         cards = self.stripOrTagDupes(cards)
+        self.cardIds = []
         if cards:
             self.addCards(cards)
+        return cards
 
     def addCards(self, cards):
         "Add facts in bulk from foreign cards."
@@ -128,7 +138,7 @@ all but one card template."""))
         try:
             idx = self.mapping.index(0)
             for c in cards:
-                c.tags = c.fields[idx]
+                c.tags += " " + c.fields[idx]
         except ValueError:
             pass
         # add facts
@@ -136,7 +146,7 @@ all but one card template."""))
         factIds = [genID() for n in range(len(cards))]
         self.deck.s.execute(factsTable.insert(),
             [{'modelId': self.model.id,
-              'tags': canonifyTags(self.tagsToAdd + "," + cards[n].tags),
+              'tags': canonifyTags(self.tagsToAdd + " " + cards[n].tags),
               'id': factIds[n]} for n in range(len(cards))])
         self.deck.factCount += len(factIds)
         self.deck.s.execute("""
@@ -175,7 +185,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                 self.deck.s.execute(cardsTable.insert(),
                                     data)
         self.deck.updateProgress()
-        self.deck.updateCardsFromModel(self.model)
+        self.deck.updateCardsFromFactIds(factIds)
         self.deck.cardCount += len(cards)
         self.total = len(factIds)
 
@@ -188,6 +198,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         data['due'] = self._now
         self._now += .00001
         data.update(card.__dict__)
+        self.cardIds.append(data['id'])
         data['combinedDue'] = data['due']
         data['isDue'] = data['combinedDue'] < time.time()
         return data
@@ -234,7 +245,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                 else:
                     self.uniqueCache[self.mapping[n].id][card.fields[n]] = 1
         if fields:
-            card.tags += u",Import: duplicate, Duplicate: " + (
+            card.tags += u" Duplicate:" + (
                 "+".join(fields))
             card.tags = canonifyTags(card.tags)
         return True
@@ -249,7 +260,7 @@ from anki.importing.wcu import WCUImporter
 
 Importers = (
     (_("Text separated by tabs or semicolons (*)"), TextImporter),
-    (_("Anki 1.0 deck (*.anki)"), Anki10Importer),
-    (_("Mnemosyne 1.x deck (*.mem)"), Mnemosyne10Importer),
-    (_("CueCard deck (*.wcu)"), WCUImporter),
+    (_("Anki Deck (*.anki)"), Anki10Importer),
+    (_("Mnemosyne Deck (*.mem)"), Mnemosyne10Importer),
+    (_("CueCard Deck (*.wcu)"), WCUImporter),
     )

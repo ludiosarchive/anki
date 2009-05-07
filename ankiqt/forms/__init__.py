@@ -7,16 +7,21 @@ __all__ = [
 	"addmodel",
 	"cardlist",
 	"changemap",
+	"changemodel",
 	"deckproperties",
 	"displayproperties",
+	"editfont",
 	"edithtml",
 	"exporting",
+	"findreplace",
+	"getshared",
 	"importing",
 	"main",
 	"modelproperties",
 	"preferences",
 	"previewcards",
 	"reschedule",
+	"share",
 	"syncdeck",
 ]
 import about
@@ -26,14 +31,19 @@ import addcards
 import addmodel
 import cardlist
 import changemap
+import changemodel
 import deckproperties
 import displayproperties
+import editfont
 import edithtml
 import exporting
+import findreplace
+import getshared
 import importing
 import main
 import modelproperties
 import preferences
 import previewcards
 import reschedule
+import share
 import syncdeck
