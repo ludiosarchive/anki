@@ -289,8 +289,8 @@ class ModelProperties(QDialog):
         self.currentCard = self.m.cardModels[self.dialog.cardList.currentRow()]
         card = self.currentCard
         self.dialog.cardName.setText(card.name)
-        self.dialog.cardQuestion.setPlainText(card.qformat.replace("<br>", "\n"))
-        self.dialog.cardAnswer.setPlainText(card.aformat.replace("<br>", "\n"))
+        self.dialog.cardQuestion.setPlainText(card.qformat.replace("<br>", "<br>\n"))
+        self.dialog.cardAnswer.setPlainText(card.aformat.replace("<br>", "<br>\n"))
         self.dialog.questionInAnswer.setChecked(card.questionInAnswer)
         self.dialog.allowEmptyAnswer.setChecked(card.allowEmptyAnswer)
         self.dialog.typeAnswer.clear()
@@ -335,10 +335,10 @@ order by n""", id=card.id)
             newname = _("Card %d") % (self.m.cardModels.index(card) + 1)
         self.updateField(card, 'name', newname)
         s = unicode(self.dialog.cardQuestion.toPlainText())
-        s = s.replace("\n", "<br>")
+        s = s.replace("<br>\n", "<br>")
         changed = self.updateField(card, 'qformat', s)
         s = unicode(self.dialog.cardAnswer.toPlainText())
-        s = s.replace("\n", "<br>")
+        s = s.replace("<br>\n", "<br>")
         changed2 = self.updateField(card, 'aformat', s)
         changed = changed or changed2
         self.updateField(card, 'questionInAnswer', self.dialog.questionInAnswer.isChecked())
@@ -379,17 +379,17 @@ order by n""", id=card.id)
             return
         if len (self.m.cardModels) < 2:
             ui.utils.showWarning(
-                _("Please add a new card first."),
+                _("Please add a new template first."),
                 parent=self)
             return
         card = self.m.cardModels[row]
         count = self.deck.cardModelUseCount(card)
         if count:
             if not ui.utils.askUser(
-                _("This model is used by %d cards. If you delete it,\n"
+                _("This template is used by %d cards. If you delete it,\n"
                   "all the cards will be deleted too. If you just\n"
                   "want to prevent the creation of future cards with\n"
-                  "this model, please use the 'disable'  button\n"
+                  "this template, please use the 'disable'  button\n"
                   "instead.\n\nReally delete these cards?") % count,
                 parent=self):
                 return
@@ -407,7 +407,7 @@ order by n""", id=card.id)
                 active += 1
         if active < 2 and card.active:
             ui.utils.showWarning(
-                _("Please enable a different model first."),
+                _("Please enable a different template first."),
                 parent=self)
             return
         card.active = not card.active
@@ -464,6 +464,7 @@ order by n""", id=card.id)
     def reject(self):
         "Save user settings on close."
         # update properties
+        self.deck.startProgress()
         mname = unicode(self.dialog.name.text())
         if not mname:
             mname = _("Model")
@@ -491,10 +492,12 @@ order by n""", id=card.id)
             self.deck.setModified()
         # if changed, reset deck
         if self.origModTime != self.deck.modified:
+            self.deck.updateTagsForModel(self.m)
             ankiqt.mw.reset()
         if self.onFinish:
             self.onFinish()
         self.deck.setUndoEnd(self.undoName)
         # check again
         self.deck.haveJapanese = None
+        self.deck.finishProgress()
         QDialog.reject(self)

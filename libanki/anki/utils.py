@@ -19,6 +19,12 @@ except ImportError:
 
 from anki.db import *
 from anki.lang import _, ngettext
+import locale, sys
+
+if sys.version_info[1] < 5:
+    def format_string(a, b):
+        return a % b
+    locale.format_string = format_string
 
 # Time handling
 ##############################################################################
@@ -50,7 +56,7 @@ def fmtTimeSpan(time, pad=0, point=0, short=False):
     else:
         fmt = timeTable[type](_pluralCount(round(time, point)))
     timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
-    return ("%" + (fmt % timestr)) % time
+    return locale.format_string("%" + (fmt % timestr), time)
 
 def fmtTimeSpanPair(time1, time2, short=False):
     (type, point) = optimalPeriod(time1, 0)
@@ -61,10 +67,10 @@ def fmtTimeSpanPair(time1, time2, short=False):
         fmt = shortTimeTable[type]
     else:
         fmt = timeTable[type](2)
-    timestr = "%(a)d.%(b)df" % {'a': 0, 'b': point}
+    timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
     finalstr = "%s-%s" % (
-        ('%' + timestr) % time1,
-        ('%' + timestr) % time2)
+        locale.format_string('%' + timestr, time1),
+        locale.format_string('%' + timestr, time2),)
     return fmt % finalstr
 
 def optimalPeriod(time, point):
@@ -104,6 +110,19 @@ def _pluralCount(time):
     if round(time, 1) == 1:
         return 1
     return round(time, 1)
+
+# locale
+##############################################################################
+
+def fmtPercentage(float_value, point=1):
+	"Return string representing a float respecting current locale followed by a percentage sign"
+	fmt = '%' + "0.%(b)df" % {'b': point}
+	return locale.format_string(fmt, float_value) + "%"
+
+def fmtFloat(float_value, point=1):
+	"Return a string representing a float with decimal separator according to current locale"
+	fmt = '%' + "0.%(b)df" % {'b': point}
+	return locale.format_string(fmt, float_value)
 
 # HTML
 ##############################################################################
@@ -182,12 +201,11 @@ to be integers."""
 
 def parseTags(tags):
     "Parse a string and return a list of tags."
-    tags = tags.split(",")
-    tags = [tag.strip() for tag in tags if tag.strip()]
-    return tags
+    tags = re.split(" |, ?", tags)
+    return [t.strip() for t in tags if t.strip()]
 
 def joinTags(tags):
-    return u", ".join(tags)
+    return u" ".join(tags)
 
 def canonifyTags(tags):
     "Strip leading/trailing/superfluous commas and duplicates."

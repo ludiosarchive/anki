@@ -4,6 +4,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from anki.utils import parseTags, canonifyTags, joinTags
+import re
 
 class TagEdit(QLineEdit):
 
@@ -18,10 +19,7 @@ class TagEdit(QLineEdit):
     def setDeck(self, deck, tags="user"):
         "Set the current deck, updating list of available tags."
         self.deck = deck
-        if tags == "user":
-            tags = self.deck.allUserTags()
-        else:
-            tags = self.deck.allTags()
+        tags = self.deck.allTags()
         self.model.setStringList(
             QStringList(tags))
 
@@ -34,6 +32,17 @@ class TagEdit(QLineEdit):
         QLineEdit.focusOutEvent(self, evt)
         self.emit(SIGNAL("lostFocus"))
 
+    def keyPressEvent(self, evt):
+        if evt.key() in (Qt.Key_Enter, Qt.Key_Return):
+            evt.accept()
+            if self.completer.completionCount():
+                self.setText(
+                    self.completer.pathFromIndex(self.completer.popup().currentIndex()))
+            else:
+                self.setText(self.completer.completionPrefix())
+            return
+        QLineEdit.keyPressEvent(self, evt)
+
 class TagCompleter(QCompleter):
 
     def __init__(self, model, parent, edit, *args):
@@ -42,23 +51,19 @@ class TagCompleter(QCompleter):
         self.edit = edit
 
     def splitPath(self, str):
-        str = unicode(str)
-        if str.strip().startswith(","):
-            self.cursor = 0
-            return QStringList("")
+        str = unicode(str).strip()
+        str = re.sub("  +", " ", str)
         self.tags = parseTags(str)
         self.tags.append(u"")
         p = self.edit.cursorPosition()
-        self.cursor = str.count(",", 0, p)
+        self.cursor = str.count(" ", 0, p)
         return QStringList(self.tags[self.cursor])
 
     def pathFromIndex(self, idx):
         ret = QCompleter.pathFromIndex(self, idx)
-        if u"" not in self.tags:
-            self.tags.append(u"")
         self.tags[self.cursor] = unicode(ret)
         try:
             self.tags.remove(u"")
         except ValueError:
             pass
-        return ", ".join(self.tags)
+        return " ".join(self.tags)

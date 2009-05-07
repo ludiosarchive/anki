@@ -36,8 +36,11 @@ class Sync(QThread):
         self.syncDeck()
 
     def error(self, error):
-        error = self.getErrorMessage(error)
-        self.emit(SIGNAL("showWarning"), error)
+        if error.data.get('type') == 'noResponse':
+            self.emit(SIGNAL("noSyncResponse"))
+        else:
+            error = self.getErrorMessage(error)
+            self.emit(SIGNAL("showWarning"), error)
         if self.onlyMerge:
             # new file needs cleaning up
             self.emit(SIGNAL("cleanNewDeck"))
@@ -49,10 +52,8 @@ class Sync(QThread):
             msg=_("Please double-check your username/password.")
         elif error.data.get('status') == "oldVersion":
             msg=_("The sync protocol has changed. Please upgrade.")
-        elif error.data.get('type') == "noResponse":
-            msg=_("Server is down or operation failed.")
         else:
-            msg=_("Unknown error: %s") % `error.data`
+            msg=_("Unknown error: %s" % `getattr(error, 'data')`)
         return msg
 
     def connect(self, *args):
@@ -81,7 +82,7 @@ class Sync(QThread):
                 self.setStatus("")
                 return
         timediff = abs(proxy.timestamp - time.time())
-        if timediff > 60:
+        if timediff > 300:
             self.emit(SIGNAL("syncClockOff"), timediff)
             return
         # reconnect
@@ -153,14 +154,14 @@ class Sync(QThread):
                 time.sleep(0.25)
             self.emit(SIGNAL("syncFinished"))
         except Exception, e:
-            traceback.print_exc()
+            self.ok = False
+            #traceback.print_exc()
             self.deck.close()
             # cheap hack to ensure message is displayed
             err = `getattr(e, 'data', None) or e`
             self.setStatus(_("Syncing failed: %(a)s") % {
                 'a': err})
-            time.sleep(3)
-            self.emit(SIGNAL("syncFinished"))
+            self.error(e)
 
     def doBulkDownload(self, deckname):
         self.emit(SIGNAL("openSyncProgress"))

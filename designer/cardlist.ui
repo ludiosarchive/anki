@@ -10,7 +10,11 @@
    </rect>
   </property>
   <property name="windowTitle" >
-   <string>Edit Items</string>
+   <string>Browse Items</string>
+  </property>
+  <property name="windowIcon" >
+   <iconset resource="../icons.qrc" >
+    <normaloff>:/icons/find.png</normaloff>:/icons/find.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget" >
    <layout class="QVBoxLayout" name="verticalLayout" >
@@ -162,7 +166,7 @@
      <x>0</x>
      <y>0</y>
      <width>599</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuEdit" >
@@ -175,7 +179,12 @@
     <addaction name="actionSelectAll" />
     <addaction name="actionSelectFacts" />
     <addaction name="actionInvertSelection" />
+    <addaction name="separator" />
+    <addaction name="actionFindReplace" />
+    <addaction name="separator" />
     <addaction name="actionReverseOrder" />
+    <addaction name="separator" />
+    <addaction name="actionFont" />
    </widget>
    <widget class="QMenu" name="menuActions" >
     <property name="title" >
@@ -185,9 +194,11 @@
     <addaction name="actionDeleteTag" />
     <addaction name="separator" />
     <addaction name="actionAddCards" />
-    <addaction name="actionChangeTemplate" />
+    <addaction name="actionChangeModel" />
     <addaction name="separator" />
+    <addaction name="actionCram" />
     <addaction name="actionReschedule" />
+    <addaction name="separator" />
     <addaction name="actionDelete" />
    </widget>
    <widget class="QMenu" name="menuJump" >
@@ -202,9 +213,16 @@
     <addaction name="actionNextCard" />
     <addaction name="actionLastCard" />
    </widget>
+   <widget class="QMenu" name="menu_Help" >
+    <property name="title" >
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionGuide" />
+   </widget>
    <addaction name="menuActions" />
    <addaction name="menuEdit" />
    <addaction name="menuJump" />
+   <addaction name="menu_Help" />
   </widget>
   <action name="actionDelete" >
    <property name="icon" >
@@ -215,7 +233,7 @@
     <string>Delete</string>
    </property>
    <property name="shortcut" >
-    <string>Del</string>
+    <string>Ctrl+Del</string>
    </property>
   </action>
   <action name="actionAddTag" >
@@ -242,7 +260,7 @@
      <normaloff>:/icons/Anki_Card.png</normaloff>:/icons/Anki_Card.png</iconset>
    </property>
    <property name="text" >
-    <string>Generate &amp;Cards...</string>
+    <string>&amp;Generate Cards...</string>
    </property>
   </action>
   <action name="actionReschedule" >
@@ -257,11 +275,6 @@
   <action name="actionSelectAll" >
    <property name="text" >
     <string>Select &amp;All</string>
-   </property>
-  </action>
-  <action name="actionSelectFacts" >
-   <property name="text" >
-    <string>Select &amp;Facts</string>
    </property>
   </action>
   <action name="actionUndo" >
@@ -359,17 +372,54 @@
     <string>Ctrl+End</string>
    </property>
   </action>
-  <action name="actionChangeTemplate" >
-   <property name="text" >
-    <string>Change &amp;Template...</string>
-   </property>
-  </action>
   <action name="actionReverseOrder" >
    <property name="checkable" >
     <bool>true</bool>
    </property>
    <property name="text" >
     <string>Reverse &amp;Order</string>
+   </property>
+  </action>
+  <action name="actionGuide" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/help.png</normaloff>:/icons/help.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Guide...</string>
+   </property>
+  </action>
+  <action name="actionChangeModel" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/system-software-update.png</normaloff>:/icons/system-software-update.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Change &amp;Model...</string>
+   </property>
+  </action>
+  <action name="actionSelectFacts" >
+   <property name="text" >
+    <string>Select &amp;Facts</string>
+   </property>
+  </action>
+  <action name="actionFindReplace" >
+   <property name="text" >
+    <string>Find and Re&amp;place...</string>
+   </property>
+  </action>
+  <action name="actionCram" >
+   <property name="icon" >
+    <iconset resource="../icons.qrc" >
+     <normaloff>:/icons/view-pim-calendar.png</normaloff>:/icons/view-pim-calendar.png</iconset>
+   </property>
+   <property name="text" >
+    <string>&amp;Cram...</string>
+   </property>
+  </action>
+  <action name="actionFont" >
+   <property name="text" >
+    <string>Font...</string>
    </property>
   </action>
  </widget>

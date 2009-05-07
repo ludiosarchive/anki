@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/addmodel.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.2
+#      by: PyQt4 UI code generator 4.4.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_AddModel(object):
     def setupUi(self, AddModel):
         AddModel.setObjectName("AddModel")
-        AddModel.resize(285,269)
+        AddModel.resize(285, 269)
         self.vboxlayout = QtGui.QVBoxLayout(AddModel)
         self.vboxlayout.setObjectName("vboxlayout")
         self.groupBox = QtGui.QGroupBox(AddModel)
@@ -35,8 +35,8 @@ class Ui_AddModel(object):
         self.vboxlayout.addWidget(self.buttonBox)
 
         self.retranslateUi(AddModel)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("accepted()"),AddModel.accept)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("rejected()"),AddModel.reject)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), AddModel.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), AddModel.reject)
         QtCore.QMetaObject.connectSlotsByName(AddModel)
 
     def retranslateUi(self, AddModel):

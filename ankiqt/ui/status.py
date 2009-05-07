@@ -47,7 +47,6 @@ class StatusView(object):
         self.state = state
         if self.state == "initial":
             self.showDeckStatus()
-            self.updateProgressGoal()
         elif self.state == "noDeck":
             self.hideDeckStatus()
         elif self.state in ("showQuestion",
@@ -55,6 +54,26 @@ class StatusView(object):
                             "deckEmpty",
                             "studyScreen"):
             self.redraw()
+            self.showOrHideToolbar(self.state)
+
+    def showOrHideToolbar(self, state):
+        if (not self.main.config['showProgress'] and
+            state in ("showQuestion", "showAnswer")):
+            shown = False
+        else:
+            shown = True
+        self.progressBar.setShown(shown)
+        self.retentionBar.setShown(shown)
+        self.etaText.setShown(shown)
+        self.remText.setShown(shown)
+        self.sep1.setShown(shown)
+        self.sep2.setShown(shown)
+        # timer has a separate option
+        if not self.main.config['showTimer']:
+            shown = False
+        self.timer.setShown(shown)
+        self.sep3.setShown(shown)
+        self.statusbar.hideOrShow()
 
     # Setup and teardown
     ##########################################################################
@@ -75,7 +94,8 @@ class StatusView(object):
         # remaining & eta
         self.remText = QLabel()
         self.addWidget(self.remText, 0)
-        self.addWidget(self.vertSep(), 0)
+        self.sep1 = self.vertSep()
+        self.addWidget(self.sep1, 0)
         self.etaText = QLabel()
         self.etaText.setToolTip(_(
             "<h1>Estimated time</h1>"
@@ -83,7 +103,8 @@ class StatusView(object):
             "at your current pace."))
         self.addWidget(self.etaText, 0)
         # progress&retention
-        self.addWidget(self.vertSep(), 0)
+        self.sep2 = self.vertSep()
+        self.addWidget(self.sep2, 0)
         vbox = QVBoxLayout()
         vbox.setSpacing(0)
         vbox.setMargin(0)
@@ -99,24 +120,22 @@ class StatusView(object):
         vbox.addWidget(self.retentionBar, 0)
         self.combinedBar = QWidget()
         self.combinedBar.setLayout(vbox)
+        self.combinedBar.setFixedWidth(50)
+        if QApplication.instance().style().objectName() != "plastique":
+            self.plastiqueStyle = QStyleFactory.create("plastique")
+            self.progressBar.setStyle(self.plastiqueStyle)
+            self.retentionBar.setStyle(self.plastiqueStyle)
         self.addWidget(self.combinedBar, 0)
         # timer
-        self.addWidget(self.vertSep(), 0)
+        self.sep3 = self.vertSep()
+        self.addWidget(self.sep3, 0)
         self.timer = QClickableLabel()
         self.timer.setText("00:00")
-        if sys.platform.startswith("darwin"):
-            self.timer.setFixedWidth(40)
         self.addWidget(self.timer)
-        self.plastiqueStyle = QStyleFactory.create("plastique")
-        self.progressBar.setStyle(self.plastiqueStyle)
-        self.retentionBar.setStyle(self.plastiqueStyle)
         self.redraw()
 
-    def addWidget(self, w, stretch=0, perm=True):
-        if perm:
-            self.statusbar.addPermanentWidget(w, stretch)
-        else:
-            self.statusbar.addWidget(w, stretch)
+    def addWidget(self, w, stretch=0):
+        self.statusbar.addWidget(w, stretch)
         self.shown.append(w)
 
     def hideDeckStatus(self):
@@ -128,11 +147,6 @@ class StatusView(object):
     def hideBorders(self):
         "Remove the ugly borders QT places on status bar widgets."
         self.statusbar.setStyleSheet("::item { border: 0; }")
-
-    def updateProgressGoal(self):
-        return
-        stats = self.main.deck.sched.getStats()
-        self.totalPending = stats['pending']
 
     # Updating
     ##########################################################################
@@ -161,17 +175,31 @@ class StatusView(object):
                     remStr += "%(failed1)s&nbsp;&nbsp;%(rev1)s&nbsp;&nbsp;<u>%(new1)s</u>"
         stats['failed1'] = '<font color=#990000>%s</font>' % stats['failed']
         stats['rev1'] = '<font color=#000000>%s</font>' % stats['rev']
-        stats['new1'] = '<font color=#0000ff>%s</font>' % stats['new']
+        if self.main.deck.newEarly:
+            new = self.main.deck.newCount
+        else:
+            new = stats['new']
+        stats['new1'] = '<font color=#0000ff>%s</font>' % new
         self.remText.setText(remStr % stats)
         stats['spaced'] = self.main.deck.spacedCardCount()
         stats['new2'] = self.main.deck.newCount
-        self.remText.setToolTip(_(
-            "<h1>Remaining cards</h1>"
-            "<p/>There are <b>%(failed)d</b> failed cards due soon.<br>"
-            "There are <b>%(rev)d</b> cards awaiting review.<br>"
-            "There are <b>%(new)d</b> new cards due today.<br><br>"
-            "There are <b>%(new2)d</b> new cards in total.<br>"
-            "There are <b>%(spaced)d</b> spaced cards.") % stats)
+        self.remText.setToolTip("<h1>" +_(
+            "Remaining cards") + "</h1><p/>" +
+            ngettext("There is <b>%d</b> failed card due soon.", \
+            "There are <b>%d</b> failed cards due soon.", \
+            stats['failed']) % stats['failed'] + "<br>" +
+            ngettext("There is <b>%d</b> card awaiting review.",
+            "There are <b>%d</b> cards awaiting review.", \
+            stats['rev']) % stats['rev'] + "<br>" +
+            ngettext("There is <b>%d</b> new card due today.", \
+            "There are <b>%d</b> new cards due today.",\
+            stats['new']) % stats['new'] + "<br><br>" +
+            ngettext("There is <b>%d</b> new card in total.", \
+            "There are <b>%d</b> new cards in total.",\
+            stats['new2']) % stats['new2'] + "<br>" +
+            ngettext("There is <b>%d</b> delayed card.", \
+            "There are <b>%d</b> delayed cards.", \
+            stats['spaced']) % stats['spaced'])
         # eta
         self.etaText.setText(_("ETA: <b>%(timeLeft)s</b>") % stats)
         # retention & progress bars
@@ -184,34 +212,31 @@ class StatusView(object):
         self.progressBar.setPalette(p)
         self.progressBar.setValue(stats['dYesTotal%'])
         # tooltips
-        stats['avgTime'] = anki.utils.fmtTimeSpan(stats['dAverageTime'], point=2)
-        stats['revTime'] = anki.utils.fmtTimeSpan(stats['dReviewTime'], point=2)
-        tip = _("""<h1>Performance</h1>
-The top bar shows your performance today. The bottom bar shows your<br>
+        tip = "<h1>" + _("Performance") + "</h1>"
+        tip += _("""The top bar shows your performance today. The bottom bar shows your<br>
 performance on cards scheduled for 21 days or more. The bottom bar should<br>
-generally be between 80-95%% - lower and you're forgetting mature cards<br>
-too often, higher and you're spending too much time reviewing.
-<h2>Reviews today</h2>
-<b>Correct today: %(dYesTotal%)0.1f%%
-(%(dYesTotal)d of %(dTotal)d)</b><br>
-Average time per answer: %(avgTime)s<br>
-Total review time: %(revTime)s""") % stats
-        stats['avgTime'] = anki.utils.fmtTimeSpan(stats['gAverageTime'], point=2)
-        stats['revTime'] = anki.utils.fmtTimeSpan(stats['gReviewTime'], point=2)
-        tip += _("""<h2>All Reviews</h2>
-<b>Correct over a month: %(gMatureYes%)0.1f%%
-(%(gMatureYes)d of %(gMatureTotal)d)</b><br>
-Average time per answer: %(avgTime)s<br>
-Total review time: %(revTime)s<br>
-Correct under a month: %(gYoungYes%)0.1f%%
-(%(gYoungYes)d of %(gYoungTotal)d)<br>
-Correct first time: %(gNewYes%)0.1f%%
-(%(gNewYes)d of %(gNewTotal)d)<br>
-Total correct: %(gYesTotal%)0.1f%%
-(%(gYesTotal)d of %(gTotal)d)""") % stats
+generally be between 80-95% - lower and you're forgetting mature cards<br>
+too often, higher and you're spending too much time reviewing.""")
+        tip += "<h2>" + _("Reviews today") + "</h2>"
+        tip += "<b>" + _("Correct today: ") + anki.utils.fmtPercentage(stats['dYesTotal%'], point=1)
+        tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['dYesTotal'], 'totalSum' : stats['dTotal'] } + ")</b><br>"
+        tip += _("Correct over a month: ") + anki.utils.fmtPercentage(stats['dMatureYes%'], point=1)
+        tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['dMatureYes'], 'totalSum' : stats['dMatureTotal'] } + ")</b><br>"
+        tip += _("Average time per answer: ") + anki.utils.fmtTimeSpan(stats['dAverageTime'], point=2) +"<br>"
+        tip += _("Total review time: ") + anki.utils.fmtTimeSpan(stats['dReviewTime'], point=2)
+        tip += "<h2>" + _("All Reviews") + "</h2>"
+        tip += "<b>" + _("Correct over a month: ") + anki.utils.fmtPercentage(stats['gMatureYes%'], point=1)
+        tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['gMatureYes'], 'totalSum' : stats['gMatureTotal'] } + ")</b><br>"
+        tip += _("Average time per answer: ") + anki.utils.fmtTimeSpan(stats['gAverageTime'], point=2) +"<br>"
+        tip += _("Total review time: ") + anki.utils.fmtTimeSpan(stats['gReviewTime'], point=2) +"<br>"
+        tip += _("Correct under a month: ") + anki.utils.fmtPercentage(stats['gYoungYes%'], point=1)
+        tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['gYoungYes'], 'totalSum' : stats['gYoungTotal'] } + ")</b><br>"
+        tip += _("Correct first time: ") + anki.utils.fmtPercentage(stats['gNewYes%'], point=1)
+        tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['gNewYes'], 'totalSum' : stats['gNewTotal'] } + ")</b><br>"
+        tip += _("Total correct: ") + anki.utils.fmtPercentage(stats['gYesTotal%'], point=1)
+        tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['gYesTotal'], 'totalSum' : stats['gTotal'] } + ")</b><br>"
         self.combinedBar.setToolTip(tip)
         if self.main.config['showTimer']:
-            self.timer.setVisible(True)
             self.drawTimer()
             self.timer.setToolTip(_("""
 <h1>Time</h1>
@@ -220,8 +245,6 @@ This time is used to calculate the ETA, but not used<br>
 for scheduling.<br><br>
 You should aim to answer each question within<br>
 10 seconds. Click the timer to learn more."""))
-        else:
-            self.timer.setVisible(False)
 
     def setProgressColour(self, palette, perc):
         if perc == 0:
@@ -236,6 +259,8 @@ You should aim to answer each question within<br>
             palette.setColor(QPalette.Highlight, QColor("#00ee00"))
 
     def drawTimer(self):
+        if self.main.inDbHandler:
+            return
         if not self.main.config['showTimer']:
             return
         if not self.timer:
@@ -247,25 +272,33 @@ You should aim to answer each question within<br>
                 if not self.main.config['showCardTimer']:
                     return
                 t = self.main.currentCard.thinkingTime()
-                self.timer.setText('%02d:%02d' % (t/60, t%60))
+                self.setTimer('%02d:%02d' % (t/60, t%60))
                 return
-        self.timer.setText("00:00")
+        self.setTimer("00:00")
 
     def flashTimer(self):
         if not (self.main.deck.sessionStartTime and
-                self.main.deck.sessionTimeLimit):
+                self.main.deck.sessionTimeLimit) or self.main.deck.reviewEarly:
             return
         t = time.time() - self.main.deck.sessionStartTime
         t = self.main.deck.sessionTimeLimit - t
         if t < 0:
             t = 0
-        self.timer.setText('<span style="color:#0000ff">%02d:%02d</span>' %
+        self.setTimer('<span style="color:#0000ff">%02d:%02d</span>' %
                            (t/60, t%60))
         self.timerFlashStart = time.time()
 
     def updateCount(self):
+        if self.main.inDbHandler:
+            return
         if not self.main.deck:
             return
-        if self.state in ("showQuestion", "showAnswer"):
+        if self.state in ("showQuestion", "showAnswer", "studyScreen"):
             self.main.deck.checkDue()
             self.redraw()
+            if self.state == "studyScreen":
+                self.main.updateStudyStats()
+
+    def setTimer(self, txt):
+        self.timer.setText("<qt>" + txt + "&nbsp;")
+

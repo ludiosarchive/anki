@@ -17,7 +17,7 @@ import anki, anki.utils
 from datetime import date
 from anki.db import *
 from anki.lang import _
-from anki.utils import canonifyTags
+from anki.utils import canonifyTags, ids2str
 
 # Tracking stats on the DB
 ##########################################################################
@@ -260,6 +260,7 @@ class CardStats(object):
     def report(self):
         c = self.card
         fmt = anki.utils.fmtTimeSpan
+        fmtFloat = anki.utils.fmtFloat
         self.txt = "<table>"
         self.addLine(_("Added"), self.strTime(c.created))
         if c.firstAnswered:
@@ -272,21 +273,21 @@ class CardStats(object):
             next = _("in %s") % fmt(abs(next))
         self.addLine(_("Due"), next)
         self.addLine(_("Interval"), fmt(c.interval * 86400))
-        self.addLine(_("Ease"), "%0.2f" % c.factor)
+        self.addLine(_("Ease"), fmtFloat(c.factor, point=2))
         if c.lastDue:
             last = _("%s ago") % fmt(time.time() - c.lastDue)
             self.addLine(_("Last Due"), last)
         if c.interval != c.lastInterval:
             # don't show the last interval if it hasn't been updated yet
             self.addLine(_("Last Interval"), fmt(c.lastInterval * 86400))
-        self.addLine(_("Last Ease"), "%0.2f" % c.lastFactor)
+        self.addLine(_("Last Ease"), fmtFloat(c.lastFactor, point=2))
         if c.reps:
             self.addLine(_("Reviews"), "%d/%d (s=%d)" % (
                 c.yesCount, c.reps, c.successive))
-        self.addLine(_("Average Time"), _("%0.1f seconds") %
-                     c.averageTime)
-        self.addLine(_("Total Time"), _("%0.1f seconds") %
-                     c.reviewTime)
+        avg = fmt(c.averageTime, point=2)
+        self.addLine(_("Average Time"),avg)
+        total = fmt(c.reviewTime, point=2)
+        self.addLine(_("Total Time"), total)
         self.addLine(_("Model Tags"), c.fact.model.tags)
         self.addLine(_("Card Template") + "&nbsp;"*5, c.cardModel.name)
         self.txt += "</table>"
@@ -309,8 +310,10 @@ class DeckStats(object):
 
     def report(self):
         "Return an HTML string with a report."
+        fmtPerc = anki.utils.fmtPercentage
+        fmtFloat = anki.utils.fmtFloat
         if self.deck.isEmpty():
-            return _("Please add some cards first.<p/>")
+            return _("Please add some cards first.") + "<p/>"
         d = self.deck
         html="<h1>" + _("Deck Statistics") + "</h1>"
         html += _("Deck created: <b>%s</b> ago<br>") % self.createdTimeStr()
@@ -325,56 +328,66 @@ class DeckStats(object):
         (stats["new"], stats["newP"]) = (new, newP)
         (stats["old"], stats["oldP"]) = (old, oldP)
         (stats["young"], stats["youngP"]) = (young, youngP)
-        html += _("Total number of cards: <b>%d</b><br><br>") % total
+        html += _("Total number of cards:") + " <b>%d</b><br>" % total
+        html += _("Total number of facts:") + " <b>%d</b><br><br>" % d.factCount
 
-        html += _("<b>Card counts</b><br>")
-        html += _("Mature cards: <b>%(old)d</b> "
-                  "(<b>%(oldP)0.2f%%</b>)<br>") % stats
-        html += _("Young cards: <b>%(young)d</b> "
-                  "(<b>%(youngP)0.2f%%</b>)<br>") % stats
-        html += _("Unseen cards: <b>%(new)d</b> "
-                  "(<b>%(newP)0.2f%%</b>)<br><br>") % stats
+        html += "<b>" + _("Card counts") + "</b><br>"
+        html += _("Mature cards: <!--card count-->") + " <b>%(old)d</b> (%(oldP)s)<br>" % {
+                'old': stats['old'], 'oldP' : fmtPerc(stats['oldP'])}
+        html += _("Young cards: <!--card count-->") + " <b>%(young)d</b> (%(youngP)s)<br>" % {
+                'young': stats['young'], 'youngP' : fmtPerc(stats['youngP'])}
+        html += _("Unseen cards:") + " <b>%(new)d</b> (%(newP)s)<br><br>" % {
+                'new': stats['new'], 'newP' : fmtPerc(stats['newP'])}
+        html += "<b>" + _("Correct answers") + "</b><br>"
+        html += _("Mature cards: <!--correct answers-->") + " <b>" + fmtPerc(stats['gMatureYes%']) + (
+                "</b> " + _("%(partOf)d of %(totalSum)d") % {
+                'partOf' : stats['gMatureYes'],
+                'totalSum' : stats['gMatureTotal'] } + "<br>")
+        html += _("Young cards: <!--correct answers-->")  + " <b>" + fmtPerc(stats['gYoungYes%']) + (
+                "</b> " + _("%(partOf)d of %(totalSum)d") % {
+                'partOf' : stats['gYoungYes'],
+                'totalSum' : stats['gYoungTotal'] } + "<br>")
+        html += _("First-seen cards:") + " <b>" + fmtPerc(stats['gNewYes%']) + (
+                "</b> " + _("%(partOf)d of %(totalSum)d") % {
+                'partOf' : stats['gNewYes'],
+                'totalSum' : stats['gNewTotal'] } + "<br><br>")
 
-        html += _("<b>Correct answers</b><br>")
-        html += _("Mature cards: <b>%(gMatureYes%)0.1f%%</b> "
-                  "(<b>%(gMatureYes)d</b> of <b>%(gMatureTotal)d</b>)<br>") % stats
-        html += _("Young cards: <b>%(gYoungYes%)0.1f%%</b> "
-                  "(<b>%(gYoungYes)d</b> of <b>%(gYoungTotal)d</b>)<br>") % stats
-        html += _("First-seen cards: <b>%(gNewYes%)0.1f%%</b> "
-                  "(<b>%(gNewYes)d</b> of <b>%(gNewTotal)d</b>)<br><br>") % stats
         # average pending time
         existing = d.cardCount - d.newCountToday
         avgInt = self.getAverageInterval()
         def tr(a, b):
             return "<tr><td>%s</td><td align=right>%s</td></tr>" % (a, b)
         if existing and avgInt:
-            html += _("<b>Averages</b><br>")
-            html += "<table width=200>"
-            html += tr(_("Interval"), _("<b>%0.0f</b> days") % avgInt)
-            html += tr(_("Average reps"), _("<b>%0.1f</b> cards/day") % (
-                self.getSumInverseRoundInterval()))
-            html += tr(_("Reps next week"), _("<b>%0.1f</b> cards/day") % (
-                self.getWorkloadPeriod(7)))
-            html += tr(_("Reps next month"), _("<b>%0.1f</b> cards/day") % (
-                self.getWorkloadPeriod(30)))
-            html += tr(_("Reps last week"), _("<b>%0.1f</b> cards/day") % (
-                self.getPastWorkloadPeriod(7)))
-            html += tr(_("Reps last month"), _("<b>%0.1f</b> cards/day") % (
-                self.getPastWorkloadPeriod(30)))
-            html += tr(_("Avg. added"), _("<b>%(a)d</b>/day, <b>%(b)d</b>/mon") % {
-                'a': self.newAverage(), 'b': self.newAverage()*30})
+            html += "<b>" + _("Averages") + "</b>"
+            if sys.platform.startswith("darwin"):
+                html += "<table width=250>"
+            else:
+                html += "<table width=200>"
+            html += tr(_("Interval"), ("<b>%s</b> ") % fmtFloat(avgInt) + _("days") )
+            html += tr(_("Average reps"), ("<b>%s</b> ") % (
+                fmtFloat(self.getSumInverseRoundInterval())) + _("cards/day"))
+            html += tr(_("Reps next week"), ("<b>%s</b> ") % (
+                fmtFloat(self.getWorkloadPeriod(7))) + _("cards/day"))
+            html += tr(_("Reps next month"), ("<b>%s</b> ") % (
+                fmtFloat(self.getWorkloadPeriod(30))) + _("cards/day"))
+            html += tr(_("Reps last week"), ("<b>%s</b> ") % (
+                fmtFloat(self.getPastWorkloadPeriod(7))) + _("cards/day"))
+            html += tr(_("Reps last month"), ("<b>%s</b> ") % (
+                fmtFloat(self.getPastWorkloadPeriod(30))) + _("cards/day"))
+            html += tr(_("Avg. added"), _("<b>%(a)s</b>/day, <b>%(b)s</b>/mon") % {
+                'a': fmtFloat(self.newAverage()), 'b': fmtFloat(self.newAverage()*30)})
             np = self.getNewPeriod(7)
-            html += tr(_("Added last week"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
-                {'a': np, 'b': np / float(7)}))
+            html += tr(_("Added last week"), _("<b>%(a)d</b> (<b>%(b)s</b>/day)") % (
+                {'a': np, 'b': fmtFloat(np / float(7))}))
             np = self.getNewPeriod(30)
-            html += tr(_("Added last month"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
-                {'a': np, 'b': np / float(30)}))
+            html += tr(_("Added last month"), _("<b>%(a)d</b> (<b>%(b)s</b>/day)") % (
+                {'a': np, 'b': fmtFloat(np / float(30))}))
             np = self.getFirstPeriod(7)
-            html += tr(_("First last week"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
-                {'a': np, 'b': np / float(7)}))
+            html += tr(_("First last week"), _("<b>%(a)d</b> (<b>%(b)s</b>/day)") % (
+                {'a': np, 'b': fmtFloat(np / float(7))}))
             np = self.getFirstPeriod(30)
-            html += tr(_("First last month"), _("<b>%(a)d</b> (<b>%(b)0.1f</b>/day)") % (
-                {'a': np, 'b': np / float(30)}))
+            html += tr(_("First last month"), _("<b>%(a)d</b> (<b>%(b)s</b>/day)") % (
+                {'a': np, 'b': fmtFloat(np / float(30))}))
             html += "</table>"
         return html
 
@@ -390,10 +403,10 @@ class DeckStats(object):
         html = ""
         for key in keys:
             html += ("<tr><td align=right>%s</td><td align=right>" +
-                     "%d</td><td align=right>%0.2f%%</td></tr>") % (
+                     "%d</td><td align=right>%s</td></tr>") % (
                 labels[key],
                 boxes[key],
-                boxes[key] / float(total) * 100)
+                fmtPerc(boxes[key] / float(total) * 100))
         return html
 
     def splitIntoIntervals(self, intervals):
@@ -428,12 +441,12 @@ class DeckStats(object):
         return (self.deck.s.scalar("""
 select count(id) from cards
 where combinedDue < :cutoff
-and priority > 0""", cutoff=cutoff) or 0) / float(period)
+and priority > 0 and type in (0,1)""", cutoff=cutoff) or 0) / float(period)
 
     def getPastWorkloadPeriod(self, period):
         cutoff = time.time() - 86400 * period
         return (self.deck.s.scalar("""
-select count(id) from reviewHistory
+select count(*) from reviewHistory
 where time > :cutoff""", cutoff=cutoff) or 0) / float(period)
 
     def getNewPeriod(self, period):
@@ -445,7 +458,7 @@ where created > :cutoff""", cutoff=cutoff) or 0)
     def getFirstPeriod(self, period):
         cutoff = time.time() - 86400 * period
         return (self.deck.s.scalar("""
-select count(id) from reviewHistory
+select count(*) from reviewHistory
 where reps = 1 and time > :cutoff""", cutoff=cutoff) or 0)
 
 # Kanji stats
@@ -502,12 +515,16 @@ class KanjiStats(object):
 
     def genKanjiSets(self):
         self.kanjiSets = [set([]) for g in self.kanjiGrades]
+        mids = self.deck.s.column0('''
+select id from models where tags like "%Japanese%"''')
         all = "".join(self.deck.s.column0("""
-select value from cards, fields
+select value from cards, fields, facts
 where
 cards.reps > 0 and
 cards.factId = fields.factId
-"""))
+and cards.factId = facts.id
+and facts.modelId in %s
+""" % ids2str(mids)))
         for u in all:
             if isKanji(u):
                 self.kanjiSets[self.kanjiGrade(u)].add(u)
@@ -538,21 +555,38 @@ cards.factId = fields.factId
         out += "</ul>"
         return out
 
-    def missingReport(self):
-        out = "<h1>Missing kanji</h1>"
+    def missingReport(self, check=None):
+        if not check:
+            check = lambda x, y: x not in y
+            out = _("<h1>Missing</h1>")
+        else:
+            out = _("<h1>Seen</h1>")
         for grade in range(1, 9):
-            missing = "".join(self.missingInGrade(grade))
+            missing = "".join(self.missingInGrade(grade, check))
             if not missing:
                 continue
             out += "<h2>" + self.kanjiGrades[grade][0] + "</h2>"
             out += "<font size=+4>"
-            while 1:
-                if not missing:
-                    break
-                # edict will take up to about 10 kanji at once
-                out += self.edictKanjiLink(missing[0:10])
-                missing = missing[10:]
+            out += self.mkEdict(missing)
             out += "</font>"
+        return out + "<br/>"
+
+    def mkEdict(self, kanji):
+        out = "<font size=+4>"
+        while 1:
+            if not kanji:
+                out += "</font>"
+                return out
+            # edict will take up to about 10 kanji at once
+            out += self.edictKanjiLink(kanji[0:10])
+            kanji = kanji[10:]
+
+    def seenReport(self):
+        return self.missingReport(lambda x, y: x in y)
+
+    def nonJouyouReport(self):
+        out = _("<h1>Non-Jouyou</h1>")
+        out += self.mkEdict("".join(self.kanjiSets[0]))
         return out + "<br/>"
 
     def edictKanjiLink(self, kanji):
@@ -560,10 +594,10 @@ cards.factId = fields.factId
         url=base + kanji
         return '<a href="%s">%s</a>' % (url, kanji)
 
-    def missingInGrade(self, gradeNum):
+    def missingInGrade(self, gradeNum, check):
         existingKanji = self.kanjiSets[gradeNum]
         totalKanji = self.kanjiGrades[gradeNum][1]
-        return [k for k in totalKanji if k not in existingKanji]
+        return [k for k in totalKanji if check(k, existingKanji)]
 
     kanjiGrades = [
         (u'non-jouyou', ''),

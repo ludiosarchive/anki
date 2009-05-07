@@ -22,7 +22,6 @@ except ImportError:
         from sqlite3 import dbapi2 as sqlite
     except:
         raise "Please install pysqlite2 or python2.5"
-sqlite.enable_shared_cache(True)
 
 from sqlalchemy import (Table, Integer, Float, Column, MetaData,
                         ForeignKey, Boolean, String, Date,
@@ -46,6 +45,8 @@ except ImportError:
     from sqlalchemy import Unicode
     UnicodeText = Unicode
 
+from anki.hooks import runHook
+
 # shared metadata
 metadata = MetaData()
 
@@ -63,6 +64,11 @@ class SessionHelper(object):
             self._lockDB()
         self._seen = True
 
+    def execute(self, *a, **ka):
+        x = self._session.execute(*a, **ka)
+        runHook("dbFinished")
+        return x
+
     def __getattr__(self, k):
         return getattr(self.__dict__['_session'], k)
 
@@ -73,7 +79,10 @@ class SessionHelper(object):
         return self.execute(text(sql), args).fetchall()
 
     def first(self, sql, **args):
-        return self.execute(text(sql), args).fetchone()
+        c = self.execute(text(sql), args)
+        r = c.fetchone()
+        c.close()
+        return r
 
     def column0(self, sql, **args):
         return [x[0] for x in self.execute(text(sql), args).fetchall()]

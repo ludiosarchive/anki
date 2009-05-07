@@ -11,7 +11,7 @@ from anki.utils import parseTags
 from anki.deck import newCardOrderLabels, newCardSchedulingLabels
 from anki.deck import revCardOrderLabels
 from anki.utils import hexifyID, dehexifyID
-from anki.lang import ngettext
+import ankiqt
 
 tabs = ("ModelsAndPriorities",
         "Synchronization",
@@ -27,6 +27,8 @@ class DeckProperties(QDialog):
         self.origMod = self.d.modified
         self.dialog = ankiqt.forms.deckproperties.Ui_DeckProperties()
         self.dialog.setupUi(self)
+        self.dialog.buttonBox.button(QDialogButtonBox.Help).setAutoDefault(False)
+        self.dialog.buttonBox.button(QDialogButtonBox.Close).setAutoDefault(False)
         self.readData()
         self.connect(self.dialog.modelsAdd, SIGNAL("clicked()"), self.onAdd)
         self.connect(self.dialog.modelsEdit, SIGNAL("clicked()"), self.onEdit)
@@ -111,7 +113,14 @@ class DeckProperties(QDialog):
         for (name, model) in self.models:
             item = QListWidgetItem(name)
             self.dialog.modelsList.addItem(item)
-            if model == self.d.currentModel:
+            cm = self.d.currentModel
+            try:
+                if ankiqt.mw.currentCard:
+                    cm = ankiqt.mw.currentCard.fact.model
+            except:
+                # model has been deleted
+                pass
+            if model == cm:
                 self.dialog.modelsList.setCurrentItem(item)
 
     def onAdd(self):
@@ -198,6 +207,7 @@ class DeckProperties(QDialog):
 
     def reject(self):
         n = _("Deck Properties")
+        self.d.startProgress()
         self.d.setUndoStart(n)
         # syncing
         if self.dialog.doSync.checkState() == Qt.Checked:
@@ -228,7 +238,7 @@ class DeckProperties(QDialog):
             v = float(self.dialog.delay2.text())
             self.updateField(self.d, 'delay2', v)
             v = int(self.dialog.failedCardMax.text())
-            self.updateField(self.d, 'failedCardMax', max(v, 5))
+            self.updateField(self.d, 'failedCardMax', v)
         except ValueError:
             pass
         # hour shift
@@ -238,6 +248,7 @@ class DeckProperties(QDialog):
                              *60*60 + time.timezone)
         except:
             pass
+        was = self.d.modified
         self.updateField(self.d, 'collapseTime',
                          self.dialog.collapse.isChecked() and 1 or 0)
         self.updateField(self.d,
@@ -252,6 +263,7 @@ class DeckProperties(QDialog):
         self.updateField(self.d,
                          "suspended",
                          unicode(self.dialog.postponing.text()))
+        prioritiesChanged = was != self.d.modified
         # sources
         d = {}
         d.update(self.sources)
@@ -284,8 +296,11 @@ insert into sources values
             self.d.setModified()
         # mark deck dirty and close
         if self.origMod != self.d.modified:
+            if prioritiesChanged:
+                self.d.updateAllPriorities()
             ankiqt.mw.reset()
         self.d.setUndoEnd(n)
+        self.d.finishProgress()
         if self.onFinish:
             self.onFinish()
         QDialog.reject(self)
