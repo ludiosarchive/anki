@@ -1,3 +1,16 @@
+anki (0.9.9.7.8-1) unstable; urgency=low
+
+  * Imported Upstream version 0.9.9.7.8
+  * Upstream release contains fix/workaround for segfault occuring with Qt
+    Plastique theme in a specific situation (closes: #518749)
+  * No support for local sample files anymore, no more repackaging of
+    upstream source needed; remove the notice from debian/copyright and the
+    dh_installexamples invocation from debian/rules
+  * debian/control: Bump Standards-Version to 3.8.1, no changes
+    necessary
+
+ -- Andreas Bombe <aeb@debian.org>  Fri, 08 May 2009 03:05:49 +0200
+
 anki (0.9.9.6-1) unstable; urgency=low
 
   * New upstream release 
