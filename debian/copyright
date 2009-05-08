@@ -12,11 +12,6 @@ License:
 On Debian systems, the complete text of the GNU General Public License version 3
 can be found in /usr/share/common-licenses/GPL-3.
 
-The .orig.tar.gz was repackaged from the original .tgz to remove the sample
-deck 'RTK1+3.anki'.  This deck has an unclear licensing status as it is a
-compilation of kanji from the book series "Remembering the Kanji" by James
-Heisig.  All sample decks were created by Damien Elmes.
-
 
 The package includes unihan.db, a database created from Unihan.txt by Unicode,
 Inc.  Its copyright is:
