@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/addcards.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -45,17 +45,32 @@ class Ui_AddCards(object):
         self.fieldsArea.setSizePolicy(sizePolicy)
         self.fieldsArea.setAutoFillBackground(True)
         self.fieldsArea.setObjectName("fieldsArea")
-        self.status = QtGui.QTextEdit(self.splitter)
-        self.status.setEnabled(False)
+        self.status = QtGui.QTextBrowser(self.splitter)
+        self.status.setEnabled(True)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.status.sizePolicy().hasHeightForWidth())
         self.status.setSizePolicy(sizePolicy)
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(228, 228, 228))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
+        brush = QtGui.QBrush(QtGui.QColor(228, 228, 228))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
+        self.status.setPalette(palette)
+        self.status.setAcceptDrops(False)
         self.status.setAutoFillBackground(True)
         self.status.setFrameShape(QtGui.QFrame.NoFrame)
         self.status.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.status.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.status.setReadOnly(True)
+        self.status.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        self.status.setOpenLinks(False)
         self.status.setObjectName("status")
         self.verticalLayout.addWidget(self.splitter)
         self.buttonBox = QtGui.QDialogButtonBox(AddCards)
@@ -70,10 +85,5 @@ class Ui_AddCards(object):
 
     def retranslateUi(self, AddCards):
         AddCards.setWindowTitle(_("Add Items"))
-        self.status.setHtml(_("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Sans Serif\'; font-size:8pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'Arial\';\"></p></body></html>"))
 
 import icons_rc

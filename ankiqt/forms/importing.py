@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/importing.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_ImportDialog(object):
     def setupUi(self, ImportDialog):
         ImportDialog.setObjectName("ImportDialog")
-        ImportDialog.resize(477, 484)
+        ImportDialog.resize(440, 513)
         self.vboxlayout = QtGui.QVBoxLayout(ImportDialog)
         self.vboxlayout.setObjectName("vboxlayout")
         self.groupBox = QtGui.QGroupBox(ImportDialog)
@@ -32,6 +32,9 @@ class Ui_ImportDialog(object):
         self.tagDuplicates = QtGui.QCheckBox(self.groupBox)
         self.tagDuplicates.setObjectName("tagDuplicates")
         self.vboxlayout1.addWidget(self.tagDuplicates)
+        self.autoDetect = QtGui.QPushButton(self.groupBox)
+        self.autoDetect.setObjectName("autoDetect")
+        self.vboxlayout1.addWidget(self.autoDetect)
         self.modelArea = QtGui.QWidget(self.groupBox)
         self.modelArea.setObjectName("modelArea")
         self.vboxlayout1.addWidget(self.modelArea)
@@ -87,7 +90,8 @@ class Ui_ImportDialog(object):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), ImportDialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), ImportDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(ImportDialog)
-        ImportDialog.setTabOrder(self.tagDuplicates, self.importButton)
+        ImportDialog.setTabOrder(self.tagDuplicates, self.autoDetect)
+        ImportDialog.setTabOrder(self.autoDetect, self.importButton)
         ImportDialog.setTabOrder(self.importButton, self.status)
         ImportDialog.setTabOrder(self.status, self.buttonBox)
 
@@ -96,6 +100,7 @@ class Ui_ImportDialog(object):
         self.groupBox.setTitle(_("Import options"))
         self.label_4.setText(_("<b>Tags to append</b>:"))
         self.tagDuplicates.setText(_("Tag facts with duplicate fields instead of deleting"))
+        self.autoDetect.setText(_("Auto-detect file format"))
         self.mappingGroup.setTitle(_("Field mapping"))
         self.importButton.setText(_("&Import"))
         self.groupBox_2.setTitle(_("Status"))

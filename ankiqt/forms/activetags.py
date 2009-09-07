@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/activetags.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -16,6 +16,7 @@ class Ui_Dialog(object):
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label = QtGui.QLabel(Dialog)
+        self.label.setWordWrap(True)
         self.label.setObjectName("label")
         self.verticalLayout.addWidget(self.label)
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
@@ -37,6 +38,6 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(_("Active Tags"))
-        self.label.setText(_("Select tags to suspend. Deselect to unsuspend."))
+        Dialog.setWindowTitle(_("Inactive Tags"))
+        self.label.setText(_("Cards with any of the selected tags below will not be shown."))
 

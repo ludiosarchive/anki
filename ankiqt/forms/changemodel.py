@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/changemodel.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -73,7 +73,6 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(_("Change Model"))
         self.label_6.setText(_("<b>Old Model</b>:"))
-        self.oldModelLabel.setText(_("TextLabel"))
         self.label.setText(_("<b>New Model</b>:"))
         self.templateMap.setTitle(_("Templates"))
         self.fieldMap.setTitle(_("Fields"))

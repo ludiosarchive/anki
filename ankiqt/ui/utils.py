@@ -166,6 +166,15 @@ def restoreGeom(widget, key):
     if ankiqt.mw.config.get(key):
         widget.restoreGeometry(ankiqt.mw.config[key])
 
+def saveState(widget, key):
+    key += "State"
+    ankiqt.mw.config[key] = widget.saveState()
+
+def restoreState(widget, key):
+    key += "State"
+    if ankiqt.mw.config.get(key):
+        widget.restoreState(ankiqt.mw.config[key])
+
 def saveSplitter(widget, key):
     key += "Splitter"
     ankiqt.mw.config[key] = widget.saveState()
@@ -221,10 +230,8 @@ class ProgressWin(object):
         self.app = QApplication.instance()
         if max == 0:
             self.diag.setLabelText(_("Processing..."))
-        self.app.processEvents()
 
-    def update(self, label=None, value=None):
-        self.app.processEvents()
+    def update(self, label=None, value=None, process=True):
         #print self.min, self.counter, self.max, label, time.time() - self.lastTime
         self.lastTime = time.time()
         if label:
@@ -234,8 +241,10 @@ class ProgressWin(object):
             self.counter += 1
         else:
             self.counter = value + 1
-        self.diag.setValue(value)
-        self.app.processEvents()
+        if self.max:
+            self.diag.setValue(value)
+        if process:
+            self.app.processEvents()
 
     def finish(self):
         if self.max:

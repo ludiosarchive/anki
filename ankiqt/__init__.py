@@ -6,7 +6,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.9.7.8"
+appVersion="0.9.9.8.5"
 appWebsite="http://ichi2.net/anki/download/"
 appWiki="http://ichi2.net/anki/wiki/"
 appHelpSite="http://ichi2.net/anki/wiki/AnkiWiki"
@@ -32,6 +32,7 @@ sys.path.append(os.path.dirname(__file__))
 class SplashScreen(object):
 
     def __init__(self, max=100):
+        self.finished = False
         self.pixmap = QPixmap(":/icons/anki-logo.png")
         self.splash = QSplashScreen(self.pixmap)
         self.prog = QProgressBar(self.splash)
@@ -63,6 +64,7 @@ color: #13486c;
 
     def finish(self, obj):
         self.splash.finish(obj)
+        self.finished = True
 
 class AnkiApp(QApplication):
 
@@ -76,8 +78,11 @@ class AnkiApp(QApplication):
 def run():
     import config
 
+    mustQuit = False
+
     # home on win32 is broken
     if sys.platform == "win32":
+        # use appdata if available
         if 'APPDATA' in os.environ:
             oldConf = os.path.expanduser("~/.anki/config.db")
             oldPlugins = os.path.expanduser("~/.anki/plugins")
@@ -85,12 +90,27 @@ def run():
         else:
             oldConf = None
             os.environ['HOME'] = "c:\\anki"
+        # make and check accessible
         try:
             os.makedirs(os.path.expanduser("~/.anki"))
         except:
             pass
-        if os.path.exists(oldConf) and not os.path.exists(oldConf.replace(
-            "config.db", "config.db.old")):
+        try:
+            os.listdir(os.path.expanduser("~/.anki"))
+        except:
+            oldConf = None
+            os.environ['HOME'] = "c:\\anki"
+        # check accessible again
+        try:
+            os.makedirs(os.path.expanduser("~/.anki"))
+        except:
+            pass
+        try:
+            os.listdir(os.path.expanduser("~/.anki"))
+        except:
+            mustQuit = True
+        if (oldConf and os.path.exists(oldConf) and not os.path.exists(
+            oldConf.replace("config.db", "config.db.old"))):
             try:
                 shutil.copy2(oldConf,
                              os.path.expanduser("~/.anki/config.db"))
@@ -112,6 +132,12 @@ def run():
 
     app = AnkiApp(sys.argv)
     QCoreApplication.setApplicationName("Anki")
+
+    if mustQuit:
+        QMessageBox.warning(
+            None, "Anki", "Can't open APPDATA, nor c:\\anki.\n"
+            "Please try removing foreign characters from your username.")
+        sys.exit(1)
 
     import forms
     import ui
@@ -167,16 +193,17 @@ def run():
     ui.splash.update()
 
     mw = ui.main.AnkiQt(app, conf, args)
-    try:
-        styleFile = open(os.path.join(opts.config, "style.css"))
-        mw.setStyleSheet(styleFile.read())
-    except (IOError, OSError):
-        pass
 
     app.exec_()
 
-    # ensure we kill any other threads
-    sys.exit(0)
+    if sys.platform.startswith("darwin"):
+        # buggy on osx
+        from anki.sound import stopMplayer
+        stopMplayer()
+        os._exit(0)
+    else:
+        # ensure we kill any other threads
+        sys.exit(0)
 
 if __name__ == "__main__":
     run()

@@ -36,6 +36,7 @@ class Importer(object):
     needMapper = True
     tagDuplicates = False
     multipleCardsAllowed = True
+    needDelimiter = False
 
     def __init__(self, deck, file):
         self.file = file
@@ -171,9 +172,11 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         # and cards
         self.deck.updateProgress()
         now = time.time()
+        active = 0
         for cm in self.model.cardModels:
             self._now = now
             if cm.active:
+                active += 1
                 data = [self.addMeta({
                     'id': genID(),
                     'factId': factIds[m],
@@ -186,7 +189,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                                     data)
         self.deck.updateProgress()
         self.deck.updateCardsFromFactIds(factIds)
-        self.deck.cardCount += len(cards)
+        self.deck.cardCount += len(cards) * active
         self.total = len(factIds)
 
     def addMeta(self, data, card):
@@ -253,14 +256,16 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
 # Export modules
 ##########################################################################
 
-from anki.importing.csv import TextImporter
+from anki.importing.csvfile import TextImporter
 from anki.importing.anki10 import Anki10Importer
 from anki.importing.mnemosyne10 import Mnemosyne10Importer
 from anki.importing.wcu import WCUImporter
+from anki.importing.supermemo_xml import SupermemoXmlImporter
 
 Importers = (
     (_("Text separated by tabs or semicolons (*)"), TextImporter),
     (_("Anki Deck (*.anki)"), Anki10Importer),
     (_("Mnemosyne Deck (*.mem)"), Mnemosyne10Importer),
     (_("CueCard Deck (*.wcu)"), WCUImporter),
+    (_("Supermemo XML export (*.xml)"), SupermemoXmlImporter),
     )

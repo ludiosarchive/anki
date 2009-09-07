@@ -6,8 +6,9 @@ from tests.shared import assertException
 from anki.errors import *
 from anki import DeckStorage
 from anki.db import *
-from anki.stdmodels import BasicModel, JapaneseModel
+from anki.stdmodels import BasicModel
 from anki.sync import SyncClient, SyncServer, HttpSyncServer, HttpSyncServerProxy
+from anki.sync import copyLocalMedia
 from anki.stats import dailyStats, globalStats
 from anki.facts import Fact
 from anki.cards import Card
@@ -35,13 +36,13 @@ def setup_local(loadDecks=None):
         deck1.currentModel.cardModels[1].active = True
         deck1.newCardOrder = 1
         f = deck1.newFact()
-        f['Front'] = u"foo"; f['Back'] = u"bar"
+        f['Front'] = u"foo"; f['Back'] = u"bar"; f.tags = u"foo"
         deck1.addFact(f)
         deck2 = DeckStorage.Deck()
         deck2.addModel(BasicModel())
         deck2.currentModel.cardModels[1].active = True
         f = deck2.newFact()
-        f['Front'] = u"baz"; f['Back'] = u"qux"
+        f['Front'] = u"baz"; f['Back'] = u"qux"; f.tags = u"bar"
         deck2.addFact(f)
         deck2.newCardOrder = 1
     client = SyncClient(deck1)
@@ -116,7 +117,7 @@ def test_localsync_deck():
 def test_localsync_models():
     client.sync()
     # add a model
-    deck1.addModel(JapaneseModel())
+    deck1.addModel(BasicModel())
     assert len(deck1.models) == 3
     assert len(deck2.models) == 2
     client.sync()
@@ -237,13 +238,20 @@ def test_localsync_media():
     assert len(os.listdir(deck1media)) == 2
     assert len(os.listdir(deck2media)) == 1
     client.sync()
-    assert len(os.listdir(deck1media)) == 3
-    assert len(os.listdir(deck2media)) == 3
+    # metadata should have been copied
     assert deck1.s.scalar("select count(1) from media") == 3
     assert deck2.s.scalar("select count(1) from media") == 3
+    # copy local files
+    copyLocalMedia(deck1, deck2)
+    assert len(os.listdir(deck1media)) == 2
+    assert len(os.listdir(deck2media)) == 3
+    copyLocalMedia(deck2, deck1)
+    assert len(os.listdir(deck1media)) == 3
+    assert len(os.listdir(deck2media)) == 3
     # check delete
     os.unlink(os.path.join(deck1media, "22161b29b0c18e068038021f54eee1ee.png"))
-    time.sleep(0.1)
+    os.system("sync")
+    time.sleep(0.2)
     rebuildMediaDir(deck1)
     client.sync()
     assert deck1.s.scalar("select count(1) from media") == 2
@@ -256,10 +264,18 @@ def test_localsync_media():
 def test_oneway_simple():
     assert deck1.s.scalar("select count(1) from cards") == 2
     assert deck2.s.scalar("select count(1) from cards") == 2
+    assert deck1.cardCount == 2
+    assert deck2.cardCount == 2
+    assert deck1.s.scalar("select id from tags where tag = 'foo'")
+    assert not deck1.s.scalar("select id from tags where tag = 'bar'")
     server.deckName = "dummy"
     client.syncOneWay(0)
     assert deck1.s.scalar("select count(1) from cards") == 4
     assert deck2.s.scalar("select count(1) from cards") == 2
+    assert deck1.cardCount == 4
+    assert deck2.cardCount == 2
+    assert deck1.s.scalar("select id from tags where tag = 'foo'")
+    assert deck1.s.scalar("select id from tags where tag = 'bar'")
     # should be a noop
     client.syncOneWay(0)
 
@@ -299,3 +315,16 @@ def test_remotesync_toserver():
     deck1.setModified()
     client.sync()
     assert deck2.modified == deck1.modified
+
+# Full sync
+##########################################################################
+
+@nose.with_setup(setup_remote, teardown)
+def test_formdata():
+    global deck1
+    (fd, name) = tempfile.mkstemp()
+    deck1 = deck1.saveAs(name)
+    deck1.setModified()
+    client.deck = deck1
+    client.prepareSync()
+    client.prepareFullSync()

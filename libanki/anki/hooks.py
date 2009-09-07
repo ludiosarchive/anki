@@ -25,6 +25,13 @@ def runHook(hook, *args):
         for func in hook:
             func(*args)
 
+def runFilter(hook, arg, *args):
+    hook = _hooks.get(hook, None)
+    if hook:
+        for func in hook:
+            arg = func(arg, *args)
+    return arg
+
 def addHook(hook, func):
     "Add a function to hook. Ignore if already on hook."
     if not _hooks.get(hook, None):

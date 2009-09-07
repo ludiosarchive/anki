@@ -10,7 +10,6 @@ from anki.models import FieldModel, CardModel
 from ankiqt import ui
 
 tabs = ("General",
-        "Fields",
         "Cards")
 
 class ModelProperties(QDialog):
@@ -23,6 +22,7 @@ class ModelProperties(QDialog):
         self.deck = deck
         self.origModTime = self.deck.modified
         self.m = model
+        self.needRebuild = False
         self.onFinish = onFinish
         self.dialog = ankiqt.forms.modelproperties.Ui_ModelProperties()
         self.dialog.setupUi(self)
@@ -42,6 +42,7 @@ class ModelProperties(QDialog):
         self.dialog.tags.setText(self.m.tags)
         self.dialog.spacing.setText(str(self.m.spacing))
         self.dialog.initialSpacing.setText(str(self.m.initialSpacing/60))
+        self.dialog.mediaURL.setText(str(self.m.features))
 
     # Fields
     ##########################################################################
@@ -147,7 +148,7 @@ class ModelProperties(QDialog):
         self.ignoreFieldUpdate = False
 
     def addField(self):
-        f = FieldModel()
+        f = FieldModel(required=False, unique=False)
         f.name = _("Field %d") % (len(self.m.fieldModels) + 1)
         self.deck.addFieldModel(self.m, f)
         self.updateFields()
@@ -332,7 +333,7 @@ order by n""", id=card.id)
         card = self.currentCard
         newname = unicode(self.dialog.cardName.text())
         if not newname:
-            newname = _("Card %d") % (self.m.cardModels.index(card) + 1)
+            newname = _("Card-%d") % (self.m.cardModels.index(card) + 1)
         self.updateField(card, 'name', newname)
         s = unicode(self.dialog.cardQuestion.toPlainText())
         s = s.replace("<br>\n", "<br>")
@@ -340,7 +341,7 @@ order by n""", id=card.id)
         s = unicode(self.dialog.cardAnswer.toPlainText())
         s = s.replace("<br>\n", "<br>")
         changed2 = self.updateField(card, 'aformat', s)
-        changed = changed or changed2
+        self.needRebuild = self.needRebuild or changed or changed2
         self.updateField(card, 'questionInAnswer', self.dialog.questionInAnswer.isChecked())
         self.updateField(card, 'allowEmptyAnswer', self.dialog.allowEmptyAnswer.isChecked())
         idx = self.dialog.typeAnswer.currentIndex()
@@ -348,9 +349,6 @@ order by n""", id=card.id)
             self.updateField(card, 'typeAnswer', u"")
         else:
             self.updateField(card, 'typeAnswer', self.fieldNames[idx-1])
-        if changed:
-            # need to generate all question/answers for this card
-            self.deck.updateCardsFromModel(self.m)
         self.ignoreCardUpdate = True
         self.updateCards()
         self.ignoreCardUpdate = False
@@ -471,6 +469,13 @@ order by n""", id=card.id)
         self.updateField(self.m, 'name', mname)
         self.updateField(self.m, 'tags',
                          unicode(self.dialog.tags.text()))
+        url = unicode(self.dialog.mediaURL.text())
+        if url:
+            if not re.match("^(http|https|ftp)://", url, re.I):
+                url = "http://" + url
+            if not url.endswith("/"):
+                url += "/"
+        self.updateField(self.m, 'features', url)
         try:
             self.updateField(self.m, 'spacing',
                              float(self.dialog.spacing.text()))
@@ -491,13 +496,19 @@ order by n""", id=card.id)
             self.m.setModified()
             self.deck.setModified()
         # if changed, reset deck
+        reset = False
         if self.origModTime != self.deck.modified:
             self.deck.updateTagsForModel(self.m)
+            reset = True
+        if self.needRebuild:
+            # need to generate q/a templates
+            self.deck.updateCardsFromModel(self.m)
+            reset = True
+        if reset:
             ankiqt.mw.reset()
         if self.onFinish:
             self.onFinish()
         self.deck.setUndoEnd(self.undoName)
         # check again
-        self.deck.haveJapanese = None
         self.deck.finishProgress()
         QDialog.reject(self)

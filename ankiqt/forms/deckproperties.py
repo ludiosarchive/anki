@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/deckproperties.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,7 +13,7 @@ class Ui_DeckProperties(object):
     def setupUi(self, DeckProperties):
         DeckProperties.setObjectName("DeckProperties")
         DeckProperties.setWindowModality(QtCore.Qt.ApplicationModal)
-        DeckProperties.resize(426, 400)
+        DeckProperties.resize(419, 457)
         self.verticalLayout_2 = QtGui.QVBoxLayout(DeckProperties)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.qtabwidget = QtGui.QTabWidget(DeckProperties)
@@ -48,13 +48,6 @@ class Ui_DeckProperties(object):
         self.lowPriority = QtGui.QLineEdit(self.tab_2)
         self.lowPriority.setObjectName("lowPriority")
         self.gridLayout_4.addWidget(self.lowPriority, 2, 1, 1, 1)
-        self.label_23 = QtGui.QLabel(self.tab_2)
-        self.label_23.setWordWrap(True)
-        self.label_23.setObjectName("label_23")
-        self.gridLayout_4.addWidget(self.label_23, 3, 0, 1, 1)
-        self.postponing = QtGui.QLineEdit(self.tab_2)
-        self.postponing.setObjectName("postponing")
-        self.gridLayout_4.addWidget(self.postponing, 3, 1, 1, 1)
         self.gridLayout_6.addLayout(self.gridLayout_4, 5, 0, 1, 1)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_6.addItem(spacerItem, 6, 0, 1, 1)
@@ -280,6 +273,18 @@ class Ui_DeckProperties(object):
         self.collapse = QtGui.QCheckBox(self.tab_4)
         self.collapse.setObjectName("collapse")
         self.gridLayout_5.addWidget(self.collapse, 0, 2, 1, 1)
+        self.label_11 = QtGui.QLabel(self.tab_4)
+        self.label_11.setObjectName("label_11")
+        self.gridLayout_5.addWidget(self.label_11, 4, 0, 1, 1)
+        self.suspendLeeches = QtGui.QCheckBox(self.tab_4)
+        self.suspendLeeches.setObjectName("suspendLeeches")
+        self.gridLayout_5.addWidget(self.suspendLeeches, 4, 2, 1, 1)
+        self.label_15 = QtGui.QLabel(self.tab_4)
+        self.label_15.setObjectName("label_15")
+        self.gridLayout_5.addWidget(self.label_15, 5, 0, 1, 1)
+        self.leechFails = QtGui.QSpinBox(self.tab_4)
+        self.leechFails.setObjectName("leechFails")
+        self.gridLayout_5.addWidget(self.leechFails, 5, 2, 1, 1)
         self.vboxlayout.addLayout(self.gridLayout_5)
         spacerItem6 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.vboxlayout.addItem(spacerItem6)
@@ -304,8 +309,7 @@ class Ui_DeckProperties(object):
         DeckProperties.setTabOrder(self.modelsDelete, self.highPriority)
         DeckProperties.setTabOrder(self.highPriority, self.medPriority)
         DeckProperties.setTabOrder(self.medPriority, self.lowPriority)
-        DeckProperties.setTabOrder(self.lowPriority, self.postponing)
-        DeckProperties.setTabOrder(self.postponing, self.doSync)
+        DeckProperties.setTabOrder(self.lowPriority, self.doSync)
         DeckProperties.setTabOrder(self.doSync, self.syncName)
         DeckProperties.setTabOrder(self.syncName, self.sourcesTable)
         DeckProperties.setTabOrder(self.sourcesTable, self.addSource)
@@ -322,7 +326,9 @@ class Ui_DeckProperties(object):
         DeckProperties.setTabOrder(self.easyMax, self.collapse)
         DeckProperties.setTabOrder(self.collapse, self.failedCardMax)
         DeckProperties.setTabOrder(self.failedCardMax, self.timeOffset)
-        DeckProperties.setTabOrder(self.timeOffset, self.buttonBox)
+        DeckProperties.setTabOrder(self.timeOffset, self.suspendLeeches)
+        DeckProperties.setTabOrder(self.suspendLeeches, self.leechFails)
+        DeckProperties.setTabOrder(self.leechFails, self.buttonBox)
 
     def retranslateUi(self, DeckProperties):
         DeckProperties.setWindowTitle(_("Deck Properties"))
@@ -331,7 +337,6 @@ class Ui_DeckProperties(object):
         self.label_21.setText(_("<b>Very High Priority</b>"))
         self.label_17.setText(_("<b>High Priority</b>"))
         self.label_24.setText(_("<b>Low Priority</b>"))
-        self.label_23.setText(_("<b>Suspended</b>"))
         self.label_14.setText(_("<h1>Models</h1>"))
         self.modelsAdd.setText(_("&Add"))
         self.modelsEdit.setText(_("&Edit"))
@@ -340,17 +345,13 @@ class Ui_DeckProperties(object):
         self.label_13.setWhatsThis(_("label"))
         self.label_13.setText(_("<h1>Synchronisation</h1>"))
         self.doSync.setText(_("Synchronize this deck"))
-        self.label_28.setText(_("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Arial\'; font-size:8pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:18px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:xx-large; font-weight:600;\"><span style=\" font-size:xx-large;\">Sources</span></p></body></html>"))
+        self.label_28.setText(_("<h1>Sources</h1>"))
         self.addSource.setText(_("&Add Source"))
         self.deleteSource.setText(_("&Delete Source"))
         self.label_18.setText(_("Name on server: "))
         self.syncName.setWhatsThis(_("option"))
         self.qtabwidget.setTabText(self.qtabwidget.indexOf(self.tab_5), _("Synchronisation"))
-        self.label_27.setText(_("<h1>Advanced Scheduling</h1>"))
+        self.label_27.setText(_("<h1>Advanced</h1>"))
         self.label_6.setText(_("Min"))
         self.label_7.setText(_("Min"))
         self.label_4.setText(_("<b>4: Initial Easy Interval</b>"))
@@ -371,5 +372,7 @@ class Ui_DeckProperties(object):
         self.label_12.setText(_("<b>Maximum failed cards</b>"))
         self.label_29.setText(_("<b>New day starts at</b>"))
         self.label_26.setText(_("<b>Show failed cards early</b>"))
+        self.label_11.setText(_("<b>Suspend leeches</b>"))
+        self.label_15.setText(_("<b>Leech failure threshold</b>"))
         self.qtabwidget.setTabText(self.qtabwidget.indexOf(self.tab_4), _("Advanced"))
 

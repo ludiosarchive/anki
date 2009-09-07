@@ -12,7 +12,7 @@ import itertools, time, re
 from operator import itemgetter
 from anki import DeckStorage
 from anki.cards import Card
-from anki.sync import SyncClient, SyncServer, BulkMediaSyncer
+from anki.sync import SyncClient, SyncServer, copyLocalMedia
 from anki.lang import _
 from anki.utils import findTag, parseTags, stripHTML, ids2str
 from anki.tags import tagIds
@@ -52,12 +52,13 @@ class Exporter(object):
 
 class AnkiExporter(Exporter):
 
-    key = _("Anki decks (*.anki)")
+    key = _("Anki Deck (*.anki)")
     ext = ".anki"
 
     def __init__(self, deck):
         Exporter.__init__(self, deck)
         self.includeSchedulingInfo = False
+        self.includeMedia = True
 
     def exportInto(self, path):
         n = 3
@@ -68,6 +69,7 @@ class AnkiExporter(Exporter):
         self.newDeck = DeckStorage.Deck(path)
         client = SyncClient(self.deck)
         server = SyncServer(self.newDeck)
+        server._mediaSupported = self.includeMedia
         client.setServer(server)
         client.localTime = self.deck.modified
         client.remoteTime = 0
@@ -116,11 +118,7 @@ modified = :now
             self.newDeck.s.statement("""
 delete from stats""")
         # media
-        if client.mediaSyncPending:
-            bulkClient = BulkMediaSyncer(client.deck)
-            bulkServer = BulkMediaSyncer(server.deck)
-            bulkClient.server = bulkServer
-            bulkClient.sync()
+        copyLocalMedia(client.deck, server.deck)
         # need to save manually
         self.newDeck.rebuildCounts()
         self.newDeck.updateAllPriorities()
@@ -174,12 +172,14 @@ class TextCardExporter(Exporter):
         strids = ids2str(self.cardIds())
         cards = self.deck.s.all("""
 select cards.question, cards.answer, cards.id from cards
-where cards.id in %s""" % strids)
+where cards.id in %s
+order by cards.created""" % strids)
         if self.includeTags:
             self.cardTags = dict(self.deck.s.all("""
 select cards.id, cards.tags || "," || facts.tags from cards, facts
 where cards.factId = facts.id
-and cards.id in %s""" % strids))
+and cards.id in %s
+order by cards.created""" % strids))
         out = u"\n".join(["%s\t%s%s" % (self.escapeText(c[0]),
                                         self.escapeText(c[1]),
                                         self.tags(c[2]))
@@ -205,21 +205,26 @@ class TextFactExporter(Exporter):
     def doExport(self, file):
         cardIds = self.cardIds()
         facts = self.deck.s.all("""
-select factId, value from fields
+select factId, value, facts.created from facts, fields
 where
-factId in
-(select distinct facts.id from facts, cards
-where facts.id = cards.factId
-and cards.id in %s)
+facts.id in
+(select distinct factId from cards
+where cards.id in %s)
+and facts.id = fields.factId
 order by factId, ordinal""" % ids2str(cardIds))
         txt = ""
         if self.includeTags:
             self.factTags = dict(self.deck.s.all(
                 "select id, tags from facts where id in %s" %
                 ids2str([fact[0] for fact in facts])))
-        out = ["\t".join([self.escapeText(x[1]) for x in ret[1]]) +
-               self.tags(ret[0])
-               for ret in (itertools.groupby(facts, itemgetter(0)))]
+        groups = itertools.groupby(facts, itemgetter(0))
+        groups = [[x for x in y[1]] for y in groups]
+        groups = [(group[0][2],
+                   "\t".join([self.escapeText(x[1]) for x in group]) +
+                   self.tags(group[0][0]))
+                  for group in groups]
+        groups.sort(key=itemgetter(0))
+        out = [ret[1] for ret in groups]
         self.count = len(out)
         out = "\n".join(out)
         file.write(out.encode("utf-8"))
@@ -234,6 +239,6 @@ order by factId, ordinal""" % ids2str(cardIds))
 
 def exporters():
     return (
-        (_("Anki deck (*.anki)"), AnkiExporter),
+        (_("Anki Deck (*.anki)"), AnkiExporter),
         (_("Cards in tab-separated text file (*.txt)"), TextCardExporter),
         (_("Facts in tab-separated text file (*.txt)"), TextFactExporter))

@@ -6,11 +6,12 @@ from PyQt4.QtCore import *
 import os, types, socket, time, traceback
 import ankiqt
 import anki
-from anki.sync import SyncClient, HttpSyncServerProxy, BulkMediaSyncerProxy
-from anki.sync import BulkMediaSyncer
+from anki.sync import SyncClient, HttpSyncServerProxy, copyLocalMedia
+from anki.sync import SYNC_HOST, SYNC_PORT
 from anki.errors import *
 from anki import DeckStorage
 import ankiqt.forms
+from anki.hooks import addHook, removeHook
 
 # Synchronising a deck with a public server
 ##########################################################################
@@ -28,14 +29,31 @@ class Sync(QThread):
         self.ok = True
         self.onlyMerge = onlyMerge
         self.sourcesToCheck = sourcesToCheck
+        addHook('fullSyncStarted', self.fullSyncStarted)
+        addHook('fullSyncFinished', self.fullSyncFinished)
+        addHook('fullSyncProgress', self.fullSyncProgress)
 
     def setStatus(self, msg, timeout=5000):
         self.emit(SIGNAL("setStatus"), msg, timeout)
 
     def run(self):
         self.syncDeck()
+        removeHook('fullSyncStarted', self.fullSyncStarted)
+        removeHook('fullSyncFinished', self.fullSyncFinished)
+        removeHook('fullSyncProgress', self.fullSyncProgress)
+
+    def fullSyncStarted(self, max):
+        self.emit(SIGNAL("fullSyncStarted"), max)
+
+    def fullSyncFinished(self):
+        self.emit(SIGNAL("fullSyncFinished"))
+
+    def fullSyncProgress(self, type, val):
+        self.emit(SIGNAL("fullSyncProgress"), type, val)
 
     def error(self, error):
+        if getattr(error, 'data', None) is None:
+            error.data = {}
         if error.data.get('type') == 'noResponse':
             self.emit(SIGNAL("noSyncResponse"))
         else:
@@ -50,10 +68,11 @@ class Sync(QThread):
     def getErrorMessage(self, error):
         if error.data.get('status') == "invalidUserPass":
             msg=_("Please double-check your username/password.")
+            self.emit(SIGNAL("badUserPass"))
         elif error.data.get('status') == "oldVersion":
             msg=_("The sync protocol has changed. Please upgrade.")
         else:
-            msg=_("Unknown error: %s" % `getattr(error, 'data')`)
+            msg=_("Unknown error: %s" % traceback.format_exc())
         return msg
 
     def connect(self, *args):
@@ -86,8 +105,9 @@ class Sync(QThread):
             self.emit(SIGNAL("syncClockOff"), timediff)
             return
         # reconnect
+        self.deck = None
         try:
-            self.deck = DeckStorage.Deck(self.parent.deckPath, backup=False)
+            self.deck = DeckStorage.Deck(self.parent.deckPath)
             client = SyncClient(self.deck)
             client.setServer(proxy)
             proxy.deckName = self.parent.syncName
@@ -98,24 +118,36 @@ class Sync(QThread):
                 # summary
                 self.setStatus(_("Fetching summary from server..."), 0)
                 sums = client.summaries()
-                # diff
-                self.setStatus(_("Determining differences..."), 0)
-                payload = client.genPayload(sums)
-                # send payload
-                pr = client.payloadChangeReport(payload)
-                self.setStatus("<br>" + pr + "<br>", 0)
-                self.setStatus(_("Transferring payload..."), 0)
-                res = client.server.applyPayload(payload)
-                # apply reply
-                self.setStatus(_("Applying reply..."), 0)
-                client.applyPayloadReply(res)
-                if client.mediaSyncPending:
-                    self.doBulkDownload(proxy.deckName)
-                # finished. save deck, preserving mod time
-                self.setStatus(_("Sync complete."))
-                self.deck.lastLoaded = self.deck.modified
-                self.deck.s.flush()
-                self.deck.s.commit()
+                if client.needFullSync(sums):
+                    self.setStatus(_("Preparing full sync..."), 0)
+                    ret = client.prepareFullSync()
+                    if ret[0] == "fromLocal":
+                        self.setStatus(_("Uploading..."), 0)
+                        client.fullSyncFromLocal(ret[1], ret[2])
+                    else:
+                        self.setStatus(_("Downloading..."), 0)
+                        client.fullSyncFromServer(ret[1], ret[2])
+                    self.setStatus(_("Sync complete."), 0)
+                    # reopen the deck in case we have sources
+                    self.deck = DeckStorage.Deck(self.parent.deckPath)
+                    client.deck = self.deck
+                else:
+                    # diff
+                    self.setStatus(_("Determining differences..."), 0)
+                    payload = client.genPayload(sums)
+                    # send payload
+                    pr = client.payloadChangeReport(payload)
+                    self.setStatus("<br>" + pr + "<br>", 0)
+                    self.setStatus(_("Transferring payload..."), 0)
+                    res = client.server.applyPayload(payload)
+                    # apply reply
+                    self.setStatus(_("Applying reply..."), 0)
+                    client.applyPayloadReply(res)
+                    # finished. save deck, preserving mod time
+                    self.setStatus(_("Sync complete."))
+                    self.deck.lastLoaded = self.deck.modified
+                    self.deck.s.flush()
+                    self.deck.s.commit()
             else:
                 changes = False
                 self.setStatus(_("No changes found."))
@@ -140,8 +172,6 @@ class Sync(QThread):
                     self.setStatus(msg + _(" applied %d modified cards.") %
                                    len(payload['cards']))
                     client.applyOneWayPayload(payload)
-                    if client.mediaSyncPending:
-                        self.doBulkDownload("")
                 self.setStatus(_("Check complete."))
                 self.deck.s.flush()
                 self.deck.s.commit()
@@ -156,28 +186,13 @@ class Sync(QThread):
         except Exception, e:
             self.ok = False
             #traceback.print_exc()
-            self.deck.close()
+            if self.deck:
+                self.deck.close()
             # cheap hack to ensure message is displayed
             err = `getattr(e, 'data', None) or e`
             self.setStatus(_("Syncing failed: %(a)s") % {
                 'a': err})
             self.error(e)
-
-    def doBulkDownload(self, deckname):
-        self.emit(SIGNAL("openSyncProgress"))
-        client = BulkMediaSyncer(self.deck)
-        client.server = BulkMediaSyncerProxy(self.user, self.pwd)
-        client.server.deckName = deckname
-        client.progressCallback = self.bulkCallback
-        try:
-            client.sync()
-        except:
-            self.emit(SIGNAL("bulkSyncFailed"))
-        time.sleep(0.1)
-        self.emit(SIGNAL("closeSyncProgress"))
-
-    def bulkCallback(self, *args):
-        self.emit(SIGNAL("updateSyncProgress"), args)
 
 # Choosing a deck to sync to
 ##########################################################################
@@ -202,7 +217,7 @@ class DeckChooser(QDialog):
         for name in decks:
             name = os.path.splitext(name)[0]
             if self.create:
-                msg = _("Merge with '%s' on server") % name
+                msg = _("Overwrite '%s' on server") % name
             else:
                 msg = name
             item = QListWidgetItem(msg)

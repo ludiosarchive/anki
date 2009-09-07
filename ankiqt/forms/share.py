@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/share.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -73,5 +73,4 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(_("Get Shared Decks/Plugins"))
         self.searchLabel.setText(_("Search:"))
         self.label_2.setText(_("Type:"))
-        self.bottomLabel.setText(_("TextLabel"))
 

@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/modelproperties.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,13 +13,12 @@ class Ui_ModelProperties(object):
     def setupUi(self, ModelProperties):
         ModelProperties.setObjectName("ModelProperties")
         ModelProperties.setWindowModality(QtCore.Qt.ApplicationModal)
-        ModelProperties.resize(376, 518)
+        ModelProperties.resize(393, 551)
         self.verticalLayout = QtGui.QVBoxLayout(ModelProperties)
         self.verticalLayout.setObjectName("verticalLayout")
         self.tabWidget = QtGui.QTabWidget(ModelProperties)
         self.tabWidget.setObjectName("tabWidget")
         self.tab_2 = QtGui.QWidget()
-        self.tab_2.setGeometry(QtCore.QRect(0, 0, 360, 452))
         self.tab_2.setObjectName("tab_2")
         self.vboxlayout = QtGui.QVBoxLayout(self.tab_2)
         self.vboxlayout.setSpacing(6)
@@ -67,6 +66,12 @@ class Ui_ModelProperties(object):
         self.spacing.setObjectName("spacing")
         self.horizontalLayout_4.addWidget(self.spacing)
         self.gridLayout.addLayout(self.horizontalLayout_4, 3, 1, 1, 1)
+        self.label_4 = QtGui.QLabel(self.tab_2)
+        self.label_4.setObjectName("label_4")
+        self.gridLayout.addWidget(self.label_4, 4, 0, 1, 1)
+        self.mediaURL = QtGui.QLineEdit(self.tab_2)
+        self.mediaURL.setObjectName("mediaURL")
+        self.gridLayout.addWidget(self.mediaURL, 4, 1, 1, 1)
         self.vboxlayout.addLayout(self.gridLayout)
         self.line_3 = QtGui.QFrame(self.tab_2)
         self.line_3.setFrameShape(QtGui.QFrame.HLine)
@@ -141,7 +146,6 @@ class Ui_ModelProperties(object):
         self.vboxlayout.addWidget(self.fieldEditBox)
         self.tabWidget.addTab(self.tab_2, "")
         self.tab_3 = QtGui.QWidget()
-        self.tab_3.setGeometry(QtCore.QRect(0, 0, 360, 452))
         self.tab_3.setObjectName("tab_3")
         self.gridLayout_2 = QtGui.QGridLayout(self.tab_3)
         self.gridLayout_2.setObjectName("gridLayout_2")
@@ -260,7 +264,8 @@ class Ui_ModelProperties(object):
         ModelProperties.setTabOrder(self.name, self.tags)
         ModelProperties.setTabOrder(self.tags, self.initialSpacing)
         ModelProperties.setTabOrder(self.initialSpacing, self.spacing)
-        ModelProperties.setTabOrder(self.spacing, self.fieldList)
+        ModelProperties.setTabOrder(self.spacing, self.mediaURL)
+        ModelProperties.setTabOrder(self.mediaURL, self.fieldList)
         ModelProperties.setTabOrder(self.fieldList, self.fieldAdd)
         ModelProperties.setTabOrder(self.fieldAdd, self.fieldUp)
         ModelProperties.setTabOrder(self.fieldUp, self.fieldDelete)
@@ -278,7 +283,10 @@ class Ui_ModelProperties(object):
         ModelProperties.setTabOrder(self.cardDelete, self.cardName)
         ModelProperties.setTabOrder(self.cardName, self.cardQuestion)
         ModelProperties.setTabOrder(self.cardQuestion, self.cardAnswer)
-        ModelProperties.setTabOrder(self.cardAnswer, self.buttonBox)
+        ModelProperties.setTabOrder(self.cardAnswer, self.typeAnswer)
+        ModelProperties.setTabOrder(self.typeAnswer, self.questionInAnswer)
+        ModelProperties.setTabOrder(self.questionInAnswer, self.allowEmptyAnswer)
+        ModelProperties.setTabOrder(self.allowEmptyAnswer, self.buttonBox)
 
     def retranslateUi(self, ModelProperties):
         ModelProperties.setWindowTitle(_("Model Properties"))
@@ -287,6 +295,7 @@ class Ui_ModelProperties(object):
         self.label_3.setText(_("<b>Tags</b>"))
         self.label_19.setText(_("<b>Minimum spacing</b>"))
         self.label_25.setText(_("<b>Spacing multipler</b>"))
+        self.label_4.setText(_("<b>Media URL</B>"))
         self.label_6.setText(_("<h1>Fields</h1>"))
         self.fieldAdd.setText(_("&Add"))
         self.fieldUp.setToolTip(_("Move selected field up"))
