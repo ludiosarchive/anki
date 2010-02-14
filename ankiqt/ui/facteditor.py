@@ -13,8 +13,10 @@ import anki.sound
 from ankiqt import ui
 import ankiqt
 from ankiqt.ui.utils import mungeQA, saveGeom, restoreGeom, getBase
-from anki.hooks import addHook, removeHook, runHook
+from anki.hooks import addHook, removeHook, runHook, runFilter
 from sqlalchemy.exceptions import InvalidRequestError
+from PyQt4 import pyqtconfig
+QtConfig = pyqtconfig.Configuration()
 
 clozeColour = "#0000ff"
 
@@ -240,7 +242,7 @@ class FactEditor(object):
         self.addSound.setShortcut(_("F4"))
         self.addSound.setEnabled(False)
         self.addSound.setIcon(QIcon(":/icons/text-speak.png"))
-        self.addSound.setToolTip(_("Add audio (F4)"))
+        self.addSound.setToolTip(_("Add audio/video (F4)"))
         self.iconsBox.addWidget(self.addSound)
         self.addSound.setStyle(self.plastiqueStyle)
         # sounds
@@ -288,7 +290,6 @@ class FactEditor(object):
         self.cloze.connect(self.clozeSC, SIGNAL("activated()"),
                                   self.onCloze)
         self.cloze.setToolTip(_("Cloze (F9)"))
-        #self.cloze.setIcon(QIcon(":/icons/document-cloze.png"))
         self.cloze.setFixedWidth(30)
         self.cloze.setFixedHeight(26)
         self.cloze.setText("[...]")
@@ -387,6 +388,10 @@ class FactEditor(object):
             w.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             w.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             w.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            if field.fieldModel.features:
+                w.setLayoutDirection(Qt.RightToLeft)
+            else:
+                w.setLayoutDirection(Qt.LeftToRight)
             runHook("makeField", w, field)
             self.fieldsGrid.addWidget(w, n, 1)
             self.fields[field.name] = (field, w)
@@ -408,12 +413,15 @@ class FactEditor(object):
         self.loadFields(check)
         self.parent.setUpdatesEnabled(True)
         self.fieldsScroll.setWidget(self.fieldsFrame)
-        extra = 0
         if sys.platform.startswith("darwin"):
             extra = 5
         elif sys.platform.startswith("win32"):
             extra = 3
-        self.tagsLabel.setFixedWidth(max(*[l.width() for l in self.labels])
+        else:
+            extra = -1
+        tagsw = self.tagsLabel.sizeHint().width()
+        self.tagsLabel.setFixedWidth(max(tagsw,
+                                         max(*[l.width() for l in self.labels]))
                                      + extra)
         self.parent.setTabOrder(last, self.tags)
 
@@ -512,7 +520,7 @@ class FactEditor(object):
         self.saveFields()
         self.checkValid()
         if self.onChange:
-            self.onChange()
+            self.onChange('field')
         self.changeTimer = None
 
     def saveFieldsNow(self):
@@ -524,7 +532,7 @@ class FactEditor(object):
             self.changeTimer.stop()
             self.changeTimer = None
             if self.onChange:
-                self.onChange()
+                self.onChange('field')
         # save fields and run features
         w = self.focusedEdit()
         if w:
@@ -566,14 +574,14 @@ class FactEditor(object):
             return
         old = self.fact.tags
         self.fact.tags = canonifyTags(unicode(self.tags.text()))
-        if self.onChange:
-            self.onChange()
         if old != self.fact.tags:
             self.deck.s.flush()
             self.deck.updateFactTags([self.fact.id])
             self.deck.updatePriorities([c.id for c in self.fact.cards])
             self.fact.setModified(textChanged=True)
             self.deck.flushMod()
+        if self.onChange:
+            self.onChange('tag')
 
     def focusField(self, fieldName):
         self.fields[fieldName][1].setFocus()
@@ -683,13 +691,21 @@ class FactEditor(object):
             runHook("colourChanged")
             self.setForeground(w)
 
+    def _needExtraWord(self):
+        ver = QtConfig.qt_version >> 8
+        if ver == 0x404:
+            # qt4.4 behaviour is wrong
+            return False
+        return True
+
     def insertLatex(self):
         w = self.focusedEdit()
         if w:
+            selected = w.textCursor().selectedText()
             self.deck.mediaDir(create=True)
-            w.insertHtml("[latex][/latex]")
+            w.insertHtml("[latex]%s[/latex]" % selected)
             w.moveCursor(QTextCursor.PreviousWord)
-            if sys.platform.startswith("win32"):
+            if self._needExtraWord():
                 w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
@@ -697,10 +713,11 @@ class FactEditor(object):
     def insertLatexEqn(self):
         w = self.focusedEdit()
         if w:
+            selected = w.textCursor().selectedText()
             self.deck.mediaDir(create=True)
-            w.insertHtml("[$][/$]")
+            w.insertHtml("[$]%s[/$]" % selected)
             w.moveCursor(QTextCursor.PreviousWord)
-            if sys.platform.startswith("win32"):
+            if self._needExtraWord():
                 w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
@@ -708,10 +725,11 @@ class FactEditor(object):
     def insertLatexMathEnv(self):
         w = self.focusedEdit()
         if w:
+            selected = w.textCursor().selectedText()
             self.deck.mediaDir(create=True)
-            w.insertHtml("[$$][/$$]")
+            w.insertHtml("[$$]%s[/$$]" % selected)
             w.moveCursor(QTextCursor.PreviousWord)
-            if sys.platform.startswith("win32"):
+            if self._needExtraWord():
                 w.moveCursor(QTextCursor.PreviousWord)
             w.moveCursor(QTextCursor.PreviousCharacter)
             w.moveCursor(QTextCursor.PreviousCharacter)
@@ -734,8 +752,8 @@ class FactEditor(object):
         src = self.focusedEdit()
         if not src:
             return
-        re1 = "\[.+?(:(.+?))?\]"
-        re2 = "\[(.+?)(:.+?)?\]"
+        re1 = "\[(?:<.+?>)?.+?(:(.+?))?\](?:</.+?>)?"
+        re2 = "\[(?:<.+?>)?(.+?)(:.+?)?\](?:</.+?>)?"
         # add brackets because selected?
         cursor = src.textCursor()
         oldSrc = None
@@ -854,12 +872,13 @@ class FactEditor(object):
         else:
             w = self.focusedEdit()
         path = self.deck.addMedia(file)
+        self.maybeDelete(path, file)
         w.insertHtml('<img src="%s">' % path)
 
     def onAddSound(self):
         # get this before we open the dialog
         w = self.focusedEdit()
-        key = _("Sounds (*.mp3 *.ogg *.wav)")
+        key = _("Sounds/Videos (*.mp3 *.ogg *.wav *.avi *.ogv *.mpg *.mpeg *.mov)")
         file = ui.utils.getFile(self.parent, _("Add audio"), "audio", key)
         if not file:
             return
@@ -872,8 +891,19 @@ class FactEditor(object):
         else:
             w = self.focusedEdit()
         path = self.deck.addMedia(file)
+        self.maybeDelete(path, file)
         anki.sound.play(path)
         w.insertHtml('[sound:%s]' % path)
+
+    def maybeDelete(self, new, old):
+        if not ankiqt.mw.config['deleteMedia']:
+            return
+        if new == os.path.basename(old):
+            return
+        try:
+            os.unlink(old)
+        except:
+            pass
 
     def onRecSound(self):
         self.initMedia()
@@ -916,6 +946,9 @@ class FactEdit(QTextEdit):
                 hadN = False
                 if "\n" in txt:
                     txt = txt.split("\n")[0]
+                    hadN = True
+                if "\r" in txt:
+                    txt = txt.split("\r")[0]
                     hadN = True
                 if not source.hasImage() or hadN:
                     # firefox on linux just gives us a url
@@ -996,46 +1029,6 @@ class FactEdit(QTextEdit):
         self.parent.disableButtons()
         self.emit(SIGNAL("lostFocus"))
 
-    # this shouldn't be necessary if/when we move away from kakasi
-    def mouseDoubleClickEvent(self, evt):
-        t = self.parent.fact.model.tags.lower()
-        if (not "japanese" in t and
-            not "mandarin" in t and
-            not "cantonese" in t):
-            return QTextEdit.mouseDoubleClickEvent(self,evt)
-        r = QRegExp("\\{(.*[|,].*)\\}")
-        r.setMinimal(True)
-
-        mouseposition = self.textCursor().position()
-
-        blockoffset = 0
-        result = r.indexIn(self.toPlainText(), 0)
-
-        found = ""
-
-        while result != -1:
-            if mouseposition > result and mouseposition < result + r.matchedLength():
-                mouseposition -= result + 1
-                frompos = 0
-                topos = 0
-
-                string = r.cap(1)
-                offset = 0
-                bits = re.split("[|,]", unicode(string))
-                for index in range(0, len(bits)):
-                    offset += len(bits[index]) + 1
-                    if mouseposition < offset:
-                        found = bits[index]
-                        break
-                break
-
-            blockoffset= result + r.matchedLength()
-            result = r.indexIn(self.toPlainText(), blockoffset)
-
-        if found == "":
-            return QTextEdit.mouseDoubleClickEvent(self,evt)
-        self.setPlainText(self.toPlainText().replace(result, r.matchedLength(), found))
-
     def focusInEvent(self, evt):
         if (self.parent.lastFocusedEdit and
             self.parent.lastFocusedEdit is not self):
@@ -1077,14 +1070,19 @@ class PreviewDialog(QDialog):
 
     def updateCard(self):
         c = self.cards[self.currentCard]
+        styles = (self.deck.css +
+                  ("\nhtml { background: %s }" % c.cardModel.lastFontColour) +
+                  "\ndiv { white-space: pre-wrap; }")
+        styles = runFilter("addStyles", styles, c)
         self.dialog.webView.setHtml(
             ('<html><head>%s</head><body>' % getBase(self.deck)) +
-            "<style>" + self.deck.css +
-            ("\nhtml { background: %s }" % c.cardModel.lastFontColour) +
-            "\ndiv { white-space: pre-wrap; }</style>" +
-            mungeQA(self.deck, c.htmlQuestion()) +
+            "<style>" + styles + "</style>" +
+            runFilter("drawQuestion", mungeQA(self.deck, c.htmlQuestion()),
+                      c) +
             "<br><br><hr><br><br>" +
-            mungeQA(self.deck, c.htmlAnswer()) + "</body></html>")
+            runFilter("drawAnswer", mungeQA(self.deck, c.htmlAnswer()),
+                      c)
+            + "</body></html>")
         playFromText(c.question)
         playFromText(c.answer)
 

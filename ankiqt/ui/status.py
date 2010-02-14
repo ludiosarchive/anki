@@ -13,6 +13,11 @@ class QClickableLabel(QLabel):
     def mouseReleaseEvent(self, evt):
         QDesktopServices.openUrl(QUrl(self.url))
 
+class QClickableProgress(QProgressBar):
+    url = "http://ichi2.net/anki/wiki/ProgressBars"
+    def mouseReleaseEvent(self, evt):
+        QDesktopServices.openUrl(QUrl(self.url))
+
 # Status bar
 ##########################################################################
 
@@ -108,12 +113,12 @@ class StatusView(object):
         vbox = QVBoxLayout()
         vbox.setSpacing(0)
         vbox.setMargin(0)
-        self.progressBar = QProgressBar()
+        self.progressBar = QClickableProgress()
         self.progressBar.setFixedSize(*progressBarSize)
         self.progressBar.setMaximum(100)
         self.progressBar.setTextVisible(False)
         vbox.addWidget(self.progressBar, 0)
-        self.retentionBar = QProgressBar()
+        self.retentionBar = QClickableProgress()
         self.retentionBar.setFixedSize(*progressBarSize)
         self.retentionBar.setMaximum(100)
         self.retentionBar.setTextVisible(False)
@@ -163,16 +168,23 @@ class StatusView(object):
             remStr += "<b>0</b>"
         else:
             # remaining string, bolded depending on current card
+            if sys.platform.startswith("linux"):
+                s = "&nbsp;"
+            else:
+                s = "&nbsp;&nbsp;"
             if not self.main.currentCard:
-                remStr += "%(failed1)s&nbsp;&nbsp;%(rev1)s&nbsp;&nbsp;%(new1)s"
+                remStr += "%(failed1)s" + s + "%(rev1)s" + s + "%(new1)s"
             else:
                 q = self.main.deck.queueForCard(self.main.currentCard)
                 if q == "failed":
-                    remStr += "<u>%(failed1)s</u>&nbsp;&nbsp;%(rev1)s&nbsp;&nbsp;%(new1)s"
+                    remStr += ("<u>%(failed1)s</u>" + s +
+                               "%(rev1)s" + s + "%(new1)s")
                 elif q == "rev":
-                    remStr += "%(failed1)s&nbsp;&nbsp;<u>%(rev1)s</u>&nbsp;&nbsp;%(new1)s"
+                    remStr += ("%(failed1)s" + s + "<u>%(rev1)s</u>" + s +
+                               "%(new1)s")
                 else:
-                    remStr += "%(failed1)s&nbsp;&nbsp;%(rev1)s&nbsp;&nbsp;<u>%(new1)s</u>"
+                    remStr += ("%(failed1)s" + s + "%(rev1)s" + s +
+                               "<u>%(new1)s</u>")
         stats['failed1'] = '<font color=#990000>%s</font>' % stats['failed']
         stats['rev1'] = '<font color=#000000>%s</font>' % stats['rev']
         if self.main.deck.newEarly:
@@ -213,23 +225,20 @@ class StatusView(object):
         self.progressBar.setValue(stats['dYesTotal%'])
         # tooltips
         tip = "<h1>" + _("Performance") + "</h1>"
-        tip += _("""The top bar shows your performance today. The bottom bar shows your<br>
-performance on cards scheduled for 21 days or more. The bottom bar should<br>
-generally be between 80-95% - lower and you're forgetting mature cards<br>
-too often, higher and you're spending too much time reviewing.""")
+        tip += _("Click the bars to learn more.")
         tip += "<h2>" + _("Reviews today") + "</h2>"
         tip += "<b>" + _("Correct today: ") + anki.utils.fmtPercentage(stats['dYesTotal%'], point=1)
         tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['dYesTotal'], 'totalSum' : stats['dTotal'] } + ")</b><br>"
-        tip += _("Correct over a month: ") + anki.utils.fmtPercentage(stats['dMatureYes%'], point=1)
+        tip += _("Correct mature: ") + anki.utils.fmtPercentage(stats['dMatureYes%'], point=1)
         tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['dMatureYes'], 'totalSum' : stats['dMatureTotal'] } + ")</b><br>"
         tip += _("Average time per answer: ") + anki.utils.fmtTimeSpan(stats['dAverageTime'], point=2) +"<br>"
         tip += _("Total review time: ") + anki.utils.fmtTimeSpan(stats['dReviewTime'], point=2)
         tip += "<h2>" + _("All Reviews") + "</h2>"
-        tip += "<b>" + _("Correct over a month: ") + anki.utils.fmtPercentage(stats['gMatureYes%'], point=1)
+        tip += "<b>" + _("Correct mature: ") + anki.utils.fmtPercentage(stats['gMatureYes%'], point=1)
         tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['gMatureYes'], 'totalSum' : stats['gMatureTotal'] } + ")</b><br>"
         tip += _("Average time per answer: ") + anki.utils.fmtTimeSpan(stats['gAverageTime'], point=2) +"<br>"
         tip += _("Total review time: ") + anki.utils.fmtTimeSpan(stats['gReviewTime'], point=2) +"<br>"
-        tip += _("Correct under a month: ") + anki.utils.fmtPercentage(stats['gYoungYes%'], point=1)
+        tip += _("Correct young: ") + anki.utils.fmtPercentage(stats['gYoungYes%'], point=1)
         tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['gYoungYes'], 'totalSum' : stats['gYoungTotal'] } + ")</b><br>"
         tip += _("Correct first time: ") + anki.utils.fmtPercentage(stats['gNewYes%'], point=1)
         tip += " (" + _("%(partOf)d of %(totalSum)d") % {'partOf' : stats['gNewYes'], 'totalSum' : stats['gNewTotal'] } + ")</b><br>"
@@ -296,9 +305,9 @@ You should aim to answer each question within<br>
         if self.state in ("showQuestion", "showAnswer", "studyScreen"):
             self.main.deck.checkDue()
             self.redraw()
+            self.main.updateTitleBar()
             if self.state == "studyScreen":
                 self.main.updateStudyStats()
 
     def setTimer(self, txt):
         self.timer.setText("<qt>" + txt + "&nbsp;")
-

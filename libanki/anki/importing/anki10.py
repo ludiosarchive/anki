@@ -10,9 +10,10 @@ __docformat__ = 'restructuredtext'
 
 from anki import DeckStorage
 from anki.importing import Importer
-from anki.sync import SyncClient, SyncServer, BulkMediaSyncer
+from anki.sync import SyncClient, SyncServer, copyLocalMedia
 from anki.lang import _
 from anki.utils import ids2str
+from anki.deck import NEW_CARDS_RANDOM
 import time
 
 class Anki10Importer(Importer):
@@ -21,7 +22,11 @@ class Anki10Importer(Importer):
 
     def doImport(self):
         "Import."
-        self.deck.startProgress(4)
+        random = self.deck.newCardOrder == NEW_CARDS_RANDOM
+        num = 4
+        if random:
+            num += 1
+        self.deck.startProgress(num)
         self.deck.updateProgress(_("Importing..."))
         src = DeckStorage.Deck(self.file)
         client = SyncClient(self.deck)
@@ -52,11 +57,7 @@ class Anki10Importer(Importer):
         res = server.applyPayload(payload)
         self.deck.updateProgress()
         client.applyPayloadReply(res)
-        if client.mediaSyncPending:
-            bulkClient = BulkMediaSyncer(client.deck)
-            bulkServer = BulkMediaSyncer(server.deck)
-            bulkClient.server = bulkServer
-            bulkClient.sync()
+        copyLocalMedia(server.deck, client.deck)
         # add tags
         self.deck.updateProgress()
         fids = [f[0] for f in res['added-facts']['facts']]
@@ -75,6 +76,10 @@ class Anki10Importer(Importer):
         self.total = len(res['added-facts']['facts'])
         src.s.rollback()
         src.engine.dispose()
+        # randomize?
+        if random:
+            self.deck.updateProgress()
+            self.deck.randomizeNewCards([x[0] for x in res['added-cards']])
         self.deck.flushMod()
         self.deck.finishProgress()
 

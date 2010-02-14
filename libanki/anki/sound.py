@@ -8,7 +8,8 @@ Sound support
 """
 __docformat__ = 'restructuredtext'
 
-import re, sys, threading, time, subprocess, os, signal
+import re, sys, threading, time, subprocess, os, signal, atexit, errno
+from anki.hooks import addHook, runHook
 
 # Shared utils
 ##########################################################################
@@ -48,17 +49,6 @@ processingChain = [
      "bass", BASS_AMOUNT, "fade", FADE_AMOUNT, "0"],
     ["lame", "tmp3.wav", processingDst, "--noreplaygain", "--quiet"],
     ]
-
-queue = []
-manager = None
-
-if sys.platform.startswith("win32"):
-    externalPlayer = ["mplayer.exe", "-ao", "win32", "-really-quiet", "-noconsolecontrols"]
-    dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    os.environ['PATH'] += ";" + dir
-    os.environ['PATH'] += ";" + dir + "\\..\\dist" # for testing
-else:
-    externalPlayer = ["mplayer", "-really-quiet", "-noconsolecontrols"]
 
 # don't show box on windows
 if sys.platform == "win32":
@@ -111,35 +101,130 @@ def generateNoiseProfile():
     processingChain[0] = ["sox", processingSrc, "tmp2.wav",
                           "noisered", noiseProfile, NOISE_AMOUNT]
 
-# External playing
+# Mplayer
 ##########################################################################
 
-class QueueMonitor(threading.Thread):
+if sys.platform.startswith("win32"):
+    mplayerCmd = ["mplayer.exe", "-ao", "win32", "-really-quiet",
+                  "-slave", "-idle"]
+    dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    os.environ['PATH'] += ";" + dir
+    os.environ['PATH'] += ";" + dir + "\\..\\dist" # for testing
+else:
+    mplayerCmd = ["mplayer", "-really-quiet", "-slave", "-idle",
+                  "-ontop"]
+
+mplayerQueue = []
+mplayerManager = None
+mplayerReader = None
+mplayerCond = threading.Condition()
+
+class MplayerReader(threading.Thread):
+    "Read any debugging info to prevent mplayer from blocking."
 
     def run(self):
         while 1:
-            time.sleep(0.1)
-            if queue:
-                path = queue.pop(0)
-                try:
-                    retryWait(subprocess.Popen(
-                        externalPlayer + [path], startupinfo=si))
-                except OSError:
-                    raise Exception("Audio player not found")
-            else:
-                return
+            mplayerCond.acquire()
+            mplayerCond.wait()
+            mplayerCond.release()
+            try:
+                mplayerManager.mplayer.stdout.read()
+            except:
+                pass
 
-def playExternal(path):
-    global manager
+class MplayerMonitor(threading.Thread):
+
+    def run(self):
+        self.mplayer = None
+        while 1:
+            mplayerCond.acquire()
+            while not mplayerQueue:
+                if not mplayerCond:
+                    return
+                mplayerCond.wait()
+            if not self.mplayer:
+                self.startProcess()
+            if self.mplayer != -1 and self.mplayer.poll() is not None:
+                self.mplayer.wait()
+                self.startProcess()
+            nextClears = False
+            while mplayerQueue:
+                item = mplayerQueue.pop(0)
+                if item is None:
+                    nextClears = True
+                    continue
+                if nextClears:
+                    nextClears = False
+                    extra = ""
+                else:
+                    extra = " 1"
+                cmd = "loadfile %s%s\n" % (item, extra)
+                self.mplayer.stdin.write(cmd)
+            mplayerCond.release()
+
+    def startProcess(self):
+        try:
+            self.mplayer = subprocess.Popen(
+                mplayerCmd, startupinfo=si, stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        except OSError:
+            mplayerCond.release()
+            raise Exception("Audio player not found")
+
+def queueMplayer(path):
+    ensureMplayerThreads()
     path = path.encode(sys.getfilesystemencoding())
-    queue.append(path)
-    if not manager or not manager.isAlive():
-        manager = QueueMonitor()
-        manager.start()
+    mplayerCond.acquire()
+    mplayerQueue.append(path)
+    mplayerCond.notifyAll()
+    mplayerCond.release()
+    runHook("soundQueued")
 
-def clearQueueExternal():
-    global queue
-    queue = []
+def clearMplayerQueue():
+    mplayerCond.acquire()
+    mplayerQueue.append(None)
+    mplayerCond.release()
+
+def ensureMplayerThreads():
+    global mplayerManager, mplayerReader
+    if not mplayerManager:
+        mplayerManager = MplayerMonitor()
+        mplayerManager.daemon = True
+        mplayerManager.start()
+        mplayerReader = MplayerReader()
+        mplayerReader.daemon = True
+        mplayerReader.start()
+        atexit.register(stopMplayer)
+
+def stopMplayer(restart=False):
+    if not mplayerManager:
+        return
+    mplayerCond.acquire()
+    if mplayerManager.mplayer:
+        while 1:
+            try:
+                mplayerManager.mplayer.stdin.write("quit\n")
+                break
+            except OSError, e:
+                if e.errno != errno.EINTR:
+                    # osx throws interrupt errors regularly, but we want to
+                    # ignore other errors on shutdown
+                    break
+            except IOError:
+                # already closed
+                break
+            except ValueError:
+                # already closed
+                break
+    if not restart:
+        mplayerManager.mplayer = -1
+    mplayerCond.notifyAll()
+    mplayerCond.release()
+
+def stopMplayerOnce():
+    stopMplayer(restart=True)
+
+addHook("deckClosed", stopMplayerOnce)
 
 # PyAudio recording
 ##########################################################################
@@ -232,7 +317,7 @@ class PyAudioRecorder(_Recorder):
 # Default audio player
 ##########################################################################
 
-play = playExternal
-clearAudioQueue = clearQueueExternal
+play = queueMplayer
+clearAudioQueue = clearMplayerQueue
 
 Recorder = PyAudioRecorder

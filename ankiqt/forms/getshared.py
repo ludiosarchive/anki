@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/getshared.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -30,16 +30,20 @@ class Ui_Dialog(object):
         self.table = QtGui.QTableWidget(self.splitter)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.table.sizePolicy().hasHeightForWidth())
         self.table.setSizePolicy(sizePolicy)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.table.setShowGrid(False)
         self.table.setObjectName("table")
         self.table.setColumnCount(0)
         self.table.setRowCount(0)
         self.scrollArea = QtGui.QScrollArea(self.splitter)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(3)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.scrollArea.sizePolicy().hasHeightForWidth())
         self.scrollArea.setSizePolicy(sizePolicy)
         self.scrollArea.setFrameShape(QtGui.QFrame.StyledPanel)
@@ -65,6 +69,7 @@ class Ui_Dialog(object):
         self.bottomLabel.setSizePolicy(sizePolicy)
         self.bottomLabel.setMaximumSize(QtCore.QSize(500, 16777215))
         self.bottomLabel.setWordWrap(True)
+        self.bottomLabel.setOpenExternalLinks(True)
         self.bottomLabel.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByMouse)
         self.bottomLabel.setObjectName("bottomLabel")
         self.verticalLayout_2.addWidget(self.bottomLabel)

@@ -8,7 +8,7 @@ import anki, anki.utils
 from anki.sound import playFromText, stripSounds
 from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
-from anki.hooks import runHook
+from anki.hooks import runHook, runFilter
 import types, time, re, os, urllib, sys, difflib
 from ankiqt import ui
 from ankiqt.ui.utils import mungeQA, getBase
@@ -86,7 +86,8 @@ class View(object):
         s = "<style>\n"
         if self.main.deck:
             s += self.main.deck.css
-        s += "div { white-space: pre-wrap; }"
+        s += "div { white-space: pre-wrap; }\n"
+        s = runFilter("addStyles", s, self.main.currentCard)
         s += "</style>"
         return s
 
@@ -134,8 +135,11 @@ class View(object):
         q = self.main.currentCard.htmlQuestion()
         if self.haveTop:
             height = 35
+        elif self.main.currentCard.cardModel.questionInAnswer:
+            height = 40
         else:
             height = 45
+        q = runFilter("drawQuestion", q, self.main.currentCard)
         self.write(self.center(self.mungeQA(self.main.deck, q), height))
         if self.state != self.oldState and not nosound:
             playFromText(q)
@@ -168,11 +172,13 @@ class View(object):
     def drawAnswer(self):
         "Show the answer."
         a = self.main.currentCard.htmlAnswer()
+        a = runFilter("drawAnswer", a, self.main.currentCard)
         if self.main.currentCard.cardModel.typeAnswer:
             try:
                 cor = stripHTML(self.main.currentCard.fact[
                     self.main.currentCard.cardModel.typeAnswer])
             except KeyError:
+                self.main.currentCard.cardModel.typeAnswer = ""
                 cor = ""
             if cor:
                 given = unicode(self.main.typeAnswerField.text())
@@ -220,7 +226,7 @@ class View(object):
             return
         self.write("<span style='color: %s'>" % futureWarningColour +
                    _("This card was due in %s.") % fmtTimeSpan(
-            self.main.currentCard.due - time.time()) +
+            self.main.currentCard.due - time.time(), after=True) +
                    "</span>")
 
     def drawLastCard(self):
@@ -273,33 +279,18 @@ class View(object):
 <table>
 
 <tr>
-<td>
-<a href="welcome:open"><img src=":/icons/document-open.png"></a>
-</td>
-<td valign=middle><h2><a href="welcome:open">%(local)s</a></h2></td>
-</tr>
-
-<tr>
 <td width=50>
-<a href="welcome:sample"><img src=":/icons/anki.png"></a>
+<a href="welcome:back"><img src=":/icons/go-previous.png"></a>
 </td>
-<td valign=middle><h2><a href="welcome:sample">%(dl_shared)s</a></h2></td>
-</tr>
-
-<tr>
-<td>
-<a href="welcome:openrem"><img src=":/icons/document-open-remote.png"></a>
-</td>
-<td valign=middle><h2><a href="welcome:openrem">%(dl_personal)s</a></h2></td>
+<td valign=middle><h2><a href="welcome:back">%(back)s</a></h2></td>
 </tr>
 
 </table>""" % \
 	{"welcome":_("Welcome to Anki!"),
-         "add":_("Add material"),
+         "add":_("Add Material"),
          "start":_("Start adding your own material."),
-         "local":_("Open Local Deck"),
-         "dl_shared":_("Download Shared Deck"),
-         "dl_personal":_("Download Personal Deck")})
+         "back":_("Back to Deck Browser"),
+         })
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."

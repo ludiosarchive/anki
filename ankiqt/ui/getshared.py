@@ -4,8 +4,8 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from PyQt4.QtNetwork import *
 import ankiqt, simplejson, time, cStringIO, zipfile, tempfile, os, re
+import traceback, urllib2
 from ankiqt.ui.utils import saveGeom, restoreGeom, showInfo
 from anki.utils import fmtTimeSpan
 
@@ -28,15 +28,16 @@ class GetShared(QDialog):
         self.parent = parent
         self.form = ankiqt.forms.getshared.Ui_Dialog()
         self.form.setupUi(self)
+        self.ok = True
         restoreGeom(self, "getshared")
         self.setupTable()
         self.onChangeType(type)
-        self.ok = False
         if type == 0:
             self.setWindowTitle(_("Download Shared Deck"))
         else:
             self.setWindowTitle(_("Download Shared Plugin"))
-        self.exec_()
+        if self.ok:
+            self.exec_()
 
     def setupTable(self):
         self.connect(
@@ -48,28 +49,17 @@ class GetShared(QDialog):
                      self.limit)
 
     def fetchData(self):
-        h = QHttp(self)
-        h.connect(h, SIGNAL("requestFinished(int,bool)"), self.onReqFin)
-        h.setHost("anki.ichi2.net")
-        #h.setHost("localhost", 8001)
-        self.conId = h.get("/file/search?t=%d" % self.type)
-        self.http = h
-        self.parent.setProgressParent(self)
-        self.parent.startProgress()
-
-    def onReqFin(self, id, err):
-        "List fetched."
-        if id != self.conId:
-            return
-        self.parent.finishProgress()
-        self.parent.setProgressParent(None)
-        self.form.search.setFocus()
-        if err:
-            showInfo(_("Unable to connect to server."), parent=self)
+        try:
+            sock = urllib2.urlopen(
+                "http://anki.ichi2.net/file/search?t=%d" % self.type)
+            self.allList = simplejson.loads(unicode(sock.read()))
+        except:
+            showInfo(_("Unable to connect to server.\n\n") +
+                     traceback.format_exc())
             self.close()
+            self.ok = False
             return
-        data = self.http.readAll()
-        self.allList = simplejson.loads(unicode(data))
+        self.form.search.setFocus()
         self.typeChanged()
         self.limit()
 
@@ -90,13 +80,16 @@ class GetShared(QDialog):
         self.form.table.setRowCount(len(self.curList))
         self.items = {}
         if self.type == 0:
-            cols = (R_TITLE, R_FACTS, R_COUNT)
+            cols = (R_TITLE, R_FACTS, R_COUNT, R_MODIFIED)
         else:
-            cols = (R_TITLE, R_COUNT)
+            cols = (R_TITLE, R_COUNT, R_MODIFIED)
         for rc, r in enumerate(self.curList):
             for cc, c in enumerate(cols):
                 if c == R_FACTS or c == R_COUNT:
                     txt = unicode("%15d" % r[c])
+                elif c == R_MODIFIED:
+                    days = int(((time.time() - r[c])/(24*60*60)))
+                    txt = ngettext("%6d day ago", "%6d days ago", days) % days
                 else:
                     txt = unicode(r[c])
                 item = QTableWidgetItem(txt)
@@ -124,12 +117,14 @@ class GetShared(QDialog):
 <b>Size</b>: %(size)0.2fKB<br>
 <b>Uploader</b>: %(author)s<br>
 <b>Downloads</b>: %(count)s<br>
-<b>Description</b>:<br>%(description)s""") % {
+<b>Modified</b>: %(mod)s ago<br>
+<br>%(description)s""") % {
             'title': r[R_TITLE],
             'tags': r[R_TAGS],
             'size': r[R_SIZE] / 1024.0,
             'author': r[R_USERNAME],
             'count': r[R_COUNT],
+            'mod': fmtTimeSpan(time.time() - r[R_MODIFIED]),
             'description': r[R_DESCRIPTION].replace("\n", "<br>"),
             })
         self.form.scrollAreaWidgetContents.adjustSize()
@@ -142,88 +137,95 @@ class GetShared(QDialog):
     def typeChanged(self):
         self.form.table.clear()
         if self.type == 0:
+            self.form.table.setColumnCount(4)
+            self.form.table.setHorizontalHeaderLabels([
+                _("Title"), _("Facts"), _("Downloads"), _("Modified")])
+        else:
             self.form.table.setColumnCount(3)
             self.form.table.setHorizontalHeaderLabels([
-                _("Title"), _("Facts"), _("Downloads")])
-        else:
-            self.form.table.setColumnCount(2)
-            self.form.table.setHorizontalHeaderLabels([
-                _("Title"), _("Downloads")])
+                _("Title"), _("Downloads"), _("Modified")])
         self.form.table.horizontalHeader().setResizeMode(
             0, QHeaderView.Stretch)
         self.form.table.verticalHeader().hide()
-        self.form.table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def accept(self):
-        h = QHttp(self)
-        h.connect(h, SIGNAL("requestFinished(int,bool)"), self.onReqFin2)
-        h.setHost("anki.ichi2.net")
-        #h.setHost("localhost", 8001)
-        self.conId = h.get("/file/get?id=%d" % self.curRow[R_ID])
-        self.http = h
-        self.parent.setProgressParent(self)
-        self.parent.startProgress()
-
-    def onReqFin2(self, id, err):
-        "File fetched."
-        if id != self.conId:
-            return
+        if self.type == 0:
+            if not self.parent.saveAndClose(hideWelcome=True, parent=self):
+                return QDialog.accept(self)
+        (fd, tmpname) = tempfile.mkstemp(prefix="anki")
+        tmpfile = os.fdopen(fd, "w+b")
+        cnt = 0
         try:
-            self.parent.finishProgress()
-            self.parent.setProgressParent(None)
-            if err:
-                showInfo(_("Unable to connect to server."), parent=self)
+            self.parent.setProgressParent(self)
+            self.parent.startProgress()
+            try:
+                sock = urllib2.urlopen(
+                    "http://anki.ichi2.net/file/get?id=%d" %
+                    self.curRow[R_ID])
+                while 1:
+                    data = sock.read(65536)
+                    if not data:
+                        break
+                    cnt += len(data)
+                    tmpfile.write(data)
+                    self.parent.updateProgress(
+                        label=_("Downloaded %dKB") % (cnt/1024.0))
+            except:
+                showInfo(_("Unable to connect to server.\n\n") +
+                         traceback.format_exc())
                 self.close()
                 return
-            data = self.http.readAll()
-            ext = os.path.splitext(self.curRow[R_FNAME])[1]
-            if ext == ".zip":
-                f = cStringIO.StringIO()
-                f.write(data)
-                z = zipfile.ZipFile(f)
-            else:
-                z = None
-            tit = self.curRow[R_TITLE]
-            tit = re.sub("[^][A-Za-z0-9 ()\-]", "", tit)
-            tit = tit[0:40]
-            if self.type == 0:
-                # deck
-                dd = self.parent.documentDir
-                p = os.path.join(dd, tit + ".anki")
-                if os.path.exists(p):
-                    tit += "%d" % time.time()
-                for l in z.namelist():
-                    if l == "shared.anki":
-                        dpath = os.path.join(dd, tit + ".anki")
-                        open(dpath, "wb").write(z.read(l))
-                    elif l.startswith("shared.media/"):
-                        try:
-                            os.mkdir(os.path.join(dd, tit + ".media"))
-                        except OSError:
-                            pass
-                        open(os.path.join(dd, tit + ".media",
-                                          os.path.basename(l)),"wb").write(z.read(l))
-                self.parent.loadDeck(dpath)
-                self.ok = True
-            else:
-                pd = self.parent.pluginsFolder()
-                if z:
-                    for l in z.infolist():
-                        if not l.file_size:
-                            continue
-                        try:
-                            os.makedirs(os.path.join(
-                                pd, os.path.dirname(l.filename)))
-                        except OSError:
-                            pass
-                        open(os.path.join(pd, l.filename), "wb").\
-                                              write(z.read(l.filename))
-                else:
-                    open(os.path.join(pd, tit + ext), "wb").write(data)
-                self.ok = True
-                showInfo(_("Plugin downloaded. Please restart Anki."),
-                         parent=self)
-                return
         finally:
+            self.parent.setProgressParent(None)
+            self.parent.finishProgress()
             QDialog.accept(self)
+        # file is fetched
+        tmpfile.seek(0)
+        self.handleFile(tmpfile)
+        QDialog.accept(self)
+
+    def handleFile(self, file):
+        ext = os.path.splitext(self.curRow[R_FNAME])[1]
+        if ext == ".zip":
+            z = zipfile.ZipFile(file)
+        else:
+            z = None
+        tit = self.curRow[R_TITLE]
+        tit = re.sub("[^][A-Za-z0-9 ()\-]", "", tit)
+        tit = tit[0:40]
+        if self.type == 0:
+            # deck
+            dd = self.parent.documentDir
+            p = os.path.join(dd, tit + ".anki")
+            if os.path.exists(p):
+                tit += "%d" % time.time()
+            for l in z.namelist():
+                if l == "shared.anki":
+                    dpath = os.path.join(dd, tit + ".anki")
+                    open(dpath, "wb").write(z.read(l))
+                elif l.startswith("shared.media/"):
+                    try:
+                        os.mkdir(os.path.join(dd, tit + ".media"))
+                    except OSError:
+                        pass
+                    open(os.path.join(dd, tit + ".media",
+                                      os.path.basename(l)),"wb").write(z.read(l))
+            self.parent.loadDeck(dpath)
+        else:
+            pd = self.parent.pluginsFolder()
+            if z:
+                for l in z.infolist():
+                    if not l.file_size:
+                        continue
+                    try:
+                        os.makedirs(os.path.join(
+                            pd, os.path.dirname(l.filename)))
+                    except OSError:
+                        pass
+                    open(os.path.join(pd, l.filename), "wb").\
+                                          write(z.read(l.filename))
+            else:
+                open(os.path.join(pd, tit + ext), "wb").write(file.read())
+            showInfo(_("Plugin downloaded. Please restart Anki."),
+                     parent=self)
 

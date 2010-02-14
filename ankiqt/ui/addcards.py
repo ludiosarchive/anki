@@ -12,6 +12,7 @@ from anki.utils import stripHTML, parseTags
 from ankiqt.ui.utils import saveGeom, restoreGeom, saveSplitter, restoreSplitter
 from ankiqt import ui
 from anki.sound import clearAudioQueue
+from anki.hooks import addHook, removeHook
 
 class FocusButton(QPushButton):
     def focusInEvent(self, evt):
@@ -31,16 +32,18 @@ class AddCards(QDialog):
         self.config = parent.config
         self.dialog = ankiqt.forms.addcards.Ui_AddCards()
         self.dialog.setupUi(self)
+        self.setWindowTitle(_("Add Items - %s") % parent.deck.name())
         self.setupEditor()
         self.addChooser()
         self.addButtons()
         self.setupStatus()
-        self.modelChanged(self.parent.deck.currentModel)
+        self.modelChanged()
         self.addedItems = 0
         self.forceClose = False
         restoreGeom(self, "add")
         restoreSplitter(self.dialog.splitter, "add")
         self.show()
+        addHook('guiReset', self.modelChanged)
         ui.dialogs.open("AddCards", self)
 
     def setupEditor(self):
@@ -82,12 +85,21 @@ class AddCards(QDialog):
 
     def setupStatus(self):
         "Make the status background the same colour as the frame."
-        p = self.dialog.status.palette()
-        c = unicode(p.color(QPalette.Window).name())
-        self.dialog.status.setStyleSheet(
-            "* { background: %s; color: #000000; }" % c)
+        if not sys.platform.startswith("darwin"):
+            p = self.dialog.status.palette()
+            c = unicode(p.color(QPalette.Window).name())
+            self.dialog.status.setStyleSheet(
+                "* { background: %s; }" % c)
+        self.connect(self.dialog.status, SIGNAL("anchorClicked(QUrl)"),
+                     self.onLink)
 
-    def modelChanged(self, model):
+    def onLink(self, url):
+        browser = ui.dialogs.get("CardList", self.parent)
+        browser.dialog.filterEdit.setText("fid:" + url.toString())
+        browser.updateSearch()
+        browser.onFact()
+
+    def modelChanged(self, model=None):
         oldFact = self.editor.fact
         # create a new fact
         fact = self.parent.deck.newFact()
@@ -127,8 +139,11 @@ class AddCards(QDialog):
 The input you have provided would make an empty
 question or answer on all cards."""), parent=self)
             return
-        self.dialog.status.append(_("Added %(num)d card(s) for '%(str)s'.") % {
+        self.dialog.status.append(
+            _("Added %(num)d card(s) for <a href=\"%(id)d\">"
+              "%(str)s</a>.") % {
             "num": len(fact.cards),
+            "id": fact.id,
             # we're guaranteed that all fields will exist now
             "str": stripHTML(fact[fact.fields[0].name]),
             })
@@ -160,14 +175,17 @@ question or answer on all cards."""), parent=self)
 
     def reject(self):
         if self.onClose():
+            self.modelChooser.deinit()
             QDialog.reject(self)
 
     def onClose(self):
+        removeHook('guiReset', self.modelChanged)
         # stop anything playing
         clearAudioQueue()
         if (self.forceClose or self.editor.fieldsAreBlank() or
             ui.utils.askUser(_("Close and lose current input?"),
                             self)):
+            self.modelChooser.deinit()
             self.editor.close()
             ui.dialogs.close("AddCards")
             self.parent.deck.s.flush()

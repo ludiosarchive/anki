@@ -24,9 +24,9 @@ For audio recording support:
 - pyaudio
 - lame
 
-For furigana generation:
+For importing SuperMemo XML:
 
-- kakasi
+- python-beautifulsoup
 
 Running / Installation
 -------------------------------------

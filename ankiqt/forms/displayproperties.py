@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/displayproperties.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -66,7 +66,6 @@ class Ui_DisplayProperties(object):
         self.tabWidget.setSizePolicy(sizePolicy)
         self.tabWidget.setObjectName("tabWidget")
         self.tab = QtGui.QWidget()
-        self.tab.setGeometry(QtCore.QRect(0, 0, 348, 317))
         self.tab.setObjectName("tab")
         self.verticalLayout = QtGui.QVBoxLayout(self.tab)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -162,7 +161,6 @@ class Ui_DisplayProperties(object):
         self.verticalLayout.addItem(spacerItem)
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtGui.QWidget()
-        self.tab_2.setGeometry(QtCore.QRect(0, 0, 348, 317))
         self.tab_2.setObjectName("tab_2")
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.tab_2)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
@@ -263,6 +261,9 @@ class Ui_DisplayProperties(object):
         self.useFamilyEdit.setMinimumSize(QtCore.QSize(0, 25))
         self.useFamilyEdit.setObjectName("useFamilyEdit")
         self._5.addWidget(self.useFamilyEdit, 0, 0, 1, 1)
+        self.rtl = QtGui.QCheckBox(self.tab_2)
+        self.rtl.setObjectName("rtl")
+        self._5.addWidget(self.rtl, 2, 0, 1, 1)
         self.verticalLayout_2.addLayout(self._5)
         spacerItem1 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem1)
@@ -344,7 +345,8 @@ class Ui_DisplayProperties(object):
         DisplayProperties.setTabOrder(self.useFamilyEdit, self.fontFamilyEdit)
         DisplayProperties.setTabOrder(self.fontFamilyEdit, self.useSizeEdit)
         DisplayProperties.setTabOrder(self.useSizeEdit, self.fontSizeEdit)
-        DisplayProperties.setTabOrder(self.fontSizeEdit, self.helpButton)
+        DisplayProperties.setTabOrder(self.fontSizeEdit, self.rtl)
+        DisplayProperties.setTabOrder(self.rtl, self.helpButton)
         DisplayProperties.setTabOrder(self.helpButton, self.preview)
         DisplayProperties.setTabOrder(self.preview, self.closeButton)
         DisplayProperties.setTabOrder(self.closeButton, self.question)
@@ -370,6 +372,7 @@ class Ui_DisplayProperties(object):
         self.label_2.setText(_(" <b>When editing (overrides above):</b>"))
         self.useSizeEdit.setText(_("Use custom size"))
         self.useFamilyEdit.setText(_("Use custom font"))
+        self.rtl.setText(_("Reverse text (RTL)"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _("Fields"))
         self.helpButton.setText(_("Help"))
         self.preview.setText(_("Show preview"))

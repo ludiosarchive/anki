@@ -51,7 +51,6 @@ class DeckProperties(QDialog):
         self.dialog.highPriority.setText(self.d.highPriority)
         self.dialog.medPriority.setText(self.d.medPriority)
         self.dialog.lowPriority.setText(self.d.lowPriority)
-        self.dialog.postponing.setText(self.d.suspended)
         # scheduling
         for type in ("hard", "mid", "easy"):
             v = getattr(self.d, type + "IntervalMin")
@@ -73,6 +72,9 @@ class DeckProperties(QDialog):
         # hour shift
         self.dialog.timeOffset.setText(str(
             (self.d.utcOffset - time.timezone) / 60.0 / 60.0))
+        # leeches
+        self.dialog.suspendLeeches.setChecked(self.d.getBool("suspendLeeches"))
+        self.dialog.leechFails.setValue(self.d.getInt("leechFails"))
 
     def drawSourcesTable(self):
         self.dialog.sourcesTable.clear()
@@ -241,6 +243,13 @@ class DeckProperties(QDialog):
             self.updateField(self.d, 'failedCardMax', v)
         except ValueError:
             pass
+        try:
+            self.d.setVar("suspendLeeches",
+                          not not self.dialog.suspendLeeches.isChecked())
+            self.d.setVar("leechFails",
+                          int(self.dialog.leechFails.value()))
+        except ValueError:
+            pass
         # hour shift
         try:
             self.updateField(self.d, 'utcOffset',
@@ -260,9 +269,6 @@ class DeckProperties(QDialog):
         self.updateField(self.d,
                          "lowPriority",
                          unicode(self.dialog.lowPriority.text()))
-        self.updateField(self.d,
-                         "suspended",
-                         unicode(self.dialog.postponing.text()))
         prioritiesChanged = was != self.d.modified
         # sources
         d = {}

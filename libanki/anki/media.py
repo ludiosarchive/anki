@@ -8,7 +8,7 @@ Media support
 """
 __docformat__ = 'restructuredtext'
 
-import os, stat, time, shutil, re, sys
+import os, stat, time, shutil, re, sys, urllib2
 from anki.db import *
 from anki.facts import Fact
 from anki.utils import addTags, genID, ids2str, checksum
@@ -51,28 +51,32 @@ def mediaFilename(path):
     ext = os.path.splitext(path)[1].lower()
     return "%s%s" % (new, ext)
 
-def copyToMedia(deck, path, latex=None):
+def copyToMedia(deck, path):
     """Copy PATH to MEDIADIR, and return new filename.
 Update media table. If file already exists, don't copy."""
-    if latex:
-        origPath = latex
-        description = "latex"
-    else:
-        origPath = path
-        description = os.path.splitext(os.path.basename(path))[0]
+    origPath = path
+    description = os.path.splitext(os.path.basename(path))[0]
     newBase = mediaFilename(path)
     new = os.path.join(deck.mediaDir(create=True), newBase)
     # copy if not existing
     if not os.path.exists(new):
         if new.lower() == path.lower():
             # case insensitive filesystems suck
-            pass
+            os.rename(path, new)
         else:
             shutil.copy2(path, new)
     newSize = os.stat(new)[stat.ST_SIZE]
     if not deck.s.scalar(
         "select 1 from media where filename = :f",
         f=newBase):
+        # if the user has modified a hashed file, try to remember the old
+        # filename
+        old = deck.s.scalar(
+            "select originalPath from media where filename = :s",
+            s=os.path.basename(origPath))
+        if old:
+            origPath = old
+            description = os.path.splitext(os.path.basename(origPath))[0]
         try:
             path = unicode(path, sys.getfilesystemencoding())
         except TypeError:
@@ -106,6 +110,18 @@ cards.factId = facts.id and facts.id in %s"""
     deck.updateCardQACache(ids, dirty)
     deck.flushMod()
 
+
+def mediaRefs(string):
+    "Return list of (fullMatch, filename, replacementString)."
+    l = []
+    for (reg, repl) in regexps:
+        for (full, fname) in re.findall(reg, string):
+            l.append((full, fname, repl))
+    return l
+
+# Rebuilding DB
+##########################################################################
+
 def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
     "Delete references to missing files, delete unused files."
     localFiles = {}
@@ -127,6 +143,8 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
     for c, oldBase in enumerate(files):
         if mod and not c % mod:
             deck.updateProgress()
+        if oldBase.startswith("latex-"):
+            continue
         oldPath = os.path.join(deck.mediaDir(), oldBase)
         if oldBase.startswith("."):
             continue
@@ -180,13 +198,11 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
     # build cache of db records
     deck.updateProgress(_("Delete unused files..."))
     mediaIds = dict(deck.s.all("select filename, id from media"))
-    # assume latex files exist
-    for f in deck.s.column0(
-        "select filename from media where description = 'latex'"):
-        usedFiles[f] = 1
     # look through the media dir for any unused files, and delete
     for f in os.listdir(unicode(deck.mediaDir())):
         if f.startswith("."):
+            continue
+        if f.startswith("latex-"):
             continue
         path = os.path.join(deck.mediaDir(), f)
         if os.path.isdir(path):
@@ -211,10 +227,66 @@ values (:id, strftime('%s', 'now'))""", id=id)
     deck.finishProgress()
     return missingFileCount, unusedFileCount - len(renamedFiles)
 
-def mediaRefs(string):
-    "Return list of (fullMatch, filename, replacementString)."
-    l = []
-    for (reg, repl) in regexps:
-        for (full, fname) in re.findall(reg, string):
-            l.append((full, fname, repl))
-    return l
+# Download missing
+##########################################################################
+
+def downloadMissing(deck):
+    from anki.latex import renderLatex
+    urls = dict(
+        deck.s.all("select id, features from models where features != ''"))
+    if not urls:
+        return None
+    mdir = deck.mediaDir(create=True)
+    os.chdir(mdir)
+    deck.startProgress()
+    missing = {}
+    for (id, fid, val, mid) in deck.s.all("""
+select fields.id, factId, value, modelId from fields, facts
+where facts.id = fields.factId"""):
+        # add latex tags
+        val = renderLatex(deck, val, False)
+        for (full, fname, repl) in mediaRefs(val):
+            if not os.path.exists(os.path.join(mdir, fname)) and mid in urls:
+                missing[fname] = mid
+    success = 0
+    for c, file in enumerate(missing.keys()):
+        deck.updateProgress(label=_("Downloading %(a)d of %(b)d...") % {
+            'a': c,
+            'b': len(missing),
+            })
+        try:
+            data = urllib2.urlopen(urls[missing[file]] + file).read()
+            open(file, "wb").write(data)
+            success += 1
+        except:
+            pass
+    deck.finishProgress()
+    return len(missing), success
+
+# Export original files
+##########################################################################
+
+def exportOriginalFiles(deck):
+    deck.startProgress()
+    origDir = deck.mediaDir(create=True)
+    newDir = origDir.replace(".media", ".originals")
+    try:
+        os.mkdir(newDir)
+    except (IOError, OSError):
+        pass
+    cnt = 0
+    for row in deck.s.all("select filename, originalPath from media"):
+        (fname, path) = row
+        base = os.path.basename(path)
+        if base == fname:
+            continue
+        cnt += 1
+        deck.updateProgress(label="Exporting %s" % base)
+        old = os.path.join(origDir, fname)
+        new = os.path.join(newDir, base)
+        if os.path.exists(new):
+            new = re.sub("(.*)(\..*?)$", "\\1-%s\\2" %
+                         os.path.splitext(fname)[0], new)
+        shutil.copy2(old, new)
+    deck.finishProgress()
+    return cnt

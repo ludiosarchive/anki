@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/reschedule.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.4
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(227, 158)
+        Dialog.resize(255, 158)
         self.verticalLayout_2 = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.asNew = QtGui.QRadioButton(Dialog)
@@ -33,30 +33,25 @@ class Ui_Dialog(object):
         self.label = QtGui.QLabel(self.rangebox)
         self.label.setObjectName("label")
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
-        self.rangeMin = QtGui.QLineEdit(self.rangebox)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.rangeMin.sizePolicy().hasHeightForWidth())
-        self.rangeMin.setSizePolicy(sizePolicy)
-        self.rangeMin.setMaximumSize(QtCore.QSize(60, 16777215))
-        self.rangeMin.setObjectName("rangeMin")
-        self.gridLayout.addWidget(self.rangeMin, 0, 1, 1, 1)
         self.label_3 = QtGui.QLabel(self.rangebox)
         self.label_3.setObjectName("label_3")
         self.gridLayout.addWidget(self.label_3, 0, 2, 1, 1)
         self.label_2 = QtGui.QLabel(self.rangebox)
         self.label_2.setObjectName("label_2")
         self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
-        self.rangeMax = QtGui.QLineEdit(self.rangebox)
-        self.rangeMax.setMaximumSize(QtCore.QSize(60, 16777215))
-        self.rangeMax.setObjectName("rangeMax")
-        self.gridLayout.addWidget(self.rangeMax, 1, 1, 1, 1)
         self.label_4 = QtGui.QLabel(self.rangebox)
         self.label_4.setObjectName("label_4")
         self.gridLayout.addWidget(self.label_4, 1, 2, 1, 1)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 0, 3, 1, 1)
+        self.rangeMin = QtGui.QDoubleSpinBox(self.rangebox)
+        self.rangeMin.setMaximum(99999.0)
+        self.rangeMin.setObjectName("rangeMin")
+        self.gridLayout.addWidget(self.rangeMin, 0, 1, 1, 1)
+        self.rangeMax = QtGui.QDoubleSpinBox(self.rangebox)
+        self.rangeMax.setMaximum(99999.0)
+        self.rangeMax.setObjectName("rangeMax")
+        self.gridLayout.addWidget(self.rangeMax, 1, 1, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout)
         self.verticalLayout_2.addWidget(self.rangebox)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
@@ -71,9 +66,7 @@ class Ui_Dialog(object):
         QtCore.QObject.connect(self.inRange, QtCore.SIGNAL("toggled(bool)"), self.rangebox.setEnabled)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
         Dialog.setTabOrder(self.asNew, self.inRange)
-        Dialog.setTabOrder(self.inRange, self.rangeMin)
-        Dialog.setTabOrder(self.rangeMin, self.rangeMax)
-        Dialog.setTabOrder(self.rangeMax, self.buttonBox)
+        Dialog.setTabOrder(self.inRange, self.buttonBox)
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(_("Reschedule"))

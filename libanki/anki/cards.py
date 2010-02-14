@@ -68,7 +68,7 @@ cardsTable = Table(
 class Card(object):
     "A card."
 
-    def __init__(self, fact=None, cardModel=None):
+    def __init__(self, fact=None, cardModel=None, created=None):
         self.tags = u""
         self.id = genID()
         # new cards start as new & due
@@ -77,12 +77,18 @@ class Card(object):
         self.timerStarted = False
         self.timerStopped = False
         self.modified = time.time()
-        self.due = self.modified
-        self.combinedDue = self.modified
+        if created:
+            self.created = created
+            self.due = created
+        else:
+            self.due = self.modified
+        self.combinedDue = self.due
         if fact:
             self.fact = fact
         if cardModel:
             self.cardModel = cardModel
+            # for non-orm use
+            self.cardModelId = cardModel.id
             self.ordinal = cardModel.ordinal
             d = {}
             for f in self.fact.model.fieldModels:
@@ -110,10 +116,13 @@ class Card(object):
         "Generate a random offset to spread intervals."
         self.fuzz = random.uniform(0.95, 1.05)
 
-    def htmlQuestion(self, type="question"):
-        div = '''<div id="cm%s%s">%s</div>''' % (
-            type[0], hexifyID(self.cardModel.id), getattr(self, type))
+    def htmlQuestion(self, type="question", align=True):
+        div = '''<div class="card%s" id="cm%s%s">%s</div>''' % (
+            type[0], type[0], hexifyID(self.cardModelId),
+            getattr(self, type))
         # add outer div & alignment (with tables due to qt's html handling)
+        if not align:
+            return div
         attr = type + 'Align'
         if getattr(self.cardModel, attr) == 0:
             align = "center"
@@ -124,8 +133,8 @@ class Card(object):
         return (("<center><table width=95%%><tr><td align=%s>" % align) +
                 div + "</td></tr></table></center>")
 
-    def htmlAnswer(self):
-        return self.htmlQuestion(type="answer")
+    def htmlAnswer(self, align=True):
+        return self.htmlQuestion(type="answer", align=align)
 
     def updateStats(self, ease, state):
         self.reps += 1
