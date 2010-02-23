@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/displayproperties.ui'
 #
 
-#      by: PyQt4 UI code generator 4.5.1
+#      by: PyQt4 UI code generator 4.7
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -205,7 +205,7 @@ class Ui_DisplayProperties(object):
         self.fontSize = QtGui.QSpinBox(self.tab_2)
         self.fontSize.setMinimum(5)
         self.fontSize.setMaximum(300)
-        self.fontSize.setProperty("value", QtCore.QVariant(14))
+        self.fontSize.setProperty("value", 14)
         self.fontSize.setObjectName("fontSize")
         self._4.addWidget(self.fontSize, 1, 1, 1, 1)
         self.useColour = QtGui.QCheckBox(self.tab_2)
@@ -372,7 +372,7 @@ class Ui_DisplayProperties(object):
         self.label_2.setText(_(" <b>When editing (overrides above):</b>"))
         self.useSizeEdit.setText(_("Use custom size"))
         self.useFamilyEdit.setText(_("Use custom font"))
-        self.rtl.setText(_("Reverse text (RTL)"))
+        self.rtl.setText(_("Right to Left (RTL)"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _("Fields"))
         self.helpButton.setText(_("Help"))
         self.preview.setText(_("Show preview"))

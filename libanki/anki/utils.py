@@ -48,12 +48,12 @@ afterTimeTable = {
     }
 
 shortTimeTable = {
-    "years": "%sy",
-    "months": "%sm",
-    "days": "%sd",
-    "hours": "%sh",
-    "minutes": "%sm",
-    "seconds": "%ss",
+    "years": _("%sy"),
+    "months": _("%sm"),
+    "days": _("%sd"),
+    "hours": _("%sh"),
+    "minutes": _("%sm"),
+    "seconds": _("%ss"),
     }
 
 def fmtTimeSpan(time, pad=0, point=0, short=False, after=False):
@@ -64,29 +64,11 @@ def fmtTimeSpan(time, pad=0, point=0, short=False, after=False):
         fmt = shortTimeTable[type]
     else:
         if after:
-            fmt = afterTimeTable[type](_pluralCount(round(time, point)))
+            fmt = afterTimeTable[type](_pluralCount(time, point))
         else:
-            fmt = timeTable[type](_pluralCount(round(time, point)))
+            fmt = timeTable[type](_pluralCount(time, point))
     timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
     return locale.format_string("%" + (fmt % timestr), time)
-
-def fmtTimeSpanPair(time1, time2, short=False, after=False):
-    (type, point) = optimalPeriod(time1, 0)
-    time1 = convertSecondsTo(time1, type)
-    time2 = convertSecondsTo(time2, type)
-    # a pair is always  should always be read as plural
-    if short:
-        fmt = shortTimeTable[type]
-    else:
-        if after:
-            fmt = afterTimeTable[type](2)
-        else:
-            fmt = timeTable[type](2)
-    timestr = "%(a)d.%(b)df" % {'a': pad, 'b': point}
-    finalstr = "%s-%s" % (
-        locale.format_string('%' + timestr, time1),
-        locale.format_string('%' + timestr, time2),)
-    return fmt % finalstr
 
 def optimalPeriod(time, point):
     if abs(time) < 60:
@@ -121,10 +103,10 @@ def convertSecondsTo(seconds, type):
         return seconds / 31536000.0
     assert False
 
-def _pluralCount(time):
-    if round(time, 1) == 1:
-        return 1
-    return round(time, 1)
+def _pluralCount(time, point):
+    if point:
+        return 2
+    return round(time)
 
 # Locale
 ##############################################################################

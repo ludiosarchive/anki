@@ -33,11 +33,13 @@ class AnkiFigureCanvas (FigureCanvas):
         w, h = self.get_width_height()
         return QSize(w+30, h+30)
 
-    # bug in matplotlib
     def keyReleaseEvent(self, evt):
         evt.ignore()
 
     def keyPressEvent(self, evt):
+        evt.ignore()
+
+    def wheelEvent(self, evt):
         evt.ignore()
 
 class AdjustableFigure(QWidget):
@@ -151,7 +153,7 @@ class GraphWindow(object):
         'added': _("Added"),
         'answered': _("First Answered"),
         'eases': _("Eases"),
-        'reps': _("Reps"),
+        'reps': _("Repetitions"),
         'times': _("Review Time"),
         }
 

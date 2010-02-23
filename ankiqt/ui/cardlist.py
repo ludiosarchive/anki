@@ -14,7 +14,8 @@ from anki.facts import factsTable, fieldsTable, Fact
 from anki.utils import fmtTimeSpan, parseTags, findTag, addTags, deleteTags, \
      stripHTML, ids2str
 from ankiqt.ui.utils import saveGeom, restoreGeom, saveSplitter, restoreSplitter
-from ankiqt.ui.utils import saveHeader, restoreHeader, saveState, restoreState
+from ankiqt.ui.utils import saveHeader, restoreHeader, saveState, \
+     restoreState, applyStyles
 from anki.errors import *
 from anki.db import *
 from anki.stats import CardStats
@@ -33,6 +34,14 @@ CARD_EASE = 9
 CARD_NO = 10
 CARD_PRIORITY = 11
 CARD_TAGS = 12
+CARD_FACTCREATED = 13
+
+COLOUR_SUSPENDED1 = "#ffffcc"
+COLOUR_SUSPENDED2 = "#ffffaa"
+COLOUR_INACTIVE1 = "#ffcccc"
+COLOUR_INACTIVE2 = "#ffaaaa"
+COLOUR_MARKED1 = "#ccccff"
+COLOUR_MARKED2 = "#aaaaff"
 
 # Deck editor
 ##########################################################################
@@ -83,6 +92,7 @@ class DeckModel(QAbstractTableModel):
             s = s.replace("\n", u"  ")
             s = stripHTML(s)
             s = re.sub("\[sound:[^]]+\]", "", s)
+            s = s.replace("&amp;", "&")
             s = s.strip()
             return QVariant(s)
         else:
@@ -171,15 +181,19 @@ where cards.factId = facts.id """
     def updateCard(self, index):
         try:
             self.cards[index.row()] = self.deck.s.first("""
-select id, question, answer, due, reps, factId, created, modified,
+select id, question, answer, combinedDue, reps, factId, created, modified,
 interval, factor, noCount, priority, (select tags from facts where
+facts.id = cards.factId), (select created from facts where
 facts.id = cards.factId) from cards where id = :id""",
                                                         id=self.cards[index.row()][0])
-            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
-                      index, self.index(index.row(), 1))
+            self.emit(SIGNAL("layoutChanged()"))
         except:
             # called after search changed
             pass
+
+    def refresh(self):
+        self.cards = [[x[0]] for x in self.cards]
+        self.emit(SIGNAL("layoutChanged()"))
 
     # Tools
     ######################################################################
@@ -228,6 +242,8 @@ facts.id = cards.factId) from cards where id = :id""",
             return self.easeColumn(index)
         elif self.sortKey == "noCount":
             return self.noColumn(index)
+        elif self.sortKey == "fact":
+            return self.factCreatedColumn(index)
         else:
             return self.nextDue(index)
 
@@ -244,6 +260,8 @@ facts.id = cards.factId) from cards where id = :id""",
             k = _("Ease")
         elif self.sortKey == "noCount":
             k = _("Lapses")
+        elif self.sortKey == "fact":
+            k = _("Fact Created")
         else:
             k = _("Due")
         self.columns[-1][0] = k
@@ -251,6 +269,10 @@ facts.id = cards.factId) from cards where id = :id""",
     def createdColumn(self, index):
         return time.strftime("%Y-%m-%d", time.localtime(
             self.cards[index.row()][CARD_CREATED]))
+
+    def factCreatedColumn(self, index):
+        return time.strftime("%Y-%m-%d", time.localtime(
+            self.cards[index.row()][CARD_FACTCREATED]))
 
     def modifiedColumn(self, index):
         return time.strftime("%Y-%m-%d", time.localtime(
@@ -282,26 +304,26 @@ class StatusDelegate(QItemDelegate):
         if row[CARD_PRIORITY] == -3:
             # custom render
             if index.row() % 2 == 0:
-                brush = QBrush(QColor("#ffffcc"))
+                brush = QBrush(QColor(COLOUR_SUSPENDED1))
             else:
-                brush = QBrush(QColor("#ffffaa"))
+                brush = QBrush(QColor(COLOUR_SUSPENDED2))
             painter.save()
             painter.fillRect(option.rect, brush)
             painter.restore()
         if row[CARD_PRIORITY] == 0:
             # custom render
             if index.row() % 2 == 0:
-                brush = QBrush(QColor("#ffcccc"))
+                brush = QBrush(QColor(COLOUR_INACTIVE1))
             else:
-                brush = QBrush(QColor("#ffaaaa"))
+                brush = QBrush(QColor(COLOUR_INACTIVE2))
             painter.save()
             painter.fillRect(option.rect, brush)
             painter.restore()
         elif "Marked" in row[CARD_TAGS]:
             if index.row() % 2 == 0:
-                brush = QBrush(QColor("#ccccff"))
+                brush = QBrush(QColor(COLOUR_MARKED1))
             else:
-                brush = QBrush(QColor("#aaaaff"))
+                brush = QBrush(QColor(COLOUR_MARKED2))
             painter.save()
             painter.fillRect(option.rect, brush)
             painter.restore()
@@ -315,6 +337,7 @@ class EditDeck(QMainWindow):
         else:
             windParent = parent
         QMainWindow.__init__(self, windParent)
+        applyStyles(self)
         self.parent = parent
         self.deck = self.parent.deck
         self.config = parent.config
@@ -343,8 +366,7 @@ class EditDeck(QMainWindow):
                      SIGNAL("selectionChanged(QItemSelection,QItemSelection)"),
                      self.updateFilterLabel)
         self.dialog.tableView.setItemDelegate(StatusDelegate(self, self.model))
-        if self.deck.getInt("reverseOrder"):
-            self.dialog.actionReverseOrder.setChecked(True)
+        self.updateSortOrder()
         self.updateFont()
         self.setupMenus()
         self.setupFilter()
@@ -399,6 +421,8 @@ class EditDeck(QMainWindow):
         self.connect(self.dialog.sortBox, SIGNAL("activated(int)"),
                      self.sortChanged)
         self.sortChanged(self.sortIndex, refresh=False)
+        self.connect(self.dialog.sortOrder, SIGNAL("clicked()"),
+                     self.reverseOrder)
 
     def drawTags(self):
         self.dialog.tagList.view().setFixedWidth(200)
@@ -407,7 +431,7 @@ class EditDeck(QMainWindow):
         self.dialog.tagList.clear()
         alltags = [None, "Marked", None, None, "Leech", None, None]
         # system tags
-        self.dialog.tagList.addItem(_("<Filter>"))
+        self.dialog.tagList.addItem(_("Show All Cards"))
         self.dialog.tagList.addItem(QIcon(":/icons/rating.png"),
                                     _('Marked'))
         self.dialog.tagList.addItem(QIcon(":/icons/media-playback-pause.png"),
@@ -472,6 +496,12 @@ class EditDeck(QMainWindow):
         if self.sortIndex >= len(self.sortList):
             self.sortIndex = 0
         self.dialog.sortBox.setCurrentIndex(self.sortIndex)
+
+    def updateSortOrder(self):
+        if self.deck.getInt("reverseOrder"):
+            self.dialog.sortOrder.setIcon(QIcon(":/icons/view-sort-descending.png"))
+        else:
+            self.dialog.sortOrder.setIcon(QIcon(":/icons/view-sort-ascending.png"))
 
     def sortChanged(self, idx, refresh=True):
         if idx == 0:
@@ -661,7 +691,6 @@ class EditDeck(QMainWindow):
         self.connect(self.dialog.actionUndo, SIGNAL("triggered()"), self.onUndo)
         self.connect(self.dialog.actionRedo, SIGNAL("triggered()"), self.onRedo)
         self.connect(self.dialog.actionInvertSelection, SIGNAL("triggered()"), self.invertSelection)
-        self.connect(self.dialog.actionReverseOrder, SIGNAL("triggered()"), self.reverseOrder)
         self.connect(self.dialog.actionSelectFacts, SIGNAL("triggered()"), self.selectFacts)
         self.connect(self.dialog.actionFindReplace, SIGNAL("triggered()"), self.onFindReplace)
         # jumps
@@ -673,6 +702,7 @@ class EditDeck(QMainWindow):
         self.connect(self.dialog.actionFact, SIGNAL("triggered()"), self.onFact)
         self.connect(self.dialog.actionTags, SIGNAL("triggered()"), self.onTags)
         self.connect(self.dialog.actionSort, SIGNAL("triggered()"), self.onSort)
+        self.connect(self.dialog.actionCardList, SIGNAL("triggered()"), self.onCardList)
         # help
         self.connect(self.dialog.actionGuide, SIGNAL("triggered()"), self.onHelp)
         runHook('editor.setupMenus', self)
@@ -734,6 +764,7 @@ class EditDeck(QMainWindow):
         self.dialog.tagList.setEnabled(True)
         self.dialog.menubar.setEnabled(True)
         self.dialog.cardInfoGroup.setEnabled(True)
+        self.dialog.toolBar.setEnabled(True)
 
     def onFactInvalid(self, fact):
         self.factValid = False
@@ -743,6 +774,7 @@ class EditDeck(QMainWindow):
         self.dialog.tagList.setEnabled(False)
         self.dialog.menubar.setEnabled(False)
         self.dialog.cardInfoGroup.setEnabled(False)
+        self.dialog.toolBar.setEnabled(False)
 
     def rowChanged(self, current, previous):
         self.currentRow = current
@@ -784,12 +816,11 @@ where id in (%s)""" % ",".join([
             "select id from cards where factId in (%s)" %
             ",".join([str(s) for s in self.selectedFacts()]))
 
-    def updateAfterCardChange(self, reset=False):
+    def updateAfterCardChange(self):
         "Refresh info like stats on current card"
         self.currentRow = self.dialog.tableView.currentIndex()
         self.rowChanged(self.currentRow, None)
-        if reset:
-            self.updateSearch()
+        self.model.refresh()
         self.drawTags()
         self.parent.moveToState("auto")
 
@@ -799,7 +830,11 @@ where id in (%s)""" % ",".join([
     def deleteCards(self):
         cards = self.selectedCards()
         n = _("Delete Cards")
-        new = self.findCardInDeckModel() + 1
+        try:
+            new = self.findCardInDeckModel() + 1
+        except:
+            # card has been deleted
+            return
         self.dialog.tableView.setFocus()
         self.deck.setUndoStart(n)
         self.deck.deleteCards(cards)
@@ -812,28 +847,32 @@ where id in (%s)""" % ",".join([
     def addTags(self, tags=None, label=None):
         if tags is None:
             (tags, r) = ui.utils.getTag(self, self.deck, _("Enter tags to add:"))
+        else:
+            r = True
         if label is None:
             label = _("Add Tags")
-        if tags:
+        if r:
             self.parent.setProgressParent(self)
             self.deck.setUndoStart(label)
             self.deck.addTags(self.selectedFacts(), tags)
             self.deck.setUndoEnd(label)
             self.parent.setProgressParent(None)
-        self.updateAfterCardChange(reset=True)
+        self.updateAfterCardChange()
 
     def deleteTags(self, tags=None, label=None):
         if tags is None:
             (tags, r) = ui.utils.getTag(self, self.deck, _("Enter tags to delete:"))
+        else:
+            r = True
         if label is None:
             label = _("Delete Tags")
-        if tags:
+        if r:
             self.parent.setProgressParent(self)
             self.deck.setUndoStart(label)
             self.deck.deleteTags(self.selectedFacts(), tags)
             self.deck.setUndoEnd(label)
             self.parent.setProgressParent(None)
-        self.updateAfterCardChange(reset=True)
+        self.updateAfterCardChange()
 
     def updateToggles(self):
         self.dialog.actionToggleSuspend.setChecked(self.isSuspended())
@@ -855,7 +894,7 @@ where id in (%s)""" % ",".join([
         self.deck.suspendCards(self.selectedCards())
         self.deck.setUndoEnd(n)
         self.parent.setProgressParent(None)
-        self.updateAfterCardChange(reset=True)
+        self.model.refresh()
 
     def _onUnsuspend(self):
         n = _("Unsuspend")
@@ -864,7 +903,7 @@ where id in (%s)""" % ",".join([
         self.deck.unsuspendCards(self.selectedCards())
         self.deck.setUndoEnd(n)
         self.parent.setProgressParent(None)
-        self.updateAfterCardChange(reset=True)
+        self.model.refresh()
 
     def isMarked(self):
         return self.currentCard and "Marked" in self.currentCard.fact.tags
@@ -894,11 +933,11 @@ where id in (%s)""" % ",".join([
                 self.deck.resetCards(self.selectedCards())
             else:
                 try:
-                    min = float(str(frm.rangeMin.text()))
-                    max = float(str(frm.rangeMax.text()))
+                    min = float(frm.rangeMin.value())
+                    max = float(frm.rangeMax.value())
                 except ValueError:
                     ui.utils.showInfo(
-                        _("Please enter a valid start and end range."),
+                        _("Please enter a valid range."),
                         parent=self)
                     return
                 self.deck.rescheduleCards(self.selectedCards(), min, max)
@@ -906,7 +945,7 @@ where id in (%s)""" % ",".join([
             self.deck.rebuildCounts(full=False)
             self.deck.rebuildQueue()
             self.deck.setUndoEnd(n)
-        self.updateAfterCardChange(reset=True)
+        self.updateAfterCardChange()
 
     def addCards(self):
         sf = self.selectedFacts()
@@ -934,12 +973,13 @@ where id in %s""" % ids2str(sf))
         facts = self.deck.s.query(Fact).filter(
             text("id in %s" % ids2str(sf))).order_by(Fact.created).all()
         self.deck.updateProgress(_("Generating Cards..."))
+        ids = []
         for c, fact in enumerate(facts):
-            self.deck.addCards(fact, d.selectedCms)
+            ids.extend(self.deck.addCards(fact, d.selectedCms))
             if c % 50 == 0:
                 self.deck.updateProgress()
         self.deck.flushMod()
-        self.deck.updateAllPriorities()
+        self.deck.updatePriorities(ids)
         self.deck.finishProgress()
         self.parent.setProgressParent(None)
         self.deck.setUndoEnd(n)
@@ -993,6 +1033,8 @@ where id in %s""" % ids2str(sf))
                 self.deck.updateProgress()
         sm.blockSignals(False)
         self.deck.finishProgress()
+        self.updateFilterLabel()
+        self.updateAfterCardChange()
 
     def invertSelection(self):
         sm = self.dialog.tableView.selectionModel()
@@ -1005,6 +1047,7 @@ where id in %s""" % ids2str(sf))
         self.model.cards.reverse()
         self.model.reset()
         self.focusCurrentCard()
+        self.updateSortOrder()
 
     # Edit: undo/redo
     ######################################################################
@@ -1156,6 +1199,9 @@ where id in %s""" % ids2str(sf))
 
     def onSort(self):
         self.dialog.sortBox.setFocus()
+
+    def onCardList(self):
+        self.dialog.tableView.setFocus()
 
     # Help
     ######################################################################
@@ -1348,22 +1394,21 @@ class ChangeModelDialog(QDialog):
         # check maps
         fmap = self.getFieldMap()
         cmap = self.getTemplateMap()
-        def any(l):
-            for x in l:
-                if x:
-                    return True
-            return False
         if not cmap or (self.targetModel != self.oldModel and
                         not fmap):
-            return ui.utils.showInfo(
+            ui.utils.showInfo(
                 _("Targets must be unique."), parent=self)
-        if not any(cmap.values()):
-            return ui.utils.showInfo(
-                _("Must map at least one template."), parent=self)
+            return
+        if [c for c in cmap.values() if not c]:
+            if not ui.utils.askUser(_("""\
+Any cards with templates mapped to nothing will be deleted.
+If a fact has no remaining cards, it will be lost.
+Are you sure you want to continue?"""), parent=self):
+                return
+        self.modelChooser.deinit()
         if self.targetModel == self.oldModel:
             self.ret = (self.targetModel, None, cmap)
             return QDialog.accept(self)
-        self.modelChooser.deinit()
         self.ret = (self.targetModel, fmap, cmap)
         return QDialog.accept(self)
 

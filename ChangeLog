@@ -1,3 +1,839 @@
+commit 1daf8f9601874cd9d81d6abad353da07bcca46d9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 12 16:46:10 2010 +0900
+
+    if an error occurs during progress op, reactivate main window
+
+commit 0f3a0832784cd1d33731d872d2f593e94bc7a4ec
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 12 16:35:11 2010 +0900
+
+    convert reverse order menu item to toggle button
+
+commit 20f9e69b7968dc44badee4aa26e7630184887682
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 12 15:51:11 2010 +0900
+
+    capitalization tweak
+
+commit 64cd0499ba2ccc09f0799db4cf41930ad589960d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 12 15:16:20 2010 +0900
+
+    make sure to open a browser when link clicked in preview
+
+commit 3bb16dc50ae39fa18426cc0343f18d64c89533ad
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 12 14:40:16 2010 +0900
+
+    bump version
+
+commit d320c013729ba99acf5878f11b020a407c0ce868
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 12 14:02:29 2010 +0900
+
+    separate button labels and default buttons
+
+commit 1c858f48b0fe98c705378e40ad822a8984a9ea30
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 12 03:05:03 2010 +0900
+
+    move cloze & preview to first line, enable preview & expand always
+
+commit b7cd8a1385c00144208761c4fd56b3dae1edfba3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 10 23:00:50 2010 +0900
+
+    add hack for qt underline bug back in
+
+commit 11357d5736c54e395e09b570ad37b7588a9ad5d3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 10 00:49:53 2010 +0900
+
+    add ogv/ogx/oga, separate from translation
+
+commit dde3c13cfe245ad8d80557cfa0f0215282f89620
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 9 04:08:03 2010 +0900
+
+    add some more file types
+
+commit dccdce9c5886f033d3421739785f998a99722310
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 9 01:54:53 2010 +0900
+
+    bump version
+
+commit c5b02a58354ea8a52ab782ab595b5bf755637393
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 7 01:07:23 2010 +0900
+
+    make sure to always deinit modelChooser
+
+commit 7d74be890be3e40d454716503e366874cf04f3a3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 6 02:01:26 2010 +0900
+
+    better warning about setting templates to nothing
+
+commit fb6d5a8556726b1ece6c065e7accced99cd9457a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 6 01:27:46 2010 +0900
+
+    strip angle brackets from syncName when downloading
+
+commit a374246fba774f68a58f6583870fbfd0ce9b5ccb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 6 00:49:18 2010 +0900
+
+    update mac build script
+
+commit ea42e18a5834383c012b496037bbf3e4cfb7838e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 6 00:48:50 2010 +0900
+
+    catch errors in inital startup and report them before dying
+
+commit 4b978e0d86e958b7bcdb6cd7b31a373b588f15c9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 6 00:46:54 2010 +0900
+
+    remove backup setting from __init__, it's done elsewhere now
+
+commit db4fb87d68f6caca2ad48065a2760aed34b35c60
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 5 12:59:42 2010 +0900
+
+    only update changed card ids after generating cards
+
+commit 5810af3199735475601342c2b73dc86df61a5475
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 2 03:20:04 2010 +0900
+
+    tweak margin
+
+commit 4afc9187b104de5a9b0cc5d15fce941679a0bf5f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 2 03:18:54 2010 +0900
+
+    include custom stylesheet
+
+commit e9ae61a5fdf798d32c431ce6b217e05a7d0798af
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 2 00:48:47 2010 +0900
+
+    forget last card when moving to state 'auto'
+
+commit 16210927419a79b5703786129287369f6f73b4fa
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 2 00:33:07 2010 +0900
+
+    hide missing decks when drawing recent decks list
+
+commit 38b1d3b48ac80b3da4bc685f382bc4975d0e5b57
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 2 00:02:33 2010 +0900
+
+    update display after selecting facts
+
+commit ed35093359711c1ad5c8271359877dd51896b803
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 1 03:39:16 2010 +0900
+
+    clear current card when deck finished
+
+commit d28096241a13cec7391add008ee8b88a5aa877ec
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 1 03:37:39 2010 +0900
+
+    update card stats when transitioning to finished screen, too
+
+commit a1728ffec411d5b0b7c8aad02a89c2455a8c288c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 31 04:06:50 2010 +0900
+
+    add notes to README about library issues
+
+commit 86a3e11716018b0f191c96c5d4724bc91b75830f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 31 04:06:34 2010 +0900
+
+    initial work on user manual
+
+commit b3f16c60ff9709ea0824ec9ad7dac4bcc904b849
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 30 02:48:59 2010 +0900
+
+    add 'anki' to documentDir
+
+commit aeb23cdbcc5e2e0cbb883348b2bb435fc2e8b033
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 20:20:14 2010 +0900
+
+    strip media before comparing with the correct answer
+
+commit 8c34fabff8b9792681057ba8731ea67afb7eb55c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 20:06:11 2010 +0900
+
+    add some precision to the daily study stats
+
+commit e96472b2b7ecee7f052e4019e03943dbcf7c17b5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 17:44:07 2010 +0900
+
+    default to 2 for new cards
+
+commit 1eaedfafa5900f03ce133770a8f5ad63c23ec084
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 17:42:55 2010 +0900
+
+    vary button labels depending on the card's last answer
+
+commit 45ba91697eecb75da1df7770663f189820c7eea2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 17:22:41 2010 +0900
+
+    if no tag completion, pass return to default button
+
+commit 9d021798753750d5932e6db1d492fdb59e0e9e4f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 17:18:03 2010 +0900
+
+    give confirmation after db check
+
+commit 4a3114155b87421337b93d1be1eacd6607be5ed3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 17:13:33 2010 +0900
+
+    revert modtime after deck closed in deck browser
+
+commit 68ab1244fcd3b1ba13f246b6de14b6e7e3fea2fb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 29 17:07:49 2010 +0900
+
+    add option to forget inaccessible decks
+
+commit e2cbfd1916150042759fcb5f5e7603fddd4b35fc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 27 20:06:24 2010 +0900
+
+    don't clear window only to write to it again
+
+commit bbe933890fa599c3926dcd6a8a3bbc52feefd1c7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 26 03:35:16 2010 +0900
+
+    don't call parseTags twice
+
+commit b3e0b302fff231a19dcb04bc48298bc2cc08857e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 26 01:50:45 2010 +0900
+
+    add hidden option to disable repeating of audio in question
+
+commit ea76ddc9f3d78dc789bff2cf9d82bae9f18ba643
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 26 01:23:53 2010 +0900
+
+    honor styles in css in add/edit dialogs too
+
+commit dcf65465b3612e23176ab29d302753ef1e7044f3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 24 03:51:08 2010 +0900
+
+    don't warn about unsaved decks if the decks are not modified
+
+commit 294ac8045c2e268fd4ab475fff3bee558ec8ce37
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 24 00:50:27 2010 +0900
+
+    five second tooltip delay
+
+commit be4b3faeb29ed56b58a8d358949277743d7f16bf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 24 00:29:25 2010 +0900
+
+    custom tooltip handler that doesn't hide on mouse movement
+
+commit 355d78f177e4867c422dbf9cd29fc72582bcf140
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 22:23:03 2010 +0900
+
+    tweak tag field alignment on linux
+
+commit dbe6809ebb448ef5c4f849ea15a97c50f56b87f6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 22:12:26 2010 +0900
+
+    only reshow the deck browser on change
+
+commit 09b30164627fe174b9379d0fdae703a27ff9e420
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 21:48:06 2010 +0900
+
+    make sure progress dialog gets shown when update called
+
+commit 4438ea62f6377920f5497457ec5b14649e1b6924
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 21:35:15 2010 +0900
+
+    handle case where there is no active window
+
+commit 42159eac4f1b85a512a86d5b558744f169bb203c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 21:14:00 2010 +0900
+
+    readme.html, not readme.txt
+
+commit c909e2ad7a3321aa1638d5fb2f5ebdfa123e846b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 21:03:23 2010 +0900
+
+    tweak layout of browser
+
+commit e3de050ee6dea0a681abf20df06057eaa0dbd701
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 20:36:44 2010 +0900
+
+    don't forget selection when refreshing after card changes
+
+commit 4fcc04cf30ae62b3778a032976c9e5cba2107779
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 20:36:07 2010 +0900
+
+    delay progress dialog appearance (prevents flashing, avoids stuck window bugs)
+
+commit 68b8b8a5dc6e729c4aecbb31bc87c20d22b620b8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 23 18:18:36 2010 +0900
+
+    use layoutChanged() instead of dataChanged()
+
+commit 85a6f4197d9bf4f521e77dc903de6da5f90ff6d8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 22 17:51:51 2010 +0900
+
+    detect broken pyqt4.6 and recover/warn
+
+commit d4491869c1020cb69b4e21b82d3379768c969730
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 22 04:59:20 2010 +0900
+
+    use a popup menu for deck operations
+
+commit 441e459af5cd034f94c1dcdd675a6fe2d5992695
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 22 03:51:30 2010 +0900
+
+    ignore wheel event in figure graph
+
+commit 85ed9910cdb26e793c0999c842601dce1aa85f2b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 22 00:31:50 2010 +0900
+
+    use answer font family as well as size in answer comparison
+
+commit a3b3e7312a2f99ac98762c8d16a6dbf884bd2157
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 21 03:02:43 2010 +0900
+
+    this time webkit breaks bold. sigh
+
+commit bd532500ef53953958ecda1752276487bd6b85b3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 20 19:01:39 2010 +0900
+
+    prevent recursive progress dialog invocations
+
+commit 1cfef7a295414c17bf492181544cc3f3042b8f43
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 20 18:56:58 2010 +0900
+
+    unsuspend explicitly suspended cards before packaged deck export
+
+commit 149e3e5b76d0e868196a3fa456280a46e824bef7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 20 18:54:40 2010 +0900
+
+    make sure both card and deck are set when returning base
+
+commit fee4613ced91da7e0438c11a404b9a5123847cf5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 20 04:21:50 2010 +0900
+
+    add mac test script
+
+commit fd0cbec5b393ac96e25367125ea9b919edd2f7a2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 20 02:34:54 2010 +0900
+
+    new mac build script
+
+commit 26de29a1764339909ead5f32bab904eced262cae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 20 02:34:30 2010 +0900
+
+    move away old build scripts
+
+commit 30949edbc38b77a96dbb0c1338e278c30f17412b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 20 02:13:19 2010 +0900
+
+    update getBase call for preview
+
+commit bdba8cea83638a5c5dc33a4ccb34e7c72616276f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 19 01:51:05 2010 +0900
+
+    support remote images (add remoteImages=1 to deckVars table)
+
+commit d4d713a60afe1da14ea5b0f1b323abec172b3384
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 12 01:54:19 2010 +0900
+
+    disable signals while updating bold/italic/underline buttons
+
+commit 24b9a9d1a8e1d1a978de2e347074d3116c838380
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 11 19:28:50 2010 +0900
+
+    update deck corrupt messages, include debug info
+
+commit aa731470ec946e7c18852b6c22419d5a2968c0d1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 8 23:35:51 2010 +0900
+
+    fix segfault on qt4.6 by storing index in local var
+
+commit 4a4ec4ad19051d408a5b98fced2cdda09544e459
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 8 21:55:50 2010 +0900
+
+    add warning if mature < young
+
+commit 4a01fb95651d419a1534c9e24b6f85f4138ab29a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 8 21:45:20 2010 +0900
+
+    don't update cards on reset (fixes button being off)
+
+commit b6dab37a0aad75ca0f0d7e8fd97e800dfeea12a7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 8 19:06:51 2010 +0900
+
+    allow unicode in media url
+
+commit 728d97104fa5869ea35c3cc90e44a02e79661ccf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 16 05:56:28 2009 +0900
+
+    redraw status after card add
+
+commit a4ca10dbae6092200977221fabc8d3d3e88ca177
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 15 22:42:40 2009 +0900
+
+    reverse text -> right to left
+
+commit fa0ca3089c144b2aa6bfe5839f813f107a5666f0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 2 21:27:53 2009 +0900
+
+    remove quick db check
+
+commit 87d976a547703138e2de74883861095566a3037f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 30 14:31:05 2009 +0900
+
+    unify deck load messages, add help, add critical msg box func
+
+commit ba3298cf3b2ebd08b2e2efa78cadeab0348bdaf4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 29 02:22:13 2009 +0900
+
+    force perms on mplayer
+
+commit 8a0d63c4cec39755c6c76f90b2b3e7ece53a6336
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 28 16:35:39 2009 +0900
+
+    mention the date may be off when clock is off
+
+commit 581422892f588790c7b1eb0a65c2e1d5c8c9e33f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 27 20:19:48 2009 +0900
+
+    make browser colours more easily adjustable
+
+commit 2e5b59fdd10a8c42f2f6a8cbafdba743ee0c84f8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 27 20:06:10 2009 +0900
+
+    add svg icons
+
+commit b2a72d5672d075d066f351aca458f627cd51e5a4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 27 19:53:55 2009 +0900
+
+    place no limit on number of remembered decks
+
+commit b852a6405ab029e182e44eb57a17c830fd892d5a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 27 19:31:59 2009 +0900
+
+    don't error out if delete card double clicked
+
+commit 8b6a8bb7ea880408c5ba7e0187d68d7c31136df2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 27 16:23:55 2009 +0900
+
+    add more languages to prefs, add farsi to list of RTL langs
+
+commit c2e8c3051437212992fbdaa10bb2dd1f32403d22
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 27 15:59:22 2009 +0900
+
+    fix leech suspension message
+
+commit 210c11671bb260b473b4fbcbd164f1d9c49df237
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 19 17:35:49 2009 +0900
+
+    fix 'download' when deck not open
+
+commit 28420be794ff52d5a5b6a132feaad3466cc67004
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 19 13:17:42 2009 +0900
+
+    fix h. pos of type answer box
+
+commit 94bad194a68187bd92319c796461377bcb328ac6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 19 12:56:44 2009 +0900
+
+    fix for mark cmd
+
+commit c023837b7671dbcf6756212684ab31c7d0d7c92c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Oct 29 17:09:18 2009 +0900
+
+    fix bury, increase recent deck paths limit
+
+commit c8c7ad0b621ca415e15beb528281383886af7f76
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Oct 1 20:17:40 2009 +0900
+
+    factor spacing into due time
+
+commit f4f3c94ec0732aadf8532f731a758222041fce5e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Oct 1 19:39:19 2009 +0900
+
+    add timeout and better error msg to getshared
+
+commit cbb7f236cd8b9967895abaff6bbeeed286000cc8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Sep 30 17:29:55 2009 +0900
+
+    clock>stopwatch
+
+commit 0f6b0054f3d8a73c29f8890c448330ce98207609
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Sep 30 12:59:54 2009 +0900
+
+    underline workaround
+
+commit 9231e79f0805d91d67dbdb216646e6602e4adb56
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Sep 28 06:50:54 2009 +0900
+
+    add sigint handler
+
+commit 84914fabb9833d40b9fff951980b488f4ba07fe9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Sep 28 06:41:36 2009 +0900
+
+    reduce chunk size in getshared, don't die when reporting error w/ foreign chars
+
+commit 5458bc8577e3d6fc49c24ebac0cb43c849f98f58
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Sep 27 00:33:37 2009 +0900
+
+    shuffle advanced menu
+
+commit 7239195df343c4d8677fdca3ae22f3e4c2f41727
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Sep 27 00:27:27 2009 +0900
+
+    add prompt to latex cache del
+
+commit 3a43f029030a1b729cf00017d42f3de3c2cd7a33
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Sep 27 00:05:02 2009 +0900
+
+    catch any load error for config file
+
+commit 24b8ddce29a624cae0e63e6d05d5bffbfc62b87c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 23:23:41 2009 +0900
+
+    display helpful dialog if cloze bad
+
+commit 273bf8c9c691d39139be7cc1dd347797125b0d58
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 20:52:29 2009 +0900
+
+    copy pyconfig.h for pkg_resources in mac setup
+
+commit 057af500ce1a13e7f2a2ccb24168655795c86e9e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 17:28:06 2009 +0900
+
+    hide status tips on osx
+
+commit 70b57dfe55fb4d6b361c16fc1f44298c7c127297
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 07:17:18 2009 +0900
+
+    remove statustips from the visible buttons
+
+commit 7784cea4b0abe157f6626aee740644869585434d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 06:57:51 2009 +0900
+
+    don't attempt to open directories for writing in getshared
+
+commit 2f42e36ffedf38338ec4a5bc65661dc2b176bfba
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 06:46:48 2009 +0900
+
+    when warning about broken plugins, escape untranslatable text
+
+commit 24adb7b8bb952f4e15e8552dde0add0e4d0753bf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 05:22:42 2009 +0900
+
+    add russian to translations
+
+commit 1629c859d0c08fccadabe187f901c9a8250bdc49
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 05:15:59 2009 +0900
+
+    don't remove temporarily inaccesible decks
+
+commit 82081bd7c86b7081f2154eec302f767f6af15b47
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 04:21:37 2009 +0900
+
+    mark version as snapshot
+
+commit ff81ca0c0650cc083536784666972a4c5ee45429
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Sep 26 04:21:27 2009 +0900
+
+    add window title to silence sampling
+
+commit e7b62bbee64eda44555cabc85ae7486f9e6ab81f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Sep 25 20:54:58 2009 +0900
+
+    add shortcut to db check
+
+commit 8f47de9366339a9139429658b760c5a2ec87279a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Sep 25 18:08:04 2009 +0900
+
+    Revert "open libanki with progress handler"
+    
+    This reverts commit ecd9ffe2b9c272c8db3ef5a072614acd257a48dd.
+
+commit a520a61d8afe329d585271b3ed056ec9ddf172c3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Sep 24 17:26:28 2009 +0900
+
+    use string rep for interval size instead of 0.3f
+
+commit ecd9ffe2b9c272c8db3ef5a072614acd257a48dd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Sep 22 18:32:26 2009 +0900
+
+    open libanki with progress handler
+
+commit ac5839b3e8f97fe4bb2681f097487a1b23474f1c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Sep 15 23:55:21 2009 +0900
+
+    don't ignore bundled zero byte files
+
+commit a72e56bc450f208e75f343717acd8eb7c5402f39
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Sep 6 17:17:13 2009 +0900
+
+    patch from saturnien, make mp3 encoding optional
+
+commit 119fa31eb9ef25906f85b25db3f8c9193cf51e03
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Sep 4 13:36:15 2009 +0900
+
+    add more languages
+
+commit 452c379d308ad7d2905bf7dfe9673176ca08d72d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Aug 19 17:44:37 2009 +0900
+
+    remove duplicate import lines
+
+commit be9aba4d1acb4d2a4eb4f8c1b76f353e7a3bcfa2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 07:44:36 2009 +0900
+
+    ensure failure multiplier <= 1
+
+commit 65012283ece5225320b3066c20ba8c9c8f366bdb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 07:43:33 2009 +0900
+
+    ensure failed max >= 2
+
+commit cd1bf3a645b7b03a17bbd48d2dc02d232a0fb5e0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:58:56 2009 +0900
+
+    download deck>download
+
+commit 25009326d0c8f73e2bc7dd46fa0c3a2669839b96
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:58:19 2009 +0900
+
+    -start and end range
+
+commit 614793d4d492d9758c3661618918b53428fd26d8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:57:26 2009 +0900
+
+    delegate external links in preview
+
+commit dbfcb44ea7494e3162d2492a259edeb7b26fea57
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:54:50 2009 +0900
+
+    if esc hit, don't add/delete tags
+
+commit 52bd264c05bda34c5a2364aadfa3770b6d032bdf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:49:48 2009 +0900
+
+    don't use float(text()) to get values from spinbox
+
+commit 2860b3222225e9dd95c0a3493c9238e4d572fe97
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:45:59 2009 +0900
+
+    fix sort by fact created
+
+commit b31ff97619d69e79bdc07e05363e9e797f1c2def
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:18:20 2009 +0900
+
+    fail silently when setting locale, automatically save personal deck on download
+
+commit e5c898fb68ee22f653ac773a7b1061a307a689c5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 06:18:01 2009 +0900
+
+    preserve selection when suspending/unsuspending
+
+commit 664b221c58290d71dee38b569f9aabd2653ae304
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 05:26:27 2009 +0900
+
+    close deck windows on saveas
+
+commit bfc852a89203db7a48708b412daaf2acdc3869d5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 05:23:31 2009 +0900
+
+    unescape &amp
+
+commit 74137721bf3fcd84d2c2423f9f5ccfd280208250
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 05:20:48 2009 +0900
+
+    properly support reverse new order
+
+commit 4c6301d3ca193e228788f1ada49d4494bc63e4c0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 05:13:13 2009 +0900
+
+    don't die if there's only one field
+
+commit 6f9e92e8557cf847730a0b416e2c0b6dd5d70c0f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 05:03:38 2009 +0900
+
+    remove width limit in getshared qlabel
+
+commit ef30c88ad87f307c009fa53e341fbaeccda162b9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 04:58:33 2009 +0900
+
+    if win32 document dir invalid, use home dir instead
+
+commit 863dcfe3895d6319cd1d351df58740a203dbc541
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 04:44:01 2009 +0900
+
+    update titlebar after 'select facts'
+
+commit d3562b105af0592d752e556f63208c06f496e480
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 17 04:33:27 2009 +0900
+
+    updated icon
+
+commit 0e3c23bae42eb12c59589396e66c0573cbd8ae90
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 28 23:26:05 2009 +0900
+
+    reps>repetitions
+
+commit 27f23b54a5611fca3d9152e69e2f466fe24ef7b3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 27 21:29:34 2009 +0900
+
+    init ctypes only once
+
+commit 117fff96b0746e58524dc956ac551af6f2abe140
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 27 21:11:30 2009 +0900
+
+    patch from "halabund" to remember keyboard layout in fields on win32
+
+commit c5857de1a74ea873e1db8820b332fba90b4264e7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jul 24 13:46:43 2009 +0900
+
+    add a hook for enabling/disabling menus
+
+commit 653e7efc06e1b985b851f7daf7360cfe977b0658
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jul 18 18:10:21 2009 +0900
+
+    tweaked icons from josh
+
+commit 85750a3d20c1ad0e19bb1e67973f77364e5a51c5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 15 09:59:47 2009 +0900
+
+    disable toolbar when fact invalid
+
+commit c36c6ae3c529ceb1eff59c1fc5d77966903b17e8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jul 10 10:32:59 2009 +0900
+
+    tag icons from josh
+
 commit 39c7410d943ee8477b274369a88b43b1f5537dd3
 Author: Damien Elmes <git@ichi2.net>
 Date:   Fri Jul 10 01:40:23 2009 +0900
@@ -281,7 +1117,7 @@ Date:   Fri Jun 26 09:46:52 2009 +0900
     fix bug that broke other importers
 
 commit 3036d3baf983b818c4c9ef6e25c640ac77174e85
-Merge: f7dd062... dd7ed45...
+Merge: f7dd062 dd7ed45
 Author: Damien Elmes <git@ichi2.net>
 Date:   Fri Jun 26 09:43:37 2009 +0900
 
@@ -584,7 +1420,7 @@ Date:   Sun Jun 21 03:33:37 2009 +0900
     updated German from Michael Jürges
 
 commit 5fd05c8099e7cd23003fe99a1070324e202a2429
-Merge: 3846df1... 517a2c0...
+Merge: 3846df1 517a2c0
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sun Jun 21 03:22:24 2009 +0900
 
@@ -757,7 +1593,7 @@ Date:   Tue Jun 16 02:30:57 2009 +0900
     switch to blank screen when deck browser is loading
 
 commit 7f8f10d577c8c8e05f53bbbfe2b9d94a008a93bf
-Merge: 04b6278... d9743d8...
+Merge: 04b6278 d9743d8
 Author: Damien Elmes <git@ichi2.net>
 Date:   Tue Jun 16 02:24:39 2009 +0900
 
@@ -854,7 +1690,7 @@ Date:   Sat Jun 13 15:58:43 2009 +0900
     use single space in status area
 
 commit f3ae37ec8b48b8b9da3ad990bde2a08250c7814c
-Merge: 5143da2... 06ab85c...
+Merge: 5143da2 06ab85c
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat Jun 13 15:53:23 2009 +0900
 
@@ -1065,7 +1901,7 @@ Date:   Tue Jun 9 05:05:14 2009 +0900
     fix cramming
 
 commit ea259d0815c809f88ef1660e90aef2d88a9151e2
-Merge: 7fd4f9f... c5ff811...
+Merge: 7fd4f9f c5ff811
 Author: Damien Elmes <git@ichi2.net>
 Date:   Tue Jun 9 04:10:35 2009 +0900
 
@@ -1090,7 +1926,7 @@ Date:   Mon Jun 8 14:07:11 2009 -0400
     perform bulk (media) sync after full sync with server
 
 commit 77a8c53e9c1791d7b64eaf4375ed5854d35a82e9
-Merge: afc5cb0... e9b41c4...
+Merge: afc5cb0 e9b41c4
 Author: Damien Elmes <git@ichi2.net>
 Date:   Tue Jun 9 01:40:52 2009 +0900
 
@@ -1206,7 +2042,7 @@ Date:   Sat Jun 6 21:56:37 2009 +0900
     support filtering question and answer
 
 commit 3a61d2ca72a41f6c6be13e5761ddc137f97b2cc4
-Merge: 9b8ad45... 283b3fb...
+Merge: 9b8ad45 283b3fb
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat Jun 6 17:38:05 2009 +0900
 
@@ -1508,7 +2344,7 @@ Date:   Thu May 21 01:09:09 2009 +0900
     fix and update translations
 
 commit 9efc4743d4b0d2f9a049dbffccaaca1d81b734a4
-Merge: a73a2e1... d3a40e3...
+Merge: a73a2e1 d3a40e3
 Author: Damien Elmes <git@ichi2.net>
 Date:   Thu May 21 01:07:29 2009 +0900
 
@@ -1545,7 +2381,7 @@ Date:   Sat May 16 05:23:09 2009 +0900
     save the cramming check before closing the deck
 
 commit ac156b8493a7b63ccbd66133de0f27170fec2135
-Merge: 3a01a30... 039cacb...
+Merge: 3a01a30 039cacb
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat May 16 05:12:20 2009 +0900
 
@@ -1624,7 +2460,7 @@ Date:   Sat May 16 00:50:13 2009 +0900
     bump version
 
 commit 5287ef7cb48f21823acf62d76e3851cb8a6efc39
-Merge: ad1854b... 2c2de42...
+Merge: ad1854b 2c2de42
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat May 16 00:49:57 2009 +0900
 
@@ -1757,7 +2593,7 @@ Date:   Fri May 8 15:45:33 2009 +0900
     fix bug in chinese translation
 
 commit d0387df5ebc19bf602b9993953bde32f591e93f8
-Merge: 5213964... 95aefef...
+Merge: 5213964 95aefef
 Author: Damien Elmes <git@ichi2.net>
 Date:   Fri May 8 15:43:51 2009 +0900
 
@@ -1884,7 +2720,7 @@ Date:   Wed May 6 12:34:47 2009 +0900
     updated mongolian translations from Charlene Barina
 
 commit 620ce8cde2ab0f9873e751579320f03b0e62a07b
-Merge: c87bf9a... f879efa...
+Merge: c87bf9a f879efa
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sun May 3 01:05:04 2009 +0900
 
@@ -1939,7 +2775,7 @@ Date:   Fri May 1 04:36:50 2009 +0900
     set focus on show answer button to avoid double tap
 
 commit ac9b8f96c2e4834dc390ad0d454b711b137c99ec
-Merge: 7c6625a... 09df5d7...
+Merge: 7c6625a 09df5d7
 Author: Damien Elmes <git@ichi2.net>
 Date:   Thu Apr 30 21:57:26 2009 +0900
 
@@ -1971,7 +2807,7 @@ Date:   Thu Apr 30 10:35:28 2009 +0200
     Updated Swedish translation and reran translation.sh
 
 commit 39da9392a6d9c58c4b74d899dad26c4cb7b4998a
-Merge: 9de5cea... d113600...
+Merge: 9de5cea d113600
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Thu Apr 30 10:06:57 2009 +0200
 
@@ -2130,7 +2966,7 @@ Date:   Tue Apr 28 17:55:42 2009 +0900
     update search when current card deleted
 
 commit 9de5ceaeffcb5af3d3d06832eb5e921b6e0cd992
-Merge: ee9edc3... 067f94a...
+Merge: ee9edc3 067f94a
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Mon Apr 27 20:09:44 2009 +0200
 
@@ -2239,7 +3075,7 @@ Date:   Sat Apr 25 01:16:06 2009 +0900
     don't convert \n to <br> and vice versa in card templates
 
 commit 81a49f70133c6f5cc5cb27f48150a59caddfe46f
-Merge: 830c3ae... b447899...
+Merge: 830c3ae b447899
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat Apr 25 01:10:46 2009 +0900
 
@@ -2252,7 +3088,7 @@ Date:   Sat Apr 25 01:10:27 2009 +0900
     import importing on startup
 
 commit ee9edc3e39b78261221b224c77ca7a17d4c228b5
-Merge: b447899... ec28744...
+Merge: b447899 ec28744
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Thu Apr 23 18:42:03 2009 +0200
 
@@ -2265,7 +3101,7 @@ Date:   Thu Apr 23 18:13:01 2009 +0200
     Updated Swedish translation and reran translation.sh
 
 commit 4852c4261162d2988bb3bd2003b8475520b853c5
-Merge: 3731468... d9d795a...
+Merge: 3731468 d9d795a
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Thu Apr 23 18:02:39 2009 +0200
 
@@ -2436,7 +3272,7 @@ Date:   Sun Apr 19 00:10:10 2009 +0900
     fix width for darwin too
 
 commit 550546b79d60169b12d7ddc0834923fb70d1f64a
-Merge: 5988bb2... beb7ec0...
+Merge: 5988bb2 beb7ec0
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat Apr 18 23:50:14 2009 +0900
 
@@ -2491,7 +3327,7 @@ Date:   Sat Apr 18 18:20:20 2009 +0900
     add correct over a month to daily stats
 
 commit ef7235bbbf82f45d157ea4da7e227de493104941
-Merge: 60baf9e... fcba72e...
+Merge: 60baf9e fcba72e
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Sat Apr 18 11:16:34 2009 +0200
 
@@ -2540,7 +3376,7 @@ Date:   Sat Apr 18 02:41:16 2009 +0900
     scroll to top when adding, keep tags always shown, not tag up on field edit
 
 commit 60baf9efd83d0fa432889c016d60ca6cc92bce40
-Merge: c0f494d... 783e9ce...
+Merge: c0f494d 783e9ce
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Fri Apr 17 18:53:58 2009 +0200
 
@@ -2703,7 +3539,7 @@ Date:   Fri Apr 10 16:01:06 2009 +0900
     add mark's latest taiwanese translations, run translate.sh
 
 commit 3819bedaf63495c1edc4d44682312ae70c3e44b1
-Merge: 4c47468... ac906e9...
+Merge: 4c47468 ac906e9
 Author: Damien Elmes <git@ichi2.net>
 Date:   Fri Apr 10 00:16:01 2009 +0900
 
@@ -2818,7 +3654,7 @@ Date:   Tue Apr 7 08:44:10 2009 +0900
     add ngettext to ankiqt namespace
 
 commit 1567de9469deeeef4aaf926d50afd1870d9eb080
-Merge: bdcac01... 03e6459...
+Merge: bdcac01 03e6459
 Author: Damien Elmes <git@ichi2.net>
 Date:   Tue Apr 7 08:40:28 2009 +0900
 
@@ -2969,7 +3805,7 @@ Date:   Sun Mar 29 03:58:00 2009 +0900
     fix card marking
 
 commit 71dd8baaf31f95c2eee0a4f894bd30b46b23ddff
-Merge: a601268... fc80265...
+Merge: a601268 fc80265
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sun Mar 29 03:46:38 2009 +0900
 
@@ -3002,7 +3838,7 @@ Date:   Sat Mar 28 14:37:05 2009 +0900
     use a toggle to show study screen change
 
 commit fc802658dca6f8c3662e611b24ed48c58eb45834
-Merge: a80fe8d... 85db7db...
+Merge: a80fe8d 85db7db
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Fri Mar 27 14:28:30 2009 +0100
 
@@ -3035,7 +3871,7 @@ Date:   Wed Mar 25 11:06:37 2009 +0100
     This reverts commit 1e6962928545f3662e6ecb53eac352f7644a14e2.
 
 commit 5266233c018226ecd6dbf748ce4417fbeb37be7b
-Merge: ddec815... ca6bc68...
+Merge: ddec815 ca6bc68
 Author: Susanna Björverud <Susanna.Bjorverud@telia.com>
 Date:   Wed Mar 25 11:02:00 2009 +0100
 
@@ -3417,7 +4253,7 @@ Date:   Fri Mar 13 06:13:26 2009 +0900
     fix problem dropping unique index
 
 commit 29278af8d97b7d313c523bbb7d3f7a2e57b4ff3b
-Merge: 16157e3... 2aa6cab...
+Merge: 16157e3 2aa6cab
 Author: Damien Elmes <git@ichi2.net>
 Date:   Thu Mar 12 08:24:54 2009 +0900
 
@@ -3574,7 +4410,7 @@ Date:   Fri Mar 6 04:14:25 2009 +0900
     generate cards in fact order
 
 commit ddec815e20ffed6bdfc8b1d6c7a3fb1f505c3384
-Merge: 6f3a92d... c6d9d0c...
+Merge: 6f3a92d c6d9d0c
 Author: Timo Paulssen <timonator@perpetuum-immobile.de>
 Date:   Thu Mar 5 17:22:43 2009 +0100
 
@@ -4020,7 +4856,7 @@ Date:   Mon Feb 9 18:19:05 2009 +0900
     don't force timer to a certain size
 
 commit 41f1eba87acf092ed34094fd1277049f4c3bd888
-Merge: 60a5f67... 737c13e...
+Merge: 60a5f67 737c13e
 Author: Damien Elmes <git@ichi2.net>
 Date:   Mon Feb 9 18:16:09 2009 +0900
 
@@ -4561,7 +5397,7 @@ Date:   Tue Jan 20 00:51:18 2009 +0900
     add chinese traditional to prefs
 
 commit b73bdcc4dfb4cd77062806580e21f1a74c05f6b6
-Merge: c175109... ef7cdf2...
+Merge: c175109 ef7cdf2
 Author: Damien Elmes <git@ichi2.net>
 Date:   Mon Jan 19 01:56:50 2009 +0900
 
@@ -4580,7 +5416,7 @@ Date:   Sun Jan 18 15:03:44 2009 +0900
     wrap
 
 commit af00f229f6849f5efcb6cca50ff6f5f09e39cdb4
-Merge: 14af7bc... e42eaaf...
+Merge: 14af7bc e42eaaf
 Author: Samson Melamed <samson.melamed@gmail.com>
 Date:   Sun Jan 18 01:00:18 2009 -0500
 
@@ -4915,7 +5751,7 @@ Date:   Sat Jan 10 17:12:45 2009 +0900
     set media path if existing
 
 commit 73c043ed7e199c42f1556d0462f228969c9c88c5
-Merge: 089f22c... 3832bfd...
+Merge: 089f22c 3832bfd
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat Jan 10 16:55:34 2009 +0900
 
@@ -5619,21 +6455,21 @@ Date:   Sat Dec 20 14:14:28 2008 +0900
     make sure to close all dialogs when opening new deck
 
 commit 857f17fbf0b0d15242dc32f9070ccfbe21866cfd
-Merge: 36a5378... 3d15fb7...
+Merge: 36a5378 3d15fb7
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat Dec 20 14:13:32 2008 +0900
 
     Merge branch 'master' of git://github.com/timo/ankiqt
 
 commit 3d15fb7ddcf057c28d22ee7f6de76fce140ac140
-Merge: 5d0abc1... 1e2600a...
+Merge: 5d0abc1 1e2600a
 Author: Timo Paulssen <timonator@perpetuum-immobile.de>
 Date:   Fri Dec 19 00:53:22 2008 +0100
 
     Merge branch 'master' of git://ichi2.net/ankiqt
 
 commit 36a5378abaad989a831f0c546795d1d171111348
-Merge: 1e2600a... 5d0abc1...
+Merge: 1e2600a 5d0abc1
 Author: Damien Elmes <git@ichi2.net>
 Date:   Thu Dec 18 14:54:21 2008 +0900
 
@@ -5700,7 +6536,7 @@ Date:   Sat Dec 13 00:50:52 2008 -0500
     Added complete list of commands.
 
 commit 711cea5a02ad09658f314a8d0d09d41aad146f81
-Merge: 4dd6056... 65353ba...
+Merge: 4dd6056 65353ba
 Author: Damien Elmes <git@ichi2.net>
 Date:   Sat Dec 13 12:30:13 2008 +0900
 
@@ -5903,7 +6739,7 @@ Date:   Tue Dec 9 02:07:15 2008 +0900
     reset editor in real time, avoid full reset
 
 commit 626ad9f813616262acdeb4216e52488c540f51e2
-Merge: 073b3b8... 133a6bc...
+Merge: 073b3b8 133a6bc
 Author: Damien Elmes <git@ichi2.net>
 Date:   Tue Dec 9 01:37:40 2008 +0900
 

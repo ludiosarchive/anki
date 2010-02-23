@@ -31,6 +31,7 @@ from sqlalchemy.orm import mapper, sessionmaker as _sessionmaker, relation, back
      object_session as _object_session, class_mapper
 from sqlalchemy.sql import select, text, and_
 from sqlalchemy.exceptions import DBAPIError, OperationalError
+from sqlalchemy.pool import NullPool
 import sqlalchemy
 
 # some users are still on 0.4.x..

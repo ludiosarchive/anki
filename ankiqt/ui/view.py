@@ -5,10 +5,11 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki, anki.utils
-from anki.sound import playFromText, stripSounds
+from anki.sound import playFromText
 from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
 from anki.hooks import runHook, runFilter
+from anki.media import stripMedia
 import types, time, re, os, urllib, sys, difflib
 from ankiqt import ui
 from ankiqt.ui.utils import mungeQA, getBase
@@ -52,7 +53,7 @@ class View(object):
         "Idempotently display the current state (prompt for question, etc)"
         if self.state == "noDeck" or self.state == "studyScreen":
             return
-        self.clearWindow()
+        self.buffer = ""
         self.haveTop = (self.main.lastCard and (
             self.main.config['showLastCardContent'] or
             self.main.config['showLastCardInterval'])) or (
@@ -108,7 +109,7 @@ class View(object):
         # hook for user css
         runHook("preFlushHook")
         self.buffer = '''<html><head>%s</head><body>%s</body></html>''' % (
-            getBase(self.main.deck), self.buffer)
+            getBase(self.main.deck, self.main.currentCard), self.buffer)
         #print self.buffer.encode("utf-8")
         self.body.setHtml(self.buffer)
 
@@ -152,10 +153,10 @@ class View(object):
         s = difflib.SequenceMatcher(None, b, a)
 
         sz = self.main.currentCard.cardModel.answerFontSize
-        ok = "background: %s; color: #000; font-size: %dpx" % (
-            passedCharColour, sz)
-        bad = "background: %s; color: #000; font-size: %dpx;" % (
-            failedCharColour, sz)
+        fn = self.main.currentCard.cardModel.answerFontFamily
+        st = "background: %s; color: #000; font-size: %dpx; font-family: %s;"
+        ok = st % (passedCharColour, sz, fn)
+        bad = st % (failedCharColour, sz, fn)
 
         for tag, i1, i2, j1, j2 in s.get_opcodes():
             if tag == "equal":
@@ -175,8 +176,8 @@ class View(object):
         a = runFilter("drawAnswer", a, self.main.currentCard)
         if self.main.currentCard.cardModel.typeAnswer:
             try:
-                cor = stripHTML(self.main.currentCard.fact[
-                    self.main.currentCard.cardModel.typeAnswer])
+                cor = stripMedia(stripHTML(self.main.currentCard.fact[
+                    self.main.currentCard.cardModel.typeAnswer]))
             except KeyError:
                 self.main.currentCard.cardModel.typeAnswer = ""
                 cor = ""
@@ -196,7 +197,7 @@ class View(object):
             txt = txt.replace("</span>", "&#8203;</span>")
         return txt
 
-    def onLoadFinished(self):
+    def onLoadFinished(self, bool):
         if self.state == "showAnswer":
             if self.main.config['scrollToAnswer']:
                 mf = self.body.page().mainFrame()

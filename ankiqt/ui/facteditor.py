@@ -5,7 +5,8 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4.QtSvg import *
-import re, os, sys, tempfile, urllib2
+from PyQt4.QtWebKit import QWebPage
+import re, os, sys, tempfile, urllib2, ctypes
 from anki.utils import stripHTML, tidyHTML, canonifyTags
 from anki.sound import playFromText
 from ankiqt.ui.sound import getAudio
@@ -19,6 +20,14 @@ from PyQt4 import pyqtconfig
 QtConfig = pyqtconfig.Configuration()
 
 clozeColour = "#0000ff"
+
+if sys.platform.startswith("win32"):
+    ActivateKeyboardLayout = ctypes.windll.user32.ActivateKeyboardLayout
+    ActivateKeyboardLayout.restype = ctypes.c_void_p
+    ActivateKeyboardLayout.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+    GetKeyboardLayout = ctypes.windll.user32.GetKeyboardLayout
+    GetKeyboardLayout.restype = ctypes.c_void_p
+    GetKeyboardLayout.argtypes = [ctypes.c_uint]
 
 class FactEditor(object):
     """An editor for new/existing facts.
@@ -223,9 +232,24 @@ class FactEditor(object):
         vbox.addWidget(self.fchoose)
         self.fchoose.setStyle(self.plastiqueStyle)
         self.iconsBox.addLayout(vbox)
-        # pictures
+        # cloze
         spc = QSpacerItem(5,5)
         self.iconsBox.addItem(spc)
+        self.cloze = QPushButton(self.widget)
+        self.clozeSC = QShortcut(QKeySequence(_("F9")), self.widget)
+        self.cloze.connect(self.cloze, SIGNAL("clicked()"),
+                                  self.onCloze)
+        self.cloze.connect(self.clozeSC, SIGNAL("activated()"),
+                                  self.onCloze)
+        self.cloze.setToolTip(_("Cloze (F9)"))
+        self.cloze.setFixedWidth(30)
+        self.cloze.setFixedHeight(26)
+        self.cloze.setText("[...]")
+        self.cloze.setFocusPolicy(Qt.NoFocus)
+        self.cloze.setEnabled(False)
+        self.iconsBox.addWidget(self.cloze)
+        self.cloze.setStyle(self.plastiqueStyle)
+        # pictures
         self.addPicture = QPushButton(self.widget)
         self.addPicture.connect(self.addPicture, SIGNAL("clicked()"), self.onAddPicture)
         self.addPicture.setFocusPolicy(Qt.NoFocus)
@@ -255,21 +279,9 @@ class FactEditor(object):
         self.recSound.setToolTip(_("Record audio (F5)"))
         self.iconsBox.addWidget(self.recSound)
         self.recSound.setStyle(self.plastiqueStyle)
-        # more
-        self.more = QPushButton(self.widget)
-        self.more.connect(self.more, SIGNAL("clicked()"),
-                                  self.onMore)
-        self.more.setToolTip(_("Show advanced options"))
-        self.more.setText(">>")
-        self.more.setFocusPolicy(Qt.NoFocus)
-        self.more.setEnabled(False)
-        self.more.setFixedWidth(30)
-        self.more.setFixedHeight(26)
-        self.iconsBox.addWidget(self.more)
-        self.more.setStyle(self.plastiqueStyle)
         # preview
         spc = QSpacerItem(5,5)
-        self.iconsBox2.addItem(spc)
+        self.iconsBox.addItem(spc)
         self.preview = QPushButton(self.widget)
         self.previewSC = QShortcut(QKeySequence(_("F2")), self.widget)
         self.preview.connect(self.preview, SIGNAL("clicked()"),
@@ -279,24 +291,19 @@ class FactEditor(object):
         self.preview.setToolTip(_("Preview (F2)"))
         self.preview.setIcon(QIcon(":/icons/document-preview.png"))
         self.preview.setFocusPolicy(Qt.NoFocus)
-        self.preview.setEnabled(False)
-        self.iconsBox2.addWidget(self.preview)
+        self.iconsBox.addWidget(self.preview)
         self.preview.setStyle(self.plastiqueStyle)
-        # cloze
-        self.cloze = QPushButton(self.widget)
-        self.clozeSC = QShortcut(QKeySequence(_("F9")), self.widget)
-        self.cloze.connect(self.cloze, SIGNAL("clicked()"),
-                                  self.onCloze)
-        self.cloze.connect(self.clozeSC, SIGNAL("activated()"),
-                                  self.onCloze)
-        self.cloze.setToolTip(_("Cloze (F9)"))
-        self.cloze.setFixedWidth(30)
-        self.cloze.setFixedHeight(26)
-        self.cloze.setText("[...]")
-        self.cloze.setFocusPolicy(Qt.NoFocus)
-        self.cloze.setEnabled(False)
-        self.iconsBox2.addWidget(self.cloze)
-        self.cloze.setStyle(self.plastiqueStyle)
+        # more
+        self.more = QPushButton(self.widget)
+        self.more.connect(self.more, SIGNAL("clicked()"),
+                                  self.onMore)
+        self.more.setToolTip(_("Show advanced options"))
+        self.more.setText(">>")
+        self.more.setFocusPolicy(Qt.NoFocus)
+        self.more.setFixedWidth(30)
+        self.more.setFixedHeight(26)
+        self.iconsBox.addWidget(self.more)
+        self.more.setStyle(self.plastiqueStyle)
         # latex
         spc = QSpacerItem(5,5)
         self.iconsBox2.addItem(spc)
@@ -418,10 +425,11 @@ class FactEditor(object):
         elif sys.platform.startswith("win32"):
             extra = 3
         else:
-            extra = -1
+            extra = 2
         tagsw = self.tagsLabel.sizeHint().width()
         self.tagsLabel.setFixedWidth(max(tagsw,
-                                         max(*[l.width() for l in self.labels]))
+                                         max(*([
+            l.width() for l in self.labels] + [0])))
                                      + extra)
         self.parent.setTabOrder(last, self.tags)
 
@@ -588,17 +596,23 @@ class FactEditor(object):
 
     def formatChanged(self, fmt):
         w = self.focusedEdit()
-        if not w or w.textCursor().hasSelection():
+        if not w:
             return
         else:
+            l = self.bold, self.italic, self.underline
+            for b in l:
+                b.blockSignals(True)
             self.bold.setChecked(w.fontWeight() == QFont.Bold)
             self.italic.setChecked(w.fontItalic())
             self.underline.setChecked(w.fontUnderline())
+            for b in l:
+                b.blockSignals(False)
 
     def resetFormatButtons(self):
-        self.bold.setChecked(False)
-        self.italic.setChecked(False)
-        self.underline.setChecked(False)
+        for b in self.bold, self.italic, self.underline:
+            b.blockSignals(True)
+            b.setChecked(False)
+            b.blockSignals(False)
 
     def enableButtons(self, val=True):
         self.bold.setEnabled(val)
@@ -613,11 +627,9 @@ class FactEditor(object):
         self.latex.setEnabled(val)
         self.latexEqn.setEnabled(val)
         self.latexMathEnv.setEnabled(val)
-        self.preview.setEnabled(val)
         self.cloze.setEnabled(val)
         self.htmlEdit.setEnabled(val)
         self.recSound.setEnabled(val)
-        self.more.setEnabled(val)
 
     def disableButtons(self):
         self.enableButtons(False)
@@ -736,10 +748,8 @@ class FactEditor(object):
 
     def onMore(self, toggle=None):
         if toggle is None:
-            toggle = not self.preview.isVisible()
+            toggle = not self.latex.isVisible()
             ankiqt.mw.config['factEditorAdvanced'] = toggle
-        self.preview.setShown(toggle)
-        self.cloze.setShown(toggle)
         self.latex.setShown(toggle)
         self.latexEqn.setShown(toggle)
         self.latexMathEnv.setShown(toggle)
@@ -794,13 +804,17 @@ class FactEditor(object):
                 self.saveFields()
                 return
             else:
-                ui.utils.showInfo(_("Next field must be blank."),
-                                  parent=self.parent)
+                ui.utils.showInfo(
+                    _("Next field must be blank."),
+                    help="ClozeDeletion",
+                    parent=self.parent)
                 return
         # check if there's anything to change
         if not re.search("\[.+?\]", unicode(src.toPlainText())):
-            QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
-                                          "ClozeDeletion"))
+            ui.utils.showInfo(
+                _("You didn't specify anything to occlude."),
+                help="ClozeDeletion",
+                parent=self.parent)
             return
         # create
         s = unicode(src.toHtml())
@@ -848,7 +862,8 @@ class FactEditor(object):
     def onAddPicture(self):
         # get this before we open the dialog
         w = self.focusedEdit()
-        key = _("Images (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)")
+        key = (_("Images") +
+               " (*.jpg *.png *.gif *.tiff *.svg *.tif *.jpeg)")
         file = ui.utils.getFile(self.parent, _("Add an image"), "picture", key)
         if not file:
             return
@@ -878,7 +893,9 @@ class FactEditor(object):
     def onAddSound(self):
         # get this before we open the dialog
         w = self.focusedEdit()
-        key = _("Sounds/Videos (*.mp3 *.ogg *.wav *.avi *.ogv *.mpg *.mpeg *.mov)")
+        key = (_("Sounds/Videos") +
+               " (*.mp3 *.ogg *.wav *.avi *.ogv *.mpg *.mpeg *.mov *.mp4 " +
+               "*.mkv *.ogx *.ogv *.oga)")
         file = ui.utils.getFile(self.parent, _("Add audio"), "audio", key)
         if not file:
             return
@@ -925,6 +942,8 @@ class FactEdit(QTextEdit):
     def __init__(self, parent, *args):
         QTextEdit.__init__(self, *args)
         self.parent = parent
+        if sys.platform.startswith("win32"):
+            self._ownLayout = None
 
     def canInsertFromMimeData(self, source):
         return (source.hasUrls() or
@@ -1027,6 +1046,9 @@ class FactEdit(QTextEdit):
         self.parent.lastFocusedEdit = self
         self.parent.resetFormatButtons()
         self.parent.disableButtons()
+        if sys.platform.startswith("win32"):
+            self._ownLayout = GetKeyboardLayout(0)
+            ActivateKeyboardLayout(self._programLayout, 0)
         self.emit(SIGNAL("lostFocus"))
 
     def focusInEvent(self, evt):
@@ -1044,6 +1066,11 @@ class FactEdit(QTextEdit):
         QTextEdit.focusInEvent(self, evt)
         self.parent.formatChanged(None)
         self.parent.enableButtons()
+        if sys.platform.startswith("win32"):
+            self._programLayout = GetKeyboardLayout(0)
+            if self._ownLayout == None:
+                self._ownLayout = self._programLayout
+            ActivateKeyboardLayout(self._ownLayout, 0)
 
 class PreviewDialog(QDialog):
 
@@ -1060,6 +1087,11 @@ class PreviewDialog(QDialog):
         self.currentCard = 0
         self.dialog = ankiqt.forms.previewcards.Ui_Dialog()
         self.dialog.setupUi(self)
+        self.dialog.webView.page().setLinkDelegationPolicy(
+            QWebPage.DelegateExternalLinks)
+        self.connect(self.dialog.webView,
+                     SIGNAL("linkClicked(QUrl)"),
+                     self.linkClicked)
         self.dialog.comboBox.addItems(QStringList(
             [c.cardModel.name for c in self.cards]))
         self.connect(self.dialog.comboBox, SIGNAL("activated(int)"),
@@ -1068,6 +1100,9 @@ class PreviewDialog(QDialog):
         restoreGeom(self, "preview")
         self.exec_()
 
+    def linkClicked(self, url):
+        QDesktopServices.openUrl(QUrl(url))
+
     def updateCard(self):
         c = self.cards[self.currentCard]
         styles = (self.deck.css +
@@ -1075,7 +1110,7 @@ class PreviewDialog(QDialog):
                   "\ndiv { white-space: pre-wrap; }")
         styles = runFilter("addStyles", styles, c)
         self.dialog.webView.setHtml(
-            ('<html><head>%s</head><body>' % getBase(self.deck)) +
+            ('<html><head>%s</head><body>' % getBase(self.deck, c)) +
             "<style>" + styles + "</style>" +
             runFilter("drawQuestion", mungeQA(self.deck, c.htmlQuestion()),
                       c) +

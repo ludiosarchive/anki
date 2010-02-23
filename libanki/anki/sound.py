@@ -101,18 +101,19 @@ def generateNoiseProfile():
     processingChain[0] = ["sox", processingSrc, "tmp2.wav",
                           "noisered", noiseProfile, NOISE_AMOUNT]
 
-# Mplayer
+# Mplayer settings
 ##########################################################################
 
 if sys.platform.startswith("win32"):
-    mplayerCmd = ["mplayer.exe", "-ao", "win32", "-really-quiet",
-                  "-slave", "-idle"]
+    mplayerCmd = ["mplayer.exe", "-ao", "win32", "-really-quiet"]
     dir = os.path.dirname(os.path.abspath(sys.argv[0]))
     os.environ['PATH'] += ";" + dir
     os.environ['PATH'] += ";" + dir + "\\..\\dist" # for testing
 else:
-    mplayerCmd = ["mplayer", "-really-quiet", "-slave", "-idle",
-                  "-ontop"]
+    mplayerCmd = ["mplayer", "-really-quiet"]
+
+# Mplayer in slave mode
+##########################################################################
 
 mplayerQueue = []
 mplayerManager = None
@@ -158,14 +159,15 @@ class MplayerMonitor(threading.Thread):
                     extra = ""
                 else:
                     extra = " 1"
-                cmd = "loadfile %s%s\n" % (item, extra)
+                cmd = 'loadfile "%s"%s\n' % (item, extra)
                 self.mplayer.stdin.write(cmd)
             mplayerCond.release()
 
     def startProcess(self):
         try:
+            cmd = mplayerCmd + ["-slave", "-idle"]
             self.mplayer = subprocess.Popen(
-                mplayerCmd, startupinfo=si, stdin=subprocess.PIPE,
+                cmd, startupinfo=si, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except OSError:
             mplayerCond.release()
@@ -242,9 +244,12 @@ except:
 
 class _Recorder(object):
 
-    def postprocess(self):
+    def postprocess(self, encode=True):
+        self.encode = encode
         for c in processingChain:
             #print c
+            if not self.encode and c[0] == 'lame':
+                continue
             ret = retryWait(subprocess.Popen(c, startupinfo=si))
             if ret:
                 raise Exception(_("""
@@ -266,7 +271,8 @@ class PyAudioThreadedRecorder(threading.Thread):
         try:
             p = pyaudio.PyAudio()
         except NameError:
-            raise Exception("Recording not supported on OSX10.3.")
+            raise Exception(
+                "Pyaudio not installed (recording not supported on OSX10.3)")
         stream = p.open(format=PYAU_FORMAT,
                         channels=PYAU_CHANNELS,
                         rate=PYAU_RATE,
@@ -302,6 +308,7 @@ class PyAudioRecorder(_Recorder):
                 os.unlink(t)
             except OSError:
                 pass
+        self.encode = False
 
     def start(self):
         self.thread = PyAudioThreadedRecorder()
@@ -312,12 +319,21 @@ class PyAudioRecorder(_Recorder):
         self.thread.join()
 
     def file(self):
-        return processingDst
+        if self.encode:
+            return processingDst
+        else:
+            return tmpFiles[1]
 
-# Default audio player
+# Audio interface
 ##########################################################################
 
-play = queueMplayer
-clearAudioQueue = clearMplayerQueue
+_player = queueMplayer
+_queueEraser = clearMplayerQueue
+
+def play(path):
+    _player(path)
+
+def clearAudioQueue():
+    _queueEraser()
 
 Recorder = PyAudioRecorder
