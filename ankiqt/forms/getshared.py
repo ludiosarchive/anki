@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/getshared.ui'
 #
 
-#      by: PyQt4 UI code generator 4.5.1
+#      by: PyQt4 UI code generator 4.7
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -67,7 +67,6 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.bottomLabel.sizePolicy().hasHeightForWidth())
         self.bottomLabel.setSizePolicy(sizePolicy)
-        self.bottomLabel.setMaximumSize(QtCore.QSize(500, 16777215))
         self.bottomLabel.setWordWrap(True)
         self.bottomLabel.setOpenExternalLinks(True)
         self.bottomLabel.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByMouse)

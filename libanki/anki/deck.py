@@ -122,6 +122,7 @@ class Deck(object):
 
     factorFour = 1.3
     initialFactor = 2.5
+    minimumAverage = 1.7
     maxScheduleTime = 36500
 
     def __init__(self, path=None):
@@ -320,7 +321,8 @@ type, due, interval, factor, priority from """
 cards where type = 0 and isDue = 1 and
 combinedDue <= :now limit 30""", now=time.time())
         d['rev'] = self.s.all(sel + rev + " limit 30")
-        if self.newCountToday:
+        if self.newCountToday and (self.newCardSpacing != NEW_CARDS_LAST or
+                                   not d['rev']):
             d['acq'] = self.s.all(sel + """
 %s where factId in (select distinct factId from cards
 where factId in (select factId from %s limit 60))""" % (new, new))
@@ -415,8 +417,8 @@ where id != :id and factId = :factId""",
         self.modified = now
         isLeech = self.isLeech(card)
         if isLeech:
-            card = self.handleLeech(card)
-        runHook("cardAnswered", card, isLeech)
+            self.handleLeech(card)
+        runHook("cardAnswered", card.id, isLeech)
         self.setUndoEnd(undoName)
 
     def isLeech(self, card):
@@ -483,7 +485,7 @@ where id != :id and factId = :factId""",
             if (interval < self.hardIntervalMax and
                 interval > 0.166):
                 mid = (self.midIntervalMin + self.midIntervalMax) / 2.0
-                interval *= (mid / interval / factor)
+                interval = mid / factor
             # multiply last interval by factor
             if ease == 2:
                 interval = (interval + delay/4) * 1.2
@@ -519,15 +521,12 @@ where id != :id and factId = :factId""",
         if not card.reps:
             # card is new, inherit beginning factor
             card.factor = self.averageFactor
-        if self.cardIsBeingLearnt(card) and ease in [0, 1, 2]:
-            # only penalize failures after success when starting
-            if card.successive and ease != 2:
+        if card.successive and not self.cardIsBeingLearnt(card):
+            if ease == 1:
                 card.factor -= 0.20
-        elif ease in [0, 1]:
-            card.factor -= 0.20
-        elif ease == 2:
-            card.factor -= 0.15
-        elif ease == 4:
+            elif ease == 2:
+                card.factor -= 0.15
+        if ease == 4:
             card.factor += 0.10
         card.factor = max(1.3, card.factor)
 
@@ -699,6 +698,7 @@ type = 0 and isDue = 1 and combinedDue <= :now""", now=time.time())
         self.averageFactor = (self.s.scalar(
             "select avg(factor) from cards where type = 1")
                                or Deck.initialFactor)
+        self.averageFactor = max(self.averageFactor, Deck.minimumAverage)
         # recache css
         self.rebuildCSS()
 
@@ -985,7 +985,7 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
 
     def cardIsBeingLearnt(self, card):
         "True if card should use present intervals."
-        return card.interval < self.easyIntervalMin
+        return card.lastInterval < 7
 
     def cardIsYoung(self, card):
         "True if card is not new and not mature."
@@ -1062,17 +1062,16 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
         self.flushMod()
         isRandom = self.newCardOrder == NEW_CARDS_RANDOM
         if isRandom:
-            oldest = self.s.scalar("""
-select min(due) from cards
-where type = 2 and priority in (1,2,3,4)""") or 0
-            due = random.uniform(oldest, time.time())
+            due = random.uniform(0, time.time())
+        t = time.time()
         for cardModel in cms:
-            card = anki.cards.Card(fact, cardModel)
+            card = anki.cards.Card(fact, cardModel, t)
             if isRandom:
                 card.due = due + card.ordinal
                 card.combinedDue = card.due
             self.flushMod()
             cards.append(card)
+            t += .00001
         self.updateFactTags([fact.id])
         self.updatePriorities([c.id for c in cards])
         self.cardCount += len(cards)
@@ -1109,6 +1108,7 @@ where type = 2 and priority in (1,2,3,4)""") or 0
 
     def addCards(self, fact, cardModelIds):
         "Caller must flush first, flushMod after, rebuild priorities."
+        ids = []
         for cardModel in self.availableCardModels(fact, False):
             if cardModel.id not in cardModelIds:
                 continue
@@ -1122,7 +1122,9 @@ where factId = :fid and cardModelId = :cmid""",
                     self.updatePriority(card)
                     self.cardCount += 1
                     self.newCount += 1
+                    ids.append(card.id)
         self.setModified()
+        return ids
 
     def factIsInvalid(self, fact):
         "True if existing fact is invalid. Returns the error."
@@ -1285,11 +1287,13 @@ facts.id = cards.factId""", id=model.id))
     def rebuildCSS(self):
         # css for all fields
         def _genCSS(prefix, row):
-            (id, fam, siz, col, align) = row
+            (id, fam, siz, col, align, rtl) = row
             t = ""
             if fam: t += 'font-family:"%s";' % toPlatformFont(fam)
             if siz: t += 'font-size:%dpx;' % siz
             if col: t += 'color:%s;' % col
+            if rtl == "rtl":
+                t += "direction:rtl;unicode-bidi:embed;"
             if align != -1:
                 if align == 0: align = "center"
                 elif align == 1: align = "left"
@@ -1299,13 +1303,13 @@ facts.id = cards.factId""", id=model.id))
                 t = "%s%s {%s}\n" % (prefix, hexifyID(id), t)
             return t
         css = "".join([_genCSS(".fm", row) for row in self.s.all("""
-select id, quizFontFamily, quizFontSize, quizFontColour, -1 from fieldModels""")])
+select id, quizFontFamily, quizFontSize, quizFontColour, -1, features from fieldModels""")])
         css += "".join([_genCSS("#cmq", row) for row in self.s.all("""
 select id, questionFontFamily, questionFontSize, questionFontColour,
-questionAlign from cardModels""")])
+questionAlign, 0 from cardModels""")])
         css += "".join([_genCSS("#cma", row) for row in self.s.all("""
 select id, answerFontFamily, answerFontSize, answerFontColour,
-answerAlign from cardModels""")])
+answerAlign, 0 from cardModels""")])
         css += "".join([".cmb%s {background:%s;}\n" %
         (hexifyID(row[0]), row[1]) for row in self.s.all("""
 select id, lastFontColour from cardModels""")])
@@ -1430,7 +1434,9 @@ where id in %s""" % ids2str(ids), new=new.id, ord=new.ordinal)
         # update q/a formats
         for cm in model.cardModels:
             cm.qformat = cm.qformat.replace("%%(%s)s" % field.name, "")
+            cm.qformat = cm.qformat.replace("%%(text:%s)s" % field.name, "")
             cm.aformat = cm.aformat.replace("%%(%s)s" % field.name, "")
+            cm.aformat = cm.aformat.replace("%%(text:%s)s" % field.name, "")
         self.updateCardsFromModel(model)
         model.setModified()
         self.flushMod()
@@ -1457,8 +1463,12 @@ update facts set modified = :t where modelId = :mid"""
         for cm in model.cardModels:
             cm.qformat = cm.qformat.replace(
                 "%%(%s)s" % field.name, "%%(%s)s" % newName)
+            cm.qformat = cm.qformat.replace(
+                "%%(text:%s)s" % field.name, "%%(text:%s)s" % newName)
             cm.aformat = cm.aformat.replace(
                 "%%(%s)s" % field.name, "%%(%s)s" % newName)
+            cm.aformat = cm.aformat.replace(
+                "%%(text:%s)s" % field.name, "%%(text:%s)s" % newName)
         field.name = newName
         model.setModified()
         self.flushMod()
@@ -1856,10 +1866,15 @@ where id = :id""", pending)
                 token = token[4:]
                 type = SEARCH_TAG
             elif token.startswith("is:"):
-                token = token[3:]
+                token = token[3:].lower()
                 type = SEARCH_TYPE
             elif token.startswith("fid:") and len(token) > 4:
-                token = token[4:]
+                dec = token[4:]
+                try:
+                    int(dec)
+                    token = token[4:]
+                except:
+                    token = "0"
                 type = SEARCH_FID
             else:
                 type = SEARCH_PHRASE
@@ -2081,13 +2096,23 @@ cardTags.tagId in %s""" % ids2str(ids)
             ret = not not int(ret)
         return ret
 
+    def getVar(self, key):
+        "Return value for key as string, or None."
+        return self.s.scalar("select value from deckVars where key = :k",
+                             k=key)
+
     def setVar(self, key, value, mod=True):
         if self.s.scalar("""
 select value = :value from deckVars
 where key = :key""", key=key, value=value):
             return
-        self.s.statement("insert or replace into deckVars (key, value) "
-                         "values (:key, :value)", key=key, value=value)
+        # can't use insert or replace as it confuses the undo code
+        if self.s.scalar("select 1 from deckVars where key = :key", key=key):
+            self.s.statement("update deckVars set value=:value where key = :key",
+                             key=key, value=value)
+        else:
+            self.s.statement("insert into deckVars (key, value) "
+                             "values (:key, :value)", key=key, value=value)
         if mod:
             self.setModified()
 
@@ -2238,6 +2263,7 @@ Return new path, relative to media dir."""
         self.s.flush()
 
     def saveAs(self, newPath):
+        "Returns new deck. Old connection is closed without saving."
         oldMediaDir = self.mediaDir()
         self.s.flush()
         # remove new deck if it exists
@@ -2245,43 +2271,41 @@ Return new path, relative to media dir."""
             os.unlink(newPath)
         except OSError:
             pass
-        # setup new db tables, then close
-        newDeck = DeckStorage.Deck(newPath)
-        newDeck.close()
-        # attach new db and copy everything in
-        s = self.s.statement
-        s("attach database :path as new", path=newPath)
-        s("delete from new.decks")
-        s("delete from new.stats")
-        s("delete from new.tags")
-        s("delete from new.cardTags")
-        s("delete from new.deckVars")
-        s("insert into new.decks select * from decks")
-        s("insert into new.fieldModels select * from fieldModels")
-        s("insert into new.modelsDeleted select * from modelsDeleted")
-        s("insert into new.cardModels select * from cardModels")
-        s("insert into new.facts select * from facts")
-        s("insert into new.fields select * from fields")
-        s("insert into new.cards select * from cards")
-        s("insert into new.factsDeleted select * from factsDeleted")
-        s("insert into new.reviewHistory select * from reviewHistory")
-        s("insert into new.cardsDeleted select * from cardsDeleted")
-        s("insert into new.models select * from models")
-        s("insert into new.stats select * from stats")
-        s("insert into new.media select * from media")
-        s("insert into new.tags select * from tags")
-        s("insert into new.cardTags select * from cardTags")
-        s("insert into new.deckVars select * from deckVars")
-        s("detach database new")
-        # close ourselves
-        self.s.commit()
+        self.startProgress()
+        # copy tables, avoiding implicit commit on current db
+        DeckStorage.Deck(newPath).close()
+        new = sqlite.connect(newPath)
+        for table in self.s.column0(
+            "select name from sqlite_master where type = 'table'"):
+            if table.startswith("sqlite_"):
+                continue
+            new.execute("delete from %s" % table)
+            cols = [str(x[1]) for x in new.execute(
+                "pragma table_info('%s')" % table).fetchall()]
+            q = "select 'insert into %(table)s values("
+            q += ",".join(["'||quote(\"" + col + "\")||'" for col in cols])
+            q += ")' from %(table)s"
+            q = q % {'table': table}
+            c = 0
+            for row in self.s.execute(q):
+                new.execute(row[0])
+                if c % 1000:
+                    self.updateProgress()
+                c += 1
+        # save new, close both
+        new.commit()
+        new.close()
         self.close()
-        # open new db
+        # open again in orm
         newDeck = DeckStorage.Deck(newPath)
         # move media
         if oldMediaDir:
             newDeck.renameMediaDir(oldMediaDir)
-        # and return the new deck object
+        # forget sync name
+        newDeck.syncName = None
+        newDeck.s.commit()
+        # and return the new deck
+        self.finishProgress()
         return newDeck
 
     # DB maintenance
@@ -2296,7 +2320,7 @@ Return new path, relative to media dir."""
         if quick:
             num = 4
         else:
-            num = 9
+            num = 10
         self.startProgress(num)
         self.updateProgress(_("Checking integrity..."))
         if self.s.scalar("pragma integrity_check") != "ok":
@@ -2394,6 +2418,11 @@ select id from fields where factId not in (select id from facts)""")
             # fix any priorities
             self.updateProgress(_("Updating priorities..."))
             self.updateAllPriorities(dirty=False)
+            # make sure
+            self.updateProgress(_("Updating ordinals..."))
+            self.s.statement("""
+update fields set ordinal = (select ordinal from fieldModels
+where id = fieldModelId)""")
             # fix problems with stripping html
             self.updateProgress(_("Rebuilding QA cache..."))
             fields = self.s.all("select id, value from fields")
@@ -2407,6 +2436,10 @@ select id from fields where factId not in (select id from facts)""")
             for m in self.models:
                 self.updateCardsFromModel(m, dirty=False)
             # force a full sync
+            self.s.flush()
+            self.s.statement("update cards set modified = :t", t=time.time())
+            self.s.statement("update facts set modified = :t", t=time.time())
+            self.s.statement("update models set modified = :t", t=time.time())
             self.lastSync = 0
             # rebuild
             self.updateProgress(_("Rebuilding types..."))
@@ -2504,7 +2537,10 @@ insert into undoLog values (null, 'insert into %(t)s (rowid""" % {'t': table}
         return self.undoEnabled and self.redoStack
 
     def resetUndo(self):
-        self.s.statement("delete from undoLog")
+        try:
+            self.s.statement("delete from undoLog")
+        except:
+            pass
         self.undoStack = []
         self.redoStack = []
 
@@ -2651,7 +2687,7 @@ backupDir = os.path.expanduser("~/.anki/backups")
 
 class DeckStorage(object):
 
-    def Deck(path=None, backup=True, lock=True):
+    def Deck(path=None, backup=True, lock=True, pool=True):
         "Create a new deck or attach to an existing one."
         create = True
         if path is None:
@@ -2664,7 +2700,7 @@ class DeckStorage(object):
             # sqlite needs utf8
             sqlpath = path.encode("utf-8")
         try:
-            (engine, session) = DeckStorage._attach(sqlpath, create)
+            (engine, session) = DeckStorage._attach(sqlpath, create, pool)
             s = session()
             metadata.create_all(engine)
             if create:
@@ -2702,11 +2738,12 @@ class DeckStorage(object):
             deck.needLock = lock
             deck.progressHandlerCalled = 0
             deck.progressHandlerEnabled = False
-            try:
-                deck.engine.raw_connection().set_progress_handler(
-                    deck.progressHandler, 100)
-            except:
-                print "please install pysqlite 2.4 for better progress dialogs"
+            if pool:
+                try:
+                    deck.engine.raw_connection().set_progress_handler(
+                        deck.progressHandler, 100)
+                except:
+                    print "please install pysqlite 2.4 for better progress dialogs"
             deck.engine.execute("pragma locking_mode = exclusive")
             deck.s = SessionHelper(s, lock=lock)
             # force a write lock
@@ -2731,7 +2768,7 @@ class DeckStorage(object):
                 deck.setVar("leechFails", 16)
             else:
                 if backup:
-                    DeckStorage.backup(deck.modified, path)
+                    DeckStorage.backup(deck, path)
                 deck._initVars()
                 try:
                     deck = DeckStorage._upgradeDeck(deck, path)
@@ -2778,15 +2815,21 @@ class DeckStorage(object):
         return deck
     Deck = staticmethod(Deck)
 
-    def _attach(path, create):
+    def _attach(path, create, pool=True):
         "Attach to a file, initializing DB"
         if path is None:
             path = "sqlite://"
         else:
             path = "sqlite:///" + path
-        engine = create_engine(path,
-                               strategy='threadlocal',
-                               connect_args={'timeout': 0})
+        if pool:
+            # open and lock connection for single use
+            engine = create_engine(path, connect_args={'timeout': 0},
+                                   strategy="threadlocal")
+        else:
+            # no pool & concurrent access w/ timeout
+            engine = create_engine(path,
+                                   poolclass=NullPool,
+                                   connect_args={'timeout': 60})
         session = sessionmaker(bind=engine,
                                autoflush=False,
                                autocommit=True)
@@ -3299,9 +3342,8 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
         deck.utcOffset = time.timezone + 60*60*4
     _setUTCOffset = staticmethod(_setUTCOffset)
 
-    def backup(modified, path):
+    def backup(deck, path):
         """Path must not be unicode."""
-        #path = os.path.join(backupDir, path)
         if not numBackups:
             return
         def escape(path):
@@ -3322,9 +3364,12 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
         # check if last backup is the same
         if backups:
             latest = os.path.join(backupDir, backups[-1][1])
-            if int(modified) == int(
+            if int(deck.modified) == int(
                 os.stat(latest)[stat.ST_MTIME]):
                 return
+        # check integrity
+        if not deck.s.scalar("pragma integrity_check") == "ok":
+            raise DeckAccessError(_("Deck is corrupt."), type="corrupt")
         # get next num
         if not backups:
             n = 1
@@ -3335,7 +3380,8 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
             re.sub("\.anki$", ".backup-%s.anki" % n, escp)))
         shutil.copy2(path, newpath)
         # set mtimes to be identical
-        os.utime(newpath, (modified, modified))
+        if deck.modified:
+            os.utime(newpath, (deck.modified, deck.modified))
         # remove if over
         if len(backups) + 1 > numBackups:
             delete = len(backups) + 1 - numBackups

@@ -43,7 +43,7 @@
        <number>0</number>
       </property>
       <property name="topMargin">
-       <number>0</number>
+       <number>4</number>
       </property>
       <property name="rightMargin">
        <number>0</number>
@@ -52,6 +52,13 @@
        <number>4</number>
       </property>
       <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Search:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLineEdit" name="filterEdit">
         <property name="text">
          <string/>
@@ -59,7 +66,44 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Filter:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QComboBox" name="tagList"/>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Sort:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="sortOrder">
+        <property name="maximumSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../icons.qrc">
+          <normaloff>:/icons/view-sort-ascending.png</normaloff>:/icons/view-sort-ascending.png</iconset>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QComboBox" name="sortBox"/>
@@ -167,7 +211,7 @@
      <x>0</x>
      <y>0</y>
      <width>599</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuEdit">
@@ -183,7 +227,6 @@
     <addaction name="separator"/>
     <addaction name="actionFindReplace"/>
     <addaction name="separator"/>
-    <addaction name="actionReverseOrder"/>
     <addaction name="separator"/>
     <addaction name="actionFont"/>
    </widget>
@@ -215,6 +258,7 @@
     <addaction name="actionTags"/>
     <addaction name="actionSort"/>
     <addaction name="actionFact"/>
+    <addaction name="actionCardList"/>
     <addaction name="separator"/>
     <addaction name="actionFirstCard"/>
     <addaction name="actionPreviousCard"/>
@@ -408,14 +452,6 @@
     <string>Ctrl+End</string>
    </property>
   </action>
-  <action name="actionReverseOrder">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Reverse &amp;Order</string>
-   </property>
-  </action>
   <action name="actionGuide">
    <property name="icon">
     <iconset resource="../icons.qrc">
@@ -537,6 +573,18 @@
    </property>
    <property name="text">
     <string>Toggle Mark</string>
+   </property>
+  </action>
+  <action name="actionCardList">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/icons/generate_07.png</normaloff>:/icons/generate_07.png</iconset>
+   </property>
+   <property name="text">
+    <string>Card List</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
  </widget>

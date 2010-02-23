@@ -122,9 +122,9 @@ class Importer(object):
             if cm.active: active += 1
         if active > 1 and not self.multipleCardsAllowed:
             raise ImportFormatError(type="tooManyCards",
-                info=_("""
-The current importer only supports a single active card template. Please disable
-all but one card template."""))
+                info=_("""\
+The current importer only supports a single active card template. Please disable\
+ all but one card template."""))
         # strip invalid cards
         cards = self.stripInvalid(cards)
         cards = self.stripOrTagDupes(cards)
@@ -145,10 +145,17 @@ all but one card template."""))
         # add facts
         self.deck.updateProgress()
         factIds = [genID() for n in range(len(cards))]
+        def fudgeCreated(d, tmp=[]):
+            if not tmp:
+                tmp.append(time.time())
+            else:
+                tmp[0] += 0.00001
+            d['created'] = tmp[0]
+            return d
         self.deck.s.execute(factsTable.insert(),
-            [{'modelId': self.model.id,
+            [fudgeCreated({'modelId': self.model.id,
               'tags': canonifyTags(self.tagsToAdd + " " + cards[n].tags),
-              'id': factIds[n]} for n in range(len(cards))])
+              'id': factIds[n]}) for n in range(len(cards))])
         self.deck.factCount += len(factIds)
         self.deck.s.execute("""
 delete from factsDeleted
@@ -196,11 +203,13 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         "Add any scheduling metadata to cards"
         if 'fields' in card.__dict__:
             del card.fields
-        data['created'] = self._now
-        data['modified'] = self._now
-        data['due'] = self._now
+        t = self._now + data['ordinal']
+        data['created'] = t
+        data['modified'] = t
+        data['due'] = t
         self._now += .00001
         data.update(card.__dict__)
+        data['tags'] = u""
         self.cardIds.append(data['id'])
         data['combinedDue'] = data['due']
         data['isDue'] = data['combinedDue'] < time.time()
@@ -235,7 +244,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
             fmid=field.id))
 
     def cardIsUnique(self, card):
-        fields = []
+        fieldsAsTags = []
         for n in range(len(self.mapping)):
             if self.mapping[n] and self.mapping[n].unique:
                 if card.fields[n] in self.uniqueCache[self.mapping[n].id]:
@@ -244,12 +253,12 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                                         (self.mapping[n].name,
                                          ", ".join(card.fields)))
                         return False
-                    fields.append(self.mapping[n].name)
+                    fieldsAsTags.append(self.mapping[n].name.replace(" ", "-"))
                 else:
                     self.uniqueCache[self.mapping[n].id][card.fields[n]] = 1
-        if fields:
+        if fieldsAsTags:
             card.tags += u" Duplicate:" + (
-                "+".join(fields))
+                "+".join(fieldsAsTags))
             card.tags = canonifyTags(card.tags)
         return True
 
@@ -261,6 +270,7 @@ from anki.importing.anki10 import Anki10Importer
 from anki.importing.mnemosyne10 import Mnemosyne10Importer
 from anki.importing.wcu import WCUImporter
 from anki.importing.supermemo_xml import SupermemoXmlImporter
+from anki.importing.dingsbums import DingsBumsImporter
 
 Importers = (
     (_("Text separated by tabs or semicolons (*)"), TextImporter),
@@ -268,4 +278,5 @@ Importers = (
     (_("Mnemosyne Deck (*.mem)"), Mnemosyne10Importer),
     (_("CueCard Deck (*.wcu)"), WCUImporter),
     (_("Supermemo XML export (*.xml)"), SupermemoXmlImporter),
+    (_("DingsBums?! Deck (*.xml)"), DingsBumsImporter),
     )

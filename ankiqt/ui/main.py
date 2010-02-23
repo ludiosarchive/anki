@@ -2,16 +2,14 @@
 # -*- coding: utf-8 -*-
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-from PyQt4.QtWebKit import QWebPage
 
-import os, sys, re, types, gettext, stat, traceback, inspect
+import os, sys, re, types, gettext, stat, traceback, inspect, signal
 import shutil, time, glob, tempfile, datetime, zipfile, locale
 from operator import itemgetter
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from PyQt4.QtWebKit import QWebPage
 from anki import DeckStorage
 from anki.errors import *
 from anki.sound import hasSound, playFromText, clearAudioQueue, stripSounds
@@ -32,69 +30,79 @@ config = ankiqt.config
 class AnkiQt(QMainWindow):
     def __init__(self, app, config, args):
         QMainWindow.__init__(self)
-        self.errorOccurred = False
-        self.inDbHandler = False
-        self.reviewingStarted = False
-        if sys.platform.startswith("darwin"):
-            qt_mac_set_menubar_icons(False)
-        ankiqt.mw = self
-        self.app = app
-        self.config = config
-        self.deck = None
-        self.state = "initial"
-        self.hideWelcome = False
-        self.views = []
-        self.setLang()
-        self.setupStyle()
-        self.setupFonts()
-        self.setupBackupDir()
-        self.setupProxy()
-        self.setupMainWindow()
-        self.setupDeckBrowser()
-        self.setupSystemHacks()
-        self.setupSound()
-        self.setupTray()
-        self.connectMenuActions()
-        ui.splash.update()
-        self.setupViews()
-        self.setupEditor()
-        self.setupStudyScreen()
-        self.setupButtons()
-        self.setupAnchors()
-        self.setupToolbar()
-        self.setupProgressInfo()
-        self.setupBackups()
-        if self.config['mainWindowState']:
-            self.restoreGeometry(self.config['mainWindowGeom'])
-            self.restoreState(self.config['mainWindowState'])
-        else:
-            self.resize(500, 500)
-        # load deck
-        ui.splash.update()
-        if (args or self.config['loadLastDeck'] or
-            len(self.config['recentDeckPaths']) == 1) and \
-            not self.maybeLoadLastDeck(args):
-            self.setEnabled(True)
-        self.moveToState("auto")
-        # check for updates
-        ui.splash.update()
-        self.setupErrorHandler()
-        self.setupMisc()
-        self.loadPlugins()
-        self.setupAutoUpdate()
-        self.rebuildPluginsMenu()
-        # run after-init hook
         try:
-            runHook('init')
+            self.errorOccurred = False
+            self.inDbHandler = False
+            self.reviewingStarted = False
+            if sys.platform.startswith("darwin"):
+                qt_mac_set_menubar_icons(False)
+            ankiqt.mw = self
+            self.app = app
+            self.config = config
+            self.deck = None
+            self.state = "initial"
+            self.hideWelcome = False
+            self.views = []
+            self.setLang()
+            self.setupStyle()
+            self.setupFonts()
+            self.setupBackupDir()
+            self.setupProxy()
+            self.setupMainWindow()
+            self.setupDeckBrowser()
+            self.setupSystemHacks()
+            self.setupSound()
+            self.setupTray()
+            self.connectMenuActions()
+            ui.splash.update()
+            self.setupViews()
+            self.setupEditor()
+            self.setupStudyScreen()
+            self.setupButtons()
+            self.setupAnchors()
+            self.setupToolbar()
+            self.setupProgressInfo()
+            self.setupBackups()
+            if self.config['mainWindowState']:
+                self.restoreGeometry(self.config['mainWindowGeom'])
+                self.restoreState(self.config['mainWindowState'])
+            else:
+                self.resize(500, 500)
+            # load deck
+            ui.splash.update()
+            if (args or self.config['loadLastDeck'] or
+                len(self.config['recentDeckPaths']) == 1) and \
+                not self.maybeLoadLastDeck(args):
+                self.setEnabled(True)
+            self.moveToState("auto")
+            # check for updates
+            ui.splash.update()
+            self.setupErrorHandler()
+            self.setupMisc()
+            self.loadPlugins()
+            self.setupAutoUpdate()
+            self.rebuildPluginsMenu()
+            # run after-init hook
+            try:
+                runHook('init')
+            except:
+                ui.utils.showWarning(
+                    _("Broken plugin:\n\n%s") %
+                    unicode(traceback.format_exc(), "utf-8", "replace"))
+            ui.splash.update()
+            ui.splash.finish(self)
+            self.show()
+            if (self.deck and self.config['syncOnLoad'] and
+                self.deck.syncName):
+                self.syncDeck(interactive=False)
+            signal.signal(signal.SIGINT, self.onSigInt)
         except:
-            ui.utils.showWarning(_("Broken plugin:\n\n%s") %
-                                 traceback.format_exc())
-        ui.splash.update()
-        ui.splash.finish(self)
-        self.show()
-        if (self.deck and self.config['syncOnLoad'] and
-            self.deck.syncName):
-            self.syncDeck(interactive=False)
+            ui.utils.showInfo("Error during startup:\n%s" %
+                              traceback.format_exc())
+            sys.exit(1)
+
+    def onSigInt(self, signum, frame):
+        self.close()
 
     def setupMainWindow(self):
         # main window
@@ -222,6 +230,7 @@ Please do not file a bug report with Anki.<br>""")
             diag.setMinimumHeight(400)
             diag.setMinimumWidth(500)
             diag.exec_()
+            self.clearProgress()
 
     def closeAllDeckWindows(self):
         ui.dialogs.closeAll()
@@ -278,6 +287,7 @@ Please do not file a bug report with Anki.<br>""")
                 return self.moveToState("noDeck")
         elif state == "auto":
             self.currentCard = None
+            self.lastCard = None
             if self.deck:
                 if self.state == "studyScreen":
                     return self.moveToState("studyScreen")
@@ -329,6 +339,7 @@ Please do not file a bug report with Anki.<br>""")
             self.switchToWelcomeScreen()
             self.disableCardMenuItems()
         elif state == "deckFinished":
+            self.currentCard = None
             self.deck.s.flush()
             self.hideButtons()
             self.disableCardMenuItems()
@@ -339,6 +350,7 @@ Please do not file a bug report with Anki.<br>""")
             self.bodyView.setState(state)
             # focus finish button
             self.mainWin.finishButton.setFocus()
+            runHook('deckFinished')
         elif state == "showQuestion":
             self.reviewingStarted = True
             if self.deck.mediaDir():
@@ -447,7 +459,7 @@ Please do not file a bug report with Anki.<br>""")
                 self.save()
         self.moveToState("getQuestion")
 
-    def onCardAnsweredHook(self, card, isLeech):
+    def onCardAnsweredHook(self, cardId, isLeech):
         if not isLeech:
             self.setNotice()
             return
@@ -455,7 +467,8 @@ Please do not file a bug report with Anki.<br>""")
 <b>%s</b>... is a <a href="http://ichi2.net/anki/wiki/Leeches">leech</a>.""")
                % stripHTML(stripSounds(self.currentCard.question)).\
                replace("\n", " ")[0:30])
-        if isLeech:
+        if isLeech and self.deck.s.scalar(
+            "select 1 from cards where id = :id and priority < 1", id=cardId):
             txt += _(" It has been suspended.")
         self.setNotice(txt)
 
@@ -600,9 +613,7 @@ new:
         self.typeAnswerShowButton = QPushButton(_("Show Answer"))
         hbox = QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        hbox.addStretch(0)
         hbox.addWidget(self.typeAnswerShowButton)
-        hbox.addStretch(0)
         vbox.addLayout(hbox)
         self.connect(self.typeAnswerShowButton, SIGNAL("clicked()"),
                      lambda: self.moveToState("showAnswer"))
@@ -628,13 +639,22 @@ new:
         self.mainWin.buttonStack.setCurrentIndex(1)
         self.mainWin.buttonStack.show()
         self.mainWin.buttonStack.setLayoutDirection(Qt.LeftToRight)
-        if self.defaultEaseButton() == 2:
-            self.mainWin.easeButton2.setFocus()
+        if self.learningButtons():
+            self.mainWin.easeButton2.setText(_("Good"))
+            self.mainWin.easeButton3.setText(_("Easy"))
+            self.mainWin.easeButton4.setText(_("Very Easy"))
         else:
-            self.mainWin.easeButton3.setFocus()
+            self.mainWin.easeButton2.setText(_("Hard"))
+            self.mainWin.easeButton3.setText(_("Good"))
+            self.mainWin.easeButton4.setText(_("Easy"))
+        getattr(self.mainWin, "easeButton%d" % self.defaultEaseButton()).\
+                              setFocus()
+
+    def learningButtons(self):
+        return not self.currentCard.successive
 
     def defaultEaseButton(self):
-        if self.currentCard.reps and not self.currentCard.successive:
+        if not self.currentCard.successive:
             return 2
         else:
             return 3
@@ -677,24 +697,15 @@ new:
         except Exception, e:
             if hasattr(e, 'data') and e.data.get('type') == 'inuse':
                 if interactive:
-                    ui.utils.showInfo(_("Deck is already open."))
+                    ui.utils.showWarning(_("Deck is already open."))
+                else:
+                    return
             else:
-                fmt = traceback.format_exc().split("\n")
-                fmt1 = "\n".join(fmt[0:3])
-                fmt2 = "\n".join(fmt[-3:])
-                ui.utils.showInfo(_("""\
-Unable to load deck.
-
-Possible reasons:
- - file is not an Anki deck
- - deck is read only
- - directory is read only
- - deck was created with Anki < 0.9
-
-To upgrade an old deck, download Anki 0.9.8.7."""))
-                traceback.print_exc()
+                ui.utils.showCritical(_("""\
+File is corrupt or not an Anki database. Click help for more info.\n
+Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
             self.moveToState("noDeck")
-            return
+            return 0
         if media is not None:
             self.deck.forceMediaDir = media
         if uprecent:
@@ -756,7 +767,6 @@ To upgrade an old deck, download Anki 0.9.8.7."""))
         if path in self.config['recentDeckPaths']:
             self.config['recentDeckPaths'].remove(path)
         self.config['recentDeckPaths'].insert(0, path)
-        del self.config['recentDeckPaths'][20:]
         self.config.save()
 
     def onSwitchToDeck(self):
@@ -767,7 +777,8 @@ To upgrade an old deck, download Anki 0.9.8.7."""))
         self.switchDecks = (
             [(os.path.basename(x).replace(".anki", ""), x)
              for x in self.config['recentDeckPaths']
-             if not self.deck or self.deck.path != x])
+             if not self.deck or self.deck.path != x and
+             os.path.exists(x)])
         self.switchDecks.sort()
         combo.addItems(QStringList([x[0] for x in self.switchDecks]))
         self.connect(combo, SIGNAL("activated(int)"),
@@ -793,7 +804,7 @@ To upgrade an old deck, download Anki 0.9.8.7."""))
     ##########################################################################
 
     def onClose(self):
-        if self.inMainWindow():
+        if self.inMainWindow() or not self.app.activeWindow():
             isCram = self.isCramming()
             self.saveAndClose(hideWelcome=isCram)
             if isCram:
@@ -952,24 +963,55 @@ To upgrade an old deck, download Anki 0.9.8.7."""))
             return True
 
     def showToolTip(self, msg):
-        t = QTimer(self)
-        t.setSingleShot(True)
-        t.start(200)
-        self.connect(t, SIGNAL("timeout()"),
-                     lambda msg=msg: self._showToolTip(msg))
-
-    def _showToolTip(self, msg):
-        QToolTip.showText(
-            self.mainWin.statusbar.mapToGlobal(QPoint(0, -40)),
-            """\
+        class CustomLabel(QLabel):
+            def mousePressEvent(self, evt):
+                evt.accept()
+                self.hide()
+        old = getattr(self, 'toolTipFrame', None)
+        if old:
+            old.deleteLater()
+        old = getattr(self, 'toolTipTimer', None)
+        if old:
+            old.stop()
+            old.deleteLater()
+        self.toolTipLabel = CustomLabel("""\
 <table cellpadding=10>
 <tr>
 <td><img src=":/icons/help-hint.png"></td>
 <td>%s</td>
 </tr>
 </table>""" % msg)
+        self.toolTipLabel.setFrameStyle(QFrame.Panel)
+        self.toolTipLabel.setLineWidth(2)
+        self.toolTipLabel.setWindowFlags(Qt.ToolTip)
+        p = QPalette()
+        p.setColor(QPalette.Window, QColor("#feffc4"))
+        self.toolTipLabel.setPalette(p)
+        aw = (self.app.instance().activeWindow() or
+              self)
+        self.toolTipLabel.move(
+            aw.mapToGlobal(QPoint(0, -100 + aw.height())))
+        self.toolTipLabel.show()
+        self.toolTipTimer = QTimer(self)
+        self.toolTipTimer.setSingleShot(True)
+        self.toolTipTimer.start(5000)
+        self.connect(self.toolTipTimer, SIGNAL("timeout()"),
+                     self.closeToolTip)
+
+    def closeToolTip(self):
+        label = getattr(self, 'toolTipLabel', None)
+        if label:
+            label.deleteLater()
+            self.toolTipLabel = None
+        timer = getattr(self, 'toolTipTimer', None)
+        if timer:
+            timer.stop()
+            timer.deleteLater()
+            self.toolTipTimer = None
 
     def save(self, required=False):
+        if not self.deck.modifiedSinceSave():
+            return True
         if not self.deck.path:
             if required:
                 # backed in memory, make sure it's saved
@@ -981,8 +1023,6 @@ Careful. You're editing an unsaved Deck.<br>
 Choose File -> Save to start autosaving<br>
 your deck."""))
             return
-        if not self.deck.modifiedSinceSave():
-            return True
         self.deck.save()
         self.updateTitleBar()
         return True
@@ -1015,6 +1055,7 @@ your deck."""))
             if not ui.utils.askUser(
                 "This file exists. Are you sure you want to overwrite it?"):
                 return
+        self.closeAllDeckWindows()
         self.deck = self.deck.saveAs(file)
         self.deck.initUndo()
         self.updateTitleBar()
@@ -1052,7 +1093,7 @@ your deck."""))
         self.browserLastRefreshed = 0
         self.browserDecks = []
 
-    def refreshBrowserDecks(self):
+    def refreshBrowserDecks(self, forget=False):
         self.browserDecks = []
         if not self.config['recentDeckPaths']:
             return
@@ -1064,9 +1105,11 @@ your deck."""))
                 self.updateProgress(_("Checking deck %(x)d of %(y)d...") % {
                     'x': c+1, 'y': len(self.config['recentDeckPaths'])})
             if not os.path.exists(d):
-                toRemove.append(d)
+                if forget:
+                    toRemove.append(d)
                 continue
             try:
+                mod = os.stat(d)[stat.ST_MTIME]
                 deck = DeckStorage.Deck(d, backup=False)
                 self.browserDecks.append({
                     'path': d,
@@ -1078,12 +1121,12 @@ your deck."""))
                     'reps': deck._dailyStats.reps,
                     })
                 deck.close()
+                os.utime(d, (mod, mod))
             except Exception, e:
-                if not "File is in use" in str(e):
-                    toRemove.append(d)
-                else:
-                    print "ignoring", d
+                if "File is in use" in str(e):
                     continue
+                else:
+                    toRemove.append(d)
         for d in toRemove:
             self.config['recentDeckPaths'].remove(d)
         self.config.save()
@@ -1116,6 +1159,7 @@ your deck."""))
         import sip
         focusButton = None
         # remove all widgets from layout & layout itself
+        self.moreMenus = []
         if self.decksFrame.layout():
             while 1:
                 obj = self.decksFrame.layout().takeAt(0)
@@ -1199,31 +1243,45 @@ your deck."""))
                 if c == 0:
                     focusButton = openButton
                 # more
-                moreButton = QComboBox()
+                moreButton = QPushButton(_("More"))
                 if sys.platform.startswith("darwin"):
                     moreButton.setFixedWidth(80)
                 if sys.platform.startswith("win32") and \
                    self.config['alternativeTheme']:
                         moreButton.setFixedHeight(24)
-                moreButton.addItems(QStringList([
-                    _("More"),
-                    _("Forget"),
-                    _("Delete")]))
-                moreButton.setToolTip(
-                    _("Forget removes the deck from the list without deleting."))
-                self.connect(moreButton, SIGNAL("currentIndexChanged(int)"),
-                             lambda idx, c=c: self.onDeckBrowserMore(idx, c))
+                moreMenu = QMenu()
+                a = moreMenu.addAction(QIcon(":/icons/edit-undo.png"),
+                                       _("Hide From List"))
+                a.connect(a, SIGNAL("activated()"),
+                          lambda c=c: self.onDeckBrowserForget(c))
+                a = moreMenu.addAction(QIcon(":/icons/editdelete.png"),
+                                       _("Delete"))
+                a.connect(a, SIGNAL("activated()"),
+                          lambda c=c: self.onDeckBrowserDelete(c))
+                moreButton.setMenu(moreMenu)
+                self.moreMenus.append(moreMenu)
                 layout.addWidget(moreButton, c+1, 6)
             refresh = QPushButton(_("Refresh"))
             refresh.setToolTip(_("Check due counts again (F5)"))
             refresh.setShortcut(_("F5"))
             self.connect(refresh, SIGNAL("clicked()"),
                          self.forceBrowserRefresh)
-            layout.addWidget(refresh, c+2, 5)
+            layout.addItem(QSpacerItem(1,20, QSizePolicy.Preferred,
+                                       QSizePolicy.Preferred), c+2, 5)
+            layout.addWidget(refresh, c+3, 5)
+            more = QPushButton(_("More"))
+            moreMenu = QMenu()
+            a = moreMenu.addAction(QIcon(":/icons/edit-undo.png"),
+                                   _("Forget Inaccessible Decks"))
+            a.connect(a, SIGNAL("activated()"),
+                      self.onDeckBrowserForgetInaccessible)
+            more.setMenu(moreMenu)
+            layout.addWidget(more, c+3, 6)
+            self.moreMenus.append(moreMenu)
             # make sure top labels don't expand
             layout.addItem(QSpacerItem(1,1, QSizePolicy.Expanding,
                                        QSizePolicy.Expanding),
-                           c+3, 5)
+                           c+4, 5)
             # summarize
             reps = 0
             mins = 0
@@ -1236,13 +1294,13 @@ your deck."""))
                 "Studied <b>%(reps)d cards</b> in <b>%(time)s</b> today.",
                 reps) % {
                 'reps': reps,
-                'time': anki.utils.fmtTimeSpan(mins),
+                'time': anki.utils.fmtTimeSpan(mins, point=2),
                 })
         else:
             l = QLabel(_("""\
 <br>
 <font size=+1>
-Welcome to Anki! Click <b>download deck</b> to get started. You can return here
+Welcome to Anki! Click <b>'Download'</b> to get started. You can return here
 later by using File>Close.
 </font>
 <br>
@@ -1255,23 +1313,23 @@ later by using File>Close.
         # do this last
         self.switchToDecksScreen()
 
-    def onDeckBrowserMore(self, idx, c):
-        if idx == 0:
-            return
-        elif idx == 1:
-            # forget
-            if ui.utils.askUser(_("Forget %s?") % self.browserDecks[c]['name']):
-                self.config['recentDeckPaths'].remove(self.browserDecks[c]['path'])
-                del self.browserDecks[c]
+    def onDeckBrowserForget(self, c):
+        if ui.utils.askUser(_("Hide %s from the list?") % self.browserDecks[c]['name'],
+                            help="DeckBrowser"):
+            self.config['recentDeckPaths'].remove(self.browserDecks[c]['path'])
+            del self.browserDecks[c]
             self.showDeckBrowser()
-        elif idx == 2:
-            # delete
-            deck = self.browserDecks[c]['path']
-            if ui.utils.askUser(_("Delete %s?") % self.browserDecks[c]['name']):
-                del self.browserDecks[c]
-                os.unlink(deck)
-                self.config['recentDeckPaths'].remove(deck)
+
+    def onDeckBrowserDelete(self, c):
+        deck = self.browserDecks[c]['path']
+        if ui.utils.askUser(_("Delete %s?") % self.browserDecks[c]['name']):
+            del self.browserDecks[c]
+            os.unlink(deck)
+            self.config['recentDeckPaths'].remove(deck)
             self.showDeckBrowser()
+
+    def onDeckBrowserForgetInaccessible(self):
+        self.refreshBrowserDecks(forget=True)
 
     # Opening and closing the app
     ##########################################################################
@@ -1418,12 +1476,13 @@ later by using File>Close.
             if getattr(obj, field) != value:
                 setattr(obj, field, value)
                 self.deck.flushMod()
-        if self.deck.newCardOrder == 0 and ncOrd != 0:
-            # random to non-random
-            self.deck.startProgress()
-            self.deck.updateProgress(_("Ordering..."))
-            self.deck.orderNewCards()
-            self.deck.finishProgress()
+        if ncOrd != 0:
+            if self.deck.newCardOrder == 0:
+                # need to put back in order
+                self.deck.startProgress()
+                self.deck.updateProgress(_("Ordering..."))
+                self.deck.orderNewCards()
+                self.deck.finishProgress()
             uf(self.deck, 'newCardOrder', ncOrd)
         elif ncOrd == 0:
             # (re-)randomize
@@ -1645,6 +1704,7 @@ learnt today")
 
     def onCardStats(self):
         addHook("showQuestion", self.onCardStats)
+        addHook("deckFinished", self.onCardStats)
         txt = ""
         if self.currentCard:
             txt += _("<h1>Current card</h1>")
@@ -1659,8 +1719,14 @@ learnt today")
     def removeCardStatsHook(self):
         "Remove the update hook if the help menu was changed."
         removeHook("showQuestion", self.onCardStats)
+        removeHook("deckFinished", self.onCardStats)
 
     def onShowGraph(self):
+        if ui.utils.pyQtBroken:
+            ui.utils.showInfo(
+                "Your PyQt installation is broken. "
+                "Please upgrade or downgrade PyQt.")
+            return
         self.setStatus(_("Loading graphs (may take time)..."))
         self.app.processEvents()
         import anki.graphs
@@ -1720,8 +1786,9 @@ learnt today")
         undo = _("Bury")
         self.deck.setUndoStart(undo)
         for card in self.currentCard.fact.cards:
-            card.priority = -2
-            card.isDue = 0
+            if card.priority > 0:
+                card.priority = -2
+                card.isDue = 0
         self.deck.flushMod()
         self.reset()
         self.deck.setUndoEnd(undo)
@@ -1892,6 +1959,9 @@ You are currently cramming. Please close this deck first."""))
         d.syncName = None
         d.suspended = u""
         self.deck.updateProgress()
+        # unsuspend cards
+        d.unsuspendCards(d.s.column0("select id from cards where priority = -3"))
+        self.deck.updateProgress()
         d.updateAllPriorities()
         d.utcOffset = -1
         d.flushMod()
@@ -1928,7 +1998,7 @@ http://anki.ichi2.net/file/upload</a>, or email
 it to your friends.
 </body></html>''')
         readme.close()
-        zip.write(readmep, "README.txt")
+        zip.write(readmep, "README.html")
         zip.write(path, "shared.anki")
         if mdir:
             for f in os.listdir(mdir):
@@ -1950,20 +2020,23 @@ it to your friends.
         self.deck.newEarly = True
         self.reset()
         self.showToolTip(_("""\
-<h1>Learning More</h1>Click the clock in the toolbar to finish."""))
+<h1>Learning More</h1>Click the stopwatch at the top to finish."""))
 
     def onReviewEarly(self):
         self.deck.reviewEarly = True
         self.reset()
         self.showToolTip(_("""\
-<h1>Reviewing Early</h1>Click the clock in the toolbar to finish."""))
+<h1>Reviewing Early</h1>Click the stopwatch at the top to finish."""))
 
     # Language handling
     ##########################################################################
 
     def setLang(self):
         "Set the user interface language."
-        locale.setlocale(locale.LC_ALL, '')
+        try:
+            locale.setlocale(locale.LC_ALL, '')
+        except:
+            pass
         languageDir="/usr/share/locale"
         self.languageTrans = gettext.translation('ankiqt', languageDir,
                                             languages=[self.config["interfaceLang"]],
@@ -1973,7 +2046,7 @@ it to your friends.
             self.mainWin.retranslateUi(self)
         anki.lang.setLang(self.config["interfaceLang"], local=False)
         self.updateTitleBar()
-        if self.config['interfaceLang'] in ("he","ar") and \
+        if self.config['interfaceLang'] in ("he","ar","fa") and \
                not self.config['forceLTR']:
             self.app.setLayoutDirection(Qt.RightToLeft)
         else:
@@ -2072,20 +2145,18 @@ it to your friends.
         "Reopen after sync finished."
         self.mainWin.buttonStack.show()
         if self.loadAfterSync:
-            uprecent = self.loadAfterSync != 2
-            self.loadDeck(self.deckPath, sync=False, uprecent=uprecent)
+            if self.loadAfterSync == 2:
+                name = re.sub("[<>]", "", self.syncName)
+                p = os.path.join(self.documentDir, name + ".anki")
+                if os.path.exists(p):
+                    p = os.path.join(self.documentDir,
+                                     name + "%d.anki" % time.time())
+                shutil.copy2(self.deckPath, p)
+                self.deckPath = p
+            self.loadDeck(self.deckPath, sync=False)
             self.deck.syncName = self.syncName
             self.deck.s.flush()
             self.deck.s.commit()
-            if self.loadAfterSync == 2:
-                # ugly hack for open online: mark temp deck as in-memory
-                self.deck.tmpMediaDir = re.sub(
-                    "(?i)\.(anki)$", ".media", self.deck.path)
-                self.deck.path = None
-                self.deck.flushMod()
-                if not self.onSaveAs():
-                    self.deck = None
-                    self.moveToState("noDeck")
         elif not self.hideWelcome:
             self.moveToState("noDeck")
         self.deckPath = None
@@ -2113,7 +2184,7 @@ it to your friends.
 
     def syncClockOff(self, diff):
         ui.utils.showWarning(
-            _("Your computer clock is not set to the correct time.\n") +
+            _("The time or date on your computer is not correct.\n") +
             ngettext("It is off by %d second.\n\n",
                 "It is off by %d seconds.\n\n", diff) % diff +
             _("Since this can cause many problems with syncing,\n"
@@ -2236,7 +2307,6 @@ it to your friends.
         self.connect(m.actionRepeatAudio, s, self.onRepeatAudio)
         self.connect(m.actionUndo, s, self.onUndo)
         self.connect(m.actionRedo, s, self.onRedo)
-        self.connect(m.actionCheckDatabaseIntegrity, s, self.onQuickCheckDB)
         self.connect(m.actionFullDatabaseCheck, s, self.onCheckDB)
         self.connect(m.actionOptimizeDatabase, s, self.onOptimizeDB)
         self.connect(m.actionCheckMediaDatabase, s, self.onCheckMediaDB)
@@ -2263,6 +2333,7 @@ it to your friends.
             getattr(self.mainWin, "action" + item).setEnabled(enabled)
         if not enabled:
             self.disableCardMenuItems()
+        runHook("enableDeckMenuItems", enabled)
 
     def disableDeckMenuItems(self):
         "Disable deck-related items."
@@ -2361,7 +2432,7 @@ it to your friends.
         else:
             ret = _("early")
         ui.utils.showWarning(
-            _("Your computer clock is not set to the correct time.\n") +
+            _("The time or date on your computer is not correct.\n") +
             ngettext("It is %(sec)d second %(type)s.\n",
                 "It is %(sec)d seconds %(type)s.\n", abs(diff))
                 % {"sec": abs(diff), "type": ret} +
@@ -2508,12 +2579,7 @@ it to your friends.
     ##########################################################################
 
     def setupStyle(self):
-        try:
-            styleFile = open(os.path.join(self.config.configPath,
-                                          "style.css"))
-            self.setStyleSheet(styleFile.read())
-        except (IOError, OSError):
-            pass
+        ui.utils.applyStyles(self)
 
     # Sounds
     ##########################################################################
@@ -2529,7 +2595,8 @@ it to your friends.
     def onRepeatAudio(self):
         clearAudioQueue()
         if (not self.currentCard.cardModel.questionInAnswer
-            or self.state == "showQuestion"):
+            or self.state == "showQuestion") and \
+            self.config['repeatQuestionAudio']:
             playFromText(self.currentCard.question)
         if self.state != "showQuestion":
             playFromText(self.currentCard.answer)
@@ -2569,32 +2636,45 @@ it to your friends.
         if self.mainThread != QThread.currentThread():
             return
         self.setBusy()
-        parent = self.progressParent or self.app.activeWindow() or self
-        if self.progressWins:
-            parent = self.progressWins[-1].diag
-        p = ui.utils.ProgressWin(parent, max, min, title)
+        if not self.progressWins:
+            parent = self.progressParent or self.app.activeWindow() or self
+            p = ui.utils.ProgressWin(parent, max, min, title)
+        else:
+            p = None
         self.progressWins.append(p)
 
     def updateProgress(self, label=None, value=None, process=True):
         if self.mainThread != QThread.currentThread():
             return
-        if self.progressWins:
-            self.progressWins[-1].update(label, value, process)
+        if len(self.progressWins) == 1:
+            self.progressWins[0].update(label, value, process)
+        else:
+            # just redraw
+            if process:
+                self.app.processEvents()
 
     def finishProgress(self):
         if self.mainThread != QThread.currentThread():
             return
         if self.progressWins:
             p = self.progressWins.pop()
-            p.finish()
+            if p:
+                p.finish()
         if not self.progressWins:
             self.unsetBusy()
+
+    def clearProgress(self):
+        # recover on error
+        self.progressWins = []
+        self.finishProgress()
 
     def onDbProgress(self):
         if self.mainThread != QThread.currentThread():
             return
         self.setBusy()
         self.inDbHandler = True
+        if self.progressWins:
+            self.progressWins[0].maybeShow()
         self.app.processEvents(QEventLoop.ExcludeUserInputEvents)
         self.inDbHandler = False
 
@@ -2623,16 +2703,13 @@ it to your friends.
     # Advanced features
     ##########################################################################
 
-    def onQuickCheckDB(self):
-        self.onCheckDB(full=False)
-
-    def onCheckDB(self, full=True):
+    def onCheckDB(self):
         "True if no problems"
         if self.errorOccurred:
             ui.utils.showWarning(_(
                 "Please restart Anki before checking the DB."))
             return
-        if full and not ui.utils.askUser(_("""\
+        if not ui.utils.askUser(_("""\
 This operation will find and fix some common problems.<br>
 <br>
 On the next sync, all cards will be sent to the server.<br>
@@ -2641,9 +2718,10 @@ Any changes on the server since your last sync will be lost.<br>
 <b>This operation is not undoable.</b><br>
 Proceed?""")):
             return
-        ret = self.deck.fixIntegrity(quick=not full)
+        ret = self.deck.fixIntegrity()
         if ret == "ok":
             ret = True
+            ui.utils.showInfo(_("No problems found."))
         else:
             ret = _("Problems found:\n%s") % ret
             diag = QDialog(self)
@@ -2720,7 +2798,8 @@ Consider backing up your media directory first."""))
         anki.latex.cacheAllLatexImages(self.deck)
 
     def onUncacheLatex(self):
-        anki.latex.deleteAllLatexImages(self.deck)
+        if ui.utils.askUser(_("Delete LaTeX image cache?")):
+            anki.latex.deleteAllLatexImages(self.deck)
 
     def onExportOriginal(self):
         cnt = anki.media.exportOriginalFiles(self.deck)
@@ -2745,6 +2824,7 @@ Consider backing up your media directory first."""))
             self.connect(self.minimizeShortcut, SIGNAL("activated()"),
                          self.onMacMinimize)
             self.hideAccelerators()
+            self.hideStatusTips()
         if sys.platform.startswith("win32"):
             self.mainWin.deckBrowserOuterFrame.setFrameStyle(QFrame.Panel)
             self.mainWin.frame_2.setFrameStyle(QFrame.Panel)
@@ -2757,6 +2837,10 @@ Consider backing up your media directory first."""))
             if m:
                 action.setText(m.group(1) + (m.group(2) or ""))
 
+    def hideStatusTips(self):
+        for action in self.findChildren(QAction):
+            action.setStatusTip("")
+
     def onMacMinimize(self):
         self.setWindowState(self.windowState() | Qt.WindowMinimized)
 
@@ -2768,10 +2852,18 @@ Consider backing up your media directory first."""))
             s = QSettings(QSettings.UserScope, "Microsoft", "Windows")
             s.beginGroup("CurrentVersion/Explorer/Shell Folders")
             self.documentDir = unicode(s.value("Personal").toString())
+            if os.path.exists(self.documentDir):
+                self.documentDir = os.path.join(self.documentDir, "Anki")
+            else:
+                self.documentDir = os.path.expanduser("~/.anki/decks")
         elif sys.platform.startswith("darwin"):
-            self.documentDir = os.path.expanduser("~/Documents")
+            self.documentDir = os.path.expanduser("~/Documents/Anki")
         else:
-            self.documentDir = os.path.expanduser("~/.anki")
+            self.documentDir = os.path.expanduser("~/.anki/decks")
+        try:
+            os.mkdir(self.documentDir)
+        except (OSError, IOError):
+            pass
 
     def changeLayoutSpacing(self):
         if sys.platform.startswith("darwin"):

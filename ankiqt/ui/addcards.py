@@ -29,6 +29,7 @@ class AddCards(QDialog):
             windParent = parent
         QDialog.__init__(self, windParent, Qt.Window)
         self.parent = parent
+        ui.utils.applyStyles(self)
         self.config = parent.config
         self.dialog = ankiqt.forms.addcards.Ui_AddCards()
         self.dialog.setupUi(self)
@@ -150,7 +151,9 @@ question or answer on all cards."""), parent=self)
         # stop anything playing
         clearAudioQueue()
         self.parent.deck.setUndoEnd(n)
+        self.parent.deck.checkDue()
         self.parent.updateTitleBar()
+        self.parent.statusView.redraw()
         # start a new fact
         f = self.parent.deck.newFact()
         f.tags = self.parent.deck.lastTags

@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/exporting.ui'
 #
 
-#      by: PyQt4 UI code generator 4.5.1
+#      by: PyQt4 UI code generator 4.7
 #
 # WARNING! All changes made in this file will be lost!
 

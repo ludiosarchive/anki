@@ -17,21 +17,25 @@ def openLink(link):
 def openWikiLink(page):
     openLink(ankiqt.appWiki + page)
 
-def showWarning(text, parent=None):
+def showWarning(text, parent=None, help=""):
     "Show a small warning with an OK button."
-    if not parent:
-        parent = ankiqt.mw
-    QMessageBox.warning(parent, "Anki", text)
+    return showInfo(text, parent, help, QMessageBox.warning)
 
-def showInfo(text, parent=None, help=""):
+def showCritical(text, parent=None, help=""):
+    "Show a small critical error with an OK button."
+    return showInfo(text, parent, help, QMessageBox.critical)
+
+def showInfo(text, parent=None, help="", func=None):
     "Show a small info window with an OK button."
     if not parent:
         parent = ankiqt.mw
+    if not func:
+        func = QMessageBox.information
     sb = QMessageBox.Ok
     if help:
         sb |= QMessageBox.Help
     while 1:
-        ret = QMessageBox.information(parent, "Anki", text, sb)
+        ret = func(parent, "Anki", text, sb)
         if ret == QMessageBox.Help:
             openWikiLink(help)
         else:
@@ -196,18 +200,36 @@ def restoreHeader(widget, key):
 def mungeQA(deck, txt):
     txt = renderLatex(deck, txt)
     txt = stripSounds(txt)
+    # webkit currently doesn't handle bold/underline properly
+    txt = txt.replace("font-weight: 600;",
+                      "font-weight: 900;")
+    txt = txt.replace("text-decoration: underline;",
+                      "border-bottom: 1px solid #000;")
     return txt
 
-def getBase(deck):
-    if deck and deck.mediaDir():
-        if sys.platform.startswith("win32"):
-            prefix = u"file:///"
-        else:
-            prefix = u"file://"
-        base = prefix + unicode(
-            urllib.quote(deck.mediaDir().encode("utf-8")),
-            "utf-8")
-        return '<base href="%s/">' % base
+def applyStyles(widget):
+    try:
+        styleFile = open(os.path.join(ankiqt.mw.config.configPath,
+                                      "style.css"))
+        widget.setStyleSheet(styleFile.read())
+    except (IOError, OSError):
+        pass
+
+def getBase(deck, card):
+    base = None
+    if deck and card:
+        if deck.getBool("remoteImages") and card.fact.model.features:
+            base = card.fact.model.features
+        elif deck.mediaDir():
+            if sys.platform.startswith("win32"):
+                prefix = u"file:///"
+            else:
+                prefix = u"file://"
+            base = prefix + unicode(
+                urllib.quote(deck.mediaDir().encode("utf-8")),
+                "utf-8") + "/"
+    if base:
+        return '<base href="%s">' % base
     else:
         return ""
 
@@ -221,18 +243,25 @@ class ProgressWin(object):
         self.diag.setCancelButton(None)
         self.diag.setAutoClose(False)
         self.diag.setAutoReset(False)
-        self.diag.setMinimumDuration(0)
-        self.diag.show()
+        # qt doesn't seem to honour this consistently, and it's not triggered
+        # by the db progress handler, so we set it high and use maybeShow() below
+        self.diag.setMinimumDuration(100000)
         self.counter = min
         self.min = min
         self.max = max
+        self.firstTime = time.time()
         self.lastTime = time.time()
         self.app = QApplication.instance()
         if max == 0:
             self.diag.setLabelText(_("Processing..."))
 
+    def maybeShow(self):
+        if time.time() - self.firstTime > 2:
+            self.diag.show()
+
     def update(self, label=None, value=None, process=True):
         #print self.min, self.counter, self.max, label, time.time() - self.lastTime
+        self.maybeShow()
         self.lastTime = time.time()
         if label:
             self.diag.setLabelText(label)
@@ -252,3 +281,6 @@ class ProgressWin(object):
             self.app.processEvents()
             time.sleep(0.1)
         self.diag.cancel()
+
+import PyQt4.pyqtconfig as PyConf;
+pyQtBroken = PyConf.Configuration().pyqt_version_str.startswith("4.6")

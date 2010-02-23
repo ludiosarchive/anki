@@ -5,7 +5,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import ankiqt, simplejson, time, cStringIO, zipfile, tempfile, os, re
-import traceback, urllib2
+import traceback, urllib2, socket, cgi
 from ankiqt.ui.utils import saveGeom, restoreGeom, showInfo
 from anki.utils import fmtTimeSpan
 
@@ -29,6 +29,11 @@ class GetShared(QDialog):
         self.form = ankiqt.forms.getshared.Ui_Dialog()
         self.form.setupUi(self)
         self.ok = True
+        self.conErrMsg = _("""\
+<b>Unable to connect to the server.<br><br>
+Please check your network connection or try again in a few minutes.</b><br>
+<br>
+Error was:<pre>%s</pre>""")
         restoreGeom(self, "getshared")
         self.setupTable()
         self.onChangeType(type)
@@ -49,16 +54,24 @@ class GetShared(QDialog):
                      self.limit)
 
     def fetchData(self):
+        self.parent.setProgressParent(None)
+        self.parent.startProgress()
+        self.parent.updateProgress()
         try:
-            sock = urllib2.urlopen(
-                "http://anki.ichi2.net/file/search?t=%d" % self.type)
-            self.allList = simplejson.loads(unicode(sock.read()))
-        except:
-            showInfo(_("Unable to connect to server.\n\n") +
-                     traceback.format_exc())
-            self.close()
-            self.ok = False
-            return
+            socket.setdefaulttimeout(30)
+            try:
+                sock = urllib2.urlopen(
+                    "http://anki.ichi2.net/file/search?t=%d" % self.type)
+                self.allList = simplejson.loads(unicode(sock.read()))
+            except:
+                showInfo(self.conErrMsg % cgi.escape(unicode(
+                    traceback.format_exc(), "utf-8", "replace")))
+                self.close()
+                self.ok = False
+                return
+        finally:
+            self.parent.finishProgress()
+            socket.setdefaulttimeout(None)
         self.form.search.setFocus()
         self.typeChanged()
         self.limit()
@@ -156,14 +169,16 @@ class GetShared(QDialog):
         tmpfile = os.fdopen(fd, "w+b")
         cnt = 0
         try:
+            socket.setdefaulttimeout(30)
             self.parent.setProgressParent(self)
             self.parent.startProgress()
+            self.parent.updateProgress()
             try:
                 sock = urllib2.urlopen(
                     "http://anki.ichi2.net/file/get?id=%d" %
                     self.curRow[R_ID])
                 while 1:
-                    data = sock.read(65536)
+                    data = sock.read(32768)
                     if not data:
                         break
                     cnt += len(data)
@@ -171,11 +186,12 @@ class GetShared(QDialog):
                     self.parent.updateProgress(
                         label=_("Downloaded %dKB") % (cnt/1024.0))
             except:
-                showInfo(_("Unable to connect to server.\n\n") +
-                         traceback.format_exc())
+                showInfo(self.conErrMsg % cgi.escape(unicode(
+                    traceback.format_exc(), "utf-8", "replace")))
                 self.close()
                 return
         finally:
+            socket.setdefaulttimeout(None)
             self.parent.setProgressParent(None)
             self.parent.finishProgress()
             QDialog.accept(self)
@@ -215,15 +231,16 @@ class GetShared(QDialog):
             pd = self.parent.pluginsFolder()
             if z:
                 for l in z.infolist():
-                    if not l.file_size:
-                        continue
                     try:
                         os.makedirs(os.path.join(
                             pd, os.path.dirname(l.filename)))
                     except OSError:
                         pass
-                    open(os.path.join(pd, l.filename), "wb").\
-                                          write(z.read(l.filename))
+                    if l.filename.endswith("/"):
+                        # directory
+                        continue
+                    path = os.path.join(pd, l.filename)
+                    open(path, "wb").write(z.read(l.filename))
             else:
                 open(os.path.join(pd, tit + ext), "wb").write(file.read())
             showInfo(_("Plugin downloaded. Please restart Anki."),
