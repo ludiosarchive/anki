@@ -20,7 +20,6 @@ binary-indep: build
 	dh_installchangelogs
 	dh_installdocs README README.development README.translating CREDITS
 	dh_installmenu
-	dh_desktop
 	dh_pysupport
 	dh_installman debian/anki.1
 	dh_compress -X.anki
