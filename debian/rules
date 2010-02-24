@@ -1,16 +1,11 @@
 #!/usr/bin/make -f
 
-build: build-stamp
-build-stamp:
-	dh_testdir
-	bunzip2 </usr/share/unicode/Unihan.txt.bz2 >Unihan.txt
-	python libanki/anki/features/chinese/save_unihan.py
-	touch build-stamp
+build:
 
 binary: binary-arch binary-indep
-binary-arch: build
+binary-arch:
 
-binary-indep: build
+binary-indep:
 	dh_testdir
 	dh_testroot
 	dh_clean
@@ -33,8 +28,6 @@ binary-indep: build
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp
-	rm -f Unihan.txt unihan.db
 	find -name \*.py[co] -exec rm {} \;
 	dh_clean
 

@@ -3,8 +3,8 @@ Maintainer: Andreas Bombe <aeb@debian.org>
 Section: misc
 Priority: optional
 Build-Depends: debhelper (>= 6)
-Build-Depends-Indep: unicode-data, bzip2, python-support (>= 0.6),
-	python-sqlalchemy (>= 0.4.1), python-pysqlite2
+Build-Depends-Indep: python-support (>= 0.6), python-sqlalchemy (>= 0.4.1),
+	python-pysqlite2
 Standards-Version: 3.8.1
 Homepage: http://ichi2.net/anki
 
