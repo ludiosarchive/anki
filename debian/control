@@ -3,8 +3,7 @@ Maintainer: Andreas Bombe <aeb@debian.org>
 Section: misc
 Priority: optional
 Build-Depends: debhelper (>= 6)
-Build-Depends-Indep: python-support (>= 0.6), python-sqlalchemy (>= 0.4.1),
-	python-pysqlite2
+Build-Depends-Indep: python-support (>= 0.6), python-sqlalchemy (>= 0.4.1)
 Standards-Version: 3.8.1
 Homepage: http://ichi2.net/anki
 
@@ -12,7 +11,7 @@ Package: anki
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends},
 	python-qt4 (>= 4.4), python-simplejson (>= 1.7.3),
-	python-sqlalchemy (>= 0.4.1), python-pysqlite2 (>= 2.3.0)
+	python-sqlalchemy (>= 0.4.1)
 Recommends: python-matplotlib, kakasi
 Suggests: dvipng
 Description: flashcard learning program with special support for Japanese
