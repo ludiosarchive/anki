@@ -18,7 +18,7 @@ binary-indep:
 	dh_pysupport
 	dh_installman debian/anki.1
 	dh_compress -X.anki
-	chmod a-x debian/anki/usr/share/anki/ankiqt/__init__.py
+	find debian/anki/usr/share -type f -perm -1 -exec chmod a-x {} \;
 	dh_fixperms
 	dh_installdeb
 	dh_gencontrol
