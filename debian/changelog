@@ -1,3 +1,27 @@
+anki (0.9.9.8.6-1) unstable; urgency=low
+
+  * Imported Upstream version 0.9.9.8.6
+  * Update debian/watch with new source location at Google code
+  * debian/rules: Remove dh_desktop, it no longer does anything
+  * debian/rules: Add ${misc:Depends} to Depends as Lintian suggests
+  * Remove build, install and associated Build-Depends of Unihan
+    database, support moved from source distribution to plugins (Closes:
+    551235)
+  * debian/control: Remove dependencies on python-pysqlite2, Python >=
+    2.5 is sufficient (Closes: 569636)
+  * debian/control: Increase minimum required version of python-
+    sqlalchemy to 0.4.3
+  * debian/control: Bump Standards-Version to 3.8.4, no changes
+    necessary
+  * debian/compat, debian/control: Use debhelper compat level 7
+  * Add debian/anki.NEWS with information about removed language support
+    and downloadable plugins that replace it
+  * debian/rules: Remove executable flag from all files to be installed
+    under usr/share for tidiness
+  * debian/control: Update package description to reflect current state
+
+ -- Andreas Bombe <aeb@debian.org>  Fri, 26 Feb 2010 13:20:48 +0100
+
 anki (0.9.9.7.8-1) unstable; urgency=low
 
   * Imported Upstream version 0.9.9.7.8
