@@ -17,7 +17,7 @@ binary-indep:
 	dh_installmenu
 	dh_pysupport
 	dh_installman debian/anki.1
-	dh_compress -X.anki
+	dh_compress
 	find debian/anki/usr/share -type f -perm -1 -exec chmod a-x {} \;
 	dh_fixperms
 	dh_installdeb
