@@ -6,6 +6,8 @@ Build-Depends: debhelper (>= 7)
 Build-Depends-Indep: python-support (>= 0.6)
 Standards-Version: 3.9.0
 Homepage: http://ichi2.net/anki
+Vcs-Git: git://git.debian.org/git/collab-maint/anki
+Vcs-Browser: http://git.debian.org/?p=collab-maint/anki.git
 
 Package: anki
 Architecture: all
