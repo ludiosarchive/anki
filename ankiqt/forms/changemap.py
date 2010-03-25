@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/changemap.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.2
+#      by: PyQt4 UI code generator 4.7
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,10 +12,10 @@ from PyQt4 import QtCore, QtGui
 class Ui_ChangeMap(object):
     def setupUi(self, ChangeMap):
         ChangeMap.setObjectName("ChangeMap")
-        ChangeMap.resize(391,360)
+        ChangeMap.resize(391, 360)
         self.vboxlayout = QtGui.QVBoxLayout(ChangeMap)
-        self.vboxlayout.setMargin(9)
         self.vboxlayout.setSpacing(6)
+        self.vboxlayout.setMargin(9)
         self.vboxlayout.setObjectName("vboxlayout")
         self.label = QtGui.QLabel(ChangeMap)
         self.label.setWordWrap(True)
@@ -31,11 +31,11 @@ class Ui_ChangeMap(object):
         self.vboxlayout.addWidget(self.buttonBox)
 
         self.retranslateUi(ChangeMap)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("accepted()"),ChangeMap.accept)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("rejected()"),ChangeMap.reject)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), ChangeMap.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), ChangeMap.reject)
         QtCore.QMetaObject.connectSlotsByName(ChangeMap)
 
     def retranslateUi(self, ChangeMap):
-        ChangeMap.setWindowTitle(_("Change field mapping"))
-        self.label.setText(_("<h1>Available fields</h1>Please choose which field you would like to import into. If you select \"Discard field\", all data from this field will be lost."))
+        ChangeMap.setWindowTitle(_("Import"))
+        self.label.setText(_("<h1>Select Target Field</h1>"))
 

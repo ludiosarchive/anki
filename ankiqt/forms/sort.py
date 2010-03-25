@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/sort.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.2
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_Sort(object):
     def setupUi(self, Sort):
         Sort.setObjectName("Sort")
-        Sort.resize(425,358)
+        Sort.resize(425, 358)
         self.vboxlayout = QtGui.QVBoxLayout(Sort)
         self.vboxlayout.setMargin(9)
         self.vboxlayout.setSpacing(20)
@@ -37,8 +37,8 @@ class Ui_Sort(object):
         self.vboxlayout.addWidget(self.buttonBox)
 
         self.retranslateUi(Sort)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("accepted()"),Sort.accept)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("rejected()"),Sort.reject)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), Sort.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), Sort.reject)
         QtCore.QMetaObject.connectSlotsByName(Sort)
 
     def retranslateUi(self, Sort):

@@ -2,19 +2,23 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
-import copy, sys
+import copy, sys, os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki, anki.utils
 from anki.facts import Fact
-from anki.stdmodels import JapaneseModel
 from ankiqt import ui
 import ankiqt.forms
+
+tabs = ("Display",
+        "Network",
+        "Saving",
+        "Advanced")
 
 class Preferences(QDialog):
 
     def __init__(self, parent, config):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.origConfig = config
         self.parent = parent
         self.config = copy.copy(self.origConfig)
@@ -22,24 +26,50 @@ class Preferences(QDialog):
         self.dialog = ankiqt.forms.preferences.Ui_Preferences()
         self.dialog.setupUi(self)
         self.supportedLanguages = [
-            (_("English"), "en_US"),
-            (_("Czech"), "cs_CZ"),
-            (_("French"), "fr_FR"),
-            (_("German"), "de_DE"),
-            (_("Japanese"), "ja_JP"),
-            (_("Korean"), "ko_KR"),
-            (_("Spanish"), "es_ES"),
+            (u"Bahasa Melayu", "ms"),
+            (u"Dansk", "da"),
+            (u"Deutsch", "de"),
+            (u"Eesti", "et"),
+            (u"English", "en"),
+            (u"Español", "es"),
+            (u"Esperanto", "eo"),
+            (u"Français", "fr"),
+            (u"Italiano", "it"),
+            (u"Magyar Nyelv", "hu"),
+            (u"Nederlands","nl"),
+            (u"Norsk","nb"),
+            (u"Polski", "pl"),
+            (u"Português Brasileiro", "pt_BR"),
+            (u"Português", "pt"),
+            (u"Româneşte", "ro"),
+            (u"Slovenščina", "sl"),
+            (u"Suomi", "fi"),
+            (u"Svenska", "sv"),
+            (u"Tiếng Việt", "vi"),
+            (u"Türkçe", "tr"),
+            (u"Čeština", "cs"),
+            (u"Ελληνικά", "el"),
+            (u"Български", "bg"),
+            (u"Монгол хэл","mn"),
+            (u"русский язык", "ru"),
+            (u"עִבְרִית", "he"),
+            (u"العربية", "ar"),
+            (u"فارسی", "fa"),
+            (u"日本語", "ja"),
+            (u"简体中文", "zh_CN"),
+            (u"繁體中文", "zh_TW"),
+            (u"한국어", "ko"),
             ]
+        self.supportedLanguages.sort()
+        self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"), self.helpRequested)
         self.setupLang()
-        self.setupFont()
-        self.setupColour()
-        self.setupSync()
+        self.setupNetwork()
         self.setupSave()
         self.setupAdvanced()
         self.show()
 
     def accept(self):
-        self.updateSync()
+        self.updateNetwork()
         self.updateSave()
         self.updateAdvanced()
         self.config['interfaceLang'] = self.origConfig['interfaceLang']
@@ -50,9 +80,7 @@ class Preferences(QDialog):
         self.done(0)
 
     def reject(self):
-        self.origConfig['interfaceLang'] = self.origInterfaceLang
-        self.parent.setLang()
-        self.done(0)
+        self.accept()
 
     def setupLang(self):
         # interface lang
@@ -69,77 +97,27 @@ class Preferences(QDialog):
         self.parent.setLang()
         self.dialog.retranslateUi(self)
 
-    fonts = (
-        "interface",
-        "lastCard",
-        "edit",
-        )
-
-    def loadCurrentFonts(self):
-        for font in self.fonts:
-            # family init
-            getattr(self.dialog, font + "Family").setCurrentFont(QFont(
-                self.config[font + "FontFamily"]))
-            # size init
-            getattr(self.dialog, font + "Size").setValue(
-                self.config[font + "FontSize"])
-
-    def setupFont(self):
-        self.loadCurrentFonts()
-        for font in self.fonts:
-            # family change
-            family = font + "Family"
-            chngFunc = lambda qfont, type=font: self.familyChanged(qfont, type)
-            self.connect(getattr(self.dialog, family),
-                         SIGNAL("currentFontChanged(QFont)"),
-                         chngFunc)
-
-            # size change
-            size = font + "Size"
-            chngFunc = lambda size, type=font: self.sizeChanged(size, type)
-            self.connect(getattr(self.dialog, size),
-                         SIGNAL("valueChanged(int)"),
-                         chngFunc)
-
-    def familyChanged(self, qfont, type):
-        self.config[type + "FontFamily"] = unicode(qfont.family())
-        getattr(self.dialog, type + "Family").setFocus()
-
-    def sizeChanged(self, size, type):
-        self.config[type + "FontSize"] = size
-        getattr(self.dialog, type + "Size").setFocus()
-
-    def setupColour(self):
-        if sys.platform.startswith("darwin"):
-            # mac widgets don't show colours
-            self.plastiqueStyle = QStyleFactory.create("plastique")
-        for c in ("interface", "lastCard", "background"):
-            colour = c + "Colour"
-            button = getattr(self.dialog, colour)
-            if sys.platform.startswith("darwin"):
-                button.setStyle(self.plastiqueStyle)
-            button.setPalette(QPalette(QColor(
-                self.config[colour])))
-            self.connect(button, SIGNAL("clicked()"),
-                         lambda b=button, t=c, : self.colourClicked(b, t))
-
-    def colourClicked(self, button, type):
-        new = QColorDialog.getColor(button.palette().window().color(), self)
-        if new.isValid():
-            self.config[type + "Colour"] = str(new.name())
-            button.setPalette(QPalette(new))
-
-    def setupSync(self):
+    def setupNetwork(self):
         self.dialog.syncOnOpen.setChecked(self.config['syncOnLoad'])
         self.dialog.syncOnClose.setChecked(self.config['syncOnClose'])
         self.dialog.syncUser.setText(self.config['syncUsername'])
         self.dialog.syncPass.setText(self.config['syncPassword'])
+        self.dialog.proxyHost.setText(self.config['proxyHost'])
+        self.dialog.proxyPort.setMinimum(1)
+        self.dialog.proxyPort.setMaximum(65535)
+        self.dialog.proxyPort.setValue(self.config['proxyPort'])
+        self.dialog.proxyUser.setText(self.config['proxyUser'])
+        self.dialog.proxyPass.setText(self.config['proxyPass'])
 
-    def updateSync(self):
+    def updateNetwork(self):
         self.config['syncOnLoad'] = self.dialog.syncOnOpen.isChecked()
         self.config['syncOnClose'] = self.dialog.syncOnClose.isChecked()
         self.config['syncUsername'] = unicode(self.dialog.syncUser.text())
         self.config['syncPassword'] = unicode(self.dialog.syncPass.text())
+        self.config['proxyHost'] = unicode(self.dialog.proxyHost.text())
+        self.config['proxyPort'] = int(self.dialog.proxyPort.value())
+        self.config['proxyUser'] = unicode(self.dialog.proxyUser.text())
+        self.config['proxyPass'] = unicode(self.dialog.proxyPass.text())
 
     def setupSave(self):
         self.dialog.saveAfterEveryNum.setValue(self.config['saveAfterAnswerNum'])
@@ -147,6 +125,19 @@ class Preferences(QDialog):
         self.dialog.saveAfterAdding.setChecked(self.config['saveAfterAdding'])
         self.dialog.saveAfterAddingNum.setValue(self.config['saveAfterAddingNum'])
         self.dialog.saveWhenClosing.setChecked(self.config['saveOnClose'])
+        self.dialog.numBackups.setValue(self.config['numBackups'])
+        self.connect(self.dialog.openBackupFolder,
+                     SIGNAL("linkActivated(QString)"),
+                     self.onOpenBackup)
+
+    def onOpenBackup(self):
+        path = os.path.join(self.config.configPath, "backups")
+        if sys.platform == "win32":
+            anki.latex.call(["explorer", path.encode(
+                sys.getfilesystemencoding())],
+                            wait=False)
+        else:
+            QDesktopServices.openUrl(QUrl("file://" + path))
 
     def updateSave(self):
         self.config['saveAfterAnswer'] = self.dialog.saveAfterEvery.isChecked()
@@ -154,34 +145,41 @@ class Preferences(QDialog):
         self.config['saveAfterAdding'] = self.dialog.saveAfterAdding.isChecked()
         self.config['saveAfterAddingNum'] = self.dialog.saveAfterAddingNum.value()
         self.config['saveOnClose'] = self.dialog.saveWhenClosing.isChecked()
+        self.config['numBackups'] = self.dialog.numBackups.value()
 
     def setupAdvanced(self):
-        self.dialog.showToolbar.setChecked(self.config['showToolbar'])
-        self.dialog.compactEaseButtons.setChecked(
-            self.config['easeButtonStyle'] != 'standard')
-        self.dialog.tallButtons.setChecked(
-            self.config['easeButtonHeight'] != 'standard')
-        self.dialog.suppressEstimates.setChecked(self.config['suppressEstimates'])
-        self.dialog.suppressLastCardInterval.setChecked(self.config['suppressLastCardInterval'])
-        self.dialog.suppressLastCardContent.setChecked(self.config['suppressLastCardContent'])
-        self.dialog.showTray.setChecked(self.config['showTray'])
-        self.dialog.editCurrentOnly.setChecked(self.config['editCurrentOnly'])
+        self.dialog.showEstimates.setChecked(not self.config['suppressEstimates'])
+        self.dialog.showStudyOptions.setChecked(self.config['showStudyScreen'])
+        self.dialog.showTray.setChecked(self.config['showTrayIcon'])
+        self.dialog.showTimer.setChecked(self.config['showTimer'])
+        self.dialog.showDivider.setChecked(self.config['qaDivider'])
+        self.dialog.splitQA.setChecked(self.config['splitQA'])
+        self.dialog.addZeroSpace.setChecked(self.config['addZeroSpace'])
+        self.dialog.alternativeTheme.setChecked(self.config['alternativeTheme'])
+        self.dialog.showProgress.setChecked(self.config['showProgress'])
+        self.dialog.openLastDeck.setChecked(self.config['loadLastDeck'])
+        self.dialog.deckBrowserOrder.setChecked(self.config['deckBrowserOrder'])
+        self.dialog.deleteMedia.setChecked(self.config['deleteMedia'])
+        self.dialog.deckBrowserLen.setValue(self.config['deckBrowserNameLength'])
 
     def updateAdvanced(self):
-        self.config['showToolbar'] = self.dialog.showToolbar.isChecked()
-        if self.dialog.compactEaseButtons.isChecked():
-            self.config['easeButtonStyle'] = 'compact'
+        self.config['showTrayIcon'] = self.dialog.showTray.isChecked()
+        self.config['showTimer'] = self.dialog.showTimer.isChecked()
+        self.config['suppressEstimates'] = not self.dialog.showEstimates.isChecked()
+        self.config['showStudyScreen'] = self.dialog.showStudyOptions.isChecked()
+        self.config['qaDivider'] = self.dialog.showDivider.isChecked()
+        self.config['splitQA'] = self.dialog.splitQA.isChecked()
+        self.config['addZeroSpace'] = self.dialog.addZeroSpace.isChecked()
+        self.config['alternativeTheme'] = self.dialog.alternativeTheme.isChecked()
+        self.config['showProgress'] = self.dialog.showProgress.isChecked()
+        self.config['preventEditUntilAnswer'] = self.dialog.preventEdits.isChecked()
+        self.config['loadLastDeck'] = self.dialog.openLastDeck.isChecked()
+        if self.dialog.deckBrowserOrder.isChecked():
+            self.config['deckBrowserOrder'] = 1
         else:
-            self.config['easeButtonStyle'] = 'standard'
-        if self.dialog.tallButtons.isChecked():
-            self.config['easeButtonHeight'] = 'tall'
-        else:
-            self.config['easeButtonHeight'] = 'standard'
-        self.config['suppressLastCardInterval'] = self.dialog.suppressLastCardInterval.isChecked()
-        self.config['suppressLastCardContent'] = self.dialog.suppressLastCardContent.isChecked()
-        self.config['showTray'] = self.dialog.showTray.isChecked()
-        self.config['suppressEstimates'] = self.dialog.suppressEstimates.isChecked()
-        self.config['editCurrentOnly'] = self.dialog.editCurrentOnly.isChecked()
+            self.config['deckBrowserOrder'] = 0
+        self.config['deleteMedia'] = self.dialog.deleteMedia.isChecked()
+        self.config['deckBrowserNameLength'] = self.dialog.deckBrowserLen.value()
 
     def codeToIndex(self, code):
         n = 0
@@ -190,4 +188,10 @@ class Preferences(QDialog):
                 return n
             n += 1
         # default to english
-        return self.codeToIndex("en_US")
+        return self.codeToIndex("en")
+
+    def helpRequested(self):
+        idx = self.dialog.tabWidget.currentIndex()
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "Preferences#" +
+                                      tabs[idx]))

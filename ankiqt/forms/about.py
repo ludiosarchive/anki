@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/about.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.2
+#      by: PyQt4 UI code generator 4.7
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,8 +12,8 @@ from PyQt4 import QtCore, QtGui
 class Ui_About(object):
     def setupUi(self, About):
         About.setObjectName("About")
-        About.resize(224,310)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred,QtGui.QSizePolicy.Minimum)
+        About.resize(410, 447)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(About.sizePolicy().hasHeightForWidth())
@@ -33,8 +33,8 @@ class Ui_About(object):
         self.vboxlayout.addWidget(self.buttonBox)
 
         self.retranslateUi(About)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("accepted()"),About.accept)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("rejected()"),About.reject)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), About.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), About.reject)
         QtCore.QMetaObject.connectSlotsByName(About)
 
     def retranslateUi(self, About):

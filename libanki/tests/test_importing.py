@@ -5,8 +5,10 @@ from tests.shared import assertException
 
 from anki.errors import *
 from anki import DeckStorage
-from anki.importing import anki03, anki10, csv, mnemosyne10
+from anki.importing import anki10, csvfile, mnemosyne10, supermemo_xml, dingsbums
 from anki.stdmodels import BasicModel
+from anki.facts import Fact
+from anki.sync import SyncClient, SyncServer
 
 from anki.db import *
 
@@ -16,11 +18,22 @@ def test_csv():
     deck = DeckStorage.Deck()
     deck.addModel(BasicModel())
     file = unicode(os.path.join(testDir, "importing/text-2fields.txt"))
-    i = csv.TextImporter(deck, file)
+    i = csvfile.TextImporter(deck, file)
     i.doImport()
-    # three problems - missing front, missing back, dupe front
-    assert len(i.log) == 3
-    assert i.total == 4
+    # four problems - missing front, dupe front, wrong num of fields
+    assert len(i.log) == 4
+    assert i.total == 5
+    deck.s.close()
+
+def test_csv_tags():
+    deck = DeckStorage.Deck()
+    deck.addModel(BasicModel())
+    file = unicode(os.path.join(testDir, "importing/text-tags.txt"))
+    i = csvfile.TextImporter(deck, file)
+    i.doImport()
+    facts = deck.s.query(Fact).all()
+    assert len(facts) == 2
+    assert facts[0].tags == "baz qux" or facts[1].tags == "baz qux"
     deck.s.close()
 
 def test_mnemosyne10():
@@ -32,13 +45,42 @@ def test_mnemosyne10():
     assert i.total == 5
     deck.s.close()
 
-def test_anki03():
+def test_supermemo_xml_01_unicode():
     deck = DeckStorage.Deck()
-    file = unicode(os.path.join(testDir, "importing/test03.anki"))
-    i = anki03.Anki03Importer(deck, file)
+    deck.addModel(BasicModel())
+    file = unicode(os.path.join(testDir, "importing/supermemo_ENGLISHFORBEGGINERS_noOEM.xml"))
+    i = supermemo_xml.SupermemoXmlImporter(deck, file)
+    #i.META.logToStdOutput = True
     i.doImport()
-    assert len(i.log) == 0
-    assert i.total == 2
+    assert i.total == 92
+    deck.s.close()
+
+def test_supermemo_xml_02_escaped():
+    deck = DeckStorage.Deck()
+    deck.addModel(BasicModel())
+    file = unicode(os.path.join(testDir, "importing/supermemo_ENGLISHFORBEGGINERS_oem_1250.xml"))
+    i = supermemo_xml.SupermemoXmlImporter(deck, file)
+    i.doImport()
+    assert i.total == 30
+    deck.s.close()
+
+def test_supermemo_xml_03():
+    deck = DeckStorage.Deck()
+    deck.addModel(BasicModel())
+    file = unicode(os.path.join(testDir, "importing/supermemo_EnglishPronunciationTop100.xml"))
+    i = supermemo_xml.SupermemoXmlImporter(deck, file)
+    #i.META.logToStdOutput = True
+    i.doImport()
+    assert i.total == 100
+    deck.s.close()
+
+def test_supermemo_xml_04():
+    deck = DeckStorage.Deck()
+    deck.addModel(BasicModel())
+    file = unicode(os.path.join(testDir, "importing/supermemo_ENGLISHVOCABULARYBUILDER.xml"))
+    i = supermemo_xml.SupermemoXmlImporter(deck, file)
+    i.doImport()
+    assert i.total == 60
     deck.s.close()
 
 def test_anki10():
@@ -55,6 +97,7 @@ def test_anki10():
     i.doImport()
     assert i.total == 2
     deck.s.rollback()
+    deck.close()
     # import a deck into itself - 10-2 is the same as test10, but with one
     # card answered and another deleted. nothing should be synced to client
     deck = DeckStorage.Deck(file)
@@ -62,3 +105,39 @@ def test_anki10():
     i.doImport()
     assert i.total == 0
     deck.s.rollback()
+
+def test_anki10_modtime():
+    deck1 = DeckStorage.Deck()
+    deck2 = DeckStorage.Deck()
+    client = SyncClient(deck1)
+    server = SyncServer(deck2)
+    client.setServer(server)
+    deck1.addModel(BasicModel())
+    f = deck1.newFact()
+    f['Front'] = u"foo"; f['Back'] = u"bar"
+    deck1.addFact(f)
+    assert deck1.cardCount == 1
+    assert deck2.cardCount == 0
+    client.sync()
+    assert deck1.cardCount == 1
+    assert deck2.cardCount == 1
+    file_ = unicode(os.path.join(testDir, "importing/test10-3.anki"))
+    file = "/tmp/test10-3.anki"
+    shutil.copy(file_, file)
+    i = anki10.Anki10Importer(deck1, file)
+    i.doImport()
+    client.sync()
+    assert i.total == 1
+    assert deck2.s.scalar("select count(*) from cards") == 2
+    assert deck2.s.scalar("select count(*) from facts") == 2
+    assert deck2.s.scalar("select count(*) from models") == 2
+
+def test_dingsbums():
+    deck = DeckStorage.Deck()
+    deck.addModel(BasicModel())
+    startNumberOfFacts = deck.factCount
+    file = unicode(os.path.join(testDir, "importing/dingsbums.xml"))
+    i = dingsbums.DingsBumsImporter(deck, file)
+    i.doImport()
+    assert 7 == i.total
+    deck.s.close()

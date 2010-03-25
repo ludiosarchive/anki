@@ -11,23 +11,14 @@ __docformat__ = 'restructuredtext'
 class Error(Exception):
     def __init__(self, message="", **data):
         self.data = data
-        self.message = message
+        self._message = message
     def __str__(self):
-        m = self.message
+        m = self._message
         if self.data:
             m += ": %s" % repr(self.data)
         return m
 
 class DeckAccessError(Error):
-    "The deck is empty."
-    pass
-
-class DeckWrongFormatError(Error):
-    "A file to import is in the wrong format."
-    pass
-
-class DuplicateCardError(Error):
-    "Attempted to add a card with the same question."
     pass
 
 class ImportFileError(Error):

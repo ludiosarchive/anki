@@ -1,32 +1,39 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
-import os, copy, time
+import os, copy, time, sys, re, traceback
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki
 import anki.importing as importing
+from ankiqt.ui.utils import getOnlyText
 from anki.errors import *
 import ankiqt.forms
 from ankiqt import ui
 
 class ChangeMap(QDialog):
     def __init__(self, parent, model, current):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.model = model
         self.dialog = ankiqt.forms.changemap.Ui_ChangeMap()
         self.dialog.setupUi(self)
         n = 0
+        setCurrent = False
         for field in self.model.fieldModels:
             item = QListWidgetItem(_("Map to %s") % field.name)
             self.dialog.fields.addItem(item)
-            if current == field.name:
+            if current and current.name == field.name:
+                setCurrent = True
                 self.dialog.fields.setCurrentRow(n)
             n += 1
+        self.dialog.fields.addItem(QListWidgetItem(_("Map to Tags")))
         self.dialog.fields.addItem(QListWidgetItem(_("Discard field")))
-        if current is None:
-            self.dialog.fields.setCurrentRow(n)
+        if not setCurrent:
+            if current == 0:
+                self.dialog.fields.setCurrentRow(n)
+            else:
+                self.dialog.fields.setCurrentRow(n+1)
         self.field = None
 
     def getField(self):
@@ -37,59 +44,70 @@ class ChangeMap(QDialog):
         row = self.dialog.fields.currentRow()
         if row < len(self.model.fieldModels):
             self.field = self.model.fieldModels[row]
-        else:
+        elif row == self.dialog.fields.count() - 1:
             self.field = None
+        else:
+            self.field = 0
         QDialog.accept(self)
 
 class ImportDialog(QDialog):
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.dialog = ankiqt.forms.importing.Ui_ImportDialog()
         self.dialog.setupUi(self)
+        self.tags = ui.tagedit.TagEdit(parent)
+        self.tags.setDeck(parent.deck)
+        self.dialog.topGrid.addWidget(self.tags,0,1,1,1)
+        self.setTabOrder(self.tags, self.dialog.tagDuplicates)
+        self.setTabOrder(self.dialog.tagDuplicates, self.dialog.autoDetect)
         self.setupMappingFrame()
         self.setupOptions()
+        self.getFile()
+        if not self.file:
+            return
+        self.dialog.groupBox.setTitle(os.path.basename(self.file))
+        self.maybePreview()
+        self.connect(self.dialog.autoDetect, SIGNAL("clicked()"),
+                     self.onDelimiter)
+        self.updateDelimiterButtonText()
         self.exec_()
 
     def setupOptions(self):
-        self.file = None
         self.model = self.parent.deck.currentModel
         self.modelChooser = ui.modelchooser.ModelChooser(self,
                                                          self.parent,
                                                          self.parent.deck,
                                                          self.modelChanged)
-        self.importerChanged(0)
-        self.connect(self.dialog.type, SIGNAL("activated(int)"),
-                     self.importerChanged)
-        self.dialog.type.insertItems(0, QStringList(list(zip(*importing.Importers)[0])))
-        self.connect(self.dialog.file, SIGNAL("clicked()"),
-                     self.changeFile)
         self.dialog.modelArea.setLayout(self.modelChooser)
         self.connect(self.dialog.importButton, SIGNAL("clicked()"),
                      self.doImport)
-        self.maybePreview()
 
-    def importerChanged(self, idx):
-        self.importerFunc = zip(*importing.Importers)[1][idx]
+    def getFile(self):
+        key = ";;".join([x[0] for x in importing.Importers])
+        file = ui.utils.getFile(self.parent, _("Import"), "import", key)
+        if not file:
+            self.file = None
+            return
+        self.file = unicode(file)
+        ext = os.path.splitext(self.file)[1]
+        self.importer = None
+        for i in importing.Importers:
+            for mext in re.findall("[( ]?\*\.(.+?)[) ]", i[0]):
+                if ext == "." + mext:
+                    self.importer = i
+                    break
+        if not self.importer:
+            self.importer = importing.Importers[0]
+        self.importerFunc = self.importer[1]
         if self.importerFunc.needMapper:
             self.modelChooser.show()
             self.dialog.tagDuplicates.show()
         else:
             self.modelChooser.hide()
             self.dialog.tagDuplicates.hide()
-        self.dialog.file.setText(_("Choose file..."))
-        self.file = None
-        self.maybePreview()
-
-    def changeFile(self):
-        key = zip(*importing.Importers)[0][self.dialog.type.currentIndex()]
-        file = ui.utils.getFile(self, _("Import file"), "import", key)
-        if not file:
-            return
-        self.file = unicode(file)
-        self.dialog.file.setText(os.path.basename(self.file))
-        self.maybePreview()
+        self.dialog.autoDetect.setShown(self.importerFunc.needDelimiter)
 
     def maybePreview(self):
         if self.file and self.model:
@@ -102,39 +120,85 @@ class ImportDialog(QDialog):
         self.model = model
         self.maybePreview()
 
+    def onDelimiter(self):
+        str = getOnlyText(_("""\
+By default, Anki will detect the character between fields, such as
+a tab, comma, and so on. If Anki is detecting the character incorrectly,
+you can enter it here. Use \\t to represent tab."""),
+                self, help="FileImport")
+        str = str.replace("\\t", "\t")
+        str = str.encode("ascii")
+        self.hideMapping()
+        def updateDelim():
+            self.importer.delimiter = str
+        self.showMapping(hook=updateDelim)
+        self.updateDelimiterButtonText()
+
+    def updateDelimiterButtonText(self):
+        if not self.importerFunc.needDelimiter:
+            return
+        if self.importer.delimiter:
+            d = self.importer.delimiter
+        else:
+            d = self.importer.dialect.delimiter
+        if d == "\t":
+            d = "Tab"
+        elif d == ",":
+            d = "Comma"
+        elif d == " ":
+            d = "Space"
+        elif d == ";":
+            d = "Semicolon"
+        elif d == ":":
+            d = "Colon"
+        else:
+            d = `d`
+        if self.importer.delimiter:
+            txt = _("Manual &delimiter: %s") % d
+        else:
+            txt = _("Auto-detected &delimiter: %s") % d
+        self.dialog.autoDetect.setText(txt)
+
     def doImport(self):
-        self.dialog.status.setText(_("Importing. Anki will freeze for a while.."))
+        self.dialog.status.setText(_("Importing..."))
         t = time.time()
-        while self.parent.app.hasPendingEvents():
-            self.parent.app.processEvents()
-            if time.time() - t > 1:
-                # windows sometimes has pending events permanently?
-                break
         self.importer.mapping = self.mapping
-        self.importer.tagsToAdd = unicode(self.dialog.tags.text())
+        self.importer.tagsToAdd = unicode(self.tags.text())
         self.importer.tagDuplicates = self.dialog.tagDuplicates.isChecked()
         try:
-            self.importer.doImport()
-        except ImportFormatError, e:
-            msg = _("Importing failed.\n")
-            msg += e.data['info']
-            self.dialog.status.setText(msg)
-            return
-        except DeckWrongFormatError, e:
-            msg = _("Import failed: %s") % `e.data`
-            self.dialog.status.setText(msg)
-            return
+            n = _("Import")
+            self.parent.deck.setUndoStart(n)
+            try:
+                self.importer.doImport()
+            except ImportFormatError, e:
+                msg = _("Importing failed.\n")
+                msg += e.data['info']
+                self.dialog.status.setText(msg)
+                return
+            except Exception, e:
+                msg = _("Import failed.\n")
+                msg += unicode(traceback.format_exc(), "ascii", "replace")
+                self.dialog.status.setText(msg)
+                return
+        finally:
+            self.parent.deck.finishProgress()
+            self.parent.deck.setUndoEnd(n)
         txt = (
-            _("Importing complete. %(num)d cards imported from %(file)s.\n") %
+            _("Importing complete. %(num)d facts imported from %(file)s.\n") %
             {"num": self.importer.total, "file": os.path.basename(self.file)})
-        txt += _("Click the close button or import another file.\n\n")
+        self.dialog.groupBox.setShown(False)
+        self.dialog.buttonBox.button(QDialogButtonBox.Close).setFocus()
         if self.importer.log:
             txt += _("Log of import:\n") + "\n".join(self.importer.log)
         self.dialog.status.setText(txt)
         self.file = None
         self.maybePreview()
-        self.parent.deck.updateAllPriorities()
-        self.parent.rebuildQueue()
+        self.parent.deck.s.flush()
+        if sys.platform.startswith("win32") and not self.parent.deck.path:
+            # this fixes a strange bug in sqlite
+            self.parent.deck.s.all("pragma integrity_check")
+        self.parent.reset()
+        self.modelChooser.deinit()
 
     def setupMappingFrame(self):
         # qt seems to have a bug with adding/removing from a grid, so we add
@@ -145,10 +209,12 @@ class ImportDialog(QDialog):
     def hideMapping(self):
         self.dialog.mappingGroup.hide()
 
-    def showMapping(self, keepMapping=False):
+    def showMapping(self, keepMapping=False, hook=None):
         # first, check that we can read the file
         try:
             self.importer = self.importerFunc(self.parent.deck, self.file)
+            if hook:
+                hook()
             if not keepMapping:
                 self.mapping = self.importer.mapping
         except ImportFormatError, e:
@@ -182,6 +248,8 @@ class ImportDialog(QDialog):
             self.grid.addWidget(QLabel(text), num, 0)
             if self.mapping[num]:
                 text = _("mapped to <b>%s</b>") % self.mapping[num].name
+            elif self.mapping[num] is 0:
+                text = _("mapped to <b>Tags</b>")
             else:
                 text = _("<ignored>")
             self.grid.addWidget(QLabel(text), num, 1)
@@ -189,6 +257,7 @@ class ImportDialog(QDialog):
             self.grid.addWidget(button, num, 2)
             self.connect(button, SIGNAL("clicked()"),
                          lambda s=self,n=num: s.changeMappingNum(n))
+        self.tags.setFocus()
 
     def changeMappingNum(self, n):
         f = ChangeMap(self.parent, self.model, self.mapping[n]).getField()
@@ -199,4 +268,14 @@ class ImportDialog(QDialog):
         except ValueError:
             pass
         self.mapping[n] = f
-        self.showMapping(keepMapping=True)
+        if getattr(self.importer, "delimiter", False):
+            self.savedDelimiter = self.importer.delimiter
+            def updateDelim():
+                self.importer.delimiter = self.savedDelimiter
+            self.showMapping(hook=updateDelim, keepMapping=True)
+        else:
+            self.showMapping(keepMapping=True)
+
+    def reject(self):
+        self.modelChooser.deinit()
+        QDialog.reject(self)

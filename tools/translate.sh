@@ -3,20 +3,25 @@
 # build translations
 #
 
-if [ ! -d "locale" ]
+if [ ! -d "ankiqt" ]
 then
-    echo "Please run this from the anki module directory"
+    echo "Please run this from the anki project directory"
     exit
 fi
 
+oldpwd=$(pwd)
+cd ankiqt
+version=$(grep -i appVersion= __init__.py)
+version2=$(expr substr $version 13 $((${#version}-13)))
+
 allPyFiles=ankiqt.files
-echo "Generating translations.."
+echo "Generating translations for version $version2"
 for i in *.py ui/*.py forms/*.py
 do
     echo $i >> $allPyFiles
 done
 
-xgettext -s --no-wrap --files-from=$allPyFiles --output=locale/messages.pot
+xgettext -s --no-wrap --package-name="ankiqt" --package-version=$version2 --files-from=$allPyFiles --output=locale/messages.pot
 for file in locale/*.po
 do
     echo -n $file
@@ -28,3 +33,4 @@ do
     msgfmt $file --output-file=$outfile
 done
 rm $allPyFiles
+cd $oldpwd

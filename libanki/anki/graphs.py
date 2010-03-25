@@ -10,12 +10,36 @@ __docformat__ = 'restructuredtext'
 
 import os, sys, time
 import anki.stats
+from anki.lang import _
+
+import datetime
+
+#colours for graphs
+dueYoungC = "#ffb380"
+dueMatureC = "#ff5555"
+dueCumulC = "#ff8080"
+
+reviewNewC = "#80b3ff"
+reviewYoungC = "#5555ff"
+reviewMatureC = "#0f5aff"
+reviewTimeC = "#0fcaff"
+
+easesNewC = "#80b3ff"
+easesYoungC = "#5555ff"
+easesMatureC = "#0f5aff"
+
+addedC = "#b3ff80"
+firstC = "#b380ff"
+intervC = "#80e5ff"
 
 # support frozen distribs
-if getattr(sys, "frozen", None):
-    os.environ['MATPLOTLIBDATA'] = os.path.join(
-        os.path.dirname(sys.argv[0]),
-        "matplotlibdata")
+if sys.platform.startswith("darwin"):
+    try:
+        del os.environ['MATPLOTLIBDATA']
+    except:
+        pass
+elif getattr(sys, "frozen", None):
+    os.environ['MATPLOTLIBDATA'] = os.path.dirname(sys.argv[0])
 
 try:
     from matplotlib.figure import Figure
@@ -43,47 +67,142 @@ class DeckGraphs(object):
     def calcStats (self):
         if not self.stats:
             days = {}
+            daysYoung = {}
+            daysMature =  {}
             months = {}
             next = {}
             lowestInDay = 0
-            now = list(time.gmtime(time.time()))
-            now[3] = 0; now[4] = 0
-            self.startOfDay = time.mktime(now)
-            all = self.deck.s.all("""
+            midnightOffset = time.timezone - self.deck.utcOffset
+            now = list(time.localtime(time.time()))
+            now[3] = 23; now[4] = 59
+            self.endOfDay = time.mktime(now) - midnightOffset
+            t = time.time()
+            young = self.deck.s.all("""
 select interval, combinedDue
-from cards where reps > 0 and priority != 0""")
-            for (interval, due) in all:
-                day=int(round(interval))
-                days[day] = days.get(day, 0) + 1
-                indays = int(round((due - self.startOfDay)
-                                   / 86400.0))
-                next[indays] = next.get(indays, 0) + 1
-                if indays < lowestInDay:
-                    lowestInDay = indays
+from cards where priority in (1,2,3,4) and
+type in (0, 1) and interval <= 21""")
+            mature = self.deck.s.all("""
+select interval, combinedDue
+from cards where type = 1 and priority in (1,2,3,4) and interval > 21""")
+
+            for (src, dest) in [(young, daysYoung),
+                                (mature, daysMature)]:
+                for (interval, due) in src:
+                    day=int(round(interval))
+                    days[day] = days.get(day, 0) + 1
+                    indays = int(((due - self.endOfDay) / 86400.0) + 1)
+                    next[indays] = next.get(indays, 0) + 1 # type-agnostic stats
+                    dest[indays] = dest.get(indays, 0) + 1 # type-specific stats
+                    if indays < lowestInDay:
+                        lowestInDay = indays
             self.stats = {}
             self.stats['next'] = next
             self.stats['days'] = days
+            self.stats['daysByType'] = {'young': daysYoung,
+                                        'mature': daysMature}
             self.stats['months'] = months
             self.stats['lowestInDay'] = lowestInDay
+
+            dayReps = self.deck.s.all("""
+select day,
+       matureEase0+matureEase1+matureEase2+matureEase3+matureEase4 as matureReps,
+       reps-(newEase0+newEase1+newEase2+newEase3+newEase4) as combinedYoungReps,
+       reps as combinedNewReps
+from stats
+where type = 1""")
+
+            dayTimes = self.deck.s.all("""
+select day, reviewTime as reviewTime
+from stats
+where type = 1""")
+
+            todaydt = datetime.datetime(*list(time.localtime(time.time())[:3]))
+            for dest, source in [("dayRepsNew", "combinedNewReps"),
+                                 ("dayRepsYoung", "combinedYoungReps"),
+                                 ("dayRepsMature", "matureReps")]:
+                self.stats[dest] = dict(
+                    map(lambda dr: (-(todaydt -datetime.datetime(
+                    *(int(x)for x in dr["day"].split("-")))).days, dr[source]), dayReps))
+
+            self.stats['dayTimes'] = dict(
+                map(lambda dr: (-(todaydt -datetime.datetime(
+                *(int(x)for x in dr["day"].split("-")))).days, dr["reviewTime"]/60.0), dayTimes))
 
     def nextDue(self, days=30):
         self.calcStats()
         fig = Figure(figsize=(self.width, self.height), dpi=self.dpi)
         graph = fig.add_subplot(111)
-        dayslist = self.stats['next']
-        self.addMissing(dayslist, self.stats['lowestInDay'], days)
-        (x, y) = self.unzip(dayslist.items())
-        self.filledGraph(graph, days, x, y, "#4444ff")
-        graph.set_ylabel(_("Cards"))
-        graph.set_xlabel(_("Days"))
+        dayslists = [self.stats['next'], self.stats['daysByType']['mature']]
+
+        for dayslist in dayslists:
+            self.addMissing(dayslist, self.stats['lowestInDay'], days)
+
+        argl = []
+
+        for dayslist in dayslists:
+            dl = [x for x in dayslist.items() if x[0] <= days]
+            argl.extend(list(self.unzip(dl)))
+
+        self.filledGraph(graph, days, [dueYoungC, dueMatureC], *argl)
+
+        cheat = fig.add_subplot(111)
+        b1 = cheat.bar(0, 0, color = dueYoungC)
+        b2 = cheat.bar(1, 0, color = dueMatureC)
+
+        cheat.legend([b1, b2], [
+            "Young",
+            "Mature"], loc='upper right')
+
         graph.set_xlim(xmin=self.stats['lowestInDay'], xmax=days)
+        return fig
+
+    def workDone(self, days=30):
+        self.calcStats()
+
+        for type in ["dayRepsNew", "dayRepsYoung", "dayRepsMature"]:
+            self.addMissing(self.stats[type], -days, 0)
+
+        fig = Figure(figsize=(self.width, self.height), dpi=self.dpi)
+        graph = fig.add_subplot(111)
+
+        args = sum((self.unzip(self.stats[type].items(), limit=days, reverseLimit=True) for type in ["dayRepsMature", "dayRepsYoung", "dayRepsNew"][::-1]), [])
+
+        self.filledGraph(graph, days, [reviewNewC, reviewYoungC, reviewMatureC], *args)
+
+        cheat = fig.add_subplot(111)
+        b1 = cheat.bar(-3, 0, color = reviewNewC)
+        b2 = cheat.bar(-4, 0, color = reviewYoungC)
+        b3 = cheat.bar(-5, 0, color = reviewMatureC)
+
+        cheat.legend([b1, b2, b3], [
+            "New",
+            "Young",
+            "Mature"], loc='upper left')
+
+        graph.set_xlim(xmin=-days, xmax=0)
+        graph.set_ylim(ymax=max(max(a for a in args[1::2])) + 10)
+
+        return fig
+
+    def timeSpent(self, days=30):
+        self.calcStats()
+        fig = Figure(figsize=(self.width, self.height), dpi=self.dpi)
+        times = self.stats['dayTimes']
+        self.addMissing(times, -days, 0)
+        times = self.unzip([(day,y) for (day,y) in times.items()
+                            if day + days >= 0])
+        graph = fig.add_subplot(111)
+        self.filledGraph(graph, days, reviewTimeC, *times)
+        graph.set_xlim(xmin=-days, xmax=0)
+        graph.set_ylim(ymax=max(a for a in times[1]) + 0.1)
         return fig
 
     def cumulativeDue(self, days=30):
         self.calcStats()
         fig = Figure(figsize=(self.width, self.height), dpi=self.dpi)
         graph = fig.add_subplot(111)
-        (x, y) = self.unzip(self.stats['next'].items())
+        dl = [x for x in self.stats['next'].items() if x[0] <= days]
+        (x, y) = self.unzip(dl)
         count=0
         y = list(y)
         for i in range(len(x)):
@@ -95,11 +214,9 @@ from cards where reps > 0 and priority != 0""")
                 break
         x = list(x); x.append(99999)
         y.append(count)
-        self.filledGraph(graph, days, x, y, "#aaaaff")
-        graph.set_ylabel(_("Cards"))
-        graph.set_xlabel(_("Days"))
+        self.filledGraph(graph, days, dueCumulC, x, y)
         graph.set_xlim(xmin=self.stats['lowestInDay'], xmax=days)
-        graph.set_ylim(ymax=count+100)
+        graph.set_ylim(ymax=graph.get_ylim()[1]+10)
         return fig
 
     def intervalPeriod(self, days=30):
@@ -107,69 +224,80 @@ from cards where reps > 0 and priority != 0""")
         fig = Figure(figsize=(self.width, self.height), dpi=self.dpi)
         ints = self.stats['days']
         self.addMissing(ints, 0, days)
-        intervals = self.unzip(ints.items())
+        intervals = self.unzip(ints.items(), limit=days)
         graph = fig.add_subplot(111)
-        self.filledGraph(graph, days, intervals[0], intervals[1], "#aaffaa")
-        graph.set_ylabel(_("Cards"))
-        graph.set_xlabel(_("Days"))
+        self.filledGraph(graph, days, intervC, *intervals)
         graph.set_xlim(xmin=0, xmax=days)
         return fig
 
     def addedRecently(self, numdays=30, attr='created'):
+        self.calcStats()
         days = {}
         fig = Figure(figsize=(self.width, self.height), dpi=self.dpi)
-        limit = time.time() - numdays * 86400
+        limit = self.endOfDay - (numdays + 1) * 86400
         res = self.deck.s.column0("select %s from cards where %s >= %f" %
                                   (attr, attr, limit))
         for r in res:
-            d = (r - self.startOfDay) / 86400.0
-            days[round(d)] = days.get(round(d), 0) + 1
+            d = int((r - self.endOfDay) / 86400.0)
+            days[d] = days.get(d, 0) + 1
         self.addMissing(days, -numdays, 0)
         graph = fig.add_subplot(111)
         intervals = self.unzip(days.items())
         if attr == 'created':
-            colour = "#ffaaaa"
+            colour = addedC
         else:
-            colour = "#ffcccc"
-        self.filledGraph(graph, numdays, intervals[0], intervals[1], colour)
-        graph.set_ylabel(_("Cards"))
-        graph.set_xlabel(_("Day"))
+            colour = firstC
+        self.filledGraph(graph, numdays, colour, *intervals)
         graph.set_xlim(xmin=-numdays, xmax=0)
         return fig
 
-    def addMissing(self, dict, min, max):
+    def addMissing(self, dic, min, max):
         for i in range(min, max+1):
-            if not i in dict:
-                dict[i] = 0
+            if not i in dic:
+                dic[i] = 0
 
-    def unzip(self, tuples, fillFix=True):
+    def unzip(self, tuples, fillFix=True, limit=None, reverseLimit=False):
         tuples.sort(cmp=lambda x,y: cmp(x[0], y[0]))
+        if limit:
+            if reverseLimit:
+                tuples = tuples[-limit - 1:]
+            else:
+                tuples = tuples[:limit + 1]
+
         new = zip(*tuples)
         return new
 
-    def filledGraph(self, graph, days, x=(), y=(), c="b"):
-        x = list(x)
-        y = list(y)
-        lowest = 99999
-        highest = -lowest
-        for i in range(len(x)):
-            if x[i] < lowest:
-                lowest = x[i]
-            if x[i] > highest:
-                highest = x[i]
-        # ensure the filled area reaches the bottom
-        x.insert(0, lowest - 1)
-        y.insert(0, 0)
-        x.append(highest + 1)
-        y.append(0)
-        # plot
-        graph.fill(x, y, c)
-        if days < 180:
-            graph.bar(x, y, width=0)
-            lw=3
-        else:
-            lw=1
-        graph.plot(x, y, "k", lw=lw)
+    def filledGraph(self, graph, days, colours=["b"], *args):
+        if isinstance(colours, str):
+            colours = [colours]
+        thick = True
+        for triplet in [(args[n], args[n + 1], colours[n / 2]) for n in range(0, len(args), 2)]:
+            x = list(triplet[0])
+            y = list(triplet[1])
+            c = triplet[2]
+            lowest = 99999
+            highest = -lowest
+            for i in range(len(x)):
+                if x[i] < lowest:
+                    lowest = x[i]
+                if x[i] > highest:
+                    highest = x[i]
+            # ensure the filled area reaches the bottom
+            x.insert(0, lowest - 1)
+            y.insert(0, 0)
+            x.append(highest + 1)
+            y.append(0)
+            # plot
+            lw = 0
+            if days < 180:
+                lw += 1
+            if thick:
+                lw += 1
+            if days > 360:
+                lw = 0
+            graph.fill(x, y, c, lw = lw)
+            thick = False
+
         graph.grid(True)
         graph.set_ylim(ymin=0, ymax=max(2, graph.get_ylim()[1]))
 
@@ -179,19 +307,22 @@ from cards where reps > 0 and priority != 0""")
         types = ("new", "young", "mature")
         enum = 5
         offset = 0
-        arrsize = 17
+        arrsize = 16
         arr = [0] * arrsize
         n = 0
-        colours = ["#ff7777", "#77ffff", "#7777ff"]
+        colours = [easesNewC, easesYoungC, easesMatureC]
         bars = []
-        gs = anki.stats.globalStats(self.deck.s)
+        gs = anki.stats.globalStats(self.deck)
         for type in types:
             total = (getattr(gs, type + "Ease0") +
                      getattr(gs, type + "Ease1") +
                      getattr(gs, type + "Ease2") +
                      getattr(gs, type + "Ease3") +
                      getattr(gs, type + "Ease4"))
-            for e in range(enum):
+            setattr(gs, type + "Ease1", getattr(gs, type + "Ease0") +
+                    getattr(gs, type + "Ease1"))
+            setattr(gs, type + "Ease0", -1)
+            for e in range(1, enum):
                 try:
                     arr[e+offset] = (getattr(gs, type + "Ease%d" % e)
                                      / float(total)) * 100 + 1
@@ -200,16 +331,15 @@ from cards where reps > 0 and priority != 0""")
             bars.append(graph.bar(range(arrsize), arr, width=1.0,
                                   color=colours[n], align='center'))
             arr = [0] * arrsize
-            offset += 6
+            offset += 5
             n += 1
-        graph.set_ylabel("%")
-        x = ([""] + [str(n) for n in range(enum)]) * 3
-        del x[0]
-        graph.legend([p[0] for p in bars], (_("New cards"),
-                                            _("Young cards"),
-                                            _("Mature cards")),
+        x = ([""] + [str(n) for n in range(1, enum)]) * 3
+        graph.legend([p[0] for p in bars], ("New",
+                                            "Young",
+                                            "Mature"),
                      'upper left')
         graph.set_ylim(ymax=100)
+        graph.set_xlim(xmax=15)
         graph.set_xticks(range(arrsize))
         graph.set_xticklabels(x)
         graph.grid(True)

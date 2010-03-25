@@ -8,14 +8,9 @@ Latex support
 """
 __docformat__ = 'restructuredtext'
 
-import re, tempfile, os, sys, subprocess
+import re, tempfile, os, sys, subprocess, stat, time, shutil
+from anki.utils import genID, checksum
 from htmlentitydefs import entitydefs
-try:
-    import hashlib
-    md5 = hashlib.md5
-except ImportError:
-    import md5
-    md5 = md5.new
 
 latexPreamble = ("\\documentclass[12pt]{article}\n"
                  "\\special{papersize=3in,5in}"
@@ -31,23 +26,25 @@ regexps = {
     "math": re.compile(r"\[\$\$\](.+?)\[/\$\$\]", re.DOTALL | re.IGNORECASE),
     }
 
-tmpdir = tempfile.mkdtemp(prefix="anki-latex")
+tmpdir = tempfile.mkdtemp(prefix="anki")
 
 # add standard tex install location to osx
 if sys.platform == "darwin":
     os.environ['PATH'] += ":/usr/texbin"
 
-def renderLatex(deck, text):
+def renderLatex(deck, text, build=True):
     "Convert TEXT with embedded latex tags to image links."
     for match in regexps['standard'].finditer(text):
-        text = text.replace(match.group(), imgLink(deck, match.group(1)))
+        text = text.replace(match.group(), imgLink(deck, match.group(1),
+                                                   build))
     for match in regexps['expression'].finditer(text):
         text = text.replace(match.group(), imgLink(
-            deck, "$" + match.group(1) + "$"))
+            deck, "$" + match.group(1) + "$", build))
     for match in regexps['math'].finditer(text):
         text = text.replace(match.group(), imgLink(
             deck,
-            "\\begin{displaymath}" + match.group(1) + "\\end{displaymath}"))
+            "\\begin{displaymath}" + match.group(1) + "\\end{displaymath}",
+            build))
     return text
 
 def stripLatex(text):
@@ -59,55 +56,107 @@ def stripLatex(text):
         text = text.replace(match.group(), "")
     return text
 
-def call(*args, **kwargs):
+def call(argv, wait=True, **kwargs):
     try:
-        o = subprocess.Popen(*args, **kwargs)
+        o = subprocess.Popen(argv, **kwargs)
     except OSError:
         # command not found
         return -1
-    while 1:
-        try:
-            ret = o.wait()
-        except OSError:
-            # interrupted system call
-            continue
-        break
+    if wait:
+        while 1:
+            try:
+                ret = o.wait()
+            except OSError:
+                # interrupted system call
+                continue
+            break
+    else:
+        ret = 0
     return ret
 
-def imgLink(deck, latex):
-    "Parse LATEX and return a HTML image representing the output."
+def latexImgFile(deck, latexCode):
+    key = checksum(latexCode)
+    return "latex-%s.png" % key
+
+def mungeLatex(latex):
+    "Convert entities, fix newlines, and convert to utf8."
     for match in re.compile("&([a-z]+);", re.IGNORECASE).finditer(latex):
         if match.group(1) in entitydefs:
             latex = latex.replace(match.group(), entitydefs[match.group(1)])
     latex = re.sub("<br( /)?>", "\n", latex)
     latex = latex.encode("utf-8")
-    imageFile = "latex-%s.png" % md5(latex).hexdigest()
-    imagePath = os.path.join(deck.mediaDir(create=True), imageFile)
-    imagePath = imagePath.encode(sys.getfilesystemencoding())
-    if not os.path.exists(imagePath):
-        log = open(os.path.join(tmpdir, "latex_log.txt"), "w+")
-        texpath = os.path.join(tmpdir, "tmp.tex")
-        texfile = file(texpath, "w")
-        texfile.write(latexPreamble + "\n")
-        texfile.write(latex + "\n")
-        texfile.write(latexPostamble + "\n")
-        texfile.close()
-        texpath = texpath.encode(sys.getfilesystemencoding())
-        oldcwd = os.getcwd()
-        if sys.platform == "win32":
-            si = subprocess.STARTUPINFO()
-            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        else:
-            si = None
-        try:
-            os.chdir(tmpdir)
-            errmsg = _("Error executing 'latex' or 'dvipng' - are they installed?")
-            if call(["latex", "-interaction=nonstopmode",
-                     texpath], stdout=log, stderr=log, startupinfo=si):
-                return errmsg
-            if call(latexDviPngCmd + ["tmp.dvi", "-o", imagePath],
-                    stdout=log, stderr=log, startupinfo=si):
-                return errmsg
-        finally:
-            os.chdir(oldcwd)
-    return '<img src="%s">' % imageFile
+    return latex
+
+def deleteAllLatexImages(deck):
+    mdir = deck.mediaDir()
+    if not mdir:
+        return
+    deck.startProgress()
+    for c, f in enumerate(os.listdir(mdir)):
+        if f.startswith("latex-"):
+            os.unlink(os.path.join(mdir, f))
+        if c % 100 == 0:
+            deck.updateProgress()
+    deck.finishProgress()
+
+def cacheAllLatexImages(deck):
+    deck.startProgress()
+    fields = deck.s.column0("select value from fields")
+    for c, field in enumerate(fields):
+        if c % 10 == 0:
+            deck.updateProgress()
+        renderLatex(deck, field)
+    deck.finishProgress()
+
+def buildImg(deck, latex):
+    log = open(os.path.join(tmpdir, "latex_log.txt"), "w+")
+    texpath = os.path.join(tmpdir, "tmp.tex")
+    texfile = file(texpath, "w")
+    texfile.write(latexPreamble + "\n")
+    texfile.write(latex + "\n")
+    texfile.write(latexPostamble + "\n")
+    texfile.close()
+    texpath = texpath.encode(sys.getfilesystemencoding())
+    # make sure we have a valid mediaDir
+    deck.mediaDir(create=True)
+    oldcwd = os.getcwd()
+    if sys.platform == "win32":
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    else:
+        si = None
+    try:
+        os.chdir(tmpdir)
+        errmsg = _("Error executing %s.\n") + _(
+            "A log file is available here:\n%s") % tmpdir
+        if call(["latex", "-interaction=nonstopmode",
+                 texpath], stdout=log, stderr=log, startupinfo=si):
+            return (False, errmsg % "latex")
+        if call(latexDviPngCmd + ["tmp.dvi", "-o", "tmp.png"],
+                stdout=log, stderr=log, startupinfo=si):
+            return (False, errmsg % "dvipng")
+        # add to media
+        target = latexImgFile(deck, latex)
+        shutil.copy2("tmp.png", os.path.join(deck.mediaDir(), target))
+        return (True, target)
+    finally:
+        os.chdir(oldcwd)
+
+def imageForLatex(deck, latex, build=True):
+    "Return an image that represents 'latex', building if necessary."
+    imageFile = latexImgFile(deck, latex)
+    ok = True
+    if build and (not imageFile or not os.path.exists(imageFile)):
+        (ok, imageFile) = buildImg(deck, latex)
+    if not ok:
+        return (False, imageFile)
+    return (True, imageFile)
+
+def imgLink(deck, latex, build=True):
+    "Parse LATEX and return a HTML image representing the output."
+    latex = mungeLatex(latex)
+    (ok, img) = imageForLatex(deck, latex, build)
+    if ok:
+        return '<img src="%s">' % img
+    else:
+        return img

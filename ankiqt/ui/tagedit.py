@@ -3,51 +3,77 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from anki.utils import parseTags
+from anki.utils import parseTags, canonifyTags, joinTags
+import re, sys
 
 class TagEdit(QLineEdit):
 
     def __init__(self, parent, *args):
         QLineEdit.__init__(self, parent, *args)
         self.model = QStringListModel()
-        self.completer = TagCompleter(self.model, parent)
+        self.completer = TagCompleter(self.model, parent, self)
         self.completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.setCompleter(self.completer)
 
-    def setDeck(self, deck):
+    def setDeck(self, deck, tags="user"):
         "Set the current deck, updating list of available tags."
         self.deck = deck
         tags = self.deck.allTags()
+        tags.sort(key=lambda x: x.lower())
         self.model.setStringList(
-            QStringList(sorted(tags)))
+            QStringList(tags))
+
+    def addTags(self, tags):
+        l = list(set([unicode(x) for x in list(self.model.stringList())] +
+                 tags))
+        l.sort(key=lambda x: x.lower())
+        self.model.setStringList(QStringList(l))
+
+    def focusOutEvent(self, evt):
+        QLineEdit.focusOutEvent(self, evt)
+        self.emit(SIGNAL("lostFocus"))
 
     def keyPressEvent(self, evt):
-        if evt.key() in (Qt.Key_Enter,
-                         Qt.Key_Return):
-            evt.accept()
-            cur = self.completer.currentCompletion()
-            if cur and not str(cur).strip().endswith(","):
-                self.setText(self.completer.currentCompletion())
+        if evt.key() in (Qt.Key_Enter, Qt.Key_Return):
+            oldtxt = self.text()
+            if not self.text():
+                evt.ignore()
             else:
-                self.completer.popup().close()
-        else:
-            QLineEdit.keyPressEvent(self, evt)
+                if self.completer.completionCount():
+                    self.setText(
+                        self.completer.pathFromIndex(self.completer.popup().currentIndex()))
+                else:
+                    self.setText(self.completer.completionPrefix())
+                if self.text() == oldtxt:
+                    evt.ignore()
+                else:
+                    evt.accept()
+            self.completer.popup().hide()
+            return
+        QLineEdit.keyPressEvent(self, evt)
 
 class TagCompleter(QCompleter):
 
-    def __init__(self, *args):
-        QCompleter.__init__(self, *args)
+    def __init__(self, model, parent, edit, *args):
+        QCompleter.__init__(self, model, parent)
         self.tags = []
+        self.edit = edit
 
     def splitPath(self, str):
-        self.tags = parseTags(unicode(str))
-        if self.tags:
-            return QStringList(self.tags[-1])
-        return QStringList("")
+        str = unicode(str).strip()
+        str = re.sub("  +", " ", str)
+        self.tags = parseTags(str)
+        self.tags.append(u"")
+        p = self.edit.cursorPosition()
+        self.cursor = str.count(" ", 0, p)
+        return QStringList(self.tags[self.cursor])
 
     def pathFromIndex(self, idx):
         ret = QCompleter.pathFromIndex(self, idx)
-        self.tags = self.tags[0:-1]
-        self.tags.append(unicode(ret))
-        return ", ".join(self.tags)
+        self.tags[self.cursor] = unicode(ret)
+        try:
+            self.tags.remove(u"")
+        except ValueError:
+            pass
+        return " ".join(self.tags)

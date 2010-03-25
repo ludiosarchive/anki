@@ -5,26 +5,27 @@ def importAll():
     # a hack
     import main
     import about
-    import unsaved
-    import help
-    import preferences
+    import activetags
     import addcards
-    import lookup
-    import sync
-    import view
     import cardlist
-    import update
-    import importing
-    import exporting
-    import status
     import deckproperties
-    import modelproperties
-    import modelchooser
+    import importing
     import displayproperties
-    import utils
+    import exporting
     import facteditor
+    import help
+    import modelchooser
+    import modelproperties
+    import preferences
+    import status
+    import sync
     import tagedit
     import tray
+    import unsaved
+    import update
+    import utils
+    import view
+    import getshared
 
 class DialogManager(object):
 
@@ -45,6 +46,8 @@ class DialogManager(object):
     def get(self, name, *args):
         (klass, obj) = self.modelessDialogs[name]
         if obj:
+            obj.activateWindow()
+            obj.raise_()
             return obj
         else:
             return klass(*args)
@@ -52,7 +55,8 @@ class DialogManager(object):
     def closeAll(self):
         for (n, (klass, obj)) in self.modelessDialogs.items():
             if obj:
-                obj.hide()
+                obj.forceClose = True
+                obj.close()
                 self.close(n)
 
     # since we load the graphs dynamically, we need a proxy for this

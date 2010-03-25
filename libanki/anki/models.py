@@ -15,16 +15,19 @@ Model - define the way in which facts are added and shown
 import time
 from sqlalchemy.ext.orderinglist import ordering_list
 from anki.db import *
-from anki.utils import genID
+from anki.utils import genID, canonifyTags
 from anki.fonts import toPlatformFont
-from anki.utils import parseTags
+from anki.utils import parseTags, hexifyID, checksum, stripHTML
 from anki.lang import _
+from anki.hooks import runFilter
+from copy import copy
 
-Alignment = {
-    0: _("Center"),
-    1: _("Left"),
-    2: _("Right"),
-    }
+def alignmentLabels():
+    return {
+        0: _("Center"),
+        1: _("Left"),
+        2: _("Right"),
+        }
 
 # Field models
 ##########################################################################
@@ -35,10 +38,11 @@ fieldModelsTable = Table(
     Column('ordinal', Integer, nullable=False),
     Column('modelId', Integer, ForeignKey('models.id'), nullable=False),
     Column('name', UnicodeText, nullable=False),
-    Column('description', UnicodeText, nullable=False, default=u""),
+    Column('description', UnicodeText, nullable=False, default=u""), # obsolete
+    # reused as RTL marker
     Column('features', UnicodeText, nullable=False, default=u""),
     Column('required', Boolean, nullable=False, default=True),
-    Column('unique', Boolean, nullable=False, default=True),
+    Column('unique', Boolean, nullable=False, default=True), # sqlite keyword
     Column('numeric', Boolean, nullable=False, default=False),
     # display
     Column('quizFontFamily', UnicodeText),
@@ -50,24 +54,19 @@ fieldModelsTable = Table(
 class FieldModel(object):
     "The definition of one field in a fact."
 
-    def __init__(self, name=u"", description=u"", required=True, unique=True):
+    def __init__(self, name=u"", required=True, unique=True):
         self.name = name
-        self.description = description
         self.required = required
         self.unique = unique
         self.id = genID()
 
-    def css(self, type="quiz"):
-        t = ".%s { " % self.name.replace(" ", "")
-        if getattr(self, type+'FontFamily'):
-            t += "font-family: \"%s\"; " % toPlatformFont(
-                getattr(self, type+'FontFamily'))
-        if getattr(self, type+'FontSize'):
-            t += "font-size: %dpx; " % getattr(self, type+'FontSize')
-        if type == "quiz" and getattr(self, type+'FontColour'):
-            t += "color: %s; " % getattr(self, type+'FontColour')
-        t += " }\n"
-        return t
+    def copy(self):
+        new = FieldModel()
+        for p in class_mapper(FieldModel).iterate_properties:
+            setattr(new, p.key, getattr(self, p.key))
+        new.id = genID()
+        new.model = None
+        return new
 
 mapper(FieldModel, fieldModelsTable)
 
@@ -80,7 +79,7 @@ cardModelsTable = Table(
     Column('ordinal', Integer, nullable=False),
     Column('modelId', Integer, ForeignKey('models.id'), nullable=False),
     Column('name', UnicodeText, nullable=False),
-    Column('description', UnicodeText, nullable=False, default=u""),
+    Column('description', UnicodeText, nullable=False, default=u""), # obsolete
     Column('active', Boolean, nullable=False, default=True),
     # formats: question/answer/last(not used)
     Column('qformat', UnicodeText, nullable=False),
@@ -99,99 +98,63 @@ cardModelsTable = Table(
     Column('answerFontSize', Integer, default=20),
     Column('answerFontColour', String(7), default=u"#000000"),
     Column('answerAlign', Integer, default=0),
+    # not used
     Column('lastFontFamily', UnicodeText, default=u"Arial"),
     Column('lastFontSize', Integer, default=20),
-    Column('lastFontColour', String(7), default=u"#000000"),
+    # used as background colour
+    Column('lastFontColour', String(7), default=u"#FFFFFF"),
     Column('editQuestionFontFamily', UnicodeText, default=None),
     Column('editQuestionFontSize', Integer, default=None),
     Column('editAnswerFontFamily', UnicodeText, default=None),
-    Column('editAnswerFontSize', Integer, default=None))
+    Column('editAnswerFontSize', Integer, default=None),
+    # empty answer
+    Column('allowEmptyAnswer', Boolean, nullable=False, default=True),
+    Column('typeAnswer', UnicodeText, nullable=False, default=u""))
 
 class CardModel(object):
     """Represents how to generate the front and back of a card."""
-    def __init__(self, name=u"", description=u"",
-                 qformat=u"q", aformat=u"a", active=True):
+    def __init__(self, name=u"", qformat=u"q", aformat=u"a", active=True):
         self.name = name
-        self.description = description
         self.qformat = qformat
         self.aformat = aformat
         self.active = active
         self.id = genID()
 
-    def renderQA(self, card, fact, type, format="text"):
-        "Render fact into card based on card model."
-        if type == "question": field = self.qformat
-        elif type == "answer": field = self.aformat
-        htmlFields = {}
-        htmlFields.update(fact)
-        alltags = parseTags(card.tags + "," +
-                            card.fact.tags + "," +
-                            card.cardModel.name + "," +
-                            card.fact.model.tags)
-        htmlFields['tags'] = ", ".join(alltags)
-        textFields = {}
-        textFields.update(htmlFields)
-        # add per-field formatting
-        for (k, v) in htmlFields.items():
-            # generate pure text entries
-            htmlFields["text:"+k] = v
-            textFields["text:"+k] = v
-            if v:
-                # convert newlines to html & add spans to fields
-                v = v.replace("\n", "<br>")
-                htmlFields[k] = '<span class="%s">%s</span>' % (k.replace(" ",""), v)
-        try:
-            html = field % htmlFields
-            text = field % textFields
-        except (KeyError, TypeError, ValueError):
-            return _("[invalid format; see model properties]")
-        if not html:
-            html = _("[empty]")
-            text = _("[empty]")
-        if format == "text":
-            return text
-        # add outer div & alignment (with tables due to qt's html handling)
-        html = '<div class="%s">%s</div>' % (type, html)
-        attr = type + 'Align'
-        if getattr(self, attr) == 0:
-            align = "center"
-        elif getattr(self, attr) == 1:
-            align = "left"
-        else:
-            align = "right"
-        html = (("<center><table width=95%%><tr><td align=%s>" % align) +
-                   html + "</td></tr></table></center>")
-        return html
-
-    def renderQASQL(self, type, factId):
-        "Render QA in pure SQL, with no HTML generation."
-        fields = dict(object_session(self).all("""
-select fieldModels.name, fields.value from fields, fieldModels
-where
-fields.factId = :factId and
-fields.fieldModelId = fieldModels.id""", factId=factId))
-        fields['tags'] = u""
-        for (k, v) in fields.items():
-            fields["text:"+k] = v
-        if type == "q": format = self.qformat
-        else: format = self.aformat
-        try:
-            return format % fields
-        except (KeyError, TypeError, ValueError):
-            return _("[empty]")
-
-    def css(self):
-        "Return the CSS markup for this card."
-        t = ""
-        for type in ("question", "answer"):
-            t += ".%s { font-family: \"%s\"; color: %s; font-size: %dpx; }\n" % (
-                type,
-                toPlatformFont(getattr(self, type+"FontFamily")),
-                getattr(self, type+"FontColour"),
-                getattr(self, type+"FontSize"))
-        return t
+    def copy(self):
+        new = CardModel()
+        for p in class_mapper(CardModel).iterate_properties:
+            setattr(new, p.key, getattr(self, p.key))
+        new.id = genID()
+        new.model = None
+        return new
 
 mapper(CardModel, cardModelsTable)
+
+def formatQA(cid, mid, fact, tags, cm):
+    "Return a dict of {id, question, answer}"
+    d = {'id': cid}
+    fields = {}
+    for (k, v) in fact.items():
+        fields["text:"+k] = stripHTML(v[1])
+        if v[1]:
+            fields[k] = '<span class="fm%s">%s</span>' % (
+                hexifyID(v[0]), v[1])
+        else:
+            fields[k] = u""
+    fields['tags'] = tags[0]
+    fields['Tags'] = tags[0]
+    fields['modelTags'] = tags[1]
+    fields['cardModel'] = tags[2]
+    # render q & a
+    ret = []
+    for (type, format) in (("question", cm.qformat),
+                           ("answer", cm.aformat)):
+        try:
+            html = format % fields
+        except (KeyError, TypeError, ValueError):
+            html = _("[invalid question/answer format]")
+        d[type] = runFilter("formatQA", html, type, cid, mid, fact, tags, cm)
+    return d
 
 # Model table
 ##########################################################################
@@ -204,16 +167,16 @@ modelsTable = Table(
     Column('modified', Float, nullable=False, default=time.time),
     Column('tags', UnicodeText, nullable=False, default=u""),
     Column('name', UnicodeText, nullable=False),
-    Column('description', UnicodeText, nullable=False, default=u""),
-    Column('features', UnicodeText, nullable=False, default=u""),
+    Column('description', UnicodeText, nullable=False, default=u""), # obsolete
+    Column('features', UnicodeText, nullable=False, default=u""), # used as mediaURL
     Column('spacing', Float, nullable=False, default=0.1),
-    Column('initialSpacing', Float, nullable=False, default=600))
+    Column('initialSpacing', Float, nullable=False, default=60),
+    Column('source', Integer, nullable=False, default=0))
 
 class Model(object):
     "Defines the way a fact behaves, what fields it can contain, etc."
-    def __init__(self, name=u"", description=u""):
+    def __init__(self, name=u""):
         self.name = name
-        self.description = description
         self.id = genID()
 
     def setModified(self):

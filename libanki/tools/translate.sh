@@ -3,15 +3,17 @@
 # update translation files
 #
 
-if [ ! -d "locale" ]
+if [ ! -d "anki" ]
 then
-    echo "Please run this from the anki module directory"
+    echo "Please run this from the anki project root directory"
     exit
 fi
 
+oldpwd=$(pwd)
+cd anki
 allPyFiles=libanki.files
 echo "Generating translations.."
-for i in *.py features/*.py
+for i in *.py importing/*.py
 do
     echo $i >> $allPyFiles
 done
@@ -28,3 +30,4 @@ do
     msgfmt $file --output-file=$outfile
 done
 rm $allPyFiles
+cd $oldpwd

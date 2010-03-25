@@ -22,8 +22,9 @@ class DisplayProperties(QDialog):
         self.main = main
         self.deck = main.deck
         self.ignoreUpdate = False
-        if sys.platform.startswith("darwin"):
-            # mac widgets don't show colours
+        self.plastiqueStyle = None
+        if (sys.platform.startswith("darwin") or
+            sys.platform.startswith("win32")):
             self.plastiqueStyle = QStyleFactory.create("plastique")
         self.dialog = ankiqt.forms.displayproperties.Ui_DisplayProperties()
         self.dialog.setupUi(self)
@@ -31,7 +32,7 @@ class DisplayProperties(QDialog):
         self.setupChooser()
         self.setupCards()
         self.setupFields()
-        self.setupPreview()
+        self.setupButtons()
         self.show()
         ui.dialogs.open("DisplayProperties", self)
 
@@ -48,9 +49,11 @@ class DisplayProperties(QDialog):
         self.drawCards()
         self.drawFields()
 
-    def setupPreview(self):
+    def setupButtons(self):
         self.connect(self.dialog.preview, SIGNAL("clicked()"),
                      self.previewClicked)
+        self.connect(self.dialog.helpButton, SIGNAL("clicked()"),
+                     self.onHelp)
         if self.main.config['showFontPreview']:
             self.dialog.preview.setChecked(True)
         else:
@@ -65,8 +68,7 @@ class DisplayProperties(QDialog):
             self.main.config['showFontPreview'] = True
         else:
             self.dialog.previewGroup.hide()
-            self.setMinimumWidth(350)
-            self.setMaximumWidth(350)
+            self.setFixedWidth(380)
             self.main.config['showFontPreview'] = False
 
     def setupCards(self):
@@ -80,19 +82,22 @@ class DisplayProperties(QDialog):
                          SIGNAL("valueChanged(int)"),
                          self.saveCard)
             w = self.cwidget("Colour", type)
-            if sys.platform.startswith("darwin"):
+            if self.plastiqueStyle:
                 w.setStyle(self.plastiqueStyle)
             self.connect(w,
                          SIGNAL("clicked()"),
-                         lambda w=w, t=type: self.chooseColour(w, t))
+                         lambda w=w: self.chooseColour(w))
             self.connect(self.cwidget("Align", type),
                          SIGNAL("activated(int)"),
                          self.saveCard)
-        # set the background colour to the current system-wide background colour
-        p = QPalette()
-        p.setColor(QPalette.Base, QColor(self.main.config['backgroundColour']))
-        self.dialog.question.setPalette(p)
-        self.dialog.answer.setPalette(p)
+        # background colour
+        self.connect(self.dialog.backgroundColour,
+                     SIGNAL("clicked()"),
+                     lambda w=self.dialog.backgroundColour:\
+                     self.chooseColour(w))
+        if self.plastiqueStyle:
+            self.dialog.backgroundColour.setStyle(self.plastiqueStyle)
+
         self.drawCards()
 
     def drawCards(self):
@@ -102,7 +107,7 @@ class DisplayProperties(QDialog):
         for t in ("question", "answer"):
             self.cwidget("Align", t).clear()
             self.cwidget("Align", t).addItems(
-                QStringList(Alignment.values()))
+                QStringList(alignmentLabels().values()))
         self.cardChanged(0)
 
     def cardChanged(self, idx):
@@ -122,6 +127,8 @@ class DisplayProperties(QDialog):
                 getattr(card, type + "FontColour"))))
             self.cwidget("Align", type).setCurrentIndex(
                 getattr(card, type + "Align"))
+        self.dialog.backgroundColour.setPalette(QPalette(QColor(
+            getattr(card, "lastFontColour"))))
         self.card = card
 
     def saveCard(self):
@@ -139,6 +146,8 @@ class DisplayProperties(QDialog):
             setattr(self.card, type + "FontColour", unicode(c.name()))
             self.card.model.setModified()
             self.deck.setModified()
+        setattr(self.card, "lastFontColour", unicode(
+            self.dialog.backgroundColour.palette().window().color().name()))
         self.drawQuestionAndAnswer()
 
     def cwidget(self, name, type):
@@ -166,11 +175,15 @@ class DisplayProperties(QDialog):
                              SIGNAL("stateChanged(int)"),
                              self.saveField)
                 w = self.fwidget("fontColour", type)
-                if sys.platform.startswith("darwin"):
+                if self.plastiqueStyle:
                     w.setStyle(self.plastiqueStyle)
                 self.connect(w,
                              SIGNAL("clicked()"),
-                             lambda w=w, t=type: self.chooseColour(w, t))
+                             lambda w=w: self.chooseColour(w))
+            elif type == "edit":
+                self.connect(self.dialog.rtl,
+                             SIGNAL("stateChanged(int)"),
+                             self.saveField)
         self.currentField = None
         self.drawFields()
 
@@ -207,26 +220,31 @@ class DisplayProperties(QDialog):
                 self.fwidget("useFamily", type).setCheckState(Qt.Checked)
                 self.fwidget("fontFamily", type).setCurrentFont(QFont(
                     getattr(field, type + 'FontFamily')))
+                self.fwidget("fontFamily", type).setEnabled(True)
             else:
                 self.fwidget("useFamily", type).setCheckState(Qt.Unchecked)
-                self.fwidget("fontFamily", type).hide()
+                self.fwidget("fontFamily", type).setEnabled(False)
             # size
             if getattr(field, type + 'FontSize'):
                 self.fwidget("useSize", type).setCheckState(Qt.Checked)
                 self.fwidget("fontSize", type).setValue(
                     getattr(field, type + 'FontSize'))
+                self.fwidget("fontSize", type).setEnabled(True)
             else:
                 self.fwidget("useSize", type).setCheckState(Qt.Unchecked)
-                self.fwidget("fontSize", type).hide()
-            # colour
+                self.fwidget("fontSize", type).setEnabled(False)
             if type == "quiz":
+                # colour
                 if getattr(field, type + 'FontColour'):
                     self.fwidget("useColour", type).setCheckState(Qt.Checked)
                     self.fwidget("fontColour", type).setPalette(QPalette(QColor(
                         getattr(field, type + 'FontColour'))))
+                    self.fwidget("fontColour", type).setEnabled(True)
                 else:
                     self.fwidget("useColour", type).setCheckState(Qt.Unchecked)
-                    self.fwidget("fontColour", type).hide()
+                    self.fwidget("fontColour", type).setEnabled(False)
+            elif type == "edit":
+                self.dialog.rtl.setChecked(not not field.features)
         self.currentField = field
 
     def saveField(self, *args):
@@ -256,11 +274,16 @@ class DisplayProperties(QDialog):
                     setattr(field, type + 'FontColour', str(c.name()))
                 else:
                     setattr(field, type + 'FontColour', None)
+            elif type == "edit":
+                if self.dialog.rtl.isChecked():
+                    field.features = u"rtl"
+                else:
+                    field.features = u""
         field.model.setModified()
-        self.deck.setModified()
+        self.deck.flushMod()
         self.drawQuestionAndAnswer()
 
-    def chooseColour(self, button, type):
+    def chooseColour(self, button):
         new = QColorDialog.getColor(button.palette().window().color(), self)
         if new.isValid():
             button.setPalette(QPalette(new))
@@ -268,20 +291,28 @@ class DisplayProperties(QDialog):
             self.saveCard()
 
     def drawQuestionAndAnswer(self):
+        self.deck.flushMod()
         f = self.deck.newFact()
         f.tags = u""
         for field in f.fields:
             f[field.name] = field.name
         f.model = self.model
         c = Card(f, self.card)
-        t = "<br><center>" + c.htmlQuestion + "</center>"
+        t = "<body><br><center>" + c.htmlQuestion() + "</center></body>"
+        bg = "body { background-color: %s; }\n" % self.card.lastFontColour
         self.dialog.question.setText(
-            "<style>\n" + c.css() + "</style>\n" + t)
-        t = "<br><center>" + c.htmlAnswer + "</center>"
+            "<style>\n" + bg + self.deck.rebuildCSS() + "</style>\n" + t)
+        t = "<body><br><center>" + c.htmlAnswer() + "</center></body>"
         self.dialog.answer.setText(
-            "<style>\n" + c.css() + "</style>\n" + t)
+            "<style>\n" + bg + self.deck.rebuildCSS() + "</style>\n" + t)
         self.main.updateViews(self.main.state)
+
 
     def reject(self):
         ui.dialogs.close("DisplayProperties")
+        self.modelChooser.deinit()
         QDialog.reject(self)
+
+    def onHelp(self):
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "DisplayProperties"))

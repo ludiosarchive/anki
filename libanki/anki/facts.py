@@ -11,9 +11,9 @@ __docformat__ = 'restructuredtext'
 import time
 from anki.db import *
 from anki.errors import *
-from anki.models import Model, FieldModel, fieldModelsTable
+from anki.models import Model, FieldModel, fieldModelsTable, formatQA
 from anki.utils import genID
-from anki.features import FeatureManager
+from anki.hooks import runHook
 
 # Fields in a fact
 ##########################################################################
@@ -81,7 +81,7 @@ class Fact(object):
         try:
             return [f.value for f in self.fields if f.name == key][0]
         except IndexError:
-            raise KeyError
+            raise KeyError(key)
 
     def __setitem__(self, key, value):
         try:
@@ -92,11 +92,8 @@ class Fact(object):
     def get(self, key, default):
         try:
             return self[key]
-        except IndexError:
+        except (IndexError, KeyError):
             return default
-
-    def css(self):
-        return "".join([f.fieldModel.css() for f in self.fields])
 
     def assertValid(self):
         "Raise an error if required fields are empty."
@@ -124,20 +121,20 @@ class Fact(object):
             req += " and id != %s" % field.id
         return not s.scalar(req, val=field.value, fmid=field.fieldModel.id)
 
-    def onSubmit(self):
-        FeatureManager.run(self.model.features, "onSubmit", self)
-
-    def onKeyPress(self, field, value):
-        FeatureManager.run(self.model.features,
-                           "onKeyPress", self, field, value)
+    def focusLost(self, field):
+        runHook('fact.focusLost', self, field)
 
     def setModified(self, textChanged=False):
         "Mark modified and update cards."
         self.modified = time.time()
         if textChanged:
+            d = {}
+            for f in self.model.fieldModels:
+                d[f.name] = (f.id, self[f.name])
             for card in self.cards:
-                card.question = card.cardModel.renderQA(card, self, "question")
-                card.answer = card.cardModel.renderQA(card, self, "answer")
+                qa = formatQA(None, self.modelId, d, card.splitTags(), card.cardModel)
+                card.question = qa['question']
+                card.answer = qa['answer']
                 card.setModified()
 
 # Fact deletions
