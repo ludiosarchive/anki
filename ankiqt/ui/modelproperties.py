@@ -9,32 +9,40 @@ import anki
 from anki.models import FieldModel, CardModel
 from ankiqt import ui
 
+tabs = ("General",
+        "Cards")
+
 class ModelProperties(QDialog):
 
-    def __init__(self, parent, model, main=None, onFinish=None):
+    def __init__(self, parent, deck, model, main=None, onFinish=None):
         QDialog.__init__(self, parent, Qt.Window)
         if not main:
             main = parent
         self.parent = main
-        self.deck = main.deck
+        self.deck = deck
         self.origModTime = self.deck.modified
         self.m = model
+        self.needRebuild = False
         self.onFinish = onFinish
         self.dialog = ankiqt.forms.modelproperties.Ui_ModelProperties()
         self.dialog.setupUi(self)
+        self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"),
+                     self.helpRequested)
         self.setupFields()
         self.setupCards()
         self.readData()
         self.show()
+        self.undoName = _("Model Properties")
+        self.deck.setUndoStart(self.undoName)
+        self.exec_()
 
     def readData(self):
         # properties section
         self.dialog.name.setText(self.m.name)
-        self.dialog.description.setText(self.m.description)
         self.dialog.tags.setText(self.m.tags)
-        self.dialog.decorators.setText(self.m.features)
         self.dialog.spacing.setText(str(self.m.spacing))
         self.dialog.initialSpacing.setText(str(self.m.initialSpacing/60))
+        self.dialog.mediaURL.setText(unicode(self.m.features))
 
     # Fields
     ##########################################################################
@@ -57,6 +65,8 @@ class ModelProperties(QDialog):
                      self.moveFieldUp)
         self.connect(self.dialog.fieldDown, SIGNAL("clicked()"),
                      self.moveFieldDown)
+        self.connect(self.dialog.fieldName, SIGNAL("lostFocus()"),
+                     self.updateFields)
 
     def updateFields(self, row = None):
         oldRow = self.dialog.fieldList.currentRow()
@@ -99,10 +109,8 @@ class ModelProperties(QDialog):
         self.currentField = self.m.fieldModels[self.dialog.fieldList.currentRow()]
         field = self.currentField
         self.dialog.fieldName.setText(field.name)
-        self.dialog.fieldDescription.setText(field.description)
         self.dialog.fieldUnique.setChecked(field.unique)
         self.dialog.fieldRequired.setChecked(field.required)
-        self.dialog.fieldFeatures.setText(field.features)
         self.dialog.numeric.setChecked(field.numeric)
 
     def enableFieldMoveButtons(self):
@@ -128,10 +136,6 @@ class ModelProperties(QDialog):
             self.deck.renameFieldModel(self.m, field, name)
             # the card models will have been updated
             self.readCurrentCard()
-        self.updateField(field, 'description',
-                         unicode(self.dialog.fieldDescription.toPlainText()))
-        self.updateField(field, 'features',
-                         unicode(self.dialog.fieldFeatures.text()))
         # unique, required, numeric
         self.updateField(field, 'unique',
                          self.dialog.fieldUnique.checkState() == Qt.Checked)
@@ -144,7 +148,7 @@ class ModelProperties(QDialog):
         self.ignoreFieldUpdate = False
 
     def addField(self):
-        f = FieldModel()
+        f = FieldModel(required=False, unique=False)
         f.name = _("Field %d") % (len(self.m.fieldModels) + 1)
         self.deck.addFieldModel(self.m, f)
         self.updateFields()
@@ -158,7 +162,8 @@ class ModelProperties(QDialog):
             return
         if len(self.m.fieldModels) < 2:
             ui.utils.showInfo(
-                _("Please add a new field first."))
+                _("Please add a new field first."),
+                parent=self)
             return
         field = self.m.fieldModels[row]
         count = self.deck.fieldModelUseCount(field)
@@ -232,6 +237,8 @@ class ModelProperties(QDialog):
                      self.moveCardUp)
         self.connect(self.dialog.cardDown, SIGNAL("clicked()"),
                      self.moveCardDown)
+        self.connect(self.dialog.cardName, SIGNAL("lostFocus()"),
+                     self.updateCards)
 
     def updateCards(self, row = None):
         oldRow = self.dialog.cardList.currentRow()
@@ -283,13 +290,24 @@ class ModelProperties(QDialog):
         self.currentCard = self.m.cardModels[self.dialog.cardList.currentRow()]
         card = self.currentCard
         self.dialog.cardName.setText(card.name)
-        self.dialog.cardDescription.setText(card.description)
-        self.dialog.cardQuestion.setPlainText(card.qformat.replace("<br>", "\n"))
-        self.dialog.cardAnswer.setPlainText(card.aformat.replace("<br>", "\n"))
-        if card.questionInAnswer:
-            self.dialog.questionInAnswer.setCheckState(Qt.Checked)
-        else:
-            self.dialog.questionInAnswer.setCheckState(Qt.Unchecked)
+        self.dialog.cardQuestion.setPlainText(card.qformat.replace("<br>", "<br>\n"))
+        self.dialog.cardAnswer.setPlainText(card.aformat.replace("<br>", "<br>\n"))
+        self.dialog.questionInAnswer.setChecked(card.questionInAnswer)
+        self.dialog.allowEmptyAnswer.setChecked(card.allowEmptyAnswer)
+        self.dialog.typeAnswer.clear()
+        self.fieldNames = self.deck.s.column0("""
+select fieldModels.name as n from fieldModels, cardModels
+where cardModels.modelId = fieldModels.modelId
+and cardModels.id = :id
+order by n""", id=card.id)
+        s = [_("Don't ask me to type in the answer")]
+        s += [_("Compare with field '%s'") % f for f in self.fieldNames]
+        self.dialog.typeAnswer.insertItems(0, QStringList(s))
+        try:
+            idx = self.fieldNames.index(card.typeAnswer)
+        except ValueError:
+            idx = -1
+        self.dialog.typeAnswer.setCurrentIndex(idx + 1)
         self.updateToggleButtonText(card)
 
     def enableCardMoveButtons(self):
@@ -315,21 +333,22 @@ class ModelProperties(QDialog):
         card = self.currentCard
         newname = unicode(self.dialog.cardName.text())
         if not newname:
-            newname = _("Card %d") % (self.m.cardModels.index(card) + 1)
+            newname = _("Card-%d") % (self.m.cardModels.index(card) + 1)
         self.updateField(card, 'name', newname)
-        self.updateField(card, 'description', unicode(
-            self.dialog.cardDescription.toPlainText()))
-        s = unicode(self.dialog.cardQuestion.toPlainText()).strip()
-        s = s.replace("\n", "<br>")
+        s = unicode(self.dialog.cardQuestion.toPlainText())
+        s = s.replace("<br>\n", "<br>")
         changed = self.updateField(card, 'qformat', s)
-        s = unicode(self.dialog.cardAnswer.toPlainText()).strip()
-        s = s.replace("\n", "<br>")
+        s = unicode(self.dialog.cardAnswer.toPlainText())
+        s = s.replace("<br>\n", "<br>")
         changed2 = self.updateField(card, 'aformat', s)
-        changed = changed or changed2
+        self.needRebuild = self.needRebuild or changed or changed2
         self.updateField(card, 'questionInAnswer', self.dialog.questionInAnswer.isChecked())
-        if changed:
-            # need to generate all question/answers for this card
-            self.deck.updateCardsFromModel(self.currentCard)
+        self.updateField(card, 'allowEmptyAnswer', self.dialog.allowEmptyAnswer.isChecked())
+        idx = self.dialog.typeAnswer.currentIndex()
+        if not idx:
+            self.updateField(card, 'typeAnswer', u"")
+        else:
+            self.updateField(card, 'typeAnswer', self.fieldNames[idx-1])
         self.ignoreCardUpdate = True
         self.updateCards()
         self.ignoreCardUpdate = False
@@ -358,17 +377,17 @@ class ModelProperties(QDialog):
             return
         if len (self.m.cardModels) < 2:
             ui.utils.showWarning(
-                _("Please add a new card first."),
+                _("Please add a new template first."),
                 parent=self)
             return
         card = self.m.cardModels[row]
         count = self.deck.cardModelUseCount(card)
         if count:
             if not ui.utils.askUser(
-                _("This model is used by %d cards. If you delete it,\n"
+                _("This template is used by %d cards. If you delete it,\n"
                   "all the cards will be deleted too. If you just\n"
                   "want to prevent the creation of future cards with\n"
-                  "this model, please use the 'disable'  button\n"
+                  "this template, please use the 'disable'  button\n"
                   "instead.\n\nReally delete these cards?") % count,
                 parent=self):
                 return
@@ -386,7 +405,7 @@ class ModelProperties(QDialog):
                 active += 1
         if active < 2 and card.active:
             ui.utils.showWarning(
-                _("Please enable a different model first."),
+                _("Please enable a different template first."),
                 parent=self)
             return
         card.active = not card.active
@@ -431,22 +450,32 @@ class ModelProperties(QDialog):
         self.updateCards(row + 1)
         self.ignoreCardUpdate = False
 
+    def helpRequested(self):
+        idx = self.dialog.tabWidget.currentIndex()
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "ModelProperties#" +
+                                      tabs[idx]))
+
     # Cleanup
     ##########################################################################
 
     def reject(self):
         "Save user settings on close."
         # update properties
+        self.deck.startProgress()
         mname = unicode(self.dialog.name.text())
         if not mname:
             mname = _("Model")
         self.updateField(self.m, 'name', mname)
-        self.updateField(self.m, 'description',
-                         unicode(self.dialog.description.toPlainText()))
         self.updateField(self.m, 'tags',
                          unicode(self.dialog.tags.text()))
-        self.updateField(self.m, 'features',
-                         unicode(self.dialog.decorators.text()))
+        url = unicode(self.dialog.mediaURL.text())
+        if url:
+            if not re.match("^(http|https|ftp)://", url, re.I):
+                url = "http://" + url
+            if not url.endswith("/"):
+                url += "/"
+        self.updateField(self.m, 'features', url)
         try:
             self.updateField(self.m, 'spacing',
                              float(self.dialog.spacing.text()))
@@ -467,8 +496,19 @@ class ModelProperties(QDialog):
             self.m.setModified()
             self.deck.setModified()
         # if changed, reset deck
+        reset = False
         if self.origModTime != self.deck.modified:
-            self.parent.reset()
+            self.deck.updateTagsForModel(self.m)
+            reset = True
+        if self.needRebuild:
+            # need to generate q/a templates
+            self.deck.updateCardsFromModel(self.m)
+            reset = True
+        if reset:
+            ankiqt.mw.reset()
         if self.onFinish:
             self.onFinish()
+        self.deck.setUndoEnd(self.undoName)
+        # check again
+        self.deck.finishProgress()
         QDialog.reject(self)

@@ -35,10 +35,6 @@ class Mnemosyne10Importer(Importer):
             raise ImportFormatError(type="systemError",
                                     info=str(e))
         header = file.readline().strip()
-        if (header != "--- Mnemosyne Data Base --- Format Version 1 ---" and
-            header != "--- Mnemosyne Data Base --- Format Version 2 ---"):
-            raise ImportFormatError(type="versionError",
-                                    info=header)
         # read the structure in
         try:
             struct = pickle.load(file)
@@ -56,14 +52,17 @@ class Mnemosyne10Importer(Importer):
             card.interval = item.next_rep - item.last_rep
             secDelta = (item.next_rep - daysPassed) * 86400.0
             card.due = card.nextTime = time.time() + secDelta
+            card.factor = item.easiness
             # for some reason mnemosyne starts cards off on 1 instead of 0
             card.successive = max(
                 (item.acq_reps_since_lapse + item.ret_reps_since_lapse -1), 0)
-            card.yesCount = (item.acq_reps + item.ret_reps) - 1
+            card.yesCount = max((item.acq_reps + item.ret_reps) - 1, 0)
             card.noCount = item.lapses
             card.reps = card.yesCount + card.noCount
             if item.cat.name != u"<default>":
-                card.tags = item.cat.name
+                card.tags = item.cat.name.replace(" ", "_")
+            if card.reps:
+                card.type = 1
             cards.append(card)
         return cards
 
@@ -73,4 +72,7 @@ class Mnemosyne10Importer(Importer):
     def fudgeText(self, text):
         text = text.replace("\n", "<br>")
         text = re.sub('<sound src="(.*?)">', '[sound:\\1]', text)
+        text = re.sub('<(/?latex)>', '[\\1]', text)
+        text = re.sub('<(/?\$)>', '[\\1]', text)
+        text = re.sub('<(/?\$\$)>', '[\\1]', text)
         return text

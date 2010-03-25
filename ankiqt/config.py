@@ -6,7 +6,8 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import os, sys, cPickle, locale, types
+import os, sys, cPickle, locale, types, shutil, time, re
+from anki.utils import genID
 
 # compatability
 def unpickleWxFont(*args):
@@ -24,35 +25,83 @@ class Config(dict):
             if self.configPath.startswith("~"):
                 # windows sucks
                 self.configPath = "c:\\anki"
+        elif sys.platform.startswith("darwin"):
+            if self.configPath == os.path.expanduser("~/.anki"):
+                oldDb = self.getDbPath()
+                self.configPath = os.path.expanduser(
+                    "~/Library/Application Support/Anki")
+                # upgrade?
+                if (not os.path.exists(self.configPath) and
+                    os.path.exists(oldDb)):
+                    self.makeAnkiDir()
+                    newDb = self.getDbPath()
+                    shutil.copy2(oldDb, newDb)
+        self.makeAnkiDir()
         self.load()
 
     def defaults(self):
         fields = {
-            'syncOnLoad': False,
-            'syncOnClose': False,
+            'addZeroSpace': False,
+            'alternativeTheme': False,
             'checkForUpdates': True,
+            'created': time.time(),
+            'deckBrowserNameLength': 30,
+            'deckBrowserOrder': 0,
+            'deckBrowserRefreshPeriod': 3600,
+            'deleteMedia': False,
+            'editFontFamily': 'Arial',
+            'editFontSize': 12,
+            'editLineSize': 20,
+            'editorReverseOrder': False,
+            'extraNewCards': 5,
+            'factEditorAdvanced': False,
+            'forceLTR': False,
+            'iconSize': 32,
+            'id': genID(),
             'interfaceLang': "",
-            'syncUsername': "",
-            'syncPassword': "",
-            'showFontPreview': True,
-            'showToolbar': True,
+            'loadLastDeck': False,
+            'mainWindowGeom': None,
+            'mainWindowState': None,
+            'numBackups': 30,
+            'preventEditUntilAnswer': False,
+            'proxyHost': '',
+            'proxyPass': '',
+            'proxyPort': 8080,
+            'proxyUser': '',
+            'qaDivider': True,
+            'randomizeOnCram': True,
+            'recentColours': ["#000000", "#0000ff"],
             'recentDeckPaths': [],
-            'saveAfterAnswer': True,
-            'saveAfterAnswerNum': 30,
+            'repeatQuestionAudio': True,
             'saveAfterAdding': True,
-            'saveAfterAddingNum': 10,
+            'saveAfterAddingNum': 1,
+            'saveAfterAnswer': True,
+            'saveAfterAnswerNum': 10,
             'saveOnClose': True,
-            'mainWindowSize': QSize(550, 625),
-            'mainWindowPos': QPoint(100, 100),
-            'easeButtonStyle': 'standard',
-            'easeButtonHeight': 'standard',
-            'suppressUpdate': False,
+            'scrollToAnswer': True,
+            'showCardTimer': True,
+            'showFontPreview': False,
+            'showLastCardContent': False,
+            'showLastCardInterval': False,
+            'showProgress': True,
+            'showStudyOptions': False,
+            'showStudyScreen': True,
+            'showStudyStats': True,
+            'showTimer': True,
+            'showToolbar': True,
+            'showTrayIcon': False,
+            'simpleToolbar': True,
+            'sortIndex': 0,
+            'splitQA': True,
+            'standaloneWindows': True,
             'suppressEstimates': False,
-            'suppressLastCardInterval': False,
-            'suppressLastCardContent': False,
-            'showTray': False,
-            'editCurrentOnly': True,
-            'showSuspendedCards': True,
+            'suppressUpdate': False,
+            'syncInMsgBox': False,
+            'syncOnClose': True,
+            'syncOnLoad': True,
+            'syncPassword': "",
+            'syncUsername': "",
+            'typeAnswerFontSize': 20,
             }
         for (k,v) in fields.items():
             if not self.has_key(k):
@@ -61,39 +110,19 @@ class Config(dict):
             # guess interface and target languages
             (lang, enc) = locale.getdefaultlocale()
             self['interfaceLang'] = lang
-        self.initFonts()
-
-    def initFonts(self):
-        defaultColours = {
-                'lastCard': "#0077FF",
-                'background': "#FFFFFF",
-                'interface': "#000000",
-            }
-        defaultSizes = {
-                'interface': 12,
-                'lastCard': 14,
-                'edit': 12,
-                'other': 24,
-            }
-        # fonts
-        for n in ("interface", "lastCard", "edit"):
-            if not self.get(n + "FontFamily", None):
-                self[n + "FontFamily"] = "Arial"
-                self[n + "FontSize"] = defaultSizes.get(n, defaultSizes['other'])
-        # colours
-        for n in ("interface", "lastCard", "background"):
-            color = n + "Colour"
-            if not color in self:
-                self[color] = defaultColours[n]
 
     def getDbPath(self):
         return os.path.join(self.configPath, self.configDbName)
 
     def makeAnkiDir(self):
         base = self.configPath
-        os.mkdir(base)
-        os.mkdir(os.path.join(base, "plugins"))
-        os.mkdir(os.path.join(base, "backups"))
+        for x in (base,
+                  os.path.join(base, "plugins"),
+                  os.path.join(base, "backups")):
+            try:
+                os.mkdir(x)
+            except:
+                pass
 
     def save(self):
         path = self.getDbPath()
@@ -108,31 +137,21 @@ class Config(dict):
             os.unlink(path)
         os.rename(tmpname, path)
 
+    def fixLang(self, lang):
+        if lang and lang not in ("pt_BR", "zh_CN", "zh_TW"):
+            lang = re.sub("(.*)_.*", "\\1", lang)
+        if not lang:
+            lang = "en"
+        return lang
+
     def load(self):
         base = self.configPath
         db = self.getDbPath()
-        if not os.path.exists(base):
-            self.makeAnkiDir()
-        # maybe move .anki config file to .anki/config.db
-        if os.path.isfile(base):
-            oldfile = open(base)
-            contents = oldfile.read()
-            oldfile.close()
-            # write to a tempfile as a backup
-            from tempfile import mkstemp
-            (fd, tmpname) = mkstemp()
-            file = os.fdopen(fd, "w")
-            file.write(contents)
-            file.close()
-            os.unlink(base)
-            self.makeAnkiDir()
-            from shutil import copyfile
-            copyfile(tmpname, db)
         # load config
         try:
             f = open(db)
             self.update(cPickle.load(f))
-        except (IOError, EOFError):
+        except:
             # config file was corrupted previously
             pass
         self.defaults()
@@ -141,16 +160,5 @@ class Config(dict):
             s = self['recentDeckPaths'][n]
             if not isinstance(s, types.UnicodeType):
                 self['recentDeckPaths'][n] = unicode(s, sys.getfilesystemencoding())
-        # fix old locale settings
-        if self["interfaceLang"] == "ja":
-            self["interfaceLang"]="ja_JP"
-        elif self["interfaceLang"] == "fr":
-            self["interfaceLang"]="fr_FR"
-        elif self["interfaceLang"] == "en":
-            self["interfaceLang"]="en_US"
-        elif self["interfaceLang"] == "de":
-            self["interfaceLang"]="de_DE"
-        elif self["interfaceLang"] == "es":
-            self["interfaceLang"]="es_ES"
-        elif not self["interfaceLang"]:
-            self["interfaceLang"]="en_US"
+        # fix locale settings
+        self["interfaceLang"] = self.fixLang(self["interfaceLang"])

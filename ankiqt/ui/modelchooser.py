@@ -3,27 +3,30 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-import anki
+from operator import attrgetter
+import anki, sys
 from anki import stdmodels
 from anki.models import *
 from ankiqt import ui
 import ankiqt.forms
+from anki.hooks import addHook, removeHook
 
 class ModelChooser(QHBoxLayout):
 
-    def __init__(self, parent, main, deck, onChangeFunc, cards=True):
+    def __init__(self, parent, main, deck, onChangeFunc=None, cards=True, label=True):
         QHBoxLayout.__init__(self)
         self.parent = parent
         self.main = main
         self.deck = deck
         self.onChangeFunc = onChangeFunc
         self.setMargin(0)
-        self.setSpacing(6)
+        self.setSpacing(4)
         self.shortcuts = []
-        label = QLabel(_("<b><u>M</u>odel</b>:"))
-        self.addWidget(label)
+        if label:
+            self.modelLabel = QLabel(_("<b>Model</b>:"))
+            self.addWidget(self.modelLabel)
         self.models = QComboBox()
-        s = QShortcut(QKeySequence(_("Alt+M")), self.parent)
+        s = QShortcut(QKeySequence(_("Shift+Alt+m")), self.parent)
         s.connect(s, SIGNAL("activated()"),
                   lambda: self.models.showPopup())
         self.drawModels()
@@ -32,16 +35,12 @@ class ModelChooser(QHBoxLayout):
             QSizePolicy.Policy(0))
         self.models.setSizePolicy(sizePolicy)
         self.addWidget(self.models)
-        self.add = QPushButton()
-        self.add.setIcon(QIcon(":/icons/list-add.png"))
-        self.add.setToolTip(_("Add a new model"))
-        self.add.setAutoDefault(False)
-        self.addWidget(self.add)
-        self.connect(self.add, SIGNAL("clicked()"), self.onAdd)
         self.edit = QPushButton()
-        self.edit.setIcon(QIcon(":/icons/edit.png"))
-        self.edit.setShortcut(_("Alt+E"))
-        self.edit.setToolTip(_("Edit the current model"))
+        if not sys.platform.startswith("darwin"):
+            self.edit.setFixedWidth(32)
+        self.edit.setIcon(QIcon(":/icons/configure.png"))
+        self.edit.setShortcut(_("Shift+Alt+e"))
+        self.edit.setToolTip(_("Customize Models"))
         self.edit.setAutoDefault(False)
         self.addWidget(self.edit)
         self.connect(self.edit, SIGNAL("clicked()"), self.onEdit)
@@ -49,15 +48,17 @@ class ModelChooser(QHBoxLayout):
         self.handleCards = False
         if cards:
             self.handleCards = True
-            label = QLabel(_("<b><u>C</u>ards</b>:"))
+            label = QLabel(_("<b>Cards</b>:"))
             self.addWidget(label)
             self.cards = QPushButton()
+            self.cards.setAutoDefault(False)
             self.connect(self.cards, SIGNAL("clicked()"), self.onCardChange)
-            s = QShortcut(QKeySequence(_("Alt+C")), self.parent)
-            s.connect(s, SIGNAL("activated()"),
-                      self.onCardChange)
             self.addWidget(self.cards)
             self.drawCardModels()
+        addHook('guiReset', self.onModelEdited)
+
+    def deinit(self):
+        removeHook('guiReset', self.onModelEdited)
 
     def show(self):
         for i in range(self.count()):
@@ -68,40 +69,34 @@ class ModelChooser(QHBoxLayout):
             self.itemAt(i).widget().hide()
 
     def onEdit(self):
-        idx = self.models.currentIndex()
-        model = self.deck.models[idx]
-        ui.modelproperties.ModelProperties(self.parent, model, self.main,
+        ui.deckproperties.DeckProperties(self.parent, self.deck,
                                            onFinish=self.onModelEdited)
-        self.drawModels()
-        self.changed(model)
 
     def onModelEdited(self):
+        # hack
+        from ankiqt import mw
+        self.deck = mw.deck
         self.drawModels()
-
-    def onAdd(self):
-        model = AddModel(self.parent, self.main).getModel()
-        if model:
-            self.deck.addModel(model)
-            self.drawModels()
-            self.changed(model)
-            self.deck.setModified()
+        self.changed(self.deck.currentModel)
 
     def onChange(self, idx):
-        model = self.deck.models[idx]
+        model = self._models[idx]
         self.deck.currentModel = model
-        self.changed(model)
+        self.changed(self.deck.currentModel)
         self.deck.setModified()
 
     def changed(self, model):
         self.deck.addModel(model)
-        self.onChangeFunc(model)
+        if self.onChangeFunc:
+            self.onChangeFunc(model)
         self.drawCardModels()
 
     def drawModels(self):
         self.models.clear()
+        self._models = sorted(self.deck.models, key=attrgetter("name"))
         self.models.addItems(QStringList(
-            [m.name for m in self.deck.models]))
-        idx = self.deck.models.index(self.deck.currentModel)
+            [m.name for m in self._models]))
+        idx = self._models.index(self.deck.currentModel)
         self.models.setCurrentIndex(idx)
 
     def drawCardModels(self):
@@ -118,7 +113,7 @@ class ModelChooser(QHBoxLayout):
         self.cards.setText(txt)
         n = 1
         for c in m.cardModels:
-            s = QShortcut(QKeySequence("Alt+%d" % n), self.parent)
+            s = QShortcut(QKeySequence("Ctrl+%d" % n), self.parent)
             self.parent.connect(s, SIGNAL("activated()"),
                                 lambda c=c: self.toggleCard(c))
             self.shortcuts.append(s)
@@ -166,45 +161,49 @@ class ModelChooser(QHBoxLayout):
 
 class AddModel(QDialog):
 
-    def __init__(self, parent, main=None, online=False):
-        QDialog.__init__(self, parent)
+    def __init__(self, parent, main, deck):
+        QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         if not main:
             main = parent
         self.main = main
         self.model = None
+        self.deck = deck
         self.dialog = ankiqt.forms.addmodel.Ui_AddModel()
         self.dialog.setupUi(self)
-        self.models = {}
-        for name in (
-            "Japanese",
-            "English",
-            "Cantonese",
-            "Mandarin",
-            "Heisig"):
-            # hard code the order so that most common come first
+        self.models = []
+        names = stdmodels.models.keys()
+        names.sort()
+        for name in names:
             m = stdmodels.byName(name)
-            item = QListWidgetItem(m.name)
+            item = QListWidgetItem(_("Add: %s") % m.name)
             self.dialog.models.addItem(item)
-            self.models[m.name] = m
+            self.models.append((True, m))
+        # add local decks
+        models = sorted(deck.models, key=attrgetter("name"))
+        for m in models:
+            item = QListWidgetItem(_("Copy: %s") % m.name)
+            self.dialog.models.addItem(item)
+            self.models.append((False, m))
         self.dialog.models.setCurrentRow(0)
         # the list widget will swallow the enter key
         s = QShortcut(QKeySequence("Return"), self)
         self.connect(s, SIGNAL("activated()"), self.accept)
-        if not online:
-            self.dialog.loadOnline.setShown(False)
+        # help
+        self.connect(self.dialog.buttonBox, SIGNAL("helpRequested()"), self.onHelp)
 
     def getModel(self):
         self.exec_()
         return self.model
 
     def accept(self):
-        if self.dialog.createTemplate.isChecked():
-            self.model = self.models[
-                unicode(self.dialog.models.currentItem().text())]
-        elif self.dialog.createBasic.isChecked():
-            self.model = stdmodels.byName("Basic")
-        else:
-            self.model = "online"
+        (isStd, self.model) = self.models[
+            self.dialog.models.currentRow()]
+        if not isStd:
+            # not a standard model, so duplicate
+            self.model = self.deck.copyModel(self.model)
         QDialog.accept(self)
 
+    def onHelp(self):
+        QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
+                                      "AddModel"))

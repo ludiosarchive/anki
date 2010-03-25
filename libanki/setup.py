@@ -24,9 +24,8 @@ setup(name='anki',
       author_email='anki@ichi2.net',
       url='http://ichi2.net/anki/index.html',
       license='GPLv3',
-      packages=find_packages(),
-      package_data={'anki':
-                    ['samples/*','locale/*/*/*']},
+      packages=["anki", "anki.importing"],
+      package_data={'anki': ['locale/*/*/*'],},
       include_package_data=True,
       zip_safe=False,
       install_requires=[

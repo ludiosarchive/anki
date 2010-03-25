@@ -5,11 +5,20 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki, anki.utils
-from anki.sound import playFromText, stripSounds
+from anki.sound import playFromText
 from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
-import types, time
+from anki.hooks import runHook, runFilter
+from anki.media import stripMedia
+import types, time, re, os, urllib, sys, difflib
 from ankiqt import ui
+from ankiqt.ui.utils import mungeQA, getBase
+from anki.utils import fmtTimeSpan
+from PyQt4.QtWebKit import QWebPage, QWebView
+
+failedCharColour = "#FF0000"
+passedCharColour = "#00FF00"
+futureWarningColour = "#FF0000"
 
 # Views - define the way a user is prompted for questions, etc
 ##########################################################################
@@ -21,6 +30,8 @@ class View(object):
         self.main = parent
         self.body = body
         self.frame = frame
+        self.main.connect(self.body, SIGNAL("loadFinished(bool)"),
+                          self.onLoadFinished)
 
     # State control
     ##########################################################################
@@ -30,39 +41,43 @@ class View(object):
         self.oldState = getattr(self, 'state', None)
         self.state = state
         if self.state == "initial":
-            self.shownLearnHelp = False
-            self.shownReviewHelp = False
-            self.shownFinalHelp = False
             return
         elif self.state == "noDeck":
             self.clearWindow()
-            self.drawNoDeckMessage()
+            self.drawWelcomeMessage()
             self.flush()
             return
         self.redisplay()
 
     def redisplay(self):
         "Idempotently display the current state (prompt for question, etc)"
-        if self.state == "noDeck":
+        if self.state == "noDeck" or self.state == "studyScreen":
             return
-        self.clearWindow()
-        self.setBackgroundColour()
-        self.maybeHelp()
-        if self.main.deck.cardCount():
-            if not self.main.lastCard or (
-                self.main.config['suppressLastCardContent'] and
-                self.main.config['suppressLastCardInterval']):
-                self.buffer += "<br>"
-            else:
+        self.buffer = ""
+        self.haveTop = (self.main.lastCard and (
+            self.main.config['showLastCardContent'] or
+            self.main.config['showLastCardInterval'])) or (
+            self.needFutureWarning())
+        self.drawRule = (self.main.config['qaDivider'] and
+                         self.main.currentCard and
+                         not self.main.currentCard.cardModel.questionInAnswer)
+        if not self.main.deck.isEmpty():
+            if self.haveTop:
                 self.drawTopSection()
         if self.state == "showQuestion":
+            self.setBackground()
             self.drawQuestion()
+            if self.drawRule:
+                self.write("<hr>")
         elif self.state == "showAnswer":
+            self.setBackground()
             if not self.main.currentCard.cardModel.questionInAnswer:
                 self.drawQuestion(nosound=True)
+            if self.drawRule:
+                self.write("<hr>")
             self.drawAnswer()
         elif self.state == "deckEmpty":
-            self.drawDeckEmptyMessage()
+            self.drawWelcomeMessage()
         elif self.state == "deckFinished":
             self.drawDeckFinishedMessage()
         self.flush()
@@ -70,16 +85,10 @@ class View(object):
     def addStyles(self):
         # card styles
         s = "<style>\n"
-        if self.main.currentCard:
-            s += self.main.currentCard.css()
-        # last card
-        for base in ("lastCard", "interface"):
-            family = self.main.config[base + "FontFamily"]
-            size = self.main.config[base + "FontSize"]
-            color = ("; color: " + self.main.config[base + "Colour"])
-            s += ('.%s {font-family: "%s"; font-size: %spx%s}\n' %
-                            (base, family, size, color))
-        # standard margins
+        if self.main.deck:
+            s += self.main.deck.css
+        s += "div { white-space: pre-wrap; }\n"
+        s = runFilter("addStyles", s, self.main.currentCard)
         s += "</style>"
         return s
 
@@ -87,44 +96,112 @@ class View(object):
         self.body.setHtml("")
         self.buffer = ""
 
+    def setBackground(self):
+        col = self.main.currentCard.cardModel.lastFontColour
+        self.write("<style>html { background: %s;}</style>" % col)
+
     # Font properties & output
     ##########################################################################
 
     def flush(self):
         "Write the current HTML buffer to the screen."
-        self.body.setHtml(self.addStyles() + '<div class="interface">' + self.buffer + "</div>")
+        self.buffer = self.addStyles() + self.buffer
+        # hook for user css
+        runHook("preFlushHook")
+        self.buffer = '''<html><head>%s</head><body>%s</body></html>''' % (
+            getBase(self.main.deck, self.main.currentCard), self.buffer)
+        #print self.buffer.encode("utf-8")
+        self.body.setHtml(self.buffer)
 
     def write(self, text):
         if type(text) != types.UnicodeType:
             text = unicode(text, "utf-8")
         self.buffer += text
 
-    def setBackgroundColour(self):
-        p = QPalette()
-        p.setColor(QPalette.Base, QColor(self.main.config['backgroundColour']))
-        self.body.setPalette(p)
-        if self.frame:
-            p.setColor(QPalette.Background, QColor(self.main.config['backgroundColour']))
-            self.frame.setPalette(p)
-
     # Question and answer
     ##########################################################################
 
+    def center(self, str, height=40):
+        if not self.main.config['splitQA']:
+            return "<center>" + str + "</center>"
+        return '''\
+<center><div style="display: table; height: %s%%; width:100%%; overflow: hidden;">\
+<div style="display: table-cell; vertical-align: middle;">\
+<div style="">%s</div></div></div></center>''' % (height, str)
+
     def drawQuestion(self, nosound=False):
         "Show the question."
-        q = self.main.currentCard.htmlQuestion
-        q = renderLatex(self.main.deck, q)
-        self.write(stripSounds(q))
+        if not self.main.config['splitQA']:
+            self.write("<br>")
+        q = self.main.currentCard.htmlQuestion()
+        if self.haveTop:
+            height = 35
+        elif self.main.currentCard.cardModel.questionInAnswer:
+            height = 40
+        else:
+            height = 45
+        q = runFilter("drawQuestion", q, self.main.currentCard)
+        self.write(self.center(self.mungeQA(self.main.deck, q), height))
         if self.state != self.oldState and not nosound:
             playFromText(q)
 
+    def correct(self, a, b):
+        if b == "":
+            return "";
+
+        ret = "";
+        s = difflib.SequenceMatcher(None, b, a)
+
+        sz = self.main.currentCard.cardModel.answerFontSize
+        fn = self.main.currentCard.cardModel.answerFontFamily
+        st = "background: %s; color: #000; font-size: %dpx; font-family: %s;"
+        ok = st % (passedCharColour, sz, fn)
+        bad = st % (failedCharColour, sz, fn)
+
+        for tag, i1, i2, j1, j2 in s.get_opcodes():
+            if tag == "equal":
+                ret += ("<span style='%s'>%s</span>" % (ok, b[i1:i2]))
+            elif tag == "replace":
+                ret += ("<span style='%s'>%s</span>"
+                        % (bad, b[i1:i2] + (" " * ((j2 - j1) - (i2 - i1)))))
+            elif tag == "delete":
+                ret += ("<span style='%s'>%s</span>" % (bad, b[i1:i2]))
+            elif tag == "insert":
+                ret += ("<span style='%s'>%s</span>" % (bad, " " * (j2 - j1)))
+        return ret
+
     def drawAnswer(self):
         "Show the answer."
-        a = self.main.currentCard.htmlAnswer
-        a = renderLatex(self.main.deck, a)
-        self.write(stripSounds(a))
+        a = self.main.currentCard.htmlAnswer()
+        a = runFilter("drawAnswer", a, self.main.currentCard)
+        if self.main.currentCard.cardModel.typeAnswer:
+            try:
+                cor = stripMedia(stripHTML(self.main.currentCard.fact[
+                    self.main.currentCard.cardModel.typeAnswer]))
+            except KeyError:
+                self.main.currentCard.cardModel.typeAnswer = ""
+                cor = ""
+            if cor:
+                given = unicode(self.main.typeAnswerField.text())
+                res = self.correct(cor, given)
+                a = res + "<br>" + a
+        self.write(self.center('<span id=answer />'
+                               + self.mungeQA(self.main.deck, a)))
         if self.state != self.oldState:
             playFromText(a)
+
+    def mungeQA(self, deck, txt):
+        txt = mungeQA(deck, txt)
+        # hack to fix thai presentation issues
+        if self.main.config['addZeroSpace']:
+            txt = txt.replace("</span>", "&#8203;</span>")
+        return txt
+
+    def onLoadFinished(self, bool):
+        if self.state == "showAnswer":
+            if self.main.config['scrollToAnswer']:
+                mf = self.body.page().mainFrame()
+                mf.evaluateJavaScript("location.hash = 'answer'")
 
     # Top section
     ##########################################################################
@@ -132,13 +209,31 @@ class View(object):
     def drawTopSection(self):
         "Show previous card, next scheduled time, and stats."
         self.buffer += "<center>"
+        self.drawFutureWarning()
         self.drawLastCard()
         self.buffer += "</center>"
+
+    def needFutureWarning(self):
+        if not self.main.currentCard:
+            return
+        if self.main.currentCard.due <= time.time():
+            return
+        if self.main.currentCard.due - time.time() <= self.main.deck.delay0:
+            return
+        return True
+
+    def drawFutureWarning(self):
+        if not self.needFutureWarning():
+            return
+        self.write("<span style='color: %s'>" % futureWarningColour +
+                   _("This card was due in %s.") % fmtTimeSpan(
+            self.main.currentCard.due - time.time(), after=True) +
+                   "</span>")
 
     def drawLastCard(self):
         "Show the last card if not the current one, and next time."
         if self.main.lastCard:
-            if not self.main.config['suppressLastCardContent']:
+            if self.main.config['showLastCardContent']:
                 if (self.state == "deckFinished" or
                     self.main.currentCard.id != self.main.lastCard.id):
                     q = self.main.lastCard.question.replace("<br>", "  ")
@@ -152,118 +247,71 @@ class View(object):
                     s = "%s<br>%s" % (q, a)
                     s = stripLatex(s)
                     self.write('<span class="lastCard">%s</span><br>' % s)
-            if not self.main.config['suppressLastCardInterval']:
+            if self.main.config['showLastCardInterval']:
                 if self.main.lastQuality > 1:
                     msg = _("Well done! This card will appear again in "
                             "<b>%(next)s</b>.") % \
                             {"next":self.main.lastScheduledTime}
                 else:
-                    msg = _("This card will appear again in less than "
-                            "<b>%(next)s</b>.") % \
-                            {"next":self.main.lastScheduledTime}
+                    msg = _("This card will appear again later.")
                 self.write(msg)
-
-    # Help
-    ##########################################################################
-
-    def maybeHelp(self):
-        return
-        stats = self.main.deck.sched.getStats()
-        if not stats['pending']:
-            self.main.help.hide()
-        elif (self.main.currentCard and
-            self.main.currentCard.nextTime > time.time()):
-            if not self.shownFinalHelp:
-                self.shownFinalHelp = True
-                self.main.help.showHideableKey("finalReview")
-        elif stats['learnMode']:
-            if not self.shownLearnHelp:
-                if stats['pending'] != 0:
-                    self.shownLearnHelp = True
-                    self.main.help.showHideableKey("learn")
-        else:
-            if not self.shownReviewHelp:
-                self.shownReviewHelp = True
-                self.main.help.showHideableKey("review")
+            self.write("<br>")
 
     # Welcome/empty/finished deck messages
     ##########################################################################
 
-    def drawNoDeckMessage(self):
-        self.write(_("""<h1>Welcome to Anki!</h1>
-<p>
-<table width=90%>
-<tr>
-<td>
-Anki is a tool which will help you remember things as quickly and easily as
-possible. Anki works by asking you questions. After answering a question,
-Anki will ask how well you remembered. If you made a mistake or had difficulty
-remembering, Anki will show you the question again after a short amount of
-time. If you answered the question easily, Anki will wait for a number of days
-before asking you again. Each time you successfully remember something, the
-time before you see it again will get bigger.
-</td>
-</tr>
-</table>
-
+    def drawWelcomeMessage(self):
+        self.main.mainWin.welcomeText.setText("""\
+<h1>%(welcome)s</h1>
 <p>
 <table>
 
 <tr>
 <td width=50>
-<a href="welcome:sample"><img src=":/icons/anki.png"></a>
+<a href="welcome:addfacts"><img src=":/icons/list-add.png"></a>
 </td>
-<td valign=middle><h2><a href="welcome:sample">Open a sample deck</a></h2></td>
+<td valign=middle><h1><a href="welcome:addfacts">%(add)s</a></h1>
+%(start)s</td>
 </tr>
 
-<tr>
-<td>
-<a href="welcome:open"><img src=":/icons/document-open.png"></a>
-</td>
-<td valign=middle><h2><a href="welcome:open">Open an existing deck</a></h2></td>
-</tr>
-
-<tr>
-<td>
-<a href="welcome:new"><img src=":/icons/document-new.png"></a>
-</td>
-<td valign=middle>
-<h2><a href="welcome:new">Create a new deck</a></h2></td>
-</tr>
 </table>
-<p>
-<table width=90%>
+
+<br>
+<table>
+
 <tr>
-<td>
-<h2>Adding material</h2>
-There are three ways to add material to Anki: typing it in yourself, using a
-pre-made Anki deck, or importing word lists that you find on the internet.
-<p>
-
-For language learning, it's a good idea to add material yourself, from sources
-like a textbook or a TV show. By adding words that you see or hear in context,
-you also learn how they are used. While it may be tempting to use a big,
-pre-made vocabulary list to save time, learning words and grammar in context
-will ensure you can use them naturally.
-<p>
-
-So if you're learning a language, consider adding material you want to learn
-into Anki by yourself. Initially the time required to type in material may
-seem daunting, but it's a small amount of time compared to the time you'll
-save by not forgetting.
+<td width=50>
+<a href="welcome:back"><img src=":/icons/go-previous.png"></a>
 </td>
+<td valign=middle><h2><a href="welcome:back">%(back)s</a></h2></td>
 </tr>
-</table>
-"""))
 
-    def drawDeckEmptyMessage(self):
-        "Tell the user the deck is empty."
-        self.write(_("""
-<h1>Empty deck</h1>The current deck has no cards in it. Please select 'Add
-card' from the Edit menu."""))
+</table>""" % \
+	{"welcome":_("Welcome to Anki!"),
+         "add":_("Add Material"),
+         "start":_("Start adding your own material."),
+         "back":_("Back to Deck Browser"),
+         })
 
     def drawDeckFinishedMessage(self):
         "Tell the user the deck is finished."
-        self.write("<br><center><table width=250><tr><td align='left'>" +
-                   self.main.deck.deckFinishedMsg() +
-                   "</td></tr></table></center>")
+        self.main.mainWin.congratsLabel.setText(
+            self.main.deck.deckFinishedMsg())
+
+class AnkiWebView(QWebView):
+
+    def __init__(self, *args):
+        QWebView.__init__(self, *args)
+        self.setObjectName("mainText")
+
+    def keyPressEvent(self, evt):
+        if evt.matches(QKeySequence.Copy):
+            self.triggerPageAction(QWebPage.Copy)
+            evt.accept()
+        evt.ignore()
+
+    def contextMenuEvent(self, evt):
+        QWebView.contextMenuEvent(self, evt)
+
+    def dropEvent(self, evt):
+        pass

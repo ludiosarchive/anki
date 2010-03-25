@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/infodialog.ui'
 #
 
-#      by: PyQt4 UI code generator 4.4.2
+#      by: PyQt4 UI code generator 4.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_InfoDialog(object):
     def setupUi(self, InfoDialog):
         InfoDialog.setObjectName("InfoDialog")
-        InfoDialog.resize(409,284)
+        InfoDialog.resize(409, 284)
         self.vboxlayout = QtGui.QVBoxLayout(InfoDialog)
         self.vboxlayout.setMargin(9)
         self.vboxlayout.setSpacing(6)
@@ -28,8 +28,8 @@ class Ui_InfoDialog(object):
         self.vboxlayout.addWidget(self.buttonBox)
 
         self.retranslateUi(InfoDialog)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("accepted()"),InfoDialog.accept)
-        QtCore.QObject.connect(self.buttonBox,QtCore.SIGNAL("rejected()"),InfoDialog.reject)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), InfoDialog.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), InfoDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(InfoDialog)
 
     def retranslateUi(self, InfoDialog):

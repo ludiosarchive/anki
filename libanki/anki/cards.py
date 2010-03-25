@@ -10,9 +10,9 @@ __docformat__ = 'restructuredtext'
 
 import time, sys, math, random
 from anki.db import *
-from anki.models import CardModel, Model, FieldModel
+from anki.models import CardModel, Model, FieldModel, formatQA
 from anki.facts import Fact, factsTable, Field
-from anki.utils import parseTags, findTag, stripHTML, genID
+from anki.utils import parseTags, findTag, stripHTML, genID, hexifyID
 
 # Cards
 ##########################################################################
@@ -58,55 +58,83 @@ cardsTable = Table(
     # data to the above
     Column('yesCount', Integer, nullable=False, default=0),
     Column('noCount', Integer, nullable=False, default=0),
-    # cache
+    # caching
     Column('spaceUntil', Float, nullable=False, default=0),
-    Column('relativeDelay', Float, nullable=False, default=0),
+    Column('relativeDelay', Float, nullable=False, default=0), # obsolete
     Column('isDue', Boolean, nullable=False, default=0),
-    Column('type', Integer, nullable=False, default=0),
+    Column('type', Integer, nullable=False, default=2),
     Column('combinedDue', Integer, nullable=False, default=0))
 
 class Card(object):
     "A card."
 
-    def __init__(self, fact=None, cardModel=None):
+    def __init__(self, fact=None, cardModel=None, created=None):
         self.tags = u""
         self.id = genID()
         # new cards start as new & due
         self.type = 2
         self.isDue = True
+        self.timerStarted = False
+        self.timerStopped = False
+        self.modified = time.time()
+        if created:
+            self.created = created
+            self.due = created
+        else:
+            self.due = self.modified
+        self.combinedDue = self.due
         if fact:
             self.fact = fact
         if cardModel:
             self.cardModel = cardModel
+            # for non-orm use
+            self.cardModelId = cardModel.id
             self.ordinal = cardModel.ordinal
-            self.question = cardModel.renderQA(self, self.fact, "question")
-            self.answer = cardModel.renderQA(self, self.fact, "answer")
-
-    htmlQuestion = property(lambda self: self.cardModel.renderQA(
-        self, self.fact, "question", format="html"))
-    htmlAnswer = property(lambda self: self.cardModel.renderQA(
-        self, self.fact, "answer", format="html"))
+            d = {}
+            for f in self.fact.model.fieldModels:
+                d[f.name] = (f.id, self.fact[f.name])
+            qa = formatQA(None, fact.modelId, d, self.splitTags(), cardModel)
+            self.question = qa['question']
+            self.answer = qa['answer']
 
     def setModified(self):
         self.modified = time.time()
 
     def startTimer(self):
-        self.lastShown = time.time()
-        self._thinkingTime = None
+        self.timerStarted = time.time()
+
+    def stopTimer(self):
+        self.timerStopped = time.time()
 
     def thinkingTime(self):
-        "End the timer if it's running, and return the last delay."
-        if self._thinkingTime:
-            return self._thinkingTime
-        self._thinkingTime = time.time() - self.lastShown
-        return self._thinkingTime
+        return (self.timerStopped or time.time()) - self.timerStarted
 
-    def css(self):
-        return self.cardModel.css() + self.fact.css()
+    def totalTime(self):
+        return time.time() - self.timerStarted
 
     def genFuzz(self):
         "Generate a random offset to spread intervals."
         self.fuzz = random.uniform(0.95, 1.05)
+
+    def htmlQuestion(self, type="question", align=True):
+        div = '''<div class="card%s" id="cm%s%s">%s</div>''' % (
+            type[0], type[0], hexifyID(self.cardModelId),
+            getattr(self, type))
+        # add outer div & alignment (with tables due to qt's html handling)
+        if not align:
+            return div
+        attr = type + 'Align'
+        if getattr(self.cardModel, attr) == 0:
+            align = "center"
+        elif getattr(self.cardModel, attr) == 1:
+            align = "left"
+        else:
+            align = "right"
+        return (("<center><table width=95%%><tr><td align=%s>" % align) +
+                div + "</td></tr></table></center>")
+
+    def htmlAnswer(self, align=True):
+        return self.htmlQuestion(type="answer", align=align)
 
     def updateStats(self, ease, state):
         self.reps += 1
@@ -114,7 +142,7 @@ class Card(object):
             self.successive += 1
         else:
             self.successive = 0
-        delay = self.thinkingTime()
+        delay = self.totalTime()
         # ignore any times over 60 seconds
         if delay < 60:
             self.reviewTime += delay
@@ -136,16 +164,28 @@ class Card(object):
             self.firstAnswered = time.time()
         self.setModified()
 
+    def splitTags(self):
+        return (self.fact.tags, self.fact.model.tags, self.cardModel.name)
+
+    def allTags(self):
+        "Non-canonified string of all tags."
+        return (self.fact.tags + "," +
+                self.fact.model.tags)
+
     def hasTag(self, tag):
-        alltags = parseTags(self.tags + "," +
-                            self.fact.tags + "," +
-                            self.cardModel.name + "," +
-                            self.fact.model.tags)
-        return findTag(tag, alltags)
+        return findTag(tag, parseTags(self.allTags()))
 
     def fromDB(self, s, id):
-        r = s.first("select * from cards where id = :id",
-                    id=id)
+        r = s.first("""select
+id, factId, cardModelId, created, modified, tags, ordinal, question, answer,
+priority, interval, lastInterval, due, lastDue, factor,
+lastFactor, firstAnswered, reps, successive, averageTime, reviewTime,
+youngEase0, youngEase1, youngEase2, youngEase3, youngEase4,
+matureEase0, matureEase1, matureEase2, matureEase3, matureEase4,
+yesCount, noCount, spaceUntil, isDue, type, combinedDue
+from cards where id = :id""", id=id)
+        if not r:
+            return
         (self.id,
          self.factId,
          self.cardModelId,
@@ -180,11 +220,10 @@ class Card(object):
          self.yesCount,
          self.noCount,
          self.spaceUntil,
-         self.relativeDelay,
          self.isDue,
          self.type,
          self.combinedDue) = r
-        self._thinkingTime = time.time()
+        return True
 
     def toDB(self, s):
         "Write card to DB. Note that isDue assumes card is not spaced."
@@ -221,10 +260,11 @@ matureEase4=:matureEase4,
 yesCount=:yesCount,
 noCount=:noCount,
 spaceUntil = :spaceUntil,
-relativeDelay = :interval / (strftime("%s", "now") - :due + 1),
 isDue = :isDue,
 type = :type,
-combinedDue = max(:spaceUntil, :due)
+combinedDue = max(:spaceUntil, :due),
+relativeDelay = 0,
+priority = :priority
 where id=:id""", self.__dict__)
 
 mapper(Card, cardsTable, properties={
@@ -235,10 +275,9 @@ mapper(Card, cardsTable, properties={
 
 mapper(Fact, factsTable, properties={
     'model': relation(Model),
-    'fields': relation(Field, backref="fact", order_by=Field.c.ordinal),
-    'lastCard': relation(Card, post_update=True, primaryjoin=
-                         cardsTable.c.id == factsTable.c.lastCardId),
+    'fields': relation(Field, backref="fact", order_by=Field.ordinal),
     })
+
 
 # Card deletions
 ##########################################################################

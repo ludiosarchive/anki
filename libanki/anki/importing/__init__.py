@@ -8,8 +8,8 @@ Importing support
 
 To import, a mapping is created of the form: [FieldModel, ...]. The mapping
 may be extended by calling code if a file has more fields. To ignore a
-particular FieldModel, replace it with None. The same field model should not
-occur more than once."""
+particular FieldModel, replace it with None. A special number 0 donates a tags
+field. The same field model should not occur more than once."""
 
 __docformat__ = 'restructuredtext'
 
@@ -17,8 +17,10 @@ import time
 from anki.cards import cardsTable
 from anki.facts import factsTable, fieldsTable
 from anki.lang import _
-from anki.utils import genID
+from anki.utils import genID, canonifyTags
 from anki.errors import *
+from anki.utils import canonifyTags
+from anki.deck import NEW_CARDS_RANDOM
 
 # Base importer
 ##########################################################################
@@ -34,6 +36,7 @@ class Importer(object):
     needMapper = True
     tagDuplicates = False
     multipleCardsAllowed = True
+    needDelimiter = False
 
     def __init__(self, deck, file):
         self.file = file
@@ -46,8 +49,22 @@ class Importer(object):
 
     def doImport(self):
         "Import."
+        random = self.deck.newCardOrder == NEW_CARDS_RANDOM
+        num = 7
+        if random:
+            num += 1
+        self.deck.startProgress(num)
+        self.deck.updateProgress(_("Importing..."))
         c = self.foreignCards()
-        self.importCards(c)
+        if self.importCards(c):
+            self.deck.updateProgress()
+            self.deck.updateCardTags(self.cardIds)
+            self.deck.updateProgress()
+            self.deck.updatePriorities(self.cardIds)
+            if random:
+                self.deck.updateProgress()
+                self.deck.randomizeNewCards(self.cardIds)
+        self.deck.finishProgress()
         if c:
             self.deck.setModified()
 
@@ -62,9 +79,8 @@ class Importer(object):
     def resetMapping(self):
         "Reset mapping to default."
         numFields = self.fields()
-        m = []
-        [m.append(f) for f in self.model.fieldModels if f.required]
-        [m.append(f) for f in self.model.fieldModels if not f.required]
+        m = [f for f in self.model.fieldModels]
+        m.append(0)
         rem = max(0, self.fields() - len(m))
         m += [None] * rem
         del m[numFields:]
@@ -106,27 +122,46 @@ class Importer(object):
             if cm.active: active += 1
         if active > 1 and not self.multipleCardsAllowed:
             raise ImportFormatError(type="tooManyCards",
-                info=_("""
-The current importer only supports a single active card model. Please disable
-all but one card model."""))
+                info=_("""\
+The current importer only supports a single active card template. Please disable\
+ all but one card template."""))
         # strip invalid cards
         cards = self.stripInvalid(cards)
         cards = self.stripOrTagDupes(cards)
+        self.cardIds = []
         if cards:
             self.addCards(cards)
+        return cards
 
     def addCards(self, cards):
         "Add facts in bulk from foreign cards."
+        # map tags field to attr
+        try:
+            idx = self.mapping.index(0)
+            for c in cards:
+                c.tags += " " + c.fields[idx]
+        except ValueError:
+            pass
         # add facts
+        self.deck.updateProgress()
         factIds = [genID() for n in range(len(cards))]
+        def fudgeCreated(d, tmp=[]):
+            if not tmp:
+                tmp.append(time.time())
+            else:
+                tmp[0] += 0.00001
+            d['created'] = tmp[0]
+            return d
         self.deck.s.execute(factsTable.insert(),
-            [{'modelId': self.model.id,
-              'tags': self.tagsToAdd,
-              'id': factIds[n]} for n in range(len(cards))])
+            [fudgeCreated({'modelId': self.model.id,
+              'tags': canonifyTags(self.tagsToAdd + " " + cards[n].tags),
+              'id': factIds[n]}) for n in range(len(cards))])
+        self.deck.factCount += len(factIds)
         self.deck.s.execute("""
 delete from factsDeleted
 where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         # add all the fields
+        self.deck.updateProgress()
         for fm in self.model.fieldModels:
             try:
                 index = self.mapping.index(fm)
@@ -142,31 +177,42 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
             self.deck.s.execute(fieldsTable.insert(),
                                 data)
         # and cards
+        self.deck.updateProgress()
         now = time.time()
+        active = 0
         for cm in self.model.cardModels:
             self._now = now
             if cm.active:
+                active += 1
                 data = [self.addMeta({
                     'id': genID(),
                     'factId': factIds[m],
                     'cardModelId': cm.id,
                     'ordinal': cm.ordinal,
-                    'question': cm.renderQASQL('q', factIds[m]),
-                    'answer': cm.renderQASQL('a', factIds[m]),
-                         }, cards[m]) for m in range(len(cards))]
+                    'question': u"",
+                    'answer': u"",
+                    'type': 2},cards[m]) for m in range(len(cards))]
                 self.deck.s.execute(cardsTable.insert(),
                                     data)
+        self.deck.updateProgress()
+        self.deck.updateCardsFromFactIds(factIds)
+        self.deck.cardCount += len(cards) * active
         self.total = len(factIds)
 
     def addMeta(self, data, card):
         "Add any scheduling metadata to cards"
         if 'fields' in card.__dict__:
             del card.fields
-        data['created'] = self._now
-        data['modified'] = self._now
-        data['due'] = self._now
+        t = self._now + data['ordinal']
+        data['created'] = t
+        data['modified'] = t
+        data['due'] = t
         self._now += .00001
         data.update(card.__dict__)
+        data['tags'] = u""
+        self.cardIds.append(data['id'])
+        data['combinedDue'] = data['due']
+        data['isDue'] = data['combinedDue'] < time.time()
         return data
 
     def stripInvalid(self, cards):
@@ -198,7 +244,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
             fmid=field.id))
 
     def cardIsUnique(self, card):
-        fields = []
+        fieldsAsTags = []
         for n in range(len(self.mapping)):
             if self.mapping[n] and self.mapping[n].unique:
                 if card.fields[n] in self.uniqueCache[self.mapping[n].id]:
@@ -207,25 +253,30 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                                         (self.mapping[n].name,
                                          ", ".join(card.fields)))
                         return False
-                    fields.append(self.mapping[n].name)
+                    fieldsAsTags.append(self.mapping[n].name.replace(" ", "-"))
                 else:
                     self.uniqueCache[self.mapping[n].id][card.fields[n]] = 1
-        if fields:
-            card.tags += u"Import: duplicate, Duplicate: " + (
-                "+".join(fields))
+        if fieldsAsTags:
+            card.tags += u" Duplicate:" + (
+                "+".join(fieldsAsTags))
+            card.tags = canonifyTags(card.tags)
         return True
 
 # Export modules
 ##########################################################################
 
-from anki.importing.csv import TextImporter
+from anki.importing.csvfile import TextImporter
 from anki.importing.anki10 import Anki10Importer
 from anki.importing.mnemosyne10 import Mnemosyne10Importer
 from anki.importing.wcu import WCUImporter
+from anki.importing.supermemo_xml import SupermemoXmlImporter
+from anki.importing.dingsbums import DingsBumsImporter
 
 Importers = (
-    (_("TAB/semicolon-separated file (*.*)"), TextImporter),
-    (_("Anki 1.0 deck (*.anki)"), Anki10Importer),
-    (_("Mnemosyne 1.0 deck (*.mem)"), Mnemosyne10Importer),
-    (_("CueCard deck (*.wcu)"), WCUImporter),
+    (_("Text separated by tabs or semicolons (*)"), TextImporter),
+    (_("Anki Deck (*.anki)"), Anki10Importer),
+    (_("Mnemosyne Deck (*.mem)"), Mnemosyne10Importer),
+    (_("CueCard Deck (*.wcu)"), WCUImporter),
+    (_("Supermemo XML export (*.xml)"), SupermemoXmlImporter),
+    (_("DingsBums?! Deck (*.xml)"), DingsBumsImporter),
     )
