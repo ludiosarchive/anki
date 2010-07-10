@@ -65,6 +65,27 @@ class SessionHelper(object):
             self._lockDB()
         self._seen = True
 
+    def save(self, obj):
+        # compat
+        if sqlalchemy.__version__.startswith("0.4."):
+            self._session.save(obj)
+        else:
+            self._session.add(obj)
+
+    def clear(self):
+        # compat
+        if sqlalchemy.__version__.startswith("0.4."):
+            self._session.clear()
+        else:
+            self._session.expunge_all()
+
+    def update(self, obj):
+        # compat
+        if sqlalchemy.__version__.startswith("0.4."):
+            self._session.update(obj)
+        else:
+            self._session.add(obj)
+
     def execute(self, *a, **ka):
         x = self._session.execute(*a, **ka)
         runHook("dbFinished")
@@ -121,4 +142,8 @@ def sessionmaker(*args, **kwargs):
         if 'autocommit' in kwargs:
             kwargs['transactional'] = not kwargs['autocommit']
             del kwargs['autocommit']
+    else:
+        if 'transactional' in kwargs:
+            kwargs['autocommit'] = not kwargs['transactional']
+            del kwargs['transactional']
     return _sessionmaker(*args, **kwargs)

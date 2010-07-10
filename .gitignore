@@ -1,11 +1,8 @@
-*.pyc
 *.mo
-.*.sw[po]
+*.pyc
 *\#
 *~
-
 /icons_rc.py
 ankiqt/forms
-ankiqt.egg-info
-build
-dist
+/docs/manual.html
+/docs/docbook-xsl.css
