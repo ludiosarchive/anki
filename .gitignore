@@ -2,6 +2,7 @@
 *.pyc
 *\#
 *~
+.*.sw[a-p]
 /icons_rc.py
 ankiqt/forms
 /docs/manual.html
