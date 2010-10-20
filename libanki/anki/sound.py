@@ -238,7 +238,7 @@ try:
     PYAU_FORMAT = pyaudio.paInt16
     PYAU_CHANNELS = 1
     PYAU_RATE = 44100
-    PYAU_INPUT_INDEX = 0
+    PYAU_INPUT_INDEX = None
 except:
     pass
 
@@ -258,7 +258,7 @@ Error processing audio.
 If you're on Linux and don't have sox 14.1+, you
 need to disable normalization. See the wiki.
 
-Command was:\n""") + " ".join(c))
+Command was:\n""") + u" ".join(c))
 
 class PyAudioThreadedRecorder(threading.Thread):
 

@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+
+<book lang="en">
+<bookinfo>
+    <title>Anki User Manual</title>
+    <author>
+        <firstname>Damien</firstname>
+        <surname>Elmes</surname>
+        <email>anki@ichi2.net</email>
+    </author>
+    <authorinitials>DE</authorinitials>
+</bookinfo>
+<chapter id="_introduction">
+<title>Introduction</title>
+<simpara>Anki is a program which makes remembering things easy. Because it is a lot
+more efficient than traditional study methods, you can either greatly decrease your
+time spent studying, or greatly increase the amount you learn.</simpara>
+<simpara>Anyone who needs to remember things in their daily life can benefit from Anki.
+Since it is content-agnostic and supports images, audio, videos and scientific
+markup (via LaTeX), the possibilities are endless. For example:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+learning a language
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+studying for medical and law exams
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+memorizing people&#8217;s names and faces
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+brushing up on geography
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+mastering long poems
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+even practicing guitar chords!
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>There are two simple concepts behind Anki: <emphasis>active recall testing</emphasis> and <emphasis>spaced
+repetition</emphasis>. They are not known to most learners, despite having been written
+about in the scientific literature for many years. Understanding how they work
+will make you a more effective learner.</simpara>
+<section id="active-recall">
+<title>Active recall testing</title>
+<simpara><emphasis>Active recall testing</emphasis> means being asked a question and trying to remember
+the answer. This is in contrast to <emphasis>passive study</emphasis>, where we read, watch or
+listen to something without any output. Research has shown that active recall
+testing is far more effective at building strong memories than passive study.
+There are two reasons for this:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+The act of recalling something <emphasis>consolidates</emphasis> the memory, increasing the
+   chances we&#8217;ll be able to remember it again
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+When we&#8217;re unable to answer a question, it tells us we need to return to
+   the material to review or relearn it
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>You have probably encountered active recall testing in your school years
+without even realizing it. When good teachers give you a series of questions
+to answer after reading an article, or make you take weekly progress-check
+tests, they are not doing it simply to see if you understood the material or
+not. By testing you, they are increasing the chances you will be able to
+remember the material in the future.</simpara>
+<simpara>You don&#8217;t need to leave it up to teachers, however. Consider a language
+learner who wants to memorize a list of 20 Indonesian numbers, like:</simpara>
+<blockquote>
+<literallayout>1 = satu
+2 = dua
+3 = tiga</literallayout>
+</blockquote>
+<simpara>Many students will look at each line in turn, concentrating on
+it for a few seconds before moving on. This is passive learning, and so the
+results will not be great. However, if you simply cover the right-hand side
+and check if you recall each word, you&#8217;ll find your initial memories are
+stronger.</simpara>
+<simpara>Active recall testing can make for stronger initial memories, but it&#8217;s only
+part of the solution to learning efficiently.</simpara>
+</section>
+<section id="_the_importance_of_review">
+<title>The importance of review</title>
+<simpara>Even with active recall testing, if you wait too long before testing again,
+you&#8217;ll find you&#8217;ve forgotten most of the material you tried to learn. This can
+be very demotivating, as it can feel like no progress is being made towards
+your goals. In order to avoid this disappointment, it&#8217;s essential to review
+previously learnt material.</simpara>
+<simpara>Despite the importance of review, it is often overlooked by learners. Part of
+the reason for this is that reviewing was traditionally difficult. If you have
+a page with 50 new words on it and you learn them in one day, some words will
+fall from your memory the next day, others a few days after that, and others
+may last a few weeks or more. It is difficult to return to the page and review
+only the words you&#8217;re about to forget.</simpara>
+<simpara>Traditional paper flashcards make it easier to acquire material than a single
+page with a list of words, since you can separate the cards into "known" and
+"not-known" piles. They don&#8217;t make it very easy to review the material in the
+following weeks, however.</simpara>
+</section>
+<section id="spaced-repetition">
+<title>Spaced repetition</title>
+<simpara>The <emphasis>spacing effect</emphasis> was reported by a German psychologist in 1885. He
+observed that we tend to remember things more effectively if we spread reviews
+out over time, instead of studying multiple times in one session. Since the
+1930s there have been a number of proposals for utilizing the spacing effect
+to improve learning, in what has come to be called <emphasis>spaced repetition</emphasis>.</simpara>
+<simpara>One example is in 1972, when a German scientist called Sebastian Leitner
+popularized a method of spaced repetition with paper flashcards. By separating
+the paper cards up into a series of boxes, and moving the cards to a different
+box on each successful or unsuccessful review, it was possible to see at a
+glance a rough estimate of how well a card was known and when it should be
+reviewed again. This was a great improvement over a single box of cards, and
+it has been widely adopted by computerized flashcard software. It is a rather
+rough approach however, as it can&#8217;t give you an exact date on which you should
+review something again, and it doesn&#8217;t cope very well with material of varying
+difficulty.</simpara>
+<simpara>The biggest developments in the last 30 years have come from the authors of
+SuperMemo, a commercial flashcard program that implements spaced repetition.
+SuperMemo pioneered the concept of a system that keeps track of the ideal time
+to review material and optimizes itself based on the performance of
+the user.</simpara>
+<simpara>In SuperMemo&#8217;s spaced repetition system, every time you answer a question, you
+tell the program how well you were able to remember it - whether you forgot
+completely, made a small mistake, remembered with trouble, remembered easily,
+etc. The program uses this feedback to decide the optimal time to show you the
+question again. Since a memory gets stronger each time you successfully recall
+it, the time between reviews gets bigger and bigger - so you may see a
+question for the first time, then 3 days later, 15 days later, 45 days later,
+and so on.</simpara>
+<simpara>This was a revolution in learning, as it meant material could be learnt and
+retained with the absolute minimum amount of effort necessary. SuperMemo&#8217;s
+slogan sums it up: with spaced repetition, you can <emphasis>forget about forgetting</emphasis>.</simpara>
+</section>
+<section id="_why_anki">
+<title>Why Anki?</title>
+<simpara>While there is no denying the huge impact SuperMemo has had on the field, it
+is not without its problems. The program is often criticized for being buggy
+and difficult to navigate. It only runs on Windows computers. It&#8217;s proprietary
+software, meaning end-users can&#8217;t extend it or access the raw data. And while
+very old versions are made available for free, they are quite limited for
+modern use.</simpara>
+<simpara>Anki addresses these issues. You are not forced to pay for it, so struggling
+students and teachers with budgetary constraints are not left out. It&#8217;s open
+source, with an already flourishing library of plugins contributed by
+end-users. It&#8217;s multi-platform, running on Windows, Mac OSX, Linux/FreeBSD, and
+some mobile devices. And it&#8217;s considerably easier to use than SuperMemo.</simpara>
+<simpara>Internally, Anki&#8217;s spaced repetition system is based on an older version of
+the SuperMemo algorithm called SM2. Subsequent versions have managed to
+squeeze out a little more learning efficiency, but they come at the cost of
+greatly increased complexity, and they are more susceptible to scheduling
+errors in real-world use. For a more in-depth discussion of this and the
+differences in scheduling algorithms, see the bottom of <ulink url="http://ichi2.net/anki/wiki/FrequentlyAskedQuestions">Frequently Asked Questions</ulink>.</simpara>
+</section>
+</chapter>
+<chapter id="_getting_started">
+<title>Getting started</title>
+<section id="_installing_amp_upgrading">
+<title>Installing &amp; upgrading</title>
+<simpara>Installation instructions are available on the front page of the <ulink url="http://ichi2.net/anki/">Anki website</ulink>.</simpara>
+</section>
+<section id="_introductory_videos">
+<title>Introductory videos</title>
+<simpara>A lot of the basic usage is covered in tutorial videos, available on the
+<ulink url="http://ichi2.net/anki/">Anki website</ulink>.</simpara>
+</section>
+<section id="_adding_material">
+<title>Adding material</title>
+<simpara>Anki uses <emphasis>cards</emphasis> to help you with <link linkend="active-recall">active recall testing</link> and
+<link linkend="spaced-repetition">spaced repetition</link>. Each card is a virtual flashcard with
+a question and answer. These cards are stored together in a file called a
+<emphasis>deck</emphasis>. You can have one big deck or keep separate decks for separate
+subjects.</simpara>
+<simpara>Most of your time in Anki will be spent reviewing these cards, but to get
+started we first need to add some. You can add cards by typing them in
+yourself, copying &amp; pasting them from some online resource, importing them
+from a text file, or you can use a deck someone else has shared.</simpara>
+<sidebar>
+<title>Self-made versus pre-made</title>
+<simpara>Creating your own deck is the most effective way to learn a complex subject.
+Subjects like languages and the sciences can&#8217;t be understood simply by
+memorizing facts - they require explanation and context to learn effectively.
+Furthermore, inputting the information yourself forces you to decide what the
+key points are, and leads to a better understanding.</simpara>
+<simpara>If you are a language learner you may be tempted to download a long list of
+words and their translations, but this won&#8217;t teach you a language any more
+than memorizing scientific equations will teach you astrophysics. To learn
+properly, you need textbooks, teachers, or exposure to real-world sentences.</simpara>
+<literallayout class="monospaced">Do not learn if you do not understand.
+-- SuperMemo</literallayout>
+<simpara>Most shared decks are created by people who are learning material outside of
+Anki - from textbooks, classes, TV, etc. They select the interesting points
+from what they learn and put them into Anki. They make no effort to add
+background information or explanations to the cards, because they already
+understand the material. But when someone else downloads their deck and tries
+to use it, they&#8217;ll find it very difficult as the background information and
+explanations are missing.</simpara>
+<simpara>That is not to say shared decks are useless - simply that for complex
+subjects, they should be used as a <emphasis>supplement</emphasis> to external material, not as a
+<emphasis>replacement</emphasis>. If you&#8217;re studying textbook ABC and someone has shared a deck
+of ideas from ABC, that&#8217;s a great way to save some time. And for simple
+subjects that are basically a list of facts, such as capital city names or pub
+quiz trivia, you probably don&#8217;t need external material. But if you attempt to
+study complex subjects without external material, you will probably meet with
+disappointing results.</simpara>
+</sidebar>
+<section id="_creating_or_getting_a_deck">
+<title>Creating or getting a deck</title>
+<simpara><emphasis role="strong">To create your own deck</emphasis>:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Open Anki.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Choose File&#8594;New, or click the Create button.
+</simpara>
+</listitem>
+</orderedlist>
+<simpara><emphasis role="strong">To open a shared deck</emphasis>:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Open Anki.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Choose File&#8594;Download&#8594;Shared Deck, or click the Download button.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Type in a string to search for, or scroll through the list.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Select a deck you&#8217;re interested in, and click OK. The deck will be
+ downloaded and will open up.
+</simpara>
+</listitem>
+</orderedlist>
+<tip><simpara>You are not limited to one deck. You can see a list of your decks by
+clicking on <inlinemediaobject>
+  <imageobject>
+  <imagedata fileref="images/view_text.png"/>
+  </imageobject>
+  <textobject><phrase>images/view_text.png</phrase></textobject>
+</inlinemediaobject></simpara></tip>
+</section>
+<section id="_making_questions">
+<title>Making questions</title>
+<simpara>If you have downloaded a shared deck, this step is optional.</simpara>
+<simpara><emphasis role="strong">To add a new card to your deck</emphasis>:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Click <inlinemediaobject>
+  <imageobject>
+  <imagedata fileref="images/list-add.png"/>
+  </imageobject>
+  <textobject><phrase>images/list-add.png</phrase></textobject>
+</inlinemediaobject> on the toolbar.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Enter the question on the <emphasis>Front</emphasis> area and the answer on the <emphasis>Back</emphasis>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Click <emphasis>Add</emphasis>, or press Ctrl+Enter (Command+Enter on a Mac).
+</simpara>
+</listitem>
+</orderedlist>
+<simpara>You&#8217;ll see a screen like the following:</simpara>
+<simpara><inlinemediaobject>
+  <imageobject>
+  <imagedata fileref="images/addcards.png"/>
+  </imageobject>
+  <textobject><phrase>images/addcards.png</phrase></textobject>
+</inlinemediaobject></simpara>
+<simpara>Front is a required field, so it is marked yellow until you input something.
+The back can be left blank, so it is not drawn in yellow.</simpara>
+<section id="_for_general_knowledge">
+<title>For general knowledge</title>
+<simpara>Turning a given idea into a question and answer pair is simple. Imagine you&#8217;ve
+just heard the following sentence:</simpara>
+<literallayout class="monospaced">Canberra was founded in 1913.</literallayout>
+<simpara>The easiest way to test this is to make a <emphasis>cloze deletion</emphasis>.</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Type or copy the above sentence into the <emphasis>Front</emphasis>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Highlight <emphasis>1913</emphasis>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Click the [&#8230;] button, or press F9.
+</simpara>
+</listitem>
+</orderedlist>
+<simpara>You&#8217;ll end up with:</simpara>
+<simpara><inlinemediaobject>
+  <imageobject>
+  <imagedata fileref="images/cloze2.png"/>
+  </imageobject>
+  <textobject><phrase>images/cloze2.png</phrase></textobject>
+</inlinemediaobject></simpara>
+<simpara>You can then click the add button to add the newly created card to your deck.</simpara>
+</section>
+<section id="_for_languages">
+<title>For languages</title>
+<simpara>There are two approaches to studying languages: you can aim for <emphasis>recall</emphasis> or
+<emphasis>recognition</emphasis>.</simpara>
+<simpara><emphasis>Recognition</emphasis> cards are cards which show you some written or audio extract of a foreign
+language, and check if you can understand it. For example, if you&#8217;re learning
+German, you might be shown a German word or sentence and asked to recall the
+general meaning. Recognition cards are comparitively easy to do, allowing you
+to cover more material in a shorter time. Their downside is that while you may
+be able to recognize many words, they may not enter your active vocabulary.</simpara>
+<simpara><emphasis>Recall</emphasis> (or <emphasis>production</emphasis>) cards are cards which require you to produce an
+answer in the language you are studying. The question is either a word or
+expression in your native tongue, or a description. The answer will depend on
+what you&#8217;re trying to study - how to pronounce the foreign words, how to spell
+them, how to write them. Recall cards are more difficult than recognition
+cards and thus take longer to do. They are best suited to essential vocabulary
+and expressions, where issues of synonyms arise less frequently.</simpara>
+</section>
+<section id="_advanced_input">
+<title>Advanced input</title>
+<simpara>If you want to input audio, pictures, movies or scientific markup, please see
+the dedicated section below about adding content.</simpara>
+</section>
+</section>
+</section>
+<section id="_reviewing">
+<title>Reviewing</title>
+<simpara>When you have found a deck you like or entered some cards in, it&#8217;s time to
+start reviewing. If the <emphasis>Add Items</emphasis> screen is still open, close it by clicking
+on close or pressing Esc. You should see a screen entitled <emphasis>Study Options</emphasis>:</simpara>
+<simpara><inlinemediaobject>
+  <imageobject>
+  <imagedata fileref="images/studyoptions-basic.png"/>
+  </imageobject>
+  <textobject><phrase>images/studyoptions-basic.png</phrase></textobject>
+</inlinemediaobject></simpara>
+<simpara>In the above example, it says there are 6 new cards today, and 6 new cards
+total. If you&#8217;ve downloaded a shared deck, there will probably be more than 20
+new cards, but Anki will only show you 20 per day by default. You can adjust
+this number by changing <emphasis>new cards per day</emphasis>, but be wary of setting it too
+high or you&#8217;ll have many reviews to do over the next few days.</simpara>
+<simpara>When you&#8217;re ready, click <emphasis>Start Reviewing</emphasis>. You&#8217;ll then see a screen like
+this:</simpara>
+<simpara><inlinemediaobject>
+  <imageobject>
+  <imagedata fileref="images/review1.png"/>
+  </imageobject>
+  <textobject><phrase>images/review1.png</phrase></textobject>
+</inlinemediaobject></simpara>
+<simpara>Here you need to look at the question and think about the answer. It can help
+to say the answer out loud, but that is not necessary. It&#8217;s ok if it takes you
+a little while to recall the answer, but as a general rule if you can&#8217;t answer
+within 10 seconds, you should just show the answer.</simpara>
+<simpara>When you&#8217;re ready, click <emphasis>Show Answer</emphasis> or press the spacebar. You&#8217;ll see
+something like the following:</simpara>
+<simpara><inlinemediaobject>
+  <imageobject>
+  <imagedata fileref="images/review2.png"/>
+  </imageobject>
+  <textobject><phrase>images/review2.png</phrase></textobject>
+</inlinemediaobject></simpara>
+<simpara>Now you need to decide how well you remembered. Anki gives you four options.
+The labels on the buttons will change depending on whether you got the card
+right last time, but the behaviour is the same.</simpara>
+<variablelist>
+<varlistentry>
+<term>
+1: Again
+</term>
+<listitem>
+<simpara>
+The card will be shown again shortly - within 10 minutes with the
+default settings. If you don&#8217;t know the answer to the question, or have
+forgotten it, choose this button.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+2: Good / Hard
+</term>
+<listitem>
+<simpara>
+Wait a little bit longer before showing the card next time,
+and tell Anki to be more conservative in the future. Best used when you are
+able to answer correctly but not with speed/confidence.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+3: Easy / Good
+</term>
+<listitem>
+<simpara>
+Wait a fair bit longer before showing the card next time, and
+tell Anki the last interval was about right.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+4: Very Easy / Easy
+</term>
+<listitem>
+<simpara>
+Wait a lot longer before showing the card next time, and
+tell Anki to be less conservative in the future.
+</simpara>
+</listitem>
+</varlistentry>
+</variablelist>
+<simpara>Each time you answer a card correctly, the time before it is shown again will
+grow longer. Imagine a user has added two cards to their deck - one difficult
+one, and an easy one. The difficult one is displayed first, and the user
+presses 1. The easy card is shown next and the user already knows the answer,
+so they choose 3. The easy card will be shown again in 3-5 days. Next the
+difficult card is shown again, and this time the user remembers the answer, so
+they choose 2, in order to be able to see the card again the next day.</simpara>
+<simpara>The next day the difficult card appears again, and the user still finds it a
+little difficult, so they choose 2 again. It will then be shown again in about
+2-3 days.</simpara>
+<simpara>After 3 days have passed, the easy card appears again. The user still finds it
+pretty easy, so they choose 3 again. The card will next be shown about 10 days
+in the future.</simpara>
+</section>
+</chapter>
+<chapter id="_adding_material_via_anki">
+<title>Adding material via anki</title>
+<itemizedlist>
+<listitem>
+<simpara>
+best practices
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+all buttons / shortcuts
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+changing fonts
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+adding text to every card
+</simpara>
+</listitem>
+</itemizedlist>
+<tip><simpara>You can also add <emphasis>tags</emphasis> (also called <emphasis>labels</emphasis>), to make organizing
+information easier. Tags are a list of space-separated words. For example, you
+might have the three tags "Level4 BookB ToCheckLater".</simpara></tip>
+</chapter>
+<chapter id="_fonts_and_colours">
+<title>Fonts and colours?</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_reviewing_main_window">
+<title>Reviewing / main window</title>
+<itemizedlist>
+<listitem>
+<simpara>
+what you see on the main screen
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+what buttons to press (see next section)
+</simpara>
+</listitem>
+</itemizedlist>
+</chapter>
+<chapter id="_study_options">
+<title>Study options</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_browsing_your_deck">
+<title>Browsing your deck</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_importing_amp_exporting_data">
+<title>Importing &amp; Exporting data</title>
+<section id="_importing">
+<title>Importing</title>
+<simpara>text files, mnemosyne, etc</simpara>
+</section>
+<section id="_exporting">
+<title>Exporting</title>
+<simpara>&#8230;</simpara>
+</section>
+<section id="_printing">
+<title>Printing</title>
+<simpara>&#8230;</simpara>
+</section>
+</chapter>
+<chapter id="_card_props">
+<title>Card props</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_deck_props">
+<title>Deck props</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_preferences">
+<title>Preferences</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_cramming">
+<title>Cramming</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_graphs">
+<title>Graphs</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_statistics">
+<title>Statistics</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_plugins">
+<title>Plugins</title>
+<itemizedlist>
+<listitem>
+<simpara>
+japanese/chinese/german etc
+</simpara>
+</listitem>
+</itemizedlist>
+</chapter>
+<chapter id="_sharing_decks_plugins">
+<title>Sharing decks/plugins</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_priorities">
+<title>Priorities</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_inactive_tags">
+<title>Inactive tags</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_synchronization">
+<title>Synchronization</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_leeches">
+<title>Leeches</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_media_support">
+<title>Media support</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_progress_bars">
+<title>Progress bars</title>
+<simpara>x</simpara>
+</chapter>
+<chapter id="_running_from_a_usb_driver">
+<title>Running from a usb driver</title>
+<simpara>x</simpara>
+</chapter>
+</book>

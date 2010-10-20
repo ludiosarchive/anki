@@ -75,6 +75,44 @@ def askUser(text, parent=None, help=""):
             break
     return r == QMessageBox.Yes
 
+class ButtonedDialog(QMessageBox):
+
+    def __init__(self, text, buttons, parent=None, help=""):
+        QDialog.__init__(self, parent)
+        self.buttons = []
+        self.setWindowTitle("Anki")
+        self.help = help
+        self.setIcon(QMessageBox.Warning)
+        self.setText(text)
+        # v = QVBoxLayout()
+        # v.addWidget(QLabel(text))
+        # box = QDialogButtonBox()
+        # v.addWidget(box)
+        for b in buttons:
+            self.buttons.append(
+                self.addButton(b, QMessageBox.AcceptRole))
+        if help:
+            self.addButton(_("Help"), QMessageBox.HelpRole)
+            buttons.append(_("Help"))
+        #self.setLayout(v)
+
+    def run(self):
+        self.exec_()
+        but = self.clickedButton().text()
+        if but == "Help":
+            # FIXME stop dialog closing?
+            openWikiLink(self.help)
+        return self.clickedButton().text()
+
+    def setDefault(self, idx):
+        self.setDefaultButton(self.buttons[idx])
+
+def askUserDialog(text, buttons, parent=None, help=""):
+    if not parent:
+        parent = ankiqt.mw
+    diag = ButtonedDialog(text, buttons, parent, help)
+    return diag
+
 class GetTextDialog(QDialog):
 
     def __init__(self, parent, question, help=None, edit=None):
@@ -235,7 +273,7 @@ def getBase(deck, card):
 
 class ProgressWin(object):
 
-    def __init__(self, parent, max=0, min=0, title=None):
+    def __init__(self, parent, max=0, min=0, title=None, immediate=False):
         if not title:
             title = "Anki"
         self.diag = QProgressDialog("", "", min, max, parent)
@@ -245,18 +283,23 @@ class ProgressWin(object):
         self.diag.setAutoReset(False)
         # qt doesn't seem to honour this consistently, and it's not triggered
         # by the db progress handler, so we set it high and use maybeShow() below
-        self.diag.setMinimumDuration(100000)
+        if immediate:
+            self.diag.show()
+        else:
+            self.diag.setMinimumDuration(100000)
         self.counter = min
         self.min = min
         self.max = max
         self.firstTime = time.time()
         self.lastTime = time.time()
         self.app = QApplication.instance()
+        self.shown = False
         if max == 0:
             self.diag.setLabelText(_("Processing..."))
 
     def maybeShow(self):
-        if time.time() - self.firstTime > 2:
+        if time.time() - self.firstTime > 2 and not self.shown:
+            self.shown = True
             self.diag.show()
 
     def update(self, label=None, value=None, process=True):
@@ -281,6 +324,3 @@ class ProgressWin(object):
             self.app.processEvents()
             time.sleep(0.1)
         self.diag.cancel()
-
-import PyQt4.pyqtconfig as PyConf;
-pyQtBroken = PyConf.Configuration().pyqt_version_str.startswith("4.6")

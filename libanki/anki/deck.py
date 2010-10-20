@@ -8,7 +8,8 @@ The Deck
 """
 __docformat__ = 'restructuredtext'
 
-import tempfile, time, os, random, sys, re, stat, shutil, types, traceback
+import tempfile, time, os, random, sys, re, stat, shutil
+import types, traceback, simplejson
 
 from anki.db import *
 from anki.lang import _, ngettext
@@ -373,6 +374,7 @@ where factId = :fid and id != :id""", fid=card.factId, id=card.id) or 0
         space = space * spaceFactor * 86400.0
         space = max(minSpacing, space)
         space += time.time()
+        card.combinedDue = max(card.due, space)
         # check what other cards we've spaced
         if self.reviewEarly:
             extra = ""
@@ -681,7 +683,6 @@ type = 0 and isDue = 1 and combinedDue <= :now""", now=time.time())
         self._dailyStats = dailyStats(self)
         # mark due cards and update counts
         self.checkDue()
-        # invalid card count
         # determine new card distribution
         if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
             if self.newCountToday:
@@ -1065,13 +1066,13 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
             due = random.uniform(0, time.time())
         t = time.time()
         for cardModel in cms:
-            card = anki.cards.Card(fact, cardModel, t)
+            created = fact.created + 0.000001*cardModel.ordinal
+            card = anki.cards.Card(fact, cardModel, created)
             if isRandom:
-                card.due = due + card.ordinal
-                card.combinedDue = card.due
+                card.due = due
+                card.combinedDue = due
             self.flushMod()
             cards.append(card)
-            t += .00001
         self.updateFactTags([fact.id])
         self.updatePriorities([c.id for c in cards])
         self.cardCount += len(cards)
@@ -1116,8 +1117,9 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
 select count(id) from cards
 where factId = :fid and cardModelId = :cmid""",
                                  fid=fact.id, cmid=cardModel.id) == 0:
+                    # enough for 10 card models assuming 0.00001 timer precision
                     card = anki.cards.Card(
-                        fact, cardModel, created=fact.created+cardModel.ordinal)
+                        fact, cardModel, created=fact.created+0.000001*cardModel.ordinal)
                     self.updateCardTags([card.id])
                     self.updatePriority(card)
                     self.cardCount += 1
@@ -1314,7 +1316,19 @@ answerAlign, 0 from cardModels""")])
         (hexifyID(row[0]), row[1]) for row in self.s.all("""
 select id, lastFontColour from cardModels""")])
         self.css = css
+        self.setVar("cssCache", css, mod=False)
+        self.addHexCache()
         return css
+
+    def addHexCache(self):
+        ids = self.s.column0("""
+select id from fieldModels union
+select id from cardModels union
+select id from models""")
+        cache = {}
+        for id in ids:
+            cache[id] = hexifyID(id)
+        self.setVar("hexCache", simplejson.dumps(cache), mod=False)
 
     def copyModel(self, oldModel):
         "Add a new model to DB based on MODEL."
@@ -1736,15 +1750,9 @@ facts.modelId = :id""", id=modelId))
 insert into cardTags
 (cardId, tagId, src) values
 (:cardId, :tagId, :src)""", d)
-        tags = self.s.column0("select id from tags")
-        unused = []
-        for t in tags:
-            if not self.s.scalar(
-                "select 1 from cardTags where tagId = :d limit 1",
-                d=t):
-                unused.append(t)
-        self.s.statement("""
-delete from tags where id in %s and priority = 2""" % ids2str(unused))
+        self.s.execute(
+            "delete from tags where priority = 2 and id not in "+
+            "(select distinct tagId from cardTags)")
 
     def updateTagsForModel(self, model):
         cards = self.s.all("""
@@ -1957,6 +1965,7 @@ cardTags.tagId in %s""" % ids2str(ids)
                 elif isNeg:
                     fquery += "select id from facts except "
                 token = token.replace("*", "%")
+                token = token.replace("?", "_")
                 args["_ff_%d" % c] = "%"+token+"%"
                 q = "select factId from fields where value like :_ff_%d" % c
                 fquery += q
@@ -2273,7 +2282,7 @@ Return new path, relative to media dir."""
             pass
         self.startProgress()
         # copy tables, avoiding implicit commit on current db
-        DeckStorage.Deck(newPath).close()
+        DeckStorage.Deck(newPath, backup=False).close()
         new = sqlite.connect(newPath)
         for table in self.s.column0(
             "select name from sqlite_master where type = 'table'"):
@@ -2297,7 +2306,7 @@ Return new path, relative to media dir."""
         new.close()
         self.close()
         # open again in orm
-        newDeck = DeckStorage.Deck(newPath)
+        newDeck = DeckStorage.Deck(newPath, backup=False)
         # move media
         if oldMediaDir:
             newDeck.renameMediaDir(oldMediaDir)
@@ -2572,6 +2581,7 @@ insert into undoLog values (null, 'insert into %(t)s (rowid""" % {'t': table}
             self.undoStack.pop()
         else:
             self.redoStack = []
+        runHook("undoEnd")
 
     def _latestUndoRow(self):
         return self.s.scalar("select max(rowid) from undoLog") or 0
@@ -2839,7 +2849,10 @@ class DeckStorage(object):
     def _init(s):
         "Add a new deck to the database. Return saved deck."
         deck = Deck()
-        s.save(deck)
+        if sqlalchemy.__version__.startswith("0.4."):
+            s.save(deck)
+        else:
+            s.add(deck)
         s.flush()
         return deck
     _init = staticmethod(_init)
@@ -3353,6 +3366,11 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
             path = path.replace(":", "")
             return path
         escp = escape(path)
+        # make sure backup dir exists
+        try:
+            os.makedirs(backupDir)
+        except (OSError, IOError):
+            pass
         # find existing backups
         gen = re.sub("\.anki$", ".backup-(\d+).anki", re.escape(escp))
         backups = []
