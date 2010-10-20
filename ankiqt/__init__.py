@@ -6,13 +6,13 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="0.9.9.8.6"
+appVersion="1.0.1"
 appWebsite="http://ichi2.net/anki/download/"
 appWiki="http://ichi2.net/anki/wiki/"
 appHelpSite="http://ichi2.net/anki/wiki/AnkiWiki"
 appIssueTracker="http://code.google.com/p/anki/issues/list"
 appForum="http://groups.google.com/group/ankisrs/topics"
-appReleaseNotes="http://ichi2.net/anki/download/index.html#changes"
+appReleaseNotes="http://ichi2.net/anki/changes.html"
 appMoreDecks="http://ichi2.net/anki/wiki/PreMadeDecks"
 appDonate="http://ichi2.net/anki/donate.html"
 
@@ -142,7 +142,7 @@ def run():
     import forms
     import ui
 
-    ui.splash = SplashScreen(5)
+    ui.splash = SplashScreen(3)
 
     import anki
     if anki.version != appVersion:

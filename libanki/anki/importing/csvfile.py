@@ -128,5 +128,5 @@ class TextImporter(Importer):
 
     def cardFromFields(self, fields):
         card = ForeignCard()
-        card.fields.extend(fields)
+        card.fields.extend([x.strip() for x in fields])
         return card

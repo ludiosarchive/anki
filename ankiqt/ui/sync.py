@@ -10,6 +10,7 @@ from anki.sync import SyncClient, HttpSyncServerProxy, copyLocalMedia
 from anki.sync import SYNC_HOST, SYNC_PORT
 from anki.errors import *
 from anki import DeckStorage
+from anki.db import sqlite
 import ankiqt.forms
 from anki.hooks import addHook, removeHook
 
@@ -29,6 +30,7 @@ class Sync(QThread):
         self.ok = True
         self.onlyMerge = onlyMerge
         self.sourcesToCheck = sourcesToCheck
+        self.proxy = None
         addHook('fullSyncStarted', self.fullSyncStarted)
         addHook('fullSyncFinished', self.fullSyncFinished)
         addHook('fullSyncProgress', self.fullSyncProgress)
@@ -37,7 +39,10 @@ class Sync(QThread):
         self.emit(SIGNAL("setStatus"), msg, timeout)
 
     def run(self):
-        self.syncDeck()
+        if self.parent.syncName:
+            self.syncDeck()
+        else:
+            self.syncAllDecks()
         removeHook('fullSyncStarted', self.fullSyncStarted)
         removeHook('fullSyncFinished', self.fullSyncFinished)
         removeHook('fullSyncProgress', self.fullSyncProgress)
@@ -56,6 +61,8 @@ class Sync(QThread):
             error.data = {}
         if error.data.get('type') == 'noResponse':
             self.emit(SIGNAL("noSyncResponse"))
+        elif error.data.get('type') == 'clockOff':
+            pass
         else:
             error = self.getErrorMessage(error)
             self.emit(SIGNAL("showWarning"), error)
@@ -72,27 +79,73 @@ class Sync(QThread):
         elif error.data.get('status') == "oldVersion":
             msg=_("The sync protocol has changed. Please upgrade.")
         else:
-            msg=_("Unknown error: %s" % traceback.format_exc())
+            msg=_("Unknown error: %s") % traceback.format_exc()
         return msg
 
     def connect(self, *args):
         # connect, check auth
-        proxy = HttpSyncServerProxy(self.user, self.pwd)
-        proxy.sourcesToCheck = self.sourcesToCheck
-        proxy.connect("ankiqt-" + ankiqt.appVersion)
-        return proxy
+        if not self.proxy:
+            self.setStatus(_("Connecting..."), 0)
+            proxy = HttpSyncServerProxy(self.user, self.pwd)
+            proxy.sourcesToCheck = self.sourcesToCheck
+            proxy.connect("ankiqt-" + ankiqt.appVersion)
+            self.proxy = proxy
+            # check clock
+            timediff = abs(proxy.timestamp - time.time())
+            if timediff > 300:
+                self.emit(SIGNAL("syncClockOff"), timediff)
+                raise SyncError(type="clockOff")
+        return self.proxy
 
-    def syncDeck(self):
-        self.setStatus(_("Connecting..."), 0)
+    def syncAllDecks(self):
+        decks = self.parent.syncDecks
+        for d in decks:
+            try:
+                self.syncDeck(deck=d)
+            except SyncError, e:
+                return
+        self.emit(SIGNAL("syncFinished"))
+
+    def syncDeck(self, deck=None):
+        try:
+            if deck:
+                # multi-mode setup
+                c = sqlite.connect(deck)
+                (syncName, localMod, localSync) = c.execute(
+                    "select syncName, modified, lastSync from decks").fetchone()
+                c.close()
+                if not syncName:
+                    return
+                path = deck
+            else:
+                syncName = self.parent.syncName
+                path = self.parent.deckPath
+                c = sqlite.connect(path)
+                (localMod, localSync) = c.execute(
+                    "select modified, lastSync from decks").fetchone()
+                c.close()
+        except Exception, e:
+            # we don't know which db library we're using, so do string match
+            if "locked" in unicode(e):
+                return
+            # unknown error
+            raise
+        # ensure deck mods cached
         try:
             proxy = self.connect()
         except SyncError, e:
-            return self.error(e)
+            self.error(e)
+            if deck:
+                raise
+            else:
+                return
         # exists on server?
-        if not proxy.hasDeck(self.parent.syncName):
+        if not proxy.hasDeck(syncName):
+            if deck:
+                return
             if self.create:
                 try:
-                    proxy.createDeck(self.parent.syncName)
+                    proxy.createDeck(syncName)
                 except SyncError, e:
                     return self.error(e)
             else:
@@ -100,17 +153,29 @@ class Sync(QThread):
                 self.emit(SIGNAL("noMatchingDeck"), keys, not self.onlyMerge)
                 self.setStatus("")
                 return
-        timediff = abs(proxy.timestamp - time.time())
-        if timediff > 300:
-            self.emit(SIGNAL("syncClockOff"), timediff)
-            return
-        # reconnect
+        # check conflicts
+        proxy.deckName = syncName
+        remoteMod = proxy.modified()
+        remoteSync = proxy._lastSync()
+        minSync = min(localSync, remoteSync)
+        self.conflictResolution = None
+        if (localMod != remoteMod and minSync > 0 and
+            localMod > minSync and remoteMod > minSync):
+            self.emit(SIGNAL("syncConflicts"), syncName)
+            while not self.conflictResolution:
+                time.sleep(0.2)
+            if self.conflictResolution == "cancel":
+                if not deck:
+                    # alert we're finished early
+                    self.emit(SIGNAL("syncFinished"))
+                return
+        # reopen
+        self.setStatus(_("Syncing <b>%s</b>...") % syncName, 0)
         self.deck = None
         try:
-            self.deck = DeckStorage.Deck(self.parent.deckPath)
+            self.deck = DeckStorage.Deck(path)
             client = SyncClient(self.deck)
             client.setServer(proxy)
-            proxy.deckName = self.parent.syncName
             # need to do anything?
             start = time.time()
             if client.prepareSync():
@@ -118,10 +183,27 @@ class Sync(QThread):
                 # summary
                 self.setStatus(_("Fetching summary from server..."), 0)
                 sums = client.summaries()
-                if client.needFullSync(sums):
+                if self.conflictResolution or client.needFullSync(sums):
                     self.setStatus(_("Preparing full sync..."), 0)
+                    if self.conflictResolution == "keepLocal":
+                        client.remoteTime = 0
+                    elif self.conflictResolution == "keepRemote":
+                        client.localTime = 0
+                    lastSync = self.deck.lastSync
                     ret = client.prepareFullSync()
                     if ret[0] == "fromLocal":
+                        if not self.conflictResolution:
+                            if lastSync <= 0:
+                                self.clobberChoice = None
+                                self.emit(SIGNAL("syncClobber"), syncName)
+                                while not self.clobberChoice:
+                                    time.sleep(0.2)
+                                if self.clobberChoice == "cancel":
+                                    self.deck.close()
+                                    if not deck:
+                                        # alert we're finished early
+                                        self.emit(SIGNAL("syncFinished"))
+                                    return
                         self.setStatus(_("Uploading..."), 0)
                         client.fullSyncFromLocal(ret[1], ret[2])
                     else:
@@ -129,15 +211,16 @@ class Sync(QThread):
                         client.fullSyncFromServer(ret[1], ret[2])
                     self.setStatus(_("Sync complete."), 0)
                     # reopen the deck in case we have sources
-                    self.deck = DeckStorage.Deck(self.parent.deckPath)
+                    self.deck = DeckStorage.Deck(path)
                     client.deck = self.deck
                 else:
                     # diff
                     self.setStatus(_("Determining differences..."), 0)
                     payload = client.genPayload(sums)
                     # send payload
-                    pr = client.payloadChangeReport(payload)
-                    self.setStatus("<br>" + pr + "<br>", 0)
+                    if not deck:
+                        pr = client.payloadChangeReport(payload)
+                        self.setStatus("<br>" + pr + "<br>", 0)
                     self.setStatus(_("Transferring payload..."), 0)
                     res = client.server.applyPayload(payload)
                     # apply reply
@@ -150,7 +233,8 @@ class Sync(QThread):
                     self.deck.s.commit()
             else:
                 changes = False
-                self.setStatus(_("No changes found."))
+                if not deck:
+                    self.setStatus(_("No changes found."))
             # check sources
             srcChanged = False
             if self.sourcesToCheck:
@@ -177,12 +261,13 @@ class Sync(QThread):
                 self.deck.s.commit()
             # close and send signal to main thread
             self.deck.close()
-            taken = time.time() - start
-            if (changes or srcChanged) and taken < 2.5:
-                time.sleep(2.5 - taken)
-            else:
-                time.sleep(0.25)
-            self.emit(SIGNAL("syncFinished"))
+            if not deck:
+                taken = time.time() - start
+                if (changes or srcChanged) and taken < 2.5:
+                    time.sleep(2.5 - taken)
+                else:
+                    time.sleep(0.25)
+                self.emit(SIGNAL("syncFinished"))
         except Exception, e:
             self.ok = False
             #traceback.print_exc()
@@ -192,7 +277,8 @@ class Sync(QThread):
             err = `getattr(e, 'data', None) or e`
             self.setStatus(_("Syncing failed: %(a)s") % {
                 'a': err})
-            self.error(e)
+            if not deck:
+                self.error(e)
 
 # Choosing a deck to sync to
 ##########################################################################

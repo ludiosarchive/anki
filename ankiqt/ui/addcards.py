@@ -51,6 +51,7 @@ class AddCards(QDialog):
         self.editor = ui.facteditor.FactEditor(self,
                                                self.dialog.fieldsArea,
                                                self.parent.deck)
+        self.editor.addMode = True
 
     def addChooser(self):
         self.modelChooser = ui.modelchooser.ModelChooser(self,
@@ -122,12 +123,17 @@ class AddCards(QDialog):
         self.setTabOrder(self.addButton, self.closeButton)
         self.setTabOrder(self.closeButton, self.helpButton)
 
-    def addCards(self):
-        # make sure updated
-        self.editor.saveFieldsNow()
-        fact = self.editor.fact
-        n = _("Add")
-        self.parent.deck.setUndoStart(n)
+    def reportAddedFact(self, fact):
+        self.dialog.status.append(
+            _("Added %(num)d card(s) for <a href=\"%(id)d\">"
+              "%(str)s</a>.") % {
+            "num": len(fact.cards),
+            "id": fact.id,
+            # we're guaranteed that all fields will exist now
+            "str": stripHTML(fact[fact.fields[0].name]),
+            })
+
+    def addFact(self, fact):
         try:
             fact = self.parent.deck.addFact(fact)
         except FactInvalidError:
@@ -140,26 +146,44 @@ class AddCards(QDialog):
 The input you have provided would make an empty
 question or answer on all cards."""), parent=self)
             return
-        self.dialog.status.append(
-            _("Added %(num)d card(s) for <a href=\"%(id)d\">"
-              "%(str)s</a>.") % {
-            "num": len(fact.cards),
-            "id": fact.id,
-            # we're guaranteed that all fields will exist now
-            "str": stripHTML(fact[fact.fields[0].name]),
-            })
+
+        self.reportAddedFact(fact)
+        return fact
+
+    def initializeNewFact(self, old_fact):
+        f = self.parent.deck.newFact()
+        f.tags = self.parent.deck.lastTags
+        return f
+
+    def clearOldFact(self, old_fact):
+        f = self.initializeNewFact(old_fact)
+        self.editor.setFact(f, check=True, scroll=True)
+        # let completer know our extra tags
+        self.editor.tags.addTags(parseTags(self.parent.deck.lastTags))
+        return f
+
+    def addCards(self):
+        # make sure updated
+        self.editor.saveFieldsNow()
+        fact = self.editor.fact
+        n = _("Add")
+        self.parent.deck.setUndoStart(n)
+
+        fact = self.addFact(fact)
+        if not fact:
+            return
+
         # stop anything playing
         clearAudioQueue()
+
         self.parent.deck.setUndoEnd(n)
         self.parent.deck.checkDue()
         self.parent.updateTitleBar()
         self.parent.statusView.redraw()
+
         # start a new fact
-        f = self.parent.deck.newFact()
-        f.tags = self.parent.deck.lastTags
-        self.editor.setFact(f, check=True, scroll=True)
-        # let completer know our extra tags
-        self.editor.tags.addTags(parseTags(self.parent.deck.lastTags))
+        self.clearOldFact(fact)
+
         self.maybeSave()
 
     def keyPressEvent(self, evt):
