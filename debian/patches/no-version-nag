@@ -1,0 +1,19 @@
+Author: Andreas Bombe <aeb@debian.org>
+Description: Disable check for new upstream version
+ The Debian packaged anki should not keep notifying the user about new upstream
+ versions.  For the user, Debian is upstream and new versions of the package
+ would be found through the usual channels (e.g. aptitude).
+Forwarded: not-needed
+
+diff --git a/ankiqt/ui/main.py b/ankiqt/ui/main.py
+index 75f47ba..ba3d51a 100755
+--- a/ankiqt/ui/main.py
++++ b/ankiqt/ui/main.py
+@@ -2515,6 +2515,7 @@ Are you sure?""" % deckName),
+     ##########################################################################
+ 
+     def setupAutoUpdate(self):
++        return  # do not lookup latest upstream version in Debian packaged anki
+         self.autoUpdate = ui.update.LatestVersionFinder(self)
+         self.connect(self.autoUpdate, SIGNAL("newVerAvail"), self.newVerAvail)
+         self.connect(self.autoUpdate, SIGNAL("clockIsOff"), self.clockIsOff)
