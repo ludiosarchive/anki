@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/syncdeck.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -18,6 +18,7 @@ class Ui_DeckChooser(object):
         self.vboxlayout.setMargin(9)
         self.vboxlayout.setObjectName("vboxlayout")
         self.topLabel = QtGui.QLabel(DeckChooser)
+        self.topLabel.setText("")
         self.topLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.topLabel.setObjectName("topLabel")
         self.vboxlayout.addWidget(self.topLabel)

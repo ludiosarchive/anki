@@ -195,11 +195,11 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
     # fix tags
     deck.updateProgress(_("Update tags..."))
     if dirty:
+        deck.deleteTags(unmodifiedFacts.keys(), _("MediaMissing"))
         if deleteRefs:
             deck.deleteTags(modifiedFacts.keys(), _("MediaMissing"))
         else:
             deck.addTags(factsMissingMedia.keys(), _("MediaMissing"))
-        deck.deleteTags(unmodifiedFacts.keys(), _("MediaMissing"))
     # build cache of db records
     deck.updateProgress(_("Delete unused files..."))
     mediaIds = dict(deck.s.all("select filename, id from media"))
@@ -214,7 +214,10 @@ def rebuildMediaDir(deck, deleteRefs=False, dirty=True):
             shutil.rmtree(path)
             continue
         if f in usedFiles:
-            del mediaIds[f]
+            try:
+                del mediaIds[f]
+            except:
+                pass # case errors
         else:
             os.unlink(path)
             unusedFileCount += 1

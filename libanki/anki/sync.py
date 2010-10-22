@@ -37,8 +37,9 @@ from anki.lang import _
 from hooks import runHook
 
 if simplejson.__version__ < "1.7.3":
-    raise "SimpleJSON must be 1.7.3 or later."
+    raise Exception("SimpleJSON must be 1.7.3 or later.")
 
+CHUNK_SIZE = 32768
 MIME_BOUNDARY = "Anki-sync-boundary"
 # live
 SYNC_URL = "http://anki.ichi2.net/sync/"
@@ -46,6 +47,7 @@ SYNC_HOST = "anki.ichi2.net"; SYNC_PORT = 80
 # testing
 #SYNC_URL = "http://localhost:8001/sync/"
 #SYNC_HOST = "localhost"; SYNC_PORT = 8001
+
 
 KEYS = ("models", "facts", "cards", "media")
 
@@ -72,7 +74,7 @@ def incrementalSend(self, strOrFile):
             while 1:
                 if sendProgressHook:
                     sendProgressHook(cnt)
-                data = strOrFile.read(32768)
+                data = strOrFile.read(CHUNK_SIZE)
                 cnt += len(data)
                 if not data:
                     break
@@ -118,8 +120,9 @@ class SyncTools(object):
         if self.localTime == self.remoteTime:
             return False
         l = self._lastSync(); r = self.server._lastSync()
+        # set lastSync to the lower of the two sides
         if l != r:
-            self.deck.lastSync = min(l, r) - 600
+            self.deck.lastSync = min(l, r)
         else:
             self.deck.lastSync = l
         return True
@@ -141,11 +144,11 @@ class SyncTools(object):
             self.deleteObjsFromKey(diff[3], key)
         # handle the remainder
         if self.localTime > self.remoteTime:
-            payload['deck'] = self.bundleDeck()
             payload['stats'] = self.bundleStats()
             payload['history'] = self.bundleHistory()
             payload['sources'] = self.bundleSources()
-            self.deck.lastSync = self.deck.modified
+            # finally, set new lastSync and bundle the deck info
+            payload['deck'] = self.bundleDeck()
         return payload
 
     def applyPayload(self, payload):
@@ -162,11 +165,11 @@ class SyncTools(object):
                 self.deleteObjsFromKey(payload['deleted-' + key], key)
         # send back deck-related stuff if it wasn't sent to us
         if not 'deck' in payload:
-            reply['deck'] = self.bundleDeck()
             reply['stats'] = self.bundleStats()
             reply['history'] = self.bundleHistory()
             reply['sources'] = self.bundleSources()
-            self.deck.lastSync = self.deck.modified
+            # finally, set new lastSync and bundle the deck info
+            reply['deck'] = self.bundleDeck()
         else:
             self.updateDeck(payload['deck'])
             self.updateStats(payload['stats'])
@@ -259,31 +262,31 @@ class SyncTools(object):
         self.deck.s.flush()
         return {
             # cards
-            "cards": self.realTuples(self.deck.s.all(
+            "cards": self.realLists(self.deck.s.all(
             "select id, modified from cards where modified > :mod",
             mod=lastSync)),
-            "delcards": self.realTuples(self.deck.s.all(
+            "delcards": self.realLists(self.deck.s.all(
             "select cardId, deletedTime from cardsDeleted "
             "where deletedTime > :mod", mod=lastSync)),
             # facts
-            "facts": self.realTuples(self.deck.s.all(
+            "facts": self.realLists(self.deck.s.all(
             "select id, modified from facts where modified > :mod",
             mod=lastSync)),
-            "delfacts": self.realTuples(self.deck.s.all(
+            "delfacts": self.realLists(self.deck.s.all(
             "select factId, deletedTime from factsDeleted "
             "where deletedTime > :mod", mod=lastSync)),
             # models
-            "models": self.realTuples(self.deck.s.all(
+            "models": self.realLists(self.deck.s.all(
             "select id, modified from models where modified > :mod",
             mod=lastSync)),
-            "delmodels": self.realTuples(self.deck.s.all(
+            "delmodels": self.realLists(self.deck.s.all(
             "select modelId, deletedTime from modelsDeleted "
             "where deletedTime > :mod", mod=lastSync)),
             # media
-            "media": self.realTuples(self.deck.s.all(
+            "media": self.realLists(self.deck.s.all(
             "select id, created from media where created > :mod",
             mod=lastSync)),
-            "delmedia":  self.realTuples(self.deck.s.all(
+            "delmedia":  self.realLists(self.deck.s.all(
             "select mediaId, deletedTime from mediaDeleted "
             "where deletedTime > :mod", mod=lastSync)),
             }
@@ -394,6 +397,7 @@ class SyncTools(object):
 
     def getModel(self, id, create=True):
         "Return a local model with same ID, or create."
+        id = int(id)
         for l in self.deck.models:
             if l.id == id:
                 return l
@@ -414,8 +418,9 @@ class SyncTools(object):
                 self.deck.deleteFieldModel(model, fm)
 
     def getFieldModel(self, model, remote):
+        id = int(remote['id'])
         for fm in model.fieldModels:
-            if fm.id == remote['id']:
+            if fm.id == id:
                 return fm
         fm = FieldModel()
         model.addFieldModel(fm)
@@ -434,8 +439,9 @@ class SyncTools(object):
                 self.deck.deleteCardModel(model, cm)
 
     def getCardModel(self, model, remote):
+        id = int(remote['id'])
         for cm in model.cardModels:
-            if cm.id == remote['id']:
+            if cm.id == id:
                 return cm
         cm = CardModel()
         model.addCardModel(cm)
@@ -457,10 +463,10 @@ class SyncTools(object):
             modified = "modified"
         factIds = ids2str(ids)
         return {
-            'facts': self.realTuples(self.deck.s.all("""
+            'facts': self.realLists(self.deck.s.all("""
 select id, modelId, created, %s, tags, spaceUntil, lastCardId from facts
 where id in %s""" % (modified, factIds))),
-            'fields': self.realTuples(self.deck.s.all("""
+            'fields': self.realLists(self.deck.s.all("""
 select id, factId, fieldModelId, ordinal, value from fields
 where factId in %s""" % factIds))
             }
@@ -517,7 +523,7 @@ values
     ##########################################################################
 
     def getCards(self, ids):
-        return self.realTuples(self.deck.s.all("""
+        return self.realLists(self.deck.s.all("""
 select id, factId, cardModelId, created, modified, tags, ordinal,
 priority, interval, lastInterval, due, lastDue, factor,
 firstAnswered, reps, successive, averageTime, reviewTime, youngEase0,
@@ -597,6 +603,7 @@ values
     ##########################################################################
 
     def bundleDeck(self):
+        self.deck.lastSync = time.time()
         d = self.dictFromObj(self.deck)
         del d['Session']
         del d['engine']
@@ -604,10 +611,11 @@ values
         del d['path']
         del d['syncName']
         del d['version']
+        del d['css']
         # these may be deleted before bundling
         if 'models' in d: del d['models']
         if 'currentModel' in d: del d['currentModel']
-        d['meta'] = self.realTuples(self.deck.s.all("select * from deckVars"))
+        d['meta'] = self.realLists(self.deck.s.all("select * from deckVars"))
         return d
 
     def updateDeck(self, deck):
@@ -619,7 +627,6 @@ insert or replace into deckVars
 (key, value) values (:k, :v)""", k=k, v=v)
             del deck['meta']
         self.applyDict(self.deck, deck)
-        self.deck.lastSync = self.deck.modified
         self.deck.updateDynamicIndices()
 
     def bundleStats(self):
@@ -659,7 +666,7 @@ insert or replace into deckVars
             stat.toDB(self.deck.s)
 
     def bundleHistory(self):
-        return self.realTuples(self.deck.s.all("""
+        return self.realLists(self.deck.s.all("""
 select cardId, time, lastInterval, nextInterval, ease, delay,
 lastFactor, nextFactor, reps, thinkingTime, yesCount, noCount
 from reviewHistory where time > :ls""",
@@ -690,7 +697,7 @@ values
                          dlist)
 
     def bundleSources(self):
-        return self.realTuples(self.deck.s.all("select * from sources"))
+        return self.realLists(self.deck.s.all("select * from sources"))
 
     def updateSources(self, sources):
         for s in sources:
@@ -785,7 +792,7 @@ where media.id in %s""" % sids, now=time.time())
         # cards
         cardIds = self.deck.s.column0(
             "select id from cards where modified > :l", l=lastSync)
-        p['cards'] = self.realTuples(self.getOneWayCards(cardIds))
+        p['cards'] = self.realLists(self.getOneWayCards(cardIds))
         return p
 
     def applyOneWayPayload(self, payload):
@@ -804,7 +811,8 @@ where media.id in %s""" % sids, now=time.time())
         try:
             self.updateOneWayCards(payload['cards'])
         except KeyError:
-            sys.stderr.write("Error in one way sync\n")
+            sys.stderr.write("Subscribed to a broken deck. "
+                             "Try removing your deck subscriptions.")
             t = 0
         # update sync time
         self.deck.s.statement(
@@ -886,9 +894,9 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
         for (k,v) in dict.items():
             setattr(obj, k, v)
 
-    def realTuples(self, result):
-        "Convert an SQLAlchemy response into a list of real tuples."
-        return [tuple(x) for x in result]
+    def realLists(self, result):
+        "Convert an SQLAlchemy response into a list of real lists."
+        return [list(x) for x in result]
 
     def getObjsFromKey(self, ids, key):
         return getattr(self, "get" + key.capitalize())(ids)
@@ -907,11 +915,11 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
             return True
         for sum in sums:
             for l in sum.values():
-                if len(l) > 500:
+                if len(l) > 1000:
                     return True
         if self.deck.s.scalar(
             "select count() from reviewHistory where time > :ls",
-            ls=self.deck.lastSync) > 500:
+            ls=self.deck.lastSync) > 1000:
             return True
         lastDay = date.fromtimestamp(max(0, self.deck.lastSync - 60*60*24))
         if self.deck.s.scalar(
@@ -922,7 +930,7 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
 
     def prepareFullSync(self):
         t = time.time()
-        self.deck.lastSync = t
+        self.deck.lastSync = time.time()
         self.deck.s.commit()
         self.deck.close()
         fields = {
@@ -965,7 +973,7 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
             # data
             comp = zlib.compressobj()
             while 1:
-                data = src.read(32768)
+                data = src.read(CHUNK_SIZE)
                 if not data:
                     tmp.write(comp.flush())
                     break
@@ -1004,12 +1012,12 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
             decomp = zlib.decompressobj()
             cnt = 0
             while 1:
-                data = src.read(32768)
+                data = src.read(CHUNK_SIZE)
                 if not data:
                     tmp.write(decomp.flush())
                     break
                 tmp.write(decomp.decompress(data))
-                cnt += 32768
+                cnt += CHUNK_SIZE
                 runHook("fullSyncProgress", "fromServer", cnt)
             src.close()
             tmp.close()

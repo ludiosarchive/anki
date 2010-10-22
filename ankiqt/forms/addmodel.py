@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/addmodel.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -16,6 +16,7 @@ class Ui_AddModel(object):
         self.vboxlayout = QtGui.QVBoxLayout(AddModel)
         self.vboxlayout.setObjectName("vboxlayout")
         self.groupBox = QtGui.QGroupBox(AddModel)
+        self.groupBox.setTitle("")
         self.groupBox.setObjectName("groupBox")
         self.vboxlayout1 = QtGui.QVBoxLayout(self.groupBox)
         self.vboxlayout1.setObjectName("vboxlayout1")

@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/about.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -21,6 +21,7 @@ class Ui_About(object):
         self.vboxlayout = QtGui.QVBoxLayout(About)
         self.vboxlayout.setObjectName("vboxlayout")
         self.label = QtGui.QLabel(About)
+        self.label.setText("")
         self.label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.label.setWordWrap(True)
         self.label.setOpenExternalLinks(True)

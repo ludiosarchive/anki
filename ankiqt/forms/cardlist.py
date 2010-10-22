@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/cardlist.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -30,6 +30,7 @@ class Ui_MainWindow(object):
         self.label.setObjectName("label")
         self.hlayout1.addWidget(self.label)
         self.filterEdit = QtGui.QLineEdit(self.centralwidget)
+        self.filterEdit.setText("")
         self.filterEdit.setObjectName("filterEdit")
         self.hlayout1.addWidget(self.filterEdit)
         self.label_2 = QtGui.QLabel(self.centralwidget)
@@ -44,6 +45,7 @@ class Ui_MainWindow(object):
         self.sortOrder = QtGui.QPushButton(self.centralwidget)
         self.sortOrder.setMaximumSize(QtCore.QSize(20, 20))
         self.sortOrder.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.sortOrder.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(":/icons/view-sort-ascending.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.sortOrder.setIcon(icon1)
@@ -100,6 +102,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setMargin(4)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.cardLabel = QtGui.QLabel(self.cardInfoGroup)
+        self.cardLabel.setText("")
         self.cardLabel.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.cardLabel.setObjectName("cardLabel")
         self.verticalLayout_4.addWidget(self.cardLabel)
@@ -107,7 +110,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 599, 24))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 599, 20))
         self.menubar.setObjectName("menubar")
         self.menuEdit = QtGui.QMenu(self.menubar)
         self.menuEdit.setObjectName("menuEdit")
@@ -121,7 +124,7 @@ class Ui_MainWindow(object):
         self.toolBar = QtGui.QToolBar(MainWindow)
         self.toolBar.setIconSize(QtCore.QSize(32, 32))
         self.toolBar.setObjectName("toolBar")
-        MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
+        MainWindow.addToolBar(QtCore.Qt.ToolBarArea(QtCore.Qt.TopToolBarArea), self.toolBar)
         self.actionDelete = QtGui.QAction(MainWindow)
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(":/icons/editdelete.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -257,7 +260,6 @@ class Ui_MainWindow(object):
         self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionFindReplace)
         self.menuEdit.addSeparator()
-        self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionFont)
         self.menuActions.addAction(self.actionAddItems)
         self.menuActions.addAction(self.actionAddCards)
@@ -284,7 +286,6 @@ class Ui_MainWindow(object):
         self.menuJump.addAction(self.actionPreviousCard)
         self.menuJump.addAction(self.actionNextCard)
         self.menuJump.addAction(self.actionLastCard)
-        self.menuJump.addSeparator()
         self.menu_Help.addAction(self.actionGuide)
         self.menubar.addAction(self.menuActions.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())

@@ -35,9 +35,10 @@ class Preferences(QDialog):
             (u"Esperanto", "eo"),
             (u"Français", "fr"),
             (u"Italiano", "it"),
-            (u"Magyar Nyelv", "hu"),
+            (u"Magyar", "hu"),
             (u"Nederlands","nl"),
             (u"Norsk","nb"),
+            (u"Occitan","oc"),
             (u"Polski", "pl"),
             (u"Português Brasileiro", "pt_BR"),
             (u"Português", "pt"),
@@ -100,6 +101,8 @@ class Preferences(QDialog):
     def setupNetwork(self):
         self.dialog.syncOnOpen.setChecked(self.config['syncOnLoad'])
         self.dialog.syncOnClose.setChecked(self.config['syncOnClose'])
+        self.dialog.syncOnProgramOpen.setChecked(self.config['syncOnProgramOpen'])
+        self.dialog.syncOnProgramClose.setChecked(self.config['syncOnProgramClose'])
         self.dialog.syncUser.setText(self.config['syncUsername'])
         self.dialog.syncPass.setText(self.config['syncPassword'])
         self.dialog.proxyHost.setText(self.config['proxyHost'])
@@ -112,6 +115,8 @@ class Preferences(QDialog):
     def updateNetwork(self):
         self.config['syncOnLoad'] = self.dialog.syncOnOpen.isChecked()
         self.config['syncOnClose'] = self.dialog.syncOnClose.isChecked()
+        self.config['syncOnProgramOpen'] = self.dialog.syncOnProgramOpen.isChecked()
+        self.config['syncOnProgramClose'] = self.dialog.syncOnProgramClose.isChecked()
         self.config['syncUsername'] = unicode(self.dialog.syncUser.text())
         self.config['syncPassword'] = unicode(self.dialog.syncPass.text())
         self.config['proxyHost'] = unicode(self.dialog.proxyHost.text())
@@ -148,6 +153,7 @@ class Preferences(QDialog):
         self.config['numBackups'] = self.dialog.numBackups.value()
 
     def setupAdvanced(self):
+        self.dialog.colourTimes.setChecked(self.config['colourTimes'])
         self.dialog.showEstimates.setChecked(not self.config['suppressEstimates'])
         self.dialog.showStudyOptions.setChecked(self.config['showStudyScreen'])
         self.dialog.showTray.setChecked(self.config['showTrayIcon'])
@@ -163,6 +169,7 @@ class Preferences(QDialog):
         self.dialog.deckBrowserLen.setValue(self.config['deckBrowserNameLength'])
 
     def updateAdvanced(self):
+        self.config['colourTimes'] = self.dialog.colourTimes.isChecked()
         self.config['showTrayIcon'] = self.dialog.showTray.isChecked()
         self.config['showTimer'] = self.dialog.showTimer.isChecked()
         self.config['suppressEstimates'] = not self.dialog.showEstimates.isChecked()

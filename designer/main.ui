@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>557</width>
+    <width>617</width>
     <height>563</height>
    </rect>
   </property>
@@ -731,6 +731,9 @@
                <height>16</height>
               </size>
              </property>
+             <property name="default">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
           </layout>
@@ -943,7 +946,7 @@
                        <string>The &lt;b&gt;number of questions in a session&lt;/b&gt;. When a session is finished, this screen will be shown again, allowing you to start another session. Choose 0 for no limit.</string>
                       </property>
                       <property name="text">
-                       <string>&lt;b&gt;Session limit (questions)&lt;/b&gt;:</string>
+                       <string>&lt;b&gt;Session limit (questions):&lt;/b&gt;</string>
                       </property>
                       <property name="margin">
                        <number>4</number>
@@ -2712,8 +2715,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>557</width>
-     <height>21</height>
+     <width>617</width>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">
@@ -2938,6 +2941,9 @@
    <property name="shortcut">
     <string>Ctrl+W</string>
    </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
+   </property>
   </action>
   <action name="actionSave">
    <property name="icon">
@@ -2966,10 +2972,10 @@
     <string>S&amp;ync</string>
    </property>
    <property name="statusTip">
-    <string>Synchronize this deck with Anki Online</string>
+    <string>Synchronize with Anki Online</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Y</string>
+    <string>Ctrl+Shift+Y</string>
    </property>
   </action>
   <action name="actionAddcards">

@@ -44,11 +44,13 @@ class Config(dict):
             'addZeroSpace': False,
             'alternativeTheme': False,
             'checkForUpdates': True,
+            'colourTimes': True,
             'created': time.time(),
             'deckBrowserNameLength': 30,
             'deckBrowserOrder': 0,
             'deckBrowserRefreshPeriod': 3600,
             'deleteMedia': False,
+            'documentDir': u"",
             'editFontFamily': 'Arial',
             'editFontSize': 12,
             'editLineSize': 20,
@@ -97,12 +99,18 @@ class Config(dict):
             'suppressEstimates': False,
             'suppressUpdate': False,
             'syncInMsgBox': False,
-            'syncOnClose': True,
-            'syncOnLoad': True,
+            'syncOnClose': False,
+            'syncOnLoad': False,
+            'syncOnProgramClose': True,
+            'syncOnProgramOpen': True,
             'syncPassword': "",
             'syncUsername': "",
             'typeAnswerFontSize': 20,
             }
+        # disable sync on deck load when upgrading
+        if not self.has_key("syncOnProgramOpen"):
+            self['syncOnLoad'] = False
+            self['syncOnClose'] = False
         for (k,v) in fields.items():
             if not self.has_key(k):
                 self[k] = v

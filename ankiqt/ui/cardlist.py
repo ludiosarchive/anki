@@ -35,6 +35,7 @@ CARD_NO = 10
 CARD_PRIORITY = 11
 CARD_TAGS = 12
 CARD_FACTCREATED = 13
+CARD_FIRSTANSWERED = 14
 
 COLOUR_SUSPENDED1 = "#ffffcc"
 COLOUR_SUSPENDED2 = "#ffffaa"
@@ -184,7 +185,7 @@ where cards.factId = facts.id """
 select id, question, answer, combinedDue, reps, factId, created, modified,
 interval, factor, noCount, priority, (select tags from facts where
 facts.id = cards.factId), (select created from facts where
-facts.id = cards.factId) from cards where id = :id""",
+facts.id = cards.factId), firstAnswered from cards where id = :id""",
                                                         id=self.cards[index.row()][0])
             self.emit(SIGNAL("layoutChanged()"))
         except:
@@ -244,6 +245,8 @@ facts.id = cards.factId) from cards where id = :id""",
             return self.noColumn(index)
         elif self.sortKey == "fact":
             return self.factCreatedColumn(index)
+        elif self.sortKey == "firstAnswered":
+            return self.firstAnsweredColumn(index)
         else:
             return self.nextDue(index)
 
@@ -260,6 +263,8 @@ facts.id = cards.factId) from cards where id = :id""",
             k = _("Ease")
         elif self.sortKey == "noCount":
             k = _("Lapses")
+        elif self.sortKey == "firstAnswered":
+            k = _("First Answered")
         elif self.sortKey == "fact":
             k = _("Fact Created")
         else:
@@ -290,6 +295,14 @@ facts.id = cards.factId) from cards where id = :id""",
 
     def noColumn(self, index):
         return "%d" % self.cards[index.row()][CARD_NO]
+
+    def firstAnsweredColumn(self, index):
+        firstAnswered = self.cards[index.row()][CARD_FIRSTANSWERED]
+        if firstAnswered == 0:
+            return _("(new card)")
+        else:
+            return time.strftime("%Y-%m-%d", time.localtime(firstAnswered))
+
 
 class StatusDelegate(QItemDelegate):
 
@@ -341,7 +354,6 @@ class EditDeck(QMainWindow):
         self.parent = parent
         self.deck = self.parent.deck
         self.config = parent.config
-        self.forceClose = False
         self.origModTime = parent.deck.modified
         self.currentRow = None
         self.lastFilter = ""
@@ -383,10 +395,6 @@ class EditDeck(QMainWindow):
         if self.parent.currentCard:
             self.currentCard = self.parent.currentCard
         self.updateSearch()
-        if sys.platform.startswith("darwin"):
-            self.macCloseShortcut = QShortcut(QKeySequence("Ctrl+w"), self)
-            self.connect(self.macCloseShortcut, SIGNAL("activated()"),
-                         self.close)
 
     def findCardInDeckModel(self):
         for i, thisCard in enumerate(self.model.cards):
@@ -488,6 +496,7 @@ class EditDeck(QMainWindow):
             _("Ease"),
             _("Fact Created"),
             _("Lapses"),
+            _("First Review"),
             ]
         self.sortFields = sorted(self.deck.allFields())
         self.sortList.extend([_("'%s'") % f for f in self.sortFields])
@@ -513,7 +522,7 @@ class EditDeck(QMainWindow):
         elif idx == 3:
             self.sortKey = "modified"
         elif idx == 4:
-            self.sortKey = "due"
+            self.sortKey = "combinedDue"
         elif idx == 5:
             self.sortKey = "interval"
         elif idx == 6:
@@ -524,8 +533,10 @@ class EditDeck(QMainWindow):
             self.sortKey = "fact"
         elif idx == 9:
             self.sortKey = "noCount"
+        elif idx == 10:
+            self.sortKey = "firstAnswered"
         else:
-            self.sortKey = ("field", self.sortFields[idx-10])
+            self.sortKey = ("field", self.sortFields[idx-11])
         self.rebuildSortIndex(self.sortKey)
         self.sortIndex = idx
         self.deck.setVar('sortIndex', idx)
@@ -540,7 +551,7 @@ class EditDeck(QMainWindow):
     def rebuildSortIndex(self, key):
         if key not in (
             "question", "answer", "created", "modified", "due", "interval",
-            "reps", "factor", "noCount"):
+            "reps", "factor", "noCount", "firstAnswered"):
             return
         old = self.deck.s.scalar("select sql from sqlite_master where name = :k",
                                  k="ix_cards_sort")
@@ -710,12 +721,6 @@ class EditDeck(QMainWindow):
     def onClose(self):
         saveSplitter(self.dialog.splitter, "editor")
         self.editor.saveFieldsNow()
-        if not self.forceClose:
-            if not self.factValid:
-                ui.utils.showInfo(_(
-                    "Some fields are missing or not unique."),
-                                  parent=self, help="AddItems#AddError")
-                return
         self.editor.setFact(None)
         self.editor.close()
         saveGeom(self, "editor")
@@ -748,33 +753,10 @@ class EditDeck(QMainWindow):
         self.editor = ui.facteditor.FactEditor(self,
                                                self.dialog.fieldsArea,
                                                self.deck)
-        self.factValid = True
-        self.editor.onFactValid = self.onFactValid
-        self.editor.onFactInvalid = self.onFactInvalid
         self.editor.onChange = self.onEvent
         self.connect(self.dialog.tableView.selectionModel(),
                      SIGNAL("currentRowChanged(QModelIndex, QModelIndex)"),
                      self.rowChanged)
-
-    def onFactValid(self, fact):
-        self.factValid = True
-        self.dialog.tableView.setEnabled(True)
-        self.dialog.filterEdit.setEnabled(True)
-        self.dialog.sortBox.setEnabled(True)
-        self.dialog.tagList.setEnabled(True)
-        self.dialog.menubar.setEnabled(True)
-        self.dialog.cardInfoGroup.setEnabled(True)
-        self.dialog.toolBar.setEnabled(True)
-
-    def onFactInvalid(self, fact):
-        self.factValid = False
-        self.dialog.tableView.setEnabled(False)
-        self.dialog.filterEdit.setEnabled(False)
-        self.dialog.sortBox.setEnabled(False)
-        self.dialog.tagList.setEnabled(False)
-        self.dialog.menubar.setEnabled(False)
-        self.dialog.cardInfoGroup.setEnabled(False)
-        self.dialog.toolBar.setEnabled(False)
 
     def rowChanged(self, current, previous):
         self.currentRow = current
@@ -1026,7 +1008,7 @@ where id in %s""" % ids2str(sf))
         sm.blockSignals(True)
         cardIds = dict([(x, 1) for x in self.selectedFactsAsCards()])
         for i, card in enumerate(self.model.cards):
-            if card.id in cardIds:
+            if card[0] in cardIds:
                 sm.select(self.model.index(i, 0),
                           QItemSelectionModel.Select | QItemSelectionModel.Rows)
             if i % 100 == 0:

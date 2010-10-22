@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/changemodel.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -28,6 +28,7 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.oldModelLabel.sizePolicy().hasHeightForWidth())
         self.oldModelLabel.setSizePolicy(sizePolicy)
+        self.oldModelLabel.setText("")
         self.oldModelLabel.setMargin(4)
         self.oldModelLabel.setObjectName("oldModelLabel")
         self.gridLayout.addWidget(self.oldModelLabel, 0, 1, 1, 1)

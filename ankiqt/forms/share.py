@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/share.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -54,6 +54,7 @@ class Ui_Dialog(object):
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.bottomLabel = QtGui.QLabel(self.scrollAreaWidgetContents)
+        self.bottomLabel.setText("")
         self.bottomLabel.setObjectName("bottomLabel")
         self.verticalLayout_2.addWidget(self.bottomLabel)
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)

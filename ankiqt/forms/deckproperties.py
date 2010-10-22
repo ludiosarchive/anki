@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/deckproperties.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -271,12 +271,14 @@ class Ui_DeckProperties(object):
         spacerItem5 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_5.addItem(spacerItem5, 0, 1, 1, 1)
         self.collapse = QtGui.QCheckBox(self.tab_4)
+        self.collapse.setText("")
         self.collapse.setObjectName("collapse")
         self.gridLayout_5.addWidget(self.collapse, 0, 2, 1, 1)
         self.label_11 = QtGui.QLabel(self.tab_4)
         self.label_11.setObjectName("label_11")
         self.gridLayout_5.addWidget(self.label_11, 4, 0, 1, 1)
         self.suspendLeeches = QtGui.QCheckBox(self.tab_4)
+        self.suspendLeeches.setText("")
         self.suspendLeeches.setObjectName("suspendLeeches")
         self.gridLayout_5.addWidget(self.suspendLeeches, 4, 2, 1, 1)
         self.label_15 = QtGui.QLabel(self.tab_4)
