@@ -1,9 +1,16 @@
 Anki was debianised by Andreas Bombe <aeb@debian.org>.  It was downloaded from
 http://ichi2.net/anki/download/
 
-Copyright 2007-2010 Damien Elmes, with contributions by "Lac", "Iroiro" and
-"Frostschutz".  Translations provided by Laurent Steffan, Andreas Klauer and
-"Pcsl".
+Copyright 2007-2010 Damien Elmes, with patches, translation, testing and design
+from: Alex Fraser, Andreas Klauer, Andrew Wright, Bernhard Ibertsberger,
+Charlene Barina, Christian Rusche, David Smith, Dave Druelinger, Dotan Cohen,
+Emilio Wuerges, Emmanuel Jarri, Frank Harper, H. Mijail, Ian Lewis, Iroiro, Jin
+Eun-Deok, Jarvik7, Jo Nakashima, Christian Krause, LaC, Laurent Steffan, Marco
+Giancotti, Mari Egami, Michael Jürges, Mark Wilbur, Matthew Holtz, Meelis
+Vasser, Michael Penkov, Michael Keppler, Michal Čadil, Nathanael Law, Nick
+Cook, Niklas Laxström, Pcsl88, Petr Michalec, Piotr Kubowicz, Richard Colley,
+Samson Melamed, Stefaan Depooter, Susanna Björverud, Tacutu, Timm Preetz, Timo
+Paulssen, Ursus, Victor Suba, and Xtru.
 
 License:
  # Copyright: Damien Elmes <anki@ichi2.net>
