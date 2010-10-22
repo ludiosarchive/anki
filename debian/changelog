@@ -1,3 +1,24 @@
+anki (1.0.1-1) unstable; urgency=low
+
+  * Imported Upstream version 1.0.1 (Closes: #598167)
+  * Upstream version no longer contains string exceptions (Closes:
+    #585262)
+  * Use getlocale(LC_MESSAGES) for default interface language instead of
+    getdefaultlocale() (Closes: 576158)
+  * Switch to version 3.0 (quilt) package format
+  * Bump Standards-Version to 3.9.1, no changes necessary
+  * Remove some more code from libanki/anki/lang.py that is not needed
+    with the fixed locale path patch
+  * Add Vcs-Git control fields pointing to the collab-maint repository
+    on Alioth
+  * Remove *.anki exclusion on dh_compress, left over from time when
+    example decks were included
+  * In anki launcher set sys.path[0] to /usr/share/anki rather than
+    prepending it to sys.path
+  * debian/copyright: Copy list of contributors from about dialog
+
+ -- Andreas Bombe <aeb@debian.org>  Fri, 22 Oct 2010 12:50:51 +0200
+
 anki (0.9.9.8.6-2.1) unstable; urgency=medium
 
   * Non-maintainer upload.
