@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/displayproperties.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -96,6 +96,7 @@ class Ui_DisplayProperties(object):
         self.label_6.setObjectName("label_6")
         self._2.addWidget(self.label_6, 0, 0, 1, 1)
         self.answerColour = QtGui.QPushButton(self.tab)
+        self.answerColour.setText("")
         self.answerColour.setAutoDefault(False)
         self.answerColour.setObjectName("answerColour")
         self._2.addWidget(self.answerColour, 6, 1, 1, 1)
@@ -125,6 +126,7 @@ class Ui_DisplayProperties(object):
         self.questionFont.setObjectName("questionFont")
         self._2.addWidget(self.questionFont, 0, 1, 1, 1)
         self.questionColour = QtGui.QPushButton(self.tab)
+        self.questionColour.setText("")
         self.questionColour.setAutoDefault(False)
         self.questionColour.setObjectName("questionColour")
         self._2.addWidget(self.questionColour, 2, 1, 1, 1)
@@ -153,6 +155,7 @@ class Ui_DisplayProperties(object):
         self.label_5.setObjectName("label_5")
         self._2.addWidget(self.label_5, 8, 0, 1, 1)
         self.backgroundColour = QtGui.QPushButton(self.tab)
+        self.backgroundColour.setText("")
         self.backgroundColour.setAutoDefault(False)
         self.backgroundColour.setObjectName("backgroundColour")
         self._2.addWidget(self.backgroundColour, 8, 1, 1, 1)
@@ -205,7 +208,7 @@ class Ui_DisplayProperties(object):
         self.fontSize = QtGui.QSpinBox(self.tab_2)
         self.fontSize.setMinimum(5)
         self.fontSize.setMaximum(300)
-        self.fontSize.setProperty("value", 14)
+        self.fontSize.setProperty("value", QtCore.QVariant(14))
         self.fontSize.setObjectName("fontSize")
         self._4.addWidget(self.fontSize, 1, 1, 1, 1)
         self.useColour = QtGui.QCheckBox(self.tab_2)
@@ -219,6 +222,7 @@ class Ui_DisplayProperties(object):
         self._4.addWidget(self.useColour, 2, 0, 1, 1)
         self.fontColour = QtGui.QPushButton(self.tab_2)
         self.fontColour.setAutoFillBackground(True)
+        self.fontColour.setText("")
         self.fontColour.setAutoDefault(False)
         self.fontColour.setObjectName("fontColour")
         self._4.addWidget(self.fontColour, 2, 1, 1, 1)

@@ -1,3 +1,301 @@
+commit c916478868371a8433c4bc047723de5232b89d6e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Aug 19 13:42:19 2010 +0900
+
+    bump version number
+
+commit 593a1e75b0e25ba36b7e4a8499331e84b94b7ef2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Aug 19 11:32:00 2010 +0900
+
+    update unit test for new sync behaviour
+
+commit cb533d9c02ef41a38751410b5bab0cb95779a668
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 16 19:28:45 2010 +0900
+
+    don't die when filename case is borked in media check
+
+commit 9332444dfdf3b27479822164d21a5eae9c4e52d3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 16 19:27:00 2010 +0900
+
+    add hook for when undo is finished
+
+commit 84cb81854b89963be43f6d19f7db0dc92b3f9255
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 16 18:52:55 2010 +0900
+
+    faster tag updating for large number of tags
+
+commit 1f90eceaec438e46984c0e3676624cfd88806edf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Aug 11 14:40:34 2010 +0900
+
+    allow bsd license rather than requiring people to sign over copyright
+
+commit ff60f105d91861d704af78e5807f46a0679b554f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 2 13:26:48 2010 +0900
+
+    add extra minor version number to ensure betas get upgraded
+
+commit 5e7c62bca51795c8cbdae2f438ea5dfe0b8d2528
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jul 30 18:15:24 2010 +0900
+
+    don't compensate for clock skew
+
+commit e956aa9afb0db63a569c22e6829224e20f07b0fb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 22:54:51 2010 +0900
+
+    remove obsolete function
+
+commit d3fb189a72f9536c4bfb18ed24bde8ce6cf0b419
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 22:46:04 2010 +0900
+
+    improved lastSync/modified handling
+    
+    - never bump deck mod while syncing
+    - set lastSync to current time, not deck modified time
+    - don't update lastSync until the final part of the sync
+    - lower clock skew allowance to ~5 minutes
+    - bump full sync threshold to 1000 modified items
+
+commit ecb6dbe69a26ea88cb6fac3cb58eb39eb638ce54
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 26 20:59:56 2010 +0900
+
+    unicode in error messages
+
+commit 55194f8aa7361ff37d3e7e7bf5f4c0f49152f95c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 26 17:15:05 2010 +0900
+
+    ensure cardmodel/fieldmodels work when given a string too
+
+commit 5fe42791c3460bc084db14f771a42265a05d3ce6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 26 17:14:49 2010 +0900
+
+    use relative path in latex generation
+
+commit 61a7d6d79eba6828169c0adf2a40640745b9ccc9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jul 24 14:28:24 2010 +0900
+
+    make sure we match a given model even when given a string
+
+commit a68366b5c49a3696cffbb9ffeb303c34be3feaa0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 19:46:27 2010 +0900
+
+    fix card ordering when generating cards by basing card creation off fact
+
+commit f3d2965e125def771d4c3b12fd246664d0a67ea1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 18:37:35 2010 +0900
+
+    Revert "don't delete dangling facts when deleting cards" hack
+    
+    We don't need this any more as we do conflict handling.
+    
+    This reverts commit 880219567e72dbdcc5d319746af265e4d1b85277.
+
+commit 6852b0acda7bc98eb4cf59583ceac2bf346f3038
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 18:37:05 2010 +0900
+
+    bump mod time on full sync to server, ensure lastSync matches
+
+commit f58651cf1b6b392b79a5ca0a66b037322106bb60
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jul 11 17:42:05 2010 +0900
+
+    bump version number
+
+commit b8401eff229ec96f3ec35e2ed99b69f489d9e563
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jun 28 11:52:25 2010 +0900
+
+    ignore parse errors due to invalid html on export
+
+commit f03000d27b54646f6db7448396b89338d761c876
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jun 10 13:24:46 2010 +0900
+
+    remove string exceptions for python2.6
+
+commit 880219567e72dbdcc5d319746af265e4d1b85277
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri May 21 06:56:38 2010 +0900
+
+    don't delete dangling facts when deleting cards
+    
+    If the user is not careful to only sync when one side has been modified, they
+    can end up with cards on one side and not the other. If they then delete a
+    card, deleting the dangling facts also deletes the fact associated with the
+    not-yet-synced card. In order to avoid this, we avoid deleting dangling facts
+    until a DB check.
+
+commit edf121f8dc272922adfcb8b27120396bc5dc3012
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun May 16 01:01:38 2010 +0900
+
+    add hex cache for dumb clients, make sure not to mark deck modified
+
+commit 5616e679f513aaf4dc3f9e5688a23a2c47384d31
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon May 10 21:32:36 2010 +0900
+
+    cache the css as a deck var, don't accidentally send it in sync
+
+commit fd1953bfb50a35e8a5eff4c1342bf0d8b87ae89b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri May 7 16:05:35 2010 +0900
+
+    convert to a list, not tuples, so we can modify on the fly
+
+commit f69d946f8355af9ca19c5e90e1056c01a3722bf5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun May 2 16:15:32 2010 +0900
+
+    more sqlalchemy compat
+
+commit 554d7021e0f413186e0124a264fcb3c59ef92bad
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 21 13:31:59 2010 +0900
+
+    don't specify an input index by default
+
+commit a1d3f13f0a694e079be196bb2eb4ee6b67799f45
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 21 13:21:16 2010 +0900
+
+    update for sqlalchemy 0.6
+
+commit 1be5943903274226ce8d9ffa10d3eb2faca48696
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Apr 16 01:25:47 2010 +0900
+
+    remove erroneous comment
+
+commit 21ec54868010438e61be22a1d2bd49fb8fa6675e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 15 23:05:14 2010 +0900
+
+    more explicit setting of creation time, don't fiddle with ordinals for rand
+
+commit 783751d7ea3a8a76a72fdb10a60a9a99e75310cc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 6 18:47:39 2010 +0900
+
+    support ? for single char search
+
+commit af66630f078a2f197480c27bb5776ce358c2408d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 1 22:57:26 2010 +0900
+
+    delay beautifulsoup import until export
+
+commit 7f75364fbe44b678c50555f9a054259b79b6205c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Mar 28 10:18:13 2010 +0900
+
+    delete mediamissing tags before setting
+
+commit 465a890bcdc514d563ac88aa7818ba5f8e0bbd2b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 16 00:39:41 2010 +0900
+
+    don't add = as a delim
+
+commit ed50fb20d951d568feff5a27d18ac5d13bb50543
+Author: Albert Peschar <albert@peschar.net>
+Date:   Sun Mar 14 11:40:31 2010 +0100
+
+    auto-detect '=' as import delimiter, strip fields
+
+commit c8d9bac5dfce9d67a1351928a54686f6ed85b51c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 5 09:27:11 2010 +0900
+
+    clarify one way sync error
+
+commit 09f51e5028dddaa7275717ae5adbaba9f58a970a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 3 02:51:05 2010 +0900
+
+    when adding facts, use a small due increment for each card model
+
+commit 80197d9c2fd85900cba6fb34198cac6cc6c5d6af
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Mar 3 02:49:55 2010 +0900
+
+    when generating cards, use a small creation date increment
+
+commit 27694adf1af88aef7d298aef6132923084fc5239
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 23 17:25:12 2010 +0900
+
+    patch from Chris Burel, fix qt html rewriting on 4.6.1+
+
+commit 7111b3b92412f60cb718f792f5fcb5a1f0b6f0f3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 18:00:23 2010 +0900
+
+    add attr to tell if fact was pulled from db
+
+commit 309789fcbdb5fd66071fdf229a2f606db9cee5a8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 17:20:19 2010 +0900
+
+    mention libanki copyright assignment
+
+commit 8a28df1a80f7828a0a0601b9907aee874655549c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 17:07:46 2010 +0900
+
+    patch from Piotr Kubowicz, fix some translations
+
+commit 220670a04868fc3a492a32f6e8c9143d186d6484
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 16:41:20 2010 +0900
+
+    update combinedDue attr in cardAnswered(), not just on disk
+
+commit 60c76c93ff2ddcc50e7d83500523f8f140936ddf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 20 10:03:47 2010 +0900
+
+    don't backup in unit tests
+
+commit 472b68b8317d75ce530b2850701c1abdb99404ed
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 20 10:03:39 2010 +0900
+
+    don't backup when importing / saving as
+
+commit bc345d371190d0baebc5dfa4ddade3e12f96a234
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Feb 20 09:54:54 2010 +0900
+
+    create backup dir if missing
+
+commit 7c8e612704c30cb7ec9271b1253d1616cd88bf70
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 18 17:36:54 2010 +0900
+
+    use a constant for chunk size
+
+commit 7bc81c81bbb8dbccbef7eb32aafa295ba234d06c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 18 16:53:29 2010 +0900
+
+    truncate supermemo tests to avoid any possible license concerns
+
 commit 4769bfa7a5cc58eb61c4c83ab2078584dcc09a64
 Author: Damien Elmes <git@ichi2.net>
 Date:   Fri Feb 12 16:03:48 2010 +0900

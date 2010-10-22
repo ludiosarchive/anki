@@ -1,3 +1,561 @@
+commit 2a28e5223c33eb01eafc09677d3a5e6402ac603f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Aug 19 13:45:01 2010 +0900
+
+    bump version number
+
+commit 5fc33ab143132a98ad2bc850d02f487d0f25994f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Aug 19 12:02:02 2010 +0900
+
+    don't report conflicts when decks have same mod time
+
+commit a4e3a9fa958c4cc62e95fbbfbb39d4fd2859241a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 16 19:31:18 2010 +0900
+
+    update release notes link
+
+commit 9b15771d8408fb7a08301778770428e489a897b1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 16 19:26:50 2010 +0900
+
+    refresh undo options after undo finished
+
+commit ee2d39938d72661a10baf834c586f10b786fb20b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 16 19:10:40 2010 +0900
+
+    use array ref when selecting facts
+
+commit 5e62fea9c810ead10cea5515fac6d1ab87f90057
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 9 08:45:32 2010 +0900
+
+    remove conflicting close window shortcut
+
+commit bb73e21c6404a0b1aafaac4e99d59437c3a56d0c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 9 08:44:58 2010 +0900
+
+    remove superfluous separators
+
+commit 14c4dfeea2cb4d5e286770bdad4d35c7fe8c2c12
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Aug 5 06:51:43 2010 +0900
+
+    patch from bernhard: revert to previous spell check behaviour
+
+commit e5a4acb0529ec6adc63ee4c36f14db40a5670ae1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 2 13:27:11 2010 +0900
+
+    bump version
+
+commit b3e47d836b89073f3872cff5d2961a411b749bfb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jul 30 18:37:55 2010 +0900
+
+    overwrite->upload
+
+commit 1eac9b52a5e21c5d1c0b556a5c6b80f1856a774f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jul 30 16:41:20 2010 +0900
+
+    fail gracefully if db is locked on sync all
+
+commit 1204f977e55dbbb637de5c3166e11ffb3e9664a4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jul 30 16:37:37 2010 +0900
+
+    do clock skew check on initial connect only
+
+commit 7f419739725eb58865851f371190ab985c953306
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 23:19:44 2010 +0900
+
+    rework conflict algorithm to detect more conflict cases
+
+commit 24d45cf93c5d041784091c5d6ea6e67fe06d1467
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 23:18:55 2010 +0900
+
+    always reset hideWelcome after a close
+
+commit 9491acc0886f1f1846de015e80c4000a2c09f454
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 21:02:45 2010 +0900
+
+    process the widget deletions before deleting the layout
+
+commit 49c92b9605c299269535bb1f648579cf90b71a41
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 16:59:49 2010 +0900
+
+    remove debug statement
+
+commit 7a510cc111f496c6644016cb228958bcc48a4c99
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 16:59:04 2010 +0900
+
+    add loadDeck hook, fix hideWelcome behaviour
+    
+    - if hideWelcome is true after a sync, do nothing at all
+    - make sure to reset hideWelcome on deck load
+
+commit 18c8d6766d3dd464628f9e1f8cc070c9040f4c5f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 16:20:22 2010 +0900
+
+    possible fix for recursion bug in maybeShow()
+
+commit d9af6288e1071847b1c53ef782261774d6d433da
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 15:47:15 2010 +0900
+
+    do clobber detection at sync time, fix sync bugs
+    
+    - don't get stuck in event loop if user cancels deck selection
+    - prompt for any full sync upload with no last sync time, so this also warns
+      about syncs after a DB check too
+    - fixes erroneous warning with file>download>personal deck
+
+commit 4eacbec78bb8d2faefdba54eb2413263256319ab
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jul 27 15:03:46 2010 +0900
+
+    possible solution to w32 deck browser crashes
+
+commit fbe7e1216020636e636634a3d48b0106be99000e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 26 19:39:56 2010 +0900
+
+    if an error happens during connect, terminate multi sync
+
+commit ac735c9a34d0032fa55377b84c2f92a8d4785e17
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 20:25:39 2010 +0900
+
+    tweak formatting
+
+commit 3e3f04ee8f60df4742318e9de3f1c130b7a72a6a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 19:22:57 2010 +0900
+
+    qt4.4 backwards compat hack
+
+commit b006b08af1b52d02c24d9a86c50cb699d3cce995
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 19:06:20 2010 +0900
+
+    tweak wrapping
+
+commit e5bb3b38f1c3fd39d44da9e83febea8e51cb7b9a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 19:05:20 2010 +0900
+
+    double check with the user before allowing them to clobber their deck
+
+commit c9010e984e2bad1b121aeefb3a161e67752eee9a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 18:53:43 2010 +0900
+
+    fix race condition in deck browser signal handlers
+
+commit e3f50540d5b2c6eb6a3b05a0166e54d617a257ee
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 18:35:55 2010 +0900
+
+    detect sync conflicts and offer choice of direction
+
+commit 9ca3430f3db7f56d7acea6d9428e980376d38412
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 18:35:26 2010 +0900
+
+    fix order of buttons in model properties
+
+commit f93910128f1a14f2b5139511b3b900d369757fff
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 21 13:16:07 2010 +0900
+
+    multi-deck sync and related improvements
+    
+    - deck open & browser refresh done after splash screen hidden now
+    - splash reduced to 3 steps
+    - new options sync on program load/close
+    - per-deck auto sync disabled on upgrade
+    - plugins are now always loaded before a deck has been opened
+    - don't prompt for sync params in auto sync, for both all and single deck
+    - refresh deck browser after multi sync
+    - wait on sync thread until syncFinished called, could fix crashes
+    - after a full sync, ensure interface is still disabled
+    - sync menu option now available in deck browser
+    - new option to tell a progress window it should appear immediately
+
+commit 77ede46ebb9a8cdddc704a78f8dd8ae1e38d8099
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 19 22:46:35 2010 +0900
+
+    fix closing logic
+
+commit 81997992498135f8cd01977ef79270eedba59afe
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 19 20:31:11 2010 +0900
+
+    warn about cram for edit current too
+
+commit bbc7c2f660e82290a35a381b9f53453ba241027b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jul 19 20:29:22 2010 +0900
+
+    unify colon boldness
+
+commit 40c07411331a5858f096d5f807029e1f89bf50d7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jul 14 15:07:54 2010 +0900
+
+    tweak wording
+
+commit 25bc507adcf49afd99b79897d826cb9753e1b03d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jul 11 17:19:19 2010 +0900
+
+    bump version
+
+commit 75fb9a111e23badb176da549460c8a878a26e1fc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jul 11 17:13:43 2010 +0900
+
+    make the close button an application shortcut, raise window for osx terminal
+
+commit a2713450a78340b42e9be662f33e746a3f1108dc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jul 11 16:49:23 2010 +0900
+
+    clear audio before previewing card
+
+commit 014c99368831acc09ba80e0c71ba3935361fc181
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jul 11 16:43:24 2010 +0900
+
+    colour times by default, add another mac build script
+
+commit e3ab11213de5041643587552aea031a2b66a307e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jul 8 21:55:56 2010 +0900
+
+    make sure to move to noDeck at least once
+
+commit 1b7d0ac7ee27bbd6d5c38db867b64246a58953d0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jul 1 13:32:11 2010 +0900
+
+    adjust offset to account for extra sort key
+
+commit 79831c4861ff2d67704400aeefe9b4611b1afaf6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jun 29 08:10:37 2010 +0900
+
+    patch from Bernhard Ibertsberger to ignore some chars in type to ans
+
+commit 722227050a68a331af024d0c6dba7b5eb97dd67b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jun 29 08:03:26 2010 +0900
+
+    don't save closed deck on sync failure, don't refresh deck browser twice
+
+commit 0b3cf9f91e6e47d35a7857da450c059247b3491e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jun 28 14:36:50 2010 +0900
+
+    add occitan to list of languages
+
+commit 634db40e56a639d4ae68a181405764a32e9ed807
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jun 28 11:31:54 2010 +0900
+
+    don't try to localize traceback
+
+commit 88581105d42b8a57b93039e761a67d10a9d3306f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jun 27 07:53:51 2010 +0900
+
+    add flac to supported audio formats
+
+commit 4317388225280777d3f2ccb3777037eee3f4ff2f
+Author: Shawn M Moore <sartak@bestpractical.com>
+Date:   Sat Jun 12 10:14:48 2010 -0400
+
+    Index firstAnswered
+
+commit ea5caa504b02a85c96aa6503abf2795eb81709ae
+Author: Shawn M Moore <sartak@bestpractical.com>
+Date:   Sat Jun 12 09:59:12 2010 -0400
+
+    Add "First Review" to sort columns in card editor
+
+commit 0cab72ef1e1dd11936c7bfee74645907f6f25fa7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jun 10 13:24:35 2010 +0900
+
+    remove string exceptions for python2.6
+
+commit 7d22ef3c8d88eae4661b032282667d93cdc3a408
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed May 19 22:08:11 2010 +0900
+
+    add fixme
+
+commit 4f03bdd94bff798fababf5d0410e44df351f6e44
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon May 10 22:31:08 2010 +0900
+
+    don't force maxFailed=2 when the user wants unlimited
+
+commit 3e739e769878d1e41feef2e2428239465481d6d4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat May 1 16:11:37 2010 +0900
+
+    make sure to return newly created media path
+
+commit 4f41d4b0bb068110388844a06fce2060777e0c0f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 21 15:09:26 2010 +0900
+
+    update sync shortcut
+
+commit 698bd64dceeecebc4ebf05a73f17725ca742c0a7
+Author: Matthew Duggan <stauff@guarana.org>
+Date:   Wed Apr 21 14:31:34 2010 +1000
+
+    Set the icon size to 128 and put the icons in nice places.
+
+commit 47d567a109115c39582cfb81c85be121829f7baf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 21 13:02:47 2010 +0900
+
+    strip trailing whitespace
+
+commit 53ec756373c44e6dfa10f13f9f9788a6914bf7ea
+Author: Matthew Duggan <stauff@guarana.org>
+Date:   Wed Apr 21 12:22:54 2010 +1000
+
+    Change the method for creating DMG to use some applescript to configure background etc
+
+commit 5d5142a87bf587080a2b722ac22f8aded1287324
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Apr 16 19:25:13 2010 +0900
+
+    new build dump location
+
+commit a563109e53a963ab7fc66c419312baa5803c9636
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 15 22:18:41 2010 +0900
+
+    don't assume media directory exists
+
+commit 3db9c0f9379361b06883f9822ceab92b9cdada0e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 15 22:08:16 2010 +0900
+
+    update error message
+
+commit f0236932b9c4b4a05321aff19a9878ba5d33b8a9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 12 11:49:13 2010 +0900
+
+    correct capitalization
+
+commit 80bf24cbc466e277900b9fed228bc5ddd238216e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Apr 7 18:08:17 2010 +0900
+
+    ignore manual xml
+
+commit 7698d36f84e12dcca1b549cb469ce8cb803333e7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 6 19:15:30 2010 +0900
+
+    catch media adding errors
+
+commit 4928c2191461f2ddacee1d0cd0bd66e600601938
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Apr 6 18:59:43 2010 +0900
+
+    delete media folder too
+
+commit 9266a3b2042f1beeaa50a047082f62286140c250
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Apr 5 19:09:12 2010 +0900
+
+    delegate all links
+
+commit 02003ff1ed6b991a44f0f134e3b27eb81840f916
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 1 23:04:15 2010 +0900
+
+    remove pyqt broken check hack
+
+commit 18ad89da7b7259377d0c7924b20174ce80a947ca
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Apr 1 22:56:24 2010 +0900
+
+    mention beautifulsoup dependency
+
+commit f8b07a19794b2a03d7fa0914b06a40e88149993d
+Author: Matthew Duggan <stauff@guarana.org>
+Date:   Sun Mar 28 16:54:48 2010 +1100
+
+    Make packaged DMG background pretty, add link to apps directory.
+
+commit 3910d32abf8840152469521adcd71d7e5b2c116b
+Author: Matthew Duggan <stauff@guarana.org>
+Date:   Sun Mar 28 15:51:31 2010 +1100
+
+    Allow yet another possible location for pyuic4
+
+commit fce5fd73e83a6d619cbd7da63ec83dbf458aa714
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 23 17:59:43 2010 +0900
+
+    sort by combined due
+
+commit d7075ecae93d11fcd2094eb04061357f5423cb63
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 23 17:15:00 2010 +0900
+
+    add support for custom document dir
+
+commit 032ab3fb4970c66ab010e5276d4620a551ba7a23
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 23 17:10:55 2010 +0900
+
+    last completion change broke completion - fix
+
+commit ed948ee810d8ceaceeafdb31db423291c7dfcf03
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Mar 23 17:06:27 2010 +0900
+
+    use unicode for error
+
+commit e4d4ecf221b7082b121bcfef06369160d523c061
+Author: Christian Krause <chkr@plauener.de>
+Date:   Sat Feb 27 15:51:50 2010 +0100
+
+    Fix crash with enabled sys tray icon
+    
+    If sys tray icon is enabled anki crash when e.g. the graphs
+    view is opened. Removing the lambda functions used for the
+    signal registration fixes the problem.
+
+commit 21969b1549f08efec5d24a9bdf48e82782e7ccaa
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 26 16:44:35 2010 +0900
+
+    add swf+flv
+
+commit 2da5c6c4e97970061662051f8dafa2807d177939
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 23 17:33:58 2010 +0900
+
+    don't force the user to fix a duplicate field anymore
+
+commit a94e0ed29e1047c2dd399d4cdf723953123d8d00
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 18:09:45 2010 +0900
+
+    ensure actions are updated after plugins loaded
+
+commit c2186f2a599657eff899cd78becf4be0876b35e5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 18:00:10 2010 +0900
+
+    don't bump deck modified until fact is commited
+
+commit f083d952829439ee099170c82e965359c27b6bf6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 16:22:51 2010 +0900
+
+    fix page reload
+
+commit 6c9db9f8bd68e03477c9f7f815ee44939244577a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 22 16:22:21 2010 +0900
+
+    change sync shortcut
+
+commit edc680b2ea2501473c0cbb84b42d6bbeb336d4e9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 18 17:23:21 2010 +0900
+
+    don't error out if ret hit in tag list before selection visible
+
+commit 37490f1046d1a2ece044cddb410da8859f707e54
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 18 17:15:36 2010 +0900
+
+    allow 'continue reviewing' button to default
+
+commit 3f551e70f97f32056981270166d09368422084f9
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Mon Feb 15 13:49:43 2010 -0500
+
+    Keep track of whether the FactEditor is used for Add or Edit
+
+commit c234423f043bd99e0b947dccc953262b8f9be7b7
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Mon Feb 15 12:51:15 2010 -0500
+
+    Forgot to return the new fact from initializeNewFact
+
+commit f3b25008aa6fab2ebb77e21c86c743a5160c0882
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Sun Feb 14 22:28:29 2010 -0500
+
+    Check 2.6 too. Hm.
+
+commit 3ec1bd4b498f032c94dbb0b69a351f689beeabcf
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Sun Feb 14 22:25:49 2010 -0500
+
+    Consult macports for pyuic4, throw error if it's unavailable
+
+commit c0003c4c0352c3b7285ac8a64b28cfa31e381ef2
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Sun Feb 14 18:41:26 2010 -0500
+
+    Factor out drawField
+
+commit f3b81d0024390257a9b9ef886e2cfcfff962c3f0
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Sun Feb 14 18:21:57 2010 -0500
+
+    Factor out initializeNewFact
+
+commit fe82902d5dba17d3ead5d36423566b49cc5aa0c5
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Sun Feb 14 18:06:44 2010 -0500
+
+    Factor out clearOldFact method
+
+commit 02c6e0c2bbe71f08f066d13880a5a4e59cad60cd
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Sun Feb 14 17:50:45 2010 -0500
+
+    Factor out addFact logic
+
+commit 79579676c506721b7ef71629b895e1b3a4954f11
+Author: Shawn M Moore <sartak@gmail.com>
+Date:   Sun Feb 14 17:49:20 2010 -0500
+
+    Factor out reportAddedFact
+
+commit bd595a1e0d6fd7cd9928ddb45156803d3ab9a31c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 14 12:49:24 2010 +0900
+
+    update hungarian name
+
 commit 1daf8f9601874cd9d81d6abad353da07bcca46d9
 Author: Damien Elmes <git@ichi2.net>
 Date:   Fri Feb 12 16:46:10 2010 +0900

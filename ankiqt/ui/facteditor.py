@@ -8,7 +8,7 @@ from PyQt4.QtSvg import *
 from PyQt4.QtWebKit import QWebPage
 import re, os, sys, tempfile, urllib2, ctypes
 from anki.utils import stripHTML, tidyHTML, canonifyTags
-from anki.sound import playFromText
+from anki.sound import playFromText, clearAudioQueue
 from ankiqt.ui.sound import getAudio
 import anki.sound
 from ankiqt import ui
@@ -42,6 +42,7 @@ class FactEditor(object):
         self.deck = deck
         self.fact = None
         self.fontChanged = False
+        self.addMode = False
         self.setupFields()
         self.onChange = None
         self.onFactValid = None
@@ -370,6 +371,36 @@ class FactEditor(object):
         self.fieldsFrame.setLayout(self.fieldsGrid)
         self.fieldsGrid.setMargin(0)
 
+    def drawField(self, field, n):
+        # label
+        l = QLabel(field.name)
+        self.labels.append(l)
+        self.fieldsGrid.addWidget(l, n, 0)
+        # edit widget
+        w = FactEdit(self)
+        w.setTabChangesFocus(True)
+        w.setAcceptRichText(True)
+        w.setMinimumSize(20, 60)
+        w.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        w.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        w.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        if field.fieldModel.features:
+            w.setLayoutDirection(Qt.RightToLeft)
+        else:
+            w.setLayoutDirection(Qt.LeftToRight)
+        runHook("makeField", w, field)
+        self.fieldsGrid.addWidget(w, n, 1)
+        self.fields[field.name] = (field, w)
+        self.widgets[w] = field
+        # catch changes
+        w.connect(w, SIGNAL("lostFocus"),
+                    lambda w=w: self.onFocusLost(w))
+        w.connect(w, SIGNAL("textChanged()"),
+                    self.onTextChanged)
+        w.connect(w, SIGNAL("currentCharFormatChanged(QTextCharFormat)"),
+                    lambda w=w: self.formatChanged(w))
+        return w
+
     def drawFields(self, noFocus=False, check=False):
         self.parent.setUpdatesEnabled(False)
         self._makeGrid()
@@ -381,39 +412,15 @@ class FactEditor(object):
         n = 0
         first = True
         last = None
+
         for field in fields:
-            # label
-            l = QLabel(field.name)
-            self.labels.append(l)
-            self.fieldsGrid.addWidget(l, n, 0)
-            # edit widget
-            w = FactEdit(self)
+            w = self.drawField(field, n)
             last = w
-            w.setTabChangesFocus(True)
-            w.setAcceptRichText(True)
-            w.setMinimumSize(20, 60)
-            w.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            w.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-            w.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-            if field.fieldModel.features:
-                w.setLayoutDirection(Qt.RightToLeft)
-            else:
-                w.setLayoutDirection(Qt.LeftToRight)
-            runHook("makeField", w, field)
-            self.fieldsGrid.addWidget(w, n, 1)
-            self.fields[field.name] = (field, w)
-            self.widgets[w] = field
-            # catch changes
-            w.connect(w, SIGNAL("lostFocus"),
-                      lambda w=w: self.onFocusLost(w))
-            w.connect(w, SIGNAL("textChanged()"),
-                      self.onTextChanged)
-            w.connect(w, SIGNAL("currentCharFormatChanged(QTextCharFormat)"),
-                      lambda w=w: self.formatChanged(w))
             if first:
                 self.focusTarget = w
                 first = False
             n += 1
+
         # update available tags
         self.tags.setDeck(self.deck)
         # update fields
@@ -489,7 +496,8 @@ class FactEditor(object):
                 modified = True
         if modified:
             self.fact.setModified(textChanged=True)
-            self.deck.setModified()
+            if not self.fact.isNew():
+                self.deck.setModified()
         self.deck.setUndoEnd(n)
 
     def onFocusLost(self, widget):
@@ -758,6 +766,8 @@ class FactEditor(object):
     def onPreview(self):
         PreviewDialog(self.parent, self.deck, self.fact)
 
+    # FIXME: in some future version, we should use a different delimiter, as
+    # [sound] et al conflicts
     def onCloze(self):
         src = self.focusedEdit()
         if not src:
@@ -886,16 +896,23 @@ class FactEditor(object):
             w = widget
         else:
             w = self.focusedEdit()
-        path = self.deck.addMedia(file)
+        path = self._addMedia(file)
         self.maybeDelete(path, file)
         w.insertHtml('<img src="%s">' % path)
+
+    def _addMedia(self, file):
+        try:
+            return self.deck.addMedia(file)
+        except (IOError, OSError), e:
+            ui.utils.showWarning(_("Unable to add media: %s") % unicode(e),
+                                 parent=self.parent)
 
     def onAddSound(self):
         # get this before we open the dialog
         w = self.focusedEdit()
         key = (_("Sounds/Videos") +
                " (*.mp3 *.ogg *.wav *.avi *.ogv *.mpg *.mpeg *.mov *.mp4 " +
-               "*.mkv *.ogx *.ogv *.oga)")
+               "*.mkv *.ogx *.ogv *.oga *.flv *.swf *.flac)")
         file = ui.utils.getFile(self.parent, _("Add audio"), "audio", key)
         if not file:
             return
@@ -907,7 +924,7 @@ class FactEditor(object):
             w = widget
         else:
             w = self.focusedEdit()
-        path = self.deck.addMedia(file)
+        path = self._addMedia(file)
         self.maybeDelete(path, file)
         anki.sound.play(path)
         w.insertHtml('[sound:%s]' % path)
@@ -1118,6 +1135,7 @@ class PreviewDialog(QDialog):
             runFilter("drawAnswer", mungeQA(self.deck, c.htmlAnswer()),
                       c)
             + "</body></html>")
+        clearAudioQueue()
         playFromText(c.question)
         playFromText(c.answer)
 

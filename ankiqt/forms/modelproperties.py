@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'designer/modelproperties.ui'
 #
 
-#      by: PyQt4 UI code generator 4.7
+#      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,7 +13,7 @@ class Ui_ModelProperties(object):
     def setupUi(self, ModelProperties):
         ModelProperties.setObjectName("ModelProperties")
         ModelProperties.setWindowModality(QtCore.Qt.ApplicationModal)
-        ModelProperties.resize(393, 551)
+        ModelProperties.resize(420, 551)
         self.verticalLayout = QtGui.QVBoxLayout(ModelProperties)
         self.verticalLayout.setObjectName("verticalLayout")
         self.tabWidget = QtGui.QTabWidget(ModelProperties)
@@ -105,16 +105,17 @@ class Ui_ModelProperties(object):
         self.fieldUp.setAutoDefault(False)
         self.fieldUp.setObjectName("fieldUp")
         self.horizontalLayout.addWidget(self.fieldUp)
-        self.fieldDelete = QtGui.QPushButton(self.tab_2)
-        self.fieldDelete.setAutoDefault(False)
-        self.fieldDelete.setObjectName("fieldDelete")
-        self.horizontalLayout.addWidget(self.fieldDelete)
         self.fieldDown = QtGui.QPushButton(self.tab_2)
         self.fieldDown.setAutoDefault(False)
         self.fieldDown.setObjectName("fieldDown")
         self.horizontalLayout.addWidget(self.fieldDown)
+        self.fieldDelete = QtGui.QPushButton(self.tab_2)
+        self.fieldDelete.setAutoDefault(False)
+        self.fieldDelete.setObjectName("fieldDelete")
+        self.horizontalLayout.addWidget(self.fieldDelete)
         self.vboxlayout.addLayout(self.horizontalLayout)
         self.fieldEditBox = QtGui.QGroupBox(self.tab_2)
+        self.fieldEditBox.setTitle("")
         self.fieldEditBox.setFlat(False)
         self.fieldEditBox.setObjectName("fieldEditBox")
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.fieldEditBox)
@@ -178,6 +179,7 @@ class Ui_ModelProperties(object):
         self.cardDown.setObjectName("cardDown")
         self.horizontalLayout_2.addWidget(self.cardDown)
         self.cardToggle = QtGui.QPushButton(self.tab_3)
+        self.cardToggle.setText("")
         self.cardToggle.setObjectName("cardToggle")
         self.horizontalLayout_2.addWidget(self.cardToggle)
         self.cardDelete = QtGui.QPushButton(self.tab_3)
@@ -185,6 +187,7 @@ class Ui_ModelProperties(object):
         self.horizontalLayout_2.addWidget(self.cardDelete)
         self.gridLayout_2.addLayout(self.horizontalLayout_2, 2, 0, 1, 1)
         self.cardEditBox = QtGui.QGroupBox(self.tab_3)
+        self.cardEditBox.setTitle("")
         self.cardEditBox.setObjectName("cardEditBox")
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.cardEditBox)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -268,9 +271,9 @@ class Ui_ModelProperties(object):
         ModelProperties.setTabOrder(self.mediaURL, self.fieldList)
         ModelProperties.setTabOrder(self.fieldList, self.fieldAdd)
         ModelProperties.setTabOrder(self.fieldAdd, self.fieldUp)
-        ModelProperties.setTabOrder(self.fieldUp, self.fieldDelete)
-        ModelProperties.setTabOrder(self.fieldDelete, self.fieldDown)
-        ModelProperties.setTabOrder(self.fieldDown, self.fieldName)
+        ModelProperties.setTabOrder(self.fieldUp, self.fieldDown)
+        ModelProperties.setTabOrder(self.fieldDown, self.fieldDelete)
+        ModelProperties.setTabOrder(self.fieldDelete, self.fieldName)
         ModelProperties.setTabOrder(self.fieldName, self.fieldUnique)
         ModelProperties.setTabOrder(self.fieldUnique, self.fieldRequired)
         ModelProperties.setTabOrder(self.fieldRequired, self.numeric)
@@ -300,9 +303,9 @@ class Ui_ModelProperties(object):
         self.fieldAdd.setText(_("&Add"))
         self.fieldUp.setToolTip(_("Move selected field up"))
         self.fieldUp.setText(_("Move &Up"))
-        self.fieldDelete.setText(_("&Delete"))
         self.fieldDown.setToolTip(_("Move selected field down"))
         self.fieldDown.setText(_("Move Dow&n"))
+        self.fieldDelete.setText(_("&Delete"))
         self.label_18.setText(_("<b>Options</b>"))
         self.fieldUnique.setText(_("Prevent duplicates"))
         self.label_20.setText(_("<b>Name</b>"))
