@@ -12,7 +12,7 @@ Model - define the way in which facts are added and shown
 
 """
 
-import time
+import time, re
 from sqlalchemy.ext.orderinglist import ordering_list
 from anki.db import *
 from anki.utils import genID, canonifyTags
@@ -20,6 +20,7 @@ from anki.fonts import toPlatformFont
 from anki.utils import parseTags, hexifyID, checksum, stripHTML
 from anki.lang import _
 from anki.hooks import runFilter
+from anki.template import render
 from copy import copy
 
 def alignmentLabels():
@@ -45,10 +46,10 @@ fieldModelsTable = Table(
     Column('unique', Boolean, nullable=False, default=True), # sqlite keyword
     Column('numeric', Boolean, nullable=False, default=False),
     # display
-    Column('quizFontFamily', UnicodeText),
-    Column('quizFontSize', Integer),
+    Column('quizFontFamily', UnicodeText, default=u"Arial"),
+    Column('quizFontSize', Integer, default=20),
     Column('quizFontColour', String(7)),
-    Column('editFontFamily', UnicodeText),
+    Column('editFontFamily', UnicodeText, default=u"1"), # reused as <pre> toggle
     Column('editFontSize', Integer, default=20))
 
 class FieldModel(object):
@@ -89,16 +90,17 @@ cardModelsTable = Table(
     Column('qedformat', UnicodeText),
     Column('aedformat', UnicodeText),
     Column('questionInAnswer', Boolean, nullable=False, default=False),
-    # display
+    # unused
     Column('questionFontFamily', UnicodeText, default=u"Arial"),
     Column('questionFontSize', Integer, default=20),
     Column('questionFontColour', String(7), default=u"#000000"),
+    # used for both question & answer
     Column('questionAlign', Integer, default=0),
+    # ununsed
     Column('answerFontFamily', UnicodeText, default=u"Arial"),
     Column('answerFontSize', Integer, default=20),
     Column('answerFontColour', String(7), default=u"#000000"),
     Column('answerAlign', Integer, default=0),
-    # not used
     Column('lastFontFamily', UnicodeText, default=u"Arial"),
     Column('lastFontSize', Integer, default=20),
     # used as background colour
@@ -130,7 +132,7 @@ class CardModel(object):
 
 mapper(CardModel, cardModelsTable)
 
-def formatQA(cid, mid, fact, tags, cm):
+def formatQA(cid, mid, fact, tags, cm, deck):
     "Return a dict of {id, question, answer}"
     d = {'id': cid}
     fields = {}
@@ -149,11 +151,12 @@ def formatQA(cid, mid, fact, tags, cm):
     ret = []
     for (type, format) in (("question", cm.qformat),
                            ("answer", cm.aformat)):
-        try:
-            html = format % fields
-        except (KeyError, TypeError, ValueError):
-            html = _("[invalid question/answer format]")
-        d[type] = runFilter("formatQA", html, type, cid, mid, fact, tags, cm)
+        # convert old style
+        format = re.sub("%\((.+?)\)s", "{{\\1}}", format)
+        # allow custom rendering functions & info
+        fields = runFilter("prepareFields", fields, cid, mid, fact, tags, cm, deck)
+        html = render(format, fields)
+        d[type] = runFilter("formatQA", html, type, cid, mid, fact, tags, cm, deck)
     return d
 
 # Model table
@@ -169,8 +172,8 @@ modelsTable = Table(
     Column('name', UnicodeText, nullable=False),
     Column('description', UnicodeText, nullable=False, default=u""), # obsolete
     Column('features', UnicodeText, nullable=False, default=u""), # used as mediaURL
-    Column('spacing', Float, nullable=False, default=0.1),
-    Column('initialSpacing', Float, nullable=False, default=60),
+    Column('spacing', Float, nullable=False, default=0.1), # obsolete
+    Column('initialSpacing', Float, nullable=False, default=60), # obsolete
     Column('source', Integer, nullable=False, default=0))
 
 class Model(object):

@@ -29,7 +29,7 @@ Edit the card:
     fields = card.fact.model.fieldModels
     for field in fields:
         card.fact[field.name] = "newvalue"
-    card.fact.setModified(textChanged=True)
+    card.fact.setModified(textChanged=True, deck=deck)
     deck.setModified()
 
 Get all cards via ORM (slow):
@@ -53,6 +53,6 @@ try:
 except ImportError:
     pass
 
-version = "1.0.1"
+version = "1.2.8"
 
 from anki.deck import DeckStorage

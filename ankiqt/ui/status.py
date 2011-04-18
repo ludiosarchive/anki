@@ -164,8 +164,6 @@ class StatusView(object):
             remStr += "<b>0</b>"
         elif self.state == "deckEmpty":
             remStr += "<b>0</b>"
-        elif self.main.deck.reviewEarly:
-            remStr += "<b>0</b>"
         else:
             # remaining string, bolded depending on current card
             if sys.platform.startswith("linux"):
@@ -175,11 +173,11 @@ class StatusView(object):
             if not self.main.currentCard:
                 remStr += "%(failed1)s" + s + "%(rev1)s" + s + "%(new1)s"
             else:
-                q = self.main.deck.queueForCard(self.main.currentCard)
-                if q == "failed":
+                t = self.main.deck.cardQueue(self.main.currentCard)
+                if t == 0:
                     remStr += ("<u>%(failed1)s</u>" + s +
                                "%(rev1)s" + s + "%(new1)s")
-                elif q == "rev":
+                elif t == 1:
                     remStr += ("%(failed1)s" + s + "<u>%(rev1)s</u>" + s +
                                "%(new1)s")
                 else:
@@ -187,10 +185,7 @@ class StatusView(object):
                                "<u>%(new1)s</u>")
         stats['failed1'] = '<font color=#990000>%s</font>' % stats['failed']
         stats['rev1'] = '<font color=#000000>%s</font>' % stats['rev']
-        if self.main.deck.newEarly:
-            new = self.main.deck.newCount
-        else:
-            new = stats['new']
+        new = stats['new']
         stats['new1'] = '<font color=#0000ff>%s</font>' % new
         self.remText.setText(remStr % stats)
         stats['spaced'] = self.main.deck.spacedCardCount()
@@ -287,7 +282,7 @@ You should aim to answer each question within<br>
 
     def flashTimer(self):
         if not (self.main.deck.sessionStartTime and
-                self.main.deck.sessionTimeLimit) or self.main.deck.reviewEarly:
+                self.main.deck.sessionTimeLimit): # or self.main.deck.reviewEarly:
             return
         t = time.time() - self.main.deck.sessionStartTime
         t = self.main.deck.sessionTimeLimit - t
@@ -302,8 +297,9 @@ You should aim to answer each question within<br>
             return
         if not self.main.deck:
             return
-        if self.state in ("showQuestion", "showAnswer", "studyScreen"):
-            self.main.deck.checkDue()
+        if self.state in ("deckFinished", "studyScreen"):
+            self.main.deck.updateCutoff()
+            self.main.deck.reset()
             self.redraw()
             self.main.updateTitleBar()
             if self.state == "studyScreen":

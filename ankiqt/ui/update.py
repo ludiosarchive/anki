@@ -6,39 +6,24 @@ from PyQt4.QtGui import *
 import urllib, urllib2, os, sys, time, httplib
 import anki, anki.utils, anki.lang, anki.stats
 import ankiqt
-import simplejson
-import tempfile
+import simplejson, platform
 
 baseUrl = "http://anki.ichi2.net/update/"
 #baseUrl = "http://localhost:8001/update/"
 
-# when requesting latest version number, gather their version, deck size and
-# average retention ratio for future development
 class LatestVersionFinder(QThread):
 
     def __init__(self, main):
         QThread.__init__(self)
         self.main = main
         self.config = main.config
-        # calculate stats before we start a new thread
         plat=sys.platform
-        pver=sys.version.replace("\n", "--")
-        if self.main.deck != None:
-            deckSize = self.main.deck.cardCount
-            stats = self.main.deck.getStats()
-            deckRecall = "%0.2f" % stats['gMatureYes%']
-            age = self.main.deck.created
-        else:
-            deckSize = "noDeck"
-            deckRecall = ""
-            age = ""
+        pver=platform.platform()
         d = {"ver": ankiqt.appVersion,
-             "size": deckSize,
-             "ret": deckRecall,
-             "age": age,
              "pver": pver,
              "plat": plat,
              "id": self.config['id'],
+             "lm": self.config['lastMsg'],
              "conf": self.config['created']}
         self.stats = d
 
@@ -57,6 +42,8 @@ class LatestVersionFinder(QThread):
         except:
             # behind proxy, corrupt message, etc
             return
+        if resp['msg']:
+            self.emit(SIGNAL("newMsg"), resp)
         if resp['latestVersion'] > ankiqt.appVersion:
             self.emit(SIGNAL("newVerAvail"), resp)
         diff = resp['currentTime'] - time.time()
@@ -67,10 +54,7 @@ class LatestVersionFinder(QThread):
 def askAndUpdate(parent, version=None):
     version = version['latestVersion']
     baseStr = (
-        _('''<h1>Anki updated</h1>Anki %s has been released.<br>
-The release notes are
-<a href="http://ichi2.net/anki/download/index.html#changes">here</a>.
-<br><br>''') %
+        _('''<h1>Anki Updated</h1>Anki %s has been released.<br><br>''') %
         version)
     msg = QMessageBox(parent)
     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
@@ -84,3 +68,7 @@ The release notes are
         parent.config['suppressUpdate'] = version
     elif ret == QMessageBox.Yes:
         QDesktopServices.openUrl(QUrl(ankiqt.appWebsite))
+
+def showMessages(main, data):
+    ankiqt.ui.utils.showText(data['msg'], main, type="html")
+    main.config['lastMsg'] = data['msgId']

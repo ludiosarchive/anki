@@ -8,7 +8,8 @@ Sound support
 """
 __docformat__ = 'restructuredtext'
 
-import re, sys, threading, time, subprocess, os, signal, atexit, errno
+import re, sys, threading, time, subprocess, os, signal, errno, atexit
+import tempfile, shutil
 from anki.hooks import addHook, runHook
 
 # Shared utils
@@ -37,23 +38,32 @@ FADE_AMOUNT = "0.25"
 
 noiseProfile = ""
 
-processingSrc = "tmp.wav"
-processingDst = "tmp.mp3"
+processingSrc = "rec.wav"
+processingDst = "rec.mp3"
 processingChain = []
-tmpFiles = ["tmp2.wav", "tmp3.wav"]
+recFiles = ["rec2.wav", "rec3.wav"]
 
-cmd = ["sox", processingSrc, "tmp2.wav"]
+cmd = ["sox", processingSrc, "rec2.wav"]
 processingChain = [
     None, # placeholder
-    ["sox", "tmp2.wav", "tmp3.wav", "norm", NORM_AMOUNT,
-     "bass", BASS_AMOUNT, "fade", FADE_AMOUNT, "0"],
-    ["lame", "tmp3.wav", processingDst, "--noreplaygain", "--quiet"],
+    ["sox", "rec2.wav", "rec3.wav", "norm", NORM_AMOUNT,
+     "bass", BASS_AMOUNT, "fade", FADE_AMOUNT],
+    ["lame", "rec3.wav", processingDst, "--noreplaygain", "--quiet"],
     ]
+
+tmpdir = None
 
 # don't show box on windows
 if sys.platform == "win32":
     si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    try:
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    except:
+        # python2.7+
+        si.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW
+    # tmp dir for non-hashed media
+    tmpdir = unicode(
+        tempfile.mkdtemp(prefix="anki"), sys.getfilesystemencoding())
 else:
     si = None
 
@@ -80,9 +90,9 @@ def checkForNoiseProfile():
     if sys.platform.startswith("darwin"):
         # not currently supported
         processingChain = [
-            ["lame", "tmp.wav", "tmp.mp3", "--noreplaygain", "--quiet"]]
+            ["lame", "rec.wav", "rec.mp3", "--noreplaygain", "--quiet"]]
     else:
-        cmd = ["sox", processingSrc, "tmp2.wav"]
+        cmd = ["sox", processingSrc, "rec2.wav"]
         if os.path.exists(noiseProfile):
             cmd = cmd + ["noisered", noiseProfile, NOISE_AMOUNT]
         processingChain[0] = cmd
@@ -93,12 +103,12 @@ def generateNoiseProfile():
     except OSError:
         pass
     retryWait(subprocess.Popen(
-        ["sox", processingSrc, tmpFiles[0], "trim", "1.5", "1.5"],
+        ["sox", processingSrc, recFiles[0], "trim", "1.5", "1.5"],
         startupinfo=si))
-    retryWait(subprocess.Popen(["sox", tmpFiles[0], tmpFiles[1],
+    retryWait(subprocess.Popen(["sox", recFiles[0], recFiles[1],
                                 "noiseprof", noiseProfile],
                                startupinfo=si))
-    processingChain[0] = ["sox", processingSrc, "tmp2.wav",
+    processingChain[0] = ["sox", processingSrc, "rec2.wav",
                           "noisered", noiseProfile, NOISE_AMOUNT]
 
 # Mplayer settings
@@ -108,7 +118,7 @@ if sys.platform.startswith("win32"):
     mplayerCmd = ["mplayer.exe", "-ao", "win32", "-really-quiet"]
     dir = os.path.dirname(os.path.abspath(sys.argv[0]))
     os.environ['PATH'] += ";" + dir
-    os.environ['PATH'] += ";" + dir + "\\..\\dist" # for testing
+    os.environ['PATH'] += ";" + dir + "\\..\\win\\top" # for testing
 else:
     mplayerCmd = ["mplayer", "-really-quiet"]
 
@@ -118,16 +128,15 @@ else:
 mplayerQueue = []
 mplayerManager = None
 mplayerReader = None
-mplayerCond = threading.Condition()
+mplayerEvt = threading.Event()
+mplayerClear = False
 
 class MplayerReader(threading.Thread):
     "Read any debugging info to prevent mplayer from blocking."
 
     def run(self):
         while 1:
-            mplayerCond.acquire()
-            mplayerCond.wait()
-            mplayerCond.release()
+            mplayerEvt.wait()
             try:
                 mplayerManager.mplayer.stdout.read()
             except:
@@ -136,32 +145,52 @@ class MplayerReader(threading.Thread):
 class MplayerMonitor(threading.Thread):
 
     def run(self):
+        global mplayerClear
         self.mplayer = None
+        self.deadPlayers = []
         while 1:
-            mplayerCond.acquire()
-            while not mplayerQueue:
-                if not mplayerCond:
-                    return
-                mplayerCond.wait()
-            if not self.mplayer:
-                self.startProcess()
-            if self.mplayer != -1 and self.mplayer.poll() is not None:
-                self.mplayer.wait()
-                self.startProcess()
-            nextClears = False
-            while mplayerQueue:
-                item = mplayerQueue.pop(0)
-                if item is None:
-                    nextClears = True
-                    continue
-                if nextClears:
-                    nextClears = False
-                    extra = ""
+            mplayerEvt.wait()
+            if mplayerQueue:
+                # ensure started
+                if not self.mplayer:
+                    self.startProcess()
+                # loop through files to play
+                while mplayerQueue:
+                    item = mplayerQueue.pop(0)
+                    if mplayerClear:
+                        mplayerClear = False
+                        extra = ""
+                    else:
+                        extra = " 1"
+                    cmd = 'loadfile "%s"%s\n' % (item, extra)
+                    try:
+                        self.mplayer.stdin.write(cmd)
+                    except:
+                        # mplayer has quit and needs restarting
+                        self.deadPlayers.append(self.mplayer)
+                        self.mplayer = None
+                        self.startProcess()
+                        self.mplayer.stdin.write(cmd)
+            # wait() on finished processes. we don't want to block on the
+            # wait, so we keep trying each time we're reactivated
+            def clean(pl):
+                if pl.poll() is not None:
+                    pl.wait()
+                    return False
                 else:
-                    extra = " 1"
-                cmd = 'loadfile "%s"%s\n' % (item, extra)
-                self.mplayer.stdin.write(cmd)
-            mplayerCond.release()
+                    return True
+            self.deadPlayers = [pl for pl in self.deadPlayers if clean(pl)]
+            mplayerEvt.clear()
+
+    def kill(self):
+        if not self.mplayer:
+            return
+        try:
+            self.mplayer.stdin.write("quit\n")
+            self.deadPlayers.append(self.mplayer)
+        except:
+            pass
+        self.mplayer = None
 
     def startProcess(self):
         try:
@@ -170,22 +199,35 @@ class MplayerMonitor(threading.Thread):
                 cmd, startupinfo=si, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except OSError:
-            mplayerCond.release()
+            mplayerEvt.clear()
             raise Exception("Audio player not found")
 
 def queueMplayer(path):
     ensureMplayerThreads()
-    path = path.encode(sys.getfilesystemencoding())
-    mplayerCond.acquire()
+    while mplayerEvt.isSet():
+        time.sleep(0.1)
+    if tmpdir and os.path.exists(path):
+        # mplayer on windows doesn't like the encoding, so we create a
+        # temporary file instead. oddly, foreign characters in the dirname
+        # don't seem to matter.
+        (fd, name) = tempfile.mkstemp(suffix=os.path.splitext(path)[1],
+                                      dir=tmpdir)
+        f = os.fdopen(fd, "wb")
+        f.write(open(path, "rb").read())
+        f.close()
+        # it wants unix paths, too!
+        path = name.replace("\\", "/")
+        path = path.encode(sys.getfilesystemencoding())
+    else:
+        path = path.encode("utf-8")
     mplayerQueue.append(path)
-    mplayerCond.notifyAll()
-    mplayerCond.release()
+    mplayerEvt.set()
     runHook("soundQueued")
 
 def clearMplayerQueue():
-    mplayerCond.acquire()
-    mplayerQueue.append(None)
-    mplayerCond.release()
+    global mplayerClear
+    mplayerClear = True
+    mplayerEvt.set()
 
 def ensureMplayerThreads():
     global mplayerManager, mplayerReader
@@ -196,37 +238,18 @@ def ensureMplayerThreads():
         mplayerReader = MplayerReader()
         mplayerReader.daemon = True
         mplayerReader.start()
-        atexit.register(stopMplayer)
 
-def stopMplayer(restart=False):
+def stopMplayer():
     if not mplayerManager:
         return
-    mplayerCond.acquire()
-    if mplayerManager.mplayer:
-        while 1:
-            try:
-                mplayerManager.mplayer.stdin.write("quit\n")
-                break
-            except OSError, e:
-                if e.errno != errno.EINTR:
-                    # osx throws interrupt errors regularly, but we want to
-                    # ignore other errors on shutdown
-                    break
-            except IOError:
-                # already closed
-                break
-            except ValueError:
-                # already closed
-                break
-    if not restart:
-        mplayerManager.mplayer = -1
-    mplayerCond.notifyAll()
-    mplayerCond.release()
+    mplayerManager.kill()
 
-def stopMplayerOnce():
-    stopMplayer(restart=True)
+def onExit():
+    if tmpdir:
+        shutil.rmtree(tmpdir)
 
-addHook("deckClosed", stopMplayerOnce)
+addHook("deckClosed", stopMplayer)
+atexit.register(onExit)
 
 # PyAudio recording
 ##########################################################################
@@ -303,7 +326,7 @@ class PyAudioThreadedRecorder(threading.Thread):
 class PyAudioRecorder(_Recorder):
 
     def __init__(self):
-        for t in tmpFiles + [processingSrc, processingDst]:
+        for t in recFiles + [processingSrc, processingDst]:
             try:
                 os.unlink(t)
             except OSError:
@@ -320,9 +343,11 @@ class PyAudioRecorder(_Recorder):
 
     def file(self):
         if self.encode:
-            return processingDst
+            tgt = "rec%d.mp3" % time.time()
+            os.rename(processingDst, tgt)
+            return tgt
         else:
-            return tmpFiles[1]
+            return recFiles[1]
 
 # Audio interface
 ##########################################################################

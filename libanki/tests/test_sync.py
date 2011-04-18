@@ -175,6 +175,7 @@ def test_localsync_factsandcards():
     assert deck1.factCount == 1 and deck1.cardCount == 2
     assert deck2.factCount == 1 and deck2.cardCount == 2
     client.sync()
+    deck1.reset(); deck2.reset()
     assert deck1.factCount == 2 and deck1.cardCount == 4
     assert deck2.factCount == 2 and deck2.cardCount == 4
     # ensure the fact was copied across
@@ -184,10 +185,10 @@ def test_localsync_factsandcards():
     f1.setModified()
     deck1.setModified()
     client.sync()
+    deck1.rebuildCounts()
+    deck2.rebuildCounts()
     f2 = deck1.s.query(Fact).get(f1.id)
     assert f2['Front'] == u"myfront"
-    deck1.rebuildQueue()
-    deck2.rebuildQueue()
     c1 = deck1.getCard()
     c2 = deck2.getCard()
     assert c1.id == c2.id
@@ -215,6 +216,7 @@ def test_localsync_threeway():
     # delete a card on deck1
     deck1.deleteCard(card.id)
     client.sync()
+    deck1.reset(); deck2.reset()
     assert deck1.cardCount == 5
     assert deck2.cardCount == 5
     # make sure the delete is now propagated from the server to deck3
@@ -227,7 +229,7 @@ def test_localsync_media():
         shutil.rmtree(tmpdir)
     except OSError:
         pass
-    shutil.copytree(os.path.join(os.getcwd(),
+    shutil.copytree(os.path.join(os.path.dirname(__file__), "..",
                                  "tests/syncing/media-tests"),
                     tmpdir)
     deck1anki = os.path.join(tmpdir, "1.anki")
@@ -250,12 +252,10 @@ def test_localsync_media():
     assert len(os.listdir(deck2media)) == 3
     # check delete
     os.unlink(os.path.join(deck1media, "22161b29b0c18e068038021f54eee1ee.png"))
-    os.system("sync")
-    time.sleep(0.2)
     rebuildMediaDir(deck1)
     client.sync()
-    assert deck1.s.scalar("select count(1) from media") == 2
-    assert deck2.s.scalar("select count(1) from media") == 2
+    assert deck1.s.scalar("select count(1) from media") == 3
+    assert deck2.s.scalar("select count(1) from media") == 3
 
 # One way syncing
 ##########################################################################
@@ -326,5 +326,5 @@ def test_formdata():
     deck1 = deck1.saveAs(name)
     deck1.setModified()
     client.deck = deck1
-    client.prepareSync()
+    client.prepareSync(0)
     client.prepareFullSync()

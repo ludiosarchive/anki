@@ -8,7 +8,7 @@ Miscellaneous utilities
 """
 __docformat__ = 'restructuredtext'
 
-import re, os, random, time, types
+import re, os, random, time, types, math, htmlentitydefs, subprocess
 
 try:
     import hashlib
@@ -39,12 +39,12 @@ timeTable = {
     }
 
 afterTimeTable = {
-    "years": lambda n: ngettext("%s year<!--after>", "%s years<!--after>", n),
-    "months": lambda n: ngettext("%s month<!--after>", "%s months<!--after>", n),
-    "days": lambda n: ngettext("%s day<!--after>", "%s days<!--after>", n),
-    "hours": lambda n: ngettext("%s hour<!--after>", "%s hours<!--after>", n),
-    "minutes": lambda n: ngettext("%s minute<!--after>", "%s minutes<!--after>", n),
-    "seconds": lambda n: ngettext("%s second<!--after>", "%s seconds<!--after>", n),
+    "years": lambda n: ngettext("%s year<!--after-->", "%s years<!--after-->", n),
+    "months": lambda n: ngettext("%s month<!--after-->", "%s months<!--after-->", n),
+    "days": lambda n: ngettext("%s day<!--after-->", "%s days<!--after-->", n),
+    "hours": lambda n: ngettext("%s hour<!--after-->", "%s hours<!--after-->", n),
+    "minutes": lambda n: ngettext("%s minute<!--after-->", "%s minutes<!--after-->", n),
+    "seconds": lambda n: ngettext("%s second<!--after-->", "%s seconds<!--after-->", n),
     }
 
 shortTimeTable = {
@@ -60,6 +60,8 @@ def fmtTimeSpan(time, pad=0, point=0, short=False, after=False):
     "Return a string representing a time span (eg '2 days')."
     (type, point) = optimalPeriod(time, point)
     time = convertSecondsTo(time, type)
+    if not point:
+        time = math.floor(time)
     if short:
         fmt = shortTimeTable[type]
     else:
@@ -106,7 +108,7 @@ def convertSecondsTo(seconds, type):
 def _pluralCount(time, point):
     if point:
         return 2
-    return round(time)
+    return math.floor(time)
 
 # Locale
 ##############################################################################
@@ -126,10 +128,20 @@ def fmtFloat(float_value, point=1):
 
 def stripHTML(s):
     s = re.sub("(?s)<style.*?>.*?</style>", "", s)
+    s = re.sub("(?s)<script.*?>.*?</script>", "", s)
     s = re.sub("<.*?>", "", s)
-    s = s.replace("&lt;", "<")
-    s = s.replace("&gt;", ">")
+    s = entsToTxt(s)
     return s
+
+def stripHTMLAlt(s):
+    "Strip HTML, preserving img alt text."
+    s = re.sub("<img [^>]*alt=[\"']?([^\"'>]+)[\"']?[^>]*>", "\\1", s)
+    return stripHTML(s)
+
+def stripHTMLMedia(s):
+    "Strip HTML but keep media filenames"
+    s = re.sub("<img src=[\"']?([^\"'>]+)[\"']? ?/?>", " \\1 ", s)
+    return stripHTML(s)
 
 def tidyHTML(html):
     "Remove cruft like body tags and return just the important part."
@@ -150,7 +162,30 @@ def tidyHTML(html):
     html = re.sub(u'<p>(.*?)</p>', u'\\1<br>', html)
     html = re.sub(u'<br>$', u'', html)
     html = re.sub(u"^<table><tr><td style=\"border: none;\">(.*)<br></td></tr></table>$", u"\\1", html)
+    # this is being added by qt's html editor, and leads to unwanted spaces
+    html = re.sub(u"^<p dir='rtl'>(.*?)</p>$", u'\\1', html)
     return html
+
+def entsToTxt(html):
+    def fixup(m):
+        text = m.group(0)
+        if text[:2] == "&#":
+            # character reference
+            try:
+                if text[:3] == "&#x":
+                    return unichr(int(text[3:-1], 16))
+                else:
+                    return unichr(int(text[2:-1]))
+            except ValueError:
+                pass
+        else:
+            # named entity
+            try:
+                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+            except KeyError:
+                pass
+        return text # leave as is
+    return re.sub("&#?\w+;", fixup, html)
 
 # IDs
 ##############################################################################
@@ -209,7 +244,8 @@ def joinTags(tags):
 
 def canonifyTags(tags):
     "Strip leading/trailing/superfluous commas and duplicates."
-    return joinTags(sorted(set(parseTags(tags))))
+    tags = [t.lstrip(":") for t in set(parseTags(tags))]
+    return joinTags(sorted(tags))
 
 def findTag(tag, tags):
     "True if TAG is in TAGS. Ignore case."
@@ -240,3 +276,21 @@ def deleteTags(tagstr, tags):
 
 def checksum(data):
     return md5(data).hexdigest()
+
+def call(argv, wait=True, **kwargs):
+    try:
+        o = subprocess.Popen(argv, **kwargs)
+    except OSError:
+        # command not found
+        return -1
+    if wait:
+        while 1:
+            try:
+                ret = o.wait()
+            except OSError:
+                # interrupted system call
+                continue
+            break
+    else:
+        ret = 0
+    return ret

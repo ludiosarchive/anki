@@ -15,6 +15,7 @@ getDecks(): return a list of deck names & modtimes
 summary(lastSync): a list of all objects changed after lastSync
 applyPayload(payload): apply any sent changes and return any changed remote
                        objects
+finish(): save deck on server after payload applied and response received
 createDeck(name): create a deck on the server
 
 Full sync support is not documented yet.
@@ -22,9 +23,10 @@ Full sync support is not documented yet.
 __docformat__ = 'restructuredtext'
 
 import zlib, re, urllib, urllib2, socket, simplejson, time, shutil
-import os, base64, httplib, sys, tempfile, httplib
+import os, base64, httplib, sys, tempfile, httplib, types
 from datetime import date
 import anki, anki.deck, anki.cards
+from anki.db import sqlite
 from anki.errors import *
 from anki.models import Model, FieldModel, CardModel
 from anki.facts import Fact, Field
@@ -32,7 +34,8 @@ from anki.cards import Card
 from anki.stats import Stats, globalStats
 from anki.history import CardHistoryEntry
 from anki.stats import globalStats
-from anki.utils import ids2str, hexifyID
+from anki.utils import ids2str, hexifyID, checksum
+from anki.media import mediaFiles
 from anki.lang import _
 from hooks import runHook
 
@@ -42,8 +45,8 @@ if simplejson.__version__ < "1.7.3":
 CHUNK_SIZE = 32768
 MIME_BOUNDARY = "Anki-sync-boundary"
 # live
-SYNC_URL = "http://anki.ichi2.net/sync/"
-SYNC_HOST = "anki.ichi2.net"; SYNC_PORT = 80
+SYNC_URL = "http://ankiweb.net/sync/"
+SYNC_HOST = "ankiweb.net"; SYNC_PORT = 80
 # testing
 #SYNC_URL = "http://localhost:8001/sync/"
 #SYNC_HOST = "localhost"; SYNC_PORT = 8001
@@ -71,9 +74,11 @@ def incrementalSend(self, strOrFile):
             self.sock.sendall(strOrFile)
         else:
             cnt = 0
+            t = time.time()
             while 1:
-                if sendProgressHook:
+                if sendProgressHook and time.time() - t > 1:
                     sendProgressHook(cnt)
+                    t = time.time()
                 data = strOrFile.read(CHUNK_SIZE)
                 cnt += len(data)
                 if not data:
@@ -97,6 +102,7 @@ class SyncTools(object):
         self.deck = deck
         self.diffs = {}
         self.serverExcludedTags = []
+        self.timediff = 0
 
     # Control
     ##########################################################################
@@ -106,25 +112,24 @@ class SyncTools(object):
 
     def sync(self):
         "Sync two decks locally. Reimplement this for finer control."
-        if not self.prepareSync():
+        if not self.prepareSync(0):
             return
         sums = self.summaries()
         payload = self.genPayload(sums)
         res = self.server.applyPayload(payload)
         self.applyPayloadReply(res)
+        self.deck.reset()
 
-    def prepareSync(self):
+    def prepareSync(self, timediff):
         "Sync setup. True if sync needed."
         self.localTime = self.modified()
         self.remoteTime = self.server.modified()
         if self.localTime == self.remoteTime:
             return False
         l = self._lastSync(); r = self.server._lastSync()
-        # set lastSync to the lower of the two sides
-        if l != r:
-            self.deck.lastSync = min(l, r)
-        else:
-            self.deck.lastSync = l
+        # set lastSync to the lower of the two sides, and account for slow
+        # clocks & assume it took up to 10 seconds for the reply to arrive
+        self.deck.lastSync = min(l, r) - timediff - 10
         return True
 
     def summaries(self):
@@ -177,12 +182,10 @@ class SyncTools(object):
             if 'sources' in payload:
                 self.updateSources(payload['sources'])
         self.postSyncRefresh()
-        # rebuild priorities on server
         cardIds = [x[0] for x in payload['added-cards']]
         self.deck.updateCardTags(cardIds)
+        # rebuild priorities on server
         self.rebuildPriorities(cardIds, self.serverExcludedTags)
-        # rebuild due counts
-        self.deck.rebuildCounts(full=False)
         return reply
 
     def applyPayloadReply(self, reply):
@@ -204,8 +207,14 @@ class SyncTools(object):
         cardIds = [x[0] for x in reply['added-cards']]
         self.deck.updateCardTags(cardIds)
         self.rebuildPriorities(cardIds)
-        # rebuild due counts
-        self.deck.rebuildCounts(full=False)
+        if self.missingFacts() != 0:
+            raise Exception(
+                "Facts missing after sync. Please run Tools>Advanced>Check DB.")
+
+    def missingFacts(self):
+        return self.deck.s.scalar(
+            "select count() from cards where factId "+
+                "not in (select id from facts)");
 
     def rebuildPriorities(self, cardIds, suspend=[]):
         self.deck.updateAllPriorities(partial=True, dirty=False)
@@ -257,7 +266,6 @@ class SyncTools(object):
         "Generate a full summary of modtimes for two-way syncing."
         # client may have selected an earlier sync time
         self.deck.lastSync = lastSync
-        self.deck.s.commit()
         # ensure we're flushed first
         self.deck.s.flush()
         return {
@@ -483,12 +491,9 @@ where factId in %s""" % factIds))
             'created': f[2],
             'modified': f[3],
             'tags': f[4],
-            'spaceUntil': f[5],
+            'spaceUntil': f[5] or "",
             'lastCardId': f[6]
             } for f in facts]
-        self.deck.factCount += (len(facts) - self.deck.s.scalar(
-            "select count(*) from facts where id in %s" %
-            ids2str([f[0] for f in facts])))
         self.deck.s.execute("""
 insert or replace into facts
 (id, modelId, created, modified, tags, spaceUntil, lastCardId)
@@ -529,12 +534,21 @@ priority, interval, lastInterval, due, lastDue, factor,
 firstAnswered, reps, successive, averageTime, reviewTime, youngEase0,
 youngEase1, youngEase2, youngEase3, youngEase4, matureEase0,
 matureEase1, matureEase2, matureEase3, matureEase4, yesCount, noCount,
-question, answer, lastFactor, spaceUntil, type, combinedDue
+question, answer, lastFactor, spaceUntil, type, combinedDue, relativeDelay
 from cards where id in %s""" % ids2str(ids)))
 
     def updateCards(self, cards):
         if not cards:
             return
+        # FIXME: older clients won't send this, so this is temp compat code
+        def getType(row):
+            if len(row) > 36:
+                return row[36]
+            if row[15]:
+                return 1
+            elif row[14]:
+                return 0
+            return 2
         dlist = [{'id': c[0],
                   'factId': c[1],
                   'cardModelId': c[2],
@@ -571,10 +585,8 @@ from cards where id in %s""" % ids2str(ids)))
                   'spaceUntil': c[33],
                   'type': c[34],
                   'combinedDue': c[35],
+                  'rd': getType(c)
                   } for c in cards]
-        self.deck.cardCount += (len(cards) - self.deck.s.scalar(
-            "select count(*) from cards where id in %s" %
-            ids2str([c[0] for c in cards])))
         self.deck.s.execute("""
 insert or replace into cards
 (id, factId, cardModelId, created, modified, tags, ordinal,
@@ -591,7 +603,7 @@ values
 :youngEase1, :youngEase2, :youngEase3, :youngEase4, :matureEase0,
 :matureEase1, :matureEase2, :matureEase3, :matureEase4, :yesCount,
 :noCount, :question, :answer, :lastFactor, :spaceUntil,
-:type, :combinedDue, 0, 0)""", dlist)
+:type, :combinedDue, :rd, 0)""", dlist)
         self.deck.s.statement(
             "delete from cardsDeleted where cardId in %s" %
             ids2str([c[0] for c in cards]))
@@ -603,7 +615,12 @@ values
     ##########################################################################
 
     def bundleDeck(self):
-        self.deck.lastSync = time.time()
+        # ensure modified is not greater than server time
+        if getattr(self, "server", None) and getattr(
+            self.server, "timestamp", None):
+            self.deck.modified = min(self.deck.modified,self.server.timestamp)
+        # and ensure lastSync is greater than modified
+        self.deck.lastSync = max(time.time(), self.deck.modified+1)
         d = self.dictFromObj(self.deck)
         del d['Session']
         del d['engine']
@@ -611,10 +628,18 @@ values
         del d['path']
         del d['syncName']
         del d['version']
-        del d['css']
+        if 'newQueue' in d:
+            del d['newQueue']
+            del d['failedQueue']
+            del d['revQueue']
         # these may be deleted before bundling
+        if 'css' in d: del d['css']
         if 'models' in d: del d['models']
         if 'currentModel' in d: del d['currentModel']
+        keys = d.keys()
+        for k in keys:
+            if isinstance(d[k], types.MethodType):
+                del d[k]
         d['meta'] = self.realLists(self.deck.s.all("select * from deckVars"))
         return d
 
@@ -627,7 +652,6 @@ insert or replace into deckVars
 (key, value) values (:k, :v)""", k=k, v=v)
             del deck['meta']
         self.applyDict(self.deck, deck)
-        self.deck.updateDynamicIndices()
 
     def bundleStats(self):
         def bundleStat(stat):
@@ -758,6 +782,7 @@ where media.id in %s""" % sids, now=time.time())
         "Sync two decks one way."
         payload = self.server.genOneWayPayload(lastSync)
         self.applyOneWayPayload(payload)
+        self.deck.reset()
 
     def syncOneWayDeckName(self):
         return (self.deck.s.scalar("select name from sources where id = :id",
@@ -832,9 +857,6 @@ where media.id in %s""" % sids, now=time.time())
         t = time.time()
         dlist = [{'id': c[0], 'factId': c[1], 'cardModelId': c[2],
                   'ordinal': c[3], 'created': c[4], 't': t} for c in cards]
-        self.deck.cardCount += (len(cards) - self.deck.s.scalar(
-            "select count(*) from cards where id in %s" %
-            ids2str([c[0] for c in cards])))
         # add any missing cards
         self.deck.s.statements("""
 insert or ignore into cards
@@ -851,7 +873,7 @@ values
 0, 0, 0, 0, 0, 0,
 0, 0, 0, 0, 0,
 0, 0, 0, 0, 0,
-0, "", "", 2.5, 0, 0, 2, :t, 0)""", dlist)
+0, "", "", 2.5, 0, 0, 2, :t, 2)""", dlist)
         # update q/as
         models = dict(self.deck.s.all("""
 select cards.id, models.id
@@ -930,7 +952,8 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
 
     def prepareFullSync(self):
         t = time.time()
-        self.deck.lastSync = time.time()
+        # ensure modified is not greater than server time
+        self.deck.modified = min(self.deck.modified, self.server.timestamp)
         self.deck.s.commit()
         self.deck.close()
         fields = {
@@ -978,6 +1001,7 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
                     tmp.write(comp.flush())
                     break
                 tmp.write(comp.compress(data))
+            src.close()
             tmp.write('\r\n--' + MIME_BOUNDARY + '--\r\n\r\n')
             size = tmp.tell()
             tmp.seek(0)
@@ -989,10 +1013,17 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
                 'Content-length': str(size),
                 'Host': SYNC_HOST,
                 }
-            req = urllib2.Request(SYNC_URL + "fullup", tmp, headers)
+            req = urllib2.Request(SYNC_URL + "fullup?v=2", tmp, headers)
             try:
                 sendProgressHook = fullSyncProgressHook
-                assert urllib2.urlopen(req).read() == "OK"
+                res = urllib2.urlopen(req).read()
+                assert res.startswith("OK")
+                # update lastSync
+                c = sqlite.connect(path)
+                c.execute("update decks set lastSync = ?",
+                          (res[3:],))
+                c.commit()
+                c.close()
             finally:
                 sendProgressHook = None
                 tmp.close()
@@ -1025,6 +1056,12 @@ and cards.id in %s""" % ids2str([c[0] for c in cards])))
             # if we were successful, overwrite old deck
             os.unlink(path)
             os.rename(tmpname, path)
+            # reset the deck name
+            c = sqlite.connect(path)
+            c.execute("update decks set syncName = ?",
+                      [checksum(path.encode("utf-8"))])
+            c.commit()
+            c.close()
         finally:
             runHook("fullSyncFinished")
 
@@ -1070,6 +1107,7 @@ class HttpSyncServerProxy(SyncServer):
                 raise SyncError(type="authFailed", status=d['status'])
             self.decks = d['decks']
             self.timestamp = d['timestamp']
+            self.timediff = abs(self.timestamp - time.time())
 
     def hasDeck(self, deckName):
         self.connect()
@@ -1105,9 +1143,13 @@ class HttpSyncServerProxy(SyncServer):
         return self.runCmd("applyPayload",
                            payload=self.stuff(payload))
 
+    def finish(self):
+        assert self.runCmd("finish") == "OK"
+
     def runCmd(self, action, **args):
         data = {"p": self.password,
-                "u": self.username}
+                "u": self.username,
+                "v": 2}
         if self.deckName:
             data['d'] = self.deckName.encode("utf-8")
         else:
@@ -1117,12 +1159,17 @@ class HttpSyncServerProxy(SyncServer):
         try:
             f = urllib2.urlopen(SYNC_URL + action, data)
         except (urllib2.URLError, socket.error, socket.timeout,
-                httplib.BadStatusLine):
-            raise SyncError(type="noResponse")
+                httplib.BadStatusLine), e:
+            raise SyncError(type="connectionError",
+                            exc=`e`)
         ret = f.read()
         if not ret:
             raise SyncError(type="noResponse")
-        return self.unstuff(ret)
+        try:
+            return self.unstuff(ret)
+        except Exception, e:
+            raise SyncError(type="connectionError",
+                            exc=`e`)
 
 # HTTP server: respond to proxy requests and return data
 ##########################################################################
@@ -1160,14 +1207,27 @@ class HttpSyncServer(SyncServer):
 ##########################################################################
 
 def copyLocalMedia(src, dst):
-    src = src.mediaDir()
-    if not src:
+    srcDir = src.mediaDir()
+    if not srcDir:
         return
-    dst = dst.mediaDir(create=True)
-    files = os.listdir(src)
+    dstDir = dst.mediaDir(create=True)
+    files = os.listdir(srcDir)
+    # find media references
+    used = {}
+    for col in ("question", "answer"):
+        txt = dst.s.column0("""
+select %(c)s from cards where
+%(c)s like '%%<img %%'
+or %(c)s like '%%[sound:%%'""" % {'c': col})
+        for entry in txt:
+            for fname in mediaFiles(entry):
+                used[fname] = True
+    # copy only used media
     for file in files:
-        srcfile = os.path.join(src, file)
-        dstfile = os.path.join(dst, file)
+        if file not in used:
+            continue
+        srcfile = os.path.join(srcDir, file)
+        dstfile = os.path.join(dstDir, file)
         if not os.path.exists(dstfile):
             try:
                 shutil.copy2(srcfile, dstfile)

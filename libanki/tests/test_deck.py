@@ -139,6 +139,7 @@ def test_modelAddDelete():
     deck.addFact(f)
     assert deck.cardCount == 1
     deck.deleteModel(deck.currentModel)
+    deck.reset()
     assert deck.cardCount == 0
     deck.s.refresh(deck)
 
@@ -171,7 +172,7 @@ def test_media():
     deck.addMedia(file)
     # make sure it gets copied on saveas
     path = "/tmp/saveAs2.anki"
-    sum = "0bee89b07a248e27c83fc3d5951213c1.png"
+    sum = "fake.png"
     try:
         os.unlink(path)
     except OSError:
@@ -222,6 +223,7 @@ def test_modelChange():
     cmap = {m1.cardModels[0]: m2.cardModels[0],
             m1.cardModels[1]: None}
     deck.changeModel([f.id], m2, fmap, cmap)
+    deck.reset()
     assert deck.modelUseCount(m1) == 1
     assert deck.modelUseCount(m2) == 1
     assert deck.cardCount == 3
