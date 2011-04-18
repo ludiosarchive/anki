@@ -13,6 +13,9 @@ from anki.db import *
 from anki.models import CardModel, Model, FieldModel, formatQA
 from anki.facts import Fact, factsTable, Field
 from anki.utils import parseTags, findTag, stripHTML, genID, hexifyID
+from anki.media import updateMediaCount, mediaFiles
+
+MAX_TIMER = 60
 
 # Cards
 ##########################################################################
@@ -58,10 +61,12 @@ cardsTable = Table(
     # data to the above
     Column('yesCount', Integer, nullable=False, default=0),
     Column('noCount', Integer, nullable=False, default=0),
-    # caching
+    # obsolete
     Column('spaceUntil', Float, nullable=False, default=0),
-    Column('relativeDelay', Float, nullable=False, default=0), # obsolete
-    Column('isDue', Boolean, nullable=False, default=0),
+    # relativeDelay is reused as type without scheduling (ie, it remains 0-2
+    # even if card is suspended, etc)
+    Column('relativeDelay', Float, nullable=False, default=0),
+    Column('isDue', Boolean, nullable=False, default=0), # obsolete
     Column('type', Integer, nullable=False, default=2),
     Column('combinedDue', Integer, nullable=False, default=0))
 
@@ -73,7 +78,7 @@ class Card(object):
         self.id = genID()
         # new cards start as new & due
         self.type = 2
-        self.isDue = True
+        self.relativeDelay = self.type
         self.timerStarted = False
         self.timerStopped = False
         self.modified = time.time()
@@ -90,12 +95,37 @@ class Card(object):
             # for non-orm use
             self.cardModelId = cardModel.id
             self.ordinal = cardModel.ordinal
-            d = {}
-            for f in self.fact.model.fieldModels:
-                d[f.name] = (f.id, self.fact[f.name])
-            qa = formatQA(None, fact.modelId, d, self.splitTags(), cardModel)
-            self.question = qa['question']
-            self.answer = qa['answer']
+
+    def rebuildQA(self, deck, media=True):
+        # format qa
+        d = {}
+        for f in self.fact.model.fieldModels:
+            d[f.name] = (f.id, self.fact[f.name])
+        qa = formatQA(None, self.fact.modelId, d, self.splitTags(),
+                      self.cardModel, deck)
+        # find old media references
+        files = {}
+        for type in ("question", "answer"):
+            for f in mediaFiles(getattr(self, type) or ""):
+                if f in files:
+                    files[f] -= 1
+                else:
+                    files[f] = -1
+        # update q/a
+        self.question = qa['question']
+        self.answer = qa['answer']
+        # determine media delta
+        for type in ("question", "answer"):
+            for f in mediaFiles(getattr(self, type)):
+                if f in files:
+                    files[f] += 1
+                else:
+                    files[f] = 1
+        # update media counts if we're attached to deck
+        if media:
+            for (f, cnt) in files.items():
+                updateMediaCount(deck, f, cnt)
+        self.setModified()
 
     def setModified(self):
         self.modified = time.time()
@@ -142,14 +172,12 @@ class Card(object):
             self.successive += 1
         else:
             self.successive = 0
-        delay = self.totalTime()
-        # ignore any times over 60 seconds
-        if delay < 60:
-            self.reviewTime += delay
-            if self.averageTime:
-                self.averageTime = (self.averageTime + delay) / 2.0
-            else:
-                self.averageTime = delay
+        delay = min(self.totalTime(), MAX_TIMER)
+        self.reviewTime += delay
+        if self.averageTime:
+            self.averageTime = (self.averageTime + delay) / 2.0
+        else:
+            self.averageTime = delay
         # we don't track first answer for cards
         if state == "new":
             state = "young"
@@ -226,13 +254,7 @@ from cards where id = :id""", id=id)
         return True
 
     def toDB(self, s):
-        "Write card to DB. Note that isDue assumes card is not spaced."
-        if self.reps == 0:
-            self.type = 2
-        elif self.successive:
-            self.type = 1
-        else:
-            self.type = 0
+        "Write card to DB."
         s.execute("""update cards set
 modified=:modified,
 tags=:tags,
@@ -260,10 +282,10 @@ matureEase4=:matureEase4,
 yesCount=:yesCount,
 noCount=:noCount,
 spaceUntil = :spaceUntil,
-isDue = :isDue,
+isDue = 0,
 type = :type,
-combinedDue = max(:spaceUntil, :due),
-relativeDelay = 0,
+combinedDue = :combinedDue,
+relativeDelay = :relativeDelay,
 priority = :priority
 where id=:id""", self.__dict__)
 

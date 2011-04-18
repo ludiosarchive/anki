@@ -43,6 +43,7 @@ class AddCards(QDialog):
         self.forceClose = False
         restoreGeom(self, "add")
         restoreSplitter(self.dialog.splitter, "add")
+        self.dialog.splitter.setChildrenCollapsible(False)
         self.show()
         addHook('guiReset', self.modelChanged)
         ui.dialogs.open("AddCards", self)
@@ -52,6 +53,7 @@ class AddCards(QDialog):
                                                self.dialog.fieldsArea,
                                                self.parent.deck)
         self.editor.addMode = True
+        self.editor.resetOnEdit = False
 
     def addChooser(self):
         self.modelChooser = ui.modelchooser.ModelChooser(self,
@@ -118,7 +120,7 @@ class AddCards(QDialog):
         else:
             fact.tags = self.parent.deck.lastTags
         # set the new fact
-        self.editor.setFact(fact, check=True)
+        self.editor.setFact(fact, check=True, forceRedraw=True)
         self.setTabOrder(self.editor.tags, self.addButton)
         self.setTabOrder(self.addButton, self.closeButton)
         self.setTabOrder(self.closeButton, self.helpButton)
@@ -135,7 +137,7 @@ class AddCards(QDialog):
 
     def addFact(self, fact):
         try:
-            fact = self.parent.deck.addFact(fact)
+            fact = self.parent.deck.addFact(fact, False)
         except FactInvalidError:
             ui.utils.showInfo(_(
                 "Some fields are missing or not unique."),
@@ -148,6 +150,7 @@ question or answer on all cards."""), parent=self)
             return
 
         self.reportAddedFact(fact)
+        # we don't reset() until the add cards dialog is closed
         return fact
 
     def initializeNewFact(self, old_fact):
@@ -177,7 +180,7 @@ question or answer on all cards."""), parent=self)
         clearAudioQueue()
 
         self.parent.deck.setUndoEnd(n)
-        self.parent.deck.checkDue()
+        self.parent.deck.rebuildCounts()
         self.parent.updateTitleBar()
         self.parent.statusView.redraw()
 
@@ -217,7 +220,7 @@ question or answer on all cards."""), parent=self)
             ui.dialogs.close("AddCards")
             self.parent.deck.s.flush()
             self.parent.deck.rebuildCSS()
-            self.parent.moveToState("auto")
+            self.parent.reset()
             saveGeom(self, "add")
             saveSplitter(self.dialog.splitter, "add")
             return True

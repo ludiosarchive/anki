@@ -6,11 +6,11 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import anki, anki.utils
 from anki.sound import playFromText
-from anki.latex import renderLatex, stripLatex
 from anki.utils import stripHTML
 from anki.hooks import runHook, runFilter
-from anki.media import stripMedia
+from anki.media import stripMedia, escapeImages
 import types, time, re, os, urllib, sys, difflib
+import unicodedata as ucd
 from ankiqt import ui
 from ankiqt.ui.utils import mungeQA, getBase
 from anki.utils import fmtTimeSpan
@@ -54,10 +54,7 @@ class View(object):
         if self.state == "noDeck" or self.state == "studyScreen":
             return
         self.buffer = ""
-        self.haveTop = (self.main.lastCard and (
-            self.main.config['showLastCardContent'] or
-            self.main.config['showLastCardInterval'])) or (
-            self.needFutureWarning())
+        self.haveTop = self.needFutureWarning()
         self.drawRule = (self.main.config['qaDivider'] and
                          self.main.currentCard and
                          not self.main.currentCard.cardModel.questionInAnswer)
@@ -87,7 +84,6 @@ class View(object):
         s = "<style>\n"
         if self.main.deck:
             s += self.main.deck.css
-        s += "div { white-space: pre-wrap; }\n"
         s = runFilter("addStyles", s, self.main.currentCard)
         s += "</style>"
         return s
@@ -111,7 +107,16 @@ class View(object):
         self.buffer = '''<html><head>%s</head><body>%s</body></html>''' % (
             getBase(self.main.deck, self.main.currentCard), self.buffer)
         #print self.buffer.encode("utf-8")
-        self.body.setHtml(self.buffer)
+        b = self.buffer
+        # Feeding webkit unicode can result in it not finding images, so on
+        # linux/osx we percent escape the image paths as utf8. On Windows the
+        # problem is more complicated - if we percent-escape as utf8 it fixes
+        # some images but breaks others. When filenames are normalized by
+        # dropbox they become unreadable if we escape them.
+        if not sys.platform.startswith("win32"):
+            # and self.main.config['mediaLocation'] == "dropbox"):
+            b = escapeImages(b)
+        self.body.setHtml(b)
 
     def write(self, text):
         if type(text) != types.UnicodeType:
@@ -142,37 +147,92 @@ class View(object):
             height = 45
         q = runFilter("drawQuestion", q, self.main.currentCard)
         self.write(self.center(self.mungeQA(self.main.deck, q), height))
-        if self.state != self.oldState and not nosound:
+        if (self.state != self.oldState and not nosound
+            and self.main.config['autoplaySounds']):
             playFromText(q)
+        if self.main.currentCard.cardModel.typeAnswer:
+            self.adjustInputFont()
+
+    def getFont(self):
+        sz = 20
+        fn = u"Arial"
+        for fm in self.main.currentCard.fact.model.fieldModels:
+            if fm.name == self.main.currentCard.cardModel.typeAnswer:
+                sz = fm.quizFontSize or sz
+                fn = fm.quizFontFamily or fn
+                break
+        return (fn, sz)
+
+    def adjustInputFont(self):
+        (fn, sz) = self.getFont()
+        f = QFont()
+        f.setFamily(fn)
+        f.setPixelSize(sz)
+        self.main.typeAnswerField.setFont(f)
+        # add some extra space as layout is wrong on osx
+        self.main.typeAnswerField.setFixedHeight(
+            self.main.typeAnswerField.sizeHint().height() + 10)
+
+
+    def calculateOkBadStyle(self):
+        "Precalculates styles for correct and incorrect part of answer"
+        (fn, sz) = self.getFont()
+        st = "background: %s; color: #000; font-size: %dpx; font-family: %s;"
+        self.styleOk  = st % (passedCharColour, sz, fn)
+        self.styleBad = st % (failedCharColour, sz, fn)
+
+    def ok(self, a):
+        "returns given sring in style correct (green)"
+        if len(a) == 0:
+            return ""
+        return "<span style='%s'>%s</span>" % (self.styleOk, a)
+
+    def bad(self, a):
+        "returns given sring in style incorrect (red)"
+        if len(a) == 0:
+            return ""
+        return "<span style='%s'>%s</span>" % (self.styleBad, a)
+
+    def head(self, a):
+        return a[:len(a) - 1]
+
+    def tail(self, a):
+        return a[len(a) - 1:]
+
+    def applyStyle(self, testChar, correct, wrong):
+        "Calculates answer fragment depending on testChar's unicode category"
+        ZERO_SIZE = 'Mn'
+        if ucd.category(testChar) == ZERO_SIZE:
+            return self.ok(self.head(correct)) + self.bad(self.tail(correct) + wrong)
+        return self.ok(correct) + self.bad(wrong)
 
     def correct(self, a, b):
+        "Diff-corrects the typed-in answer."
         if b == "":
             return "";
 
-        ret = "";
-        s = difflib.SequenceMatcher(None, b, a)
+        self.calculateOkBadStyle()
 
-        sz = self.main.currentCard.cardModel.answerFontSize
-        fn = self.main.currentCard.cardModel.answerFontFamily
-        st = "background: %s; color: #000; font-size: %dpx; font-family: %s;"
-        ok = st % (passedCharColour, sz, fn)
-        bad = st % (failedCharColour, sz, fn)
+        ret = ""
+        lastEqual = ""
+        s = difflib.SequenceMatcher(None, b, a)
 
         for tag, i1, i2, j1, j2 in s.get_opcodes():
             if tag == "equal":
-                ret += ("<span style='%s'>%s</span>" % (ok, b[i1:i2]))
+                lastEqual = b[i1:i2]
             elif tag == "replace":
-                ret += ("<span style='%s'>%s</span>"
-                        % (bad, b[i1:i2] + (" " * ((j2 - j1) - (i2 - i1)))))
+                ret += self.applyStyle(b[i1], lastEqual, 
+                                 b[i1:i2] + ("-" * ((j2 - j1) - (i2 - i1))))
+                lastEqual = ""
             elif tag == "delete":
-                p = re.compile(r"^\s*$")
-                if p.match(b[i1:i2]):
-                    ret += ("<span style='%s'>%s</span>" % (ok, b[i1:i2]))
-                else:
-                    ret += ("<span style='%s'>%s</span>" % (bad, b[i1:i2]))
+                ret += self.applyStyle(b[i1], lastEqual, b[i1:i2])
+                lastEqual = ""
             elif tag == "insert":
-                ret += ("<span style='%s'>%s</span>" % (bad, " " * (j2 - j1)))
-        return ret
+                dashNum = (j2 - j1) if ucd.category(a[j1]) != 'Mn' else ((j2 - j1) - 1)
+                ret += self.applyStyle(a[j1], lastEqual, "-" * dashNum)
+                lastEqual = ""
+
+        return ret + self.ok(lastEqual)
 
     def drawAnswer(self):
         "Show the answer."
@@ -191,7 +251,7 @@ class View(object):
                 a = res + "<br>" + a
         self.write(self.center('<span id=answer />'
                                + self.mungeQA(self.main.deck, a)))
-        if self.state != self.oldState:
+        if self.state != self.oldState and self.main.config['autoplaySounds']:
             playFromText(a)
 
     def mungeQA(self, deck, txt):
@@ -214,15 +274,16 @@ class View(object):
         "Show previous card, next scheduled time, and stats."
         self.buffer += "<center>"
         self.drawFutureWarning()
-        self.drawLastCard()
         self.buffer += "</center>"
 
     def needFutureWarning(self):
         if not self.main.currentCard:
             return
-        if self.main.currentCard.due <= time.time():
+        if self.main.currentCard.due <= self.main.deck.dueCutoff:
             return
         if self.main.currentCard.due - time.time() <= self.main.deck.delay0:
+            return
+        if self.main.deck.scheduler == "cram":
             return
         return True
 
@@ -233,33 +294,6 @@ class View(object):
                    _("This card was due in %s.") % fmtTimeSpan(
             self.main.currentCard.due - time.time(), after=True) +
                    "</span>")
-
-    def drawLastCard(self):
-        "Show the last card if not the current one, and next time."
-        if self.main.lastCard:
-            if self.main.config['showLastCardContent']:
-                if (self.state == "deckFinished" or
-                    self.main.currentCard.id != self.main.lastCard.id):
-                    q = self.main.lastCard.question.replace("<br>", "  ")
-                    q = stripHTML(q)
-                    if len(q) > 50:
-                        q = q[:50] + "..."
-                    a = self.main.lastCard.answer.replace("<br>", "  ")
-                    a = stripHTML(a)
-                    if len(a) > 50:
-                        a = a[:50] + "..."
-                    s = "%s<br>%s" % (q, a)
-                    s = stripLatex(s)
-                    self.write('<span class="lastCard">%s</span><br>' % s)
-            if self.main.config['showLastCardInterval']:
-                if self.main.lastQuality > 1:
-                    msg = _("Well done! This card will appear again in "
-                            "<b>%(next)s</b>.") % \
-                            {"next":self.main.lastScheduledTime}
-                else:
-                    msg = _("This card will appear again later.")
-                self.write(msg)
-            self.write("<br>")
 
     # Welcome/empty/finished deck messages
     ##########################################################################
@@ -312,7 +346,7 @@ class AnkiWebView(QWebView):
         if evt.matches(QKeySequence.Copy):
             self.triggerPageAction(QWebPage.Copy)
             evt.accept()
-        evt.ignore()
+        QWebView.keyPressEvent(self, evt)
 
     def contextMenuEvent(self, evt):
         QWebView.contextMenuEvent(self, evt)

@@ -36,6 +36,7 @@ class Ui_AddCards(object):
         self.verticalLayout.addLayout(self.gridlayout)
         self.splitter = QtGui.QSplitter(AddCards)
         self.splitter.setOrientation(QtCore.Qt.Vertical)
+        self.splitter.setChildrenCollapsible(False)
         self.splitter.setObjectName("splitter")
         self.fieldsArea = QtGui.QWidget(self.splitter)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)

@@ -9,14 +9,14 @@ The Deck
 __docformat__ = 'restructuredtext'
 
 import tempfile, time, os, random, sys, re, stat, shutil
-import types, traceback, simplejson
+import types, traceback, simplejson, datetime
 
 from anki.db import *
 from anki.lang import _, ngettext
 from anki.errors import DeckAccessError
 from anki.stdmodels import BasicModel
 from anki.utils import parseTags, tidyHTML, genID, ids2str, hexifyID, \
-     canonifyTags, joinTags, addTags
+     canonifyTags, joinTags, addTags, checksum
 from anki.history import CardHistoryEntry
 from anki.models import Model, CardModel, formatQA
 from anki.stats import dailyStats, globalStats, genToday
@@ -24,22 +24,32 @@ from anki.fonts import toPlatformFont
 from anki.tags import initTagTables, tagIds
 from operator import itemgetter
 from itertools import groupby
-from anki.hooks import runHook
+from anki.hooks import runHook, hookEmpty
+from anki.template import render
+from anki.media import updateMediaCount, mediaFiles, \
+     rebuildMediaDir
+import anki.latex # sets up hook
 
-# ensure all the metadata in other files is loaded before proceeding
+# ensure all the DB metadata in other files is loaded before proceeding
 import anki.models, anki.facts, anki.cards, anki.stats
 import anki.history, anki.media
 
-# auto priorities
+# the current code set type -= 3 for manually suspended cards, and += 3*n
+# for temporary suspends, (where n=1 for bury, n=2 for review/cram).
+# This way we don't need to recalculate priorities when enabling the cards
+# again, and paves the way for an arbitrary number of priorities in the
+# future. But until all clients are upgraded, we need to keep munging the
+# priorities to prevent older clients from getting confused
+# PRIORITY_REVEARLY = -1
+# PRIORITY_BURIED = -2
+# PRIORITY_SUSPENDED = -3
+
+# priorities
 PRIORITY_HIGH = 4
 PRIORITY_MED = 3
 PRIORITY_NORM = 2
 PRIORITY_LOW = 1
 PRIORITY_NONE = 0
-# manual priorities
-PRIORITY_REVEARLY = -1
-PRIORITY_BURIED = -2
-PRIORITY_SUSPENDED = -3
 # rest
 MATURE_THRESHOLD = 21
 NEW_CARDS_DISTRIBUTE = 0
@@ -56,7 +66,13 @@ SEARCH_TAG = 0
 SEARCH_TYPE = 1
 SEARCH_PHRASE = 2
 SEARCH_FID = 3
-DECK_VERSION = 43
+SEARCH_CARD = 4
+SEARCH_DISTINCT = 5
+SEARCH_FIELD = 6
+SEARCH_FIELD_EXISTS = 7
+SEARCH_QA = 8
+SEARCH_PHRASE_WB = 9
+DECK_VERSION = 65
 
 deckVarsTable = Table(
     'deckVars', metadata,
@@ -72,21 +88,24 @@ decksTable = Table(
     Column('description', UnicodeText, nullable=False, default=u""),
     Column('version', Integer, nullable=False, default=DECK_VERSION),
     Column('currentModelId', Integer, ForeignKey("models.id")),
-    # syncing
+    # syncName stores an md5sum of the deck path when syncing is enabled. If
+    # it doesn't match the current deck path, the deck has been moved,
+    # and syncing is disabled on load.
     Column('syncName', UnicodeText),
     Column('lastSync', Float, nullable=False, default=0),
     # scheduling
     ##############
     # initial intervals
-    Column('hardIntervalMin', Float, nullable=False, default=0.333),
-    Column('hardIntervalMax', Float, nullable=False, default=0.5),
+    Column('hardIntervalMin', Float, nullable=False, default=1.0),
+    Column('hardIntervalMax', Float, nullable=False, default=1.1),
     Column('midIntervalMin', Float, nullable=False, default=3.0),
     Column('midIntervalMax', Float, nullable=False, default=5.0),
     Column('easyIntervalMin', Float, nullable=False, default=7.0),
     Column('easyIntervalMax', Float, nullable=False, default=9.0),
     # delays on failure
     Column('delay0', Integer, nullable=False, default=600),
-    Column('delay1', Integer, nullable=False, default=600),
+    # days to delay mature fails
+    Column('delay1', Integer, nullable=False, default=0),
     Column('delay2', Float, nullable=False, default=0.0),
     # collapsing future cards
     Column('collapseTime', Integer, nullable=False, default=1),
@@ -94,7 +113,7 @@ decksTable = Table(
     Column('highPriority', UnicodeText, nullable=False, default=u"PriorityVeryHigh"),
     Column('medPriority', UnicodeText, nullable=False, default=u"PriorityHigh"),
     Column('lowPriority', UnicodeText, nullable=False, default=u"PriorityLow"),
-    Column('suspended', UnicodeText, nullable=False, default=u""),
+    Column('suspended', UnicodeText, nullable=False, default=u""), # obsolete
     # 0 is random, 1 is by input date
     Column('newCardOrder', Integer, nullable=False, default=1),
     # when to show new cards
@@ -111,7 +130,7 @@ decksTable = Table(
     # count cache
     Column('cardCount', Integer, nullable=False, default=0),
     Column('factCount', Integer, nullable=False, default=0),
-    Column('failedNowCount', Integer, nullable=False, default=0),
+    Column('failedNowCount', Integer, nullable=False, default=0), # obsolete
     Column('failedSoonCount', Integer, nullable=False, default=0),
     Column('revCount', Integer, nullable=False, default=0),
     Column('newCount', Integer, nullable=False, default=0),
@@ -136,122 +155,600 @@ class Deck(object):
 
     def _initVars(self):
         self.tmpMediaDir = None
-        self.forceMediaDir = None
+        self.mediaPrefix = ""
         self.lastTags = u""
         self.lastLoaded = time.time()
         self.undoEnabled = False
         self.sessionStartReps = 0
         self.sessionStartTime = 0
         self.lastSessionStart = 0
-        self.newEarly = False
-        self.reviewEarly = False
+        self.queueLimit = 200
+        # if most recent deck var not defined, make sure defaults are set
+        if not self.s.scalar("select 1 from deckVars where key = 'revSpacing'"):
+            self.setVarDefault("suspendLeeches", True)
+            self.setVarDefault("leechFails", 16)
+            self.setVarDefault("perDay", True)
+            self.setVarDefault("newActive", "")
+            self.setVarDefault("revActive", "")
+            self.setVarDefault("newInactive", self.suspended)
+            self.setVarDefault("revInactive", self.suspended)
+            self.setVarDefault("newSpacing", 60)
+            self.setVarDefault("mediaURL", "")
+            self.setVarDefault("latexPre", """\
+\\documentclass[12pt]{article}
+\\special{papersize=3in,5in}
+\\usepackage[utf8]{inputenc}
+\\usepackage{amssymb,amsmath}
+\\pagestyle{empty}
+\\setlength{\\parindent}{0in}
+\\begin{document}
+""")
+            self.setVarDefault("latexPost", "\\end{document}")
+            self.setVarDefault("revSpacing", 0.1)
+        self.updateCutoff()
+        self.setupStandardScheduler()
 
     def modifiedSinceSave(self):
         return self.modified > self.lastLoaded
+
+    # Queue management
+    ##########################################################################
+
+    def setupStandardScheduler(self):
+        self.getCardId = self._getCardId
+        self.fillFailedQueue = self._fillFailedQueue
+        self.fillRevQueue = self._fillRevQueue
+        self.fillNewQueue = self._fillNewQueue
+        self.rebuildFailedCount = self._rebuildFailedCount
+        self.rebuildRevCount = self._rebuildRevCount
+        self.rebuildNewCount = self._rebuildNewCount
+        self.requeueCard = self._requeueCard
+        self.timeForNewCard = self._timeForNewCard
+        self.updateNewCountToday = self._updateNewCountToday
+        self.cardQueue = self._cardQueue
+        self.finishScheduler = None
+        self.answerCard = self._answerCard
+        self.cardLimit = self._cardLimit
+        self.answerPreSave = None
+        self.spaceCards = self._spaceCards
+        self.scheduler = "standard"
+        # restore any cards temporarily suspended by alternate schedulers
+        try:
+            self.resetAfterReviewEarly()
+        except OperationalError, e:
+            # will fail if deck hasn't been upgraded yet
+            pass
+
+    def fillQueues(self):
+        self.fillFailedQueue()
+        self.fillRevQueue()
+        self.fillNewQueue()
+
+    def rebuildCounts(self):
+        # global counts
+        self.cardCount = self.s.scalar("select count(*) from cards")
+        self.factCount = self.s.scalar("select count(*) from facts")
+        # due counts
+        self.rebuildFailedCount()
+        self.rebuildRevCount()
+        self.rebuildNewCount()
+
+    def _cardLimit(self, active, inactive, sql):
+        yes = parseTags(self.getVar(active))
+        no = parseTags(self.getVar(inactive))
+        if yes:
+            yids = tagIds(self.s, yes).values()
+            nids = tagIds(self.s, no).values()
+            return sql.replace(
+                "where",
+                "where +c.id in (select cardId from cardTags where "
+                "tagId in %s) and +c.id not in (select cardId from "
+                "cardTags where tagId in %s) and" % (
+                ids2str(yids),
+                ids2str(nids)))
+        elif no:
+            nids = tagIds(self.s, no).values()
+            return sql.replace(
+                "where",
+                "where +c.id not in (select cardId from cardTags where "
+                "tagId in %s) and" % ids2str(nids))
+        else:
+            return sql
+
+    def _rebuildFailedCount(self):
+        # This is a count of all failed cards within the current day cutoff.
+        # The cards may not be ready for review yet, but can still be
+        # displayed if failedCardsMax is reached.
+        self.failedSoonCount = self.s.scalar(
+            self.cardLimit(
+            "revActive", "revInactive",
+            "select count(*) from cards c where type = 0 "
+            "and combinedDue < :lim"), lim=self.failedCutoff)
+
+    def _rebuildRevCount(self):
+        self.revCount = self.s.scalar(
+            self.cardLimit(
+            "revActive", "revInactive",
+            "select count(*) from cards c where type = 1 "
+            "and combinedDue < :lim"), lim=self.dueCutoff)
+
+    def _rebuildNewCount(self):
+        self.newCount = self.s.scalar(
+            self.cardLimit(
+            "newActive", "newInactive",
+            "select count(*) from cards c where type = 2 "
+            "and combinedDue < :lim"), lim=self.dueCutoff)
+        self.updateNewCountToday()
+        self.spacedCards = []
+
+    def _updateNewCountToday(self):
+        self.newCountToday = max(min(
+            self.newCount, self.newCardsPerDay -
+            self.newCardsDoneToday()), 0)
+
+    def _fillFailedQueue(self):
+        if self.failedSoonCount and not self.failedQueue:
+            self.failedQueue = self.s.all(
+                self.cardLimit(
+                "revActive", "revInactive", """
+select c.id, factId, combinedDue from cards c where
+type = 0 and combinedDue < :lim order by combinedDue
+limit %d""" % self.queueLimit), lim=self.failedCutoff)
+            self.failedQueue.reverse()
+
+    def _fillRevQueue(self):
+        if self.revCount and not self.revQueue:
+            self.revQueue = self.s.all(
+                self.cardLimit(
+                "revActive", "revInactive", """
+select c.id, factId from cards c where
+type = 1 and combinedDue < :lim order by %s
+limit %d""" % (self.revOrder(), self.queueLimit)), lim=self.dueCutoff)
+            self.revQueue.reverse()
+
+    def _fillNewQueue(self):
+        if self.newCountToday and not self.newQueue and not self.spacedCards:
+            self.newQueue = self.s.all(
+                self.cardLimit(
+                "newActive", "newInactive", """
+select c.id, factId from cards c where
+type = 2 and combinedDue < :lim order by %s
+limit %d""" % (self.newOrder(), self.queueLimit)), lim=self.dueCutoff)
+            self.newQueue.reverse()
+
+    def queueNotEmpty(self, queue, fillFunc, new=False):
+        while True:
+            self.removeSpaced(queue, new)
+            if queue:
+                return True
+            fillFunc()
+            if not queue:
+                return False
+
+    def removeSpaced(self, queue, new=False):
+        popped = []
+        delay = None
+        while queue:
+            fid = queue[-1][1]
+            if fid in self.spacedFacts:
+                # still spaced
+                id = queue.pop()[0]
+                # assuming 10 cards/minute, track id if likely to expire
+                # before queue refilled
+                if new and self.newSpacing < self.queueLimit * 6:
+                    popped.append(id)
+                    delay = self.spacedFacts[fid]
+            else:
+                if popped:
+                    self.spacedCards.append((delay, popped))
+                return
+
+    def revNoSpaced(self):
+        return self.queueNotEmpty(self.revQueue, self.fillRevQueue)
+
+    def newNoSpaced(self):
+        return self.queueNotEmpty(self.newQueue, self.fillNewQueue, True)
+
+    def _requeueCard(self, card, oldSuc):
+        newType = None
+        try:
+            if card.reps == 1:
+                if self.newFromCache:
+                    # fetched from spaced cache
+                    newType = 2
+                    cards = self.spacedCards.pop(0)[1]
+                    # reschedule the siblings
+                    if len(cards) > 1:
+                        self.spacedCards.append(
+                            (time.time() + self.newSpacing, cards[1:]))
+                else:
+                    # fetched from normal queue
+                    newType = 1
+                    self.newQueue.pop()
+            elif oldSuc == 0:
+                self.failedQueue.pop()
+            else:
+                self.revQueue.pop()
+        except:
+            raise Exception("""\
+requeueCard() failed. Please report this along with the steps you take to
+produce the problem.
+
+Counts %d %d %d
+Queue %d %d %d
+Card info: %d %d %d
+New type: %s""" % (self.failedSoonCount, self.revCount, self.newCountToday,
+                          len(self.failedQueue), len(self.revQueue),
+                          len(self.newQueue),
+                          card.reps, card.successive, oldSuc, `newType`))
+
+    def revOrder(self):
+        return ("priority desc, interval desc",
+                "priority desc, interval",
+                "priority desc, combinedDue",
+                "priority desc, factId, ordinal")[self.revCardOrder]
+
+    def newOrder(self):
+        return ("priority desc, due",
+                "priority desc, due",
+                "priority desc, due desc")[self.newCardOrder]
+
+    def rebuildTypes(self):
+        "Rebuild the type cache. Only necessary on upgrade."
+        # set canonical type first
+        self.s.statement("""
+update cards set
+relativeDelay = (case
+when successive then 1 when reps then 0 else 2 end)
+""")
+        # then current type based on that
+        self.s.statement("""
+update cards set
+type = (case
+when type >= 0 then relativeDelay else relativeDelay - 3 end)
+""")
+
+    def _cardQueue(self, card):
+        return self.cardType(card)
+
+    def cardType(self, card):
+        "Return the type of the current card (what queue it's in)"
+        if card.successive:
+            return 1
+        elif card.reps:
+            return 0
+        else:
+            return 2
+
+    def updateCutoff(self):
+        d = datetime.datetime.utcfromtimestamp(
+            time.time() - self.utcOffset) + datetime.timedelta(days=1)
+        d = datetime.datetime(d.year, d.month, d.day)
+        newday = self.utcOffset - time.timezone
+        d += datetime.timedelta(seconds=newday)
+        cutoff = time.mktime(d.timetuple())
+        # cutoff must not be in the past
+        while cutoff < time.time():
+            cutoff += 86400
+        # cutoff must not be more than 24 hours in the future
+        cutoff = min(time.time() + 86400, cutoff)
+        self.failedCutoff = cutoff
+        if self.getBool("perDay"):
+            self.dueCutoff = cutoff
+        else:
+            self.dueCutoff = time.time()
+
+    def reset(self):
+        # setup global/daily stats
+        self._globalStats = globalStats(self)
+        self._dailyStats = dailyStats(self)
+        # recheck counts
+        self.rebuildCounts()
+        # empty queues; will be refilled by getCard()
+        self.failedQueue = []
+        self.revQueue = []
+        self.newQueue = []
+        self.spacedFacts = {}
+        # determine new card distribution
+        if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
+            if self.newCountToday:
+                self.newCardModulus = (
+                    (self.newCountToday + self.revCount) / self.newCountToday)
+                # if there are cards to review, ensure modulo >= 2
+                if self.revCount:
+                    self.newCardModulus = max(2, self.newCardModulus)
+            else:
+                self.newCardModulus = 0
+        else:
+            self.newCardModulus = 0
+        # recache css
+        self.rebuildCSS()
+        # spacing for delayed cards - not to be confused with newCardSpacing
+        # above
+        self.newSpacing = self.getFloat('newSpacing')
+        self.revSpacing = self.getFloat('revSpacing')
+
+    def checkDay(self):
+        # check if the day has rolled over
+        if genToday(self) != self._dailyStats.day:
+            self.updateCutoff()
+            self.reset()
+
+    # Review early
+    ##########################################################################
+
+    def setupReviewEarlyScheduler(self):
+        self.fillRevQueue = self._fillRevEarlyQueue
+        self.rebuildRevCount = self._rebuildRevEarlyCount
+        self.finishScheduler = self._onReviewEarlyFinished
+        self.answerPreSave = self._reviewEarlyPreSave
+        self.scheduler = "reviewEarly"
+
+    def _reviewEarlyPreSave(self, card, ease):
+        if ease > 1:
+            # prevent it from appearing in next queue fill
+            card.type += 6
+
+    def resetAfterReviewEarly(self):
+        "Put temporarily suspended cards back into play. Caller must .reset()"
+        # FIXME: can ignore priorities in the future
+        ids = self.s.column0(
+            "select id from cards where type between 6 and 8 or priority = -1")
+        if ids:
+            self.updatePriorities(ids)
+            self.s.statement(
+                "update cards set type = type - 6 where type between 6 and 8")
+            self.flushMod()
+
+    def _onReviewEarlyFinished(self):
+        # clean up buried cards
+        self.resetAfterReviewEarly()
+        # and go back to regular scheduler
+        self.setupStandardScheduler()
+
+    def _rebuildRevEarlyCount(self):
+        # in the future it would be nice to skip the first x days of due cards
+        self.revCount = self.s.scalar(
+            self.cardLimit(
+            "revActive", "revInactive", """
+select count() from cards c where type = 1 and combinedDue > :now
+"""), now=self.dueCutoff)
+
+    def _fillRevEarlyQueue(self):
+        if self.revCount and not self.revQueue:
+            self.revQueue = self.s.all(
+                self.cardLimit(
+                "revActive", "revInactive", """
+select id, factId from cards c where type = 1 and combinedDue > :lim
+order by combinedDue limit %d""" % self.queueLimit), lim=self.dueCutoff)
+            self.revQueue.reverse()
+
+    # Learn more
+    ##########################################################################
+
+    def setupLearnMoreScheduler(self):
+        self.rebuildNewCount = self._rebuildLearnMoreCount
+        self.updateNewCountToday = self._updateLearnMoreCountToday
+        self.finishScheduler = self.setupStandardScheduler
+        self.scheduler = "learnMore"
+
+    def _rebuildLearnMoreCount(self):
+        self.newCount = self.s.scalar(
+            self.cardLimit(
+            "newActive", "newInactive",
+            "select count(*) from cards c where type = 2 "
+            "and combinedDue < :lim"), lim=self.dueCutoff)
+        self.spacedCards = []
+
+    def _updateLearnMoreCountToday(self):
+        self.newCountToday = self.newCount
+
+    # Cramming
+    ##########################################################################
+
+    def setupCramScheduler(self, active, order):
+        self.getCardId = self._getCramCardId
+        self.activeCramTags = active
+        self.cramOrder = order
+        self.rebuildNewCount = self._rebuildCramNewCount
+        self.rebuildRevCount = self._rebuildCramCount
+        self.rebuildFailedCount = self._rebuildFailedCramCount
+        self.fillRevQueue = self._fillCramQueue
+        self.fillFailedQueue = self._fillFailedCramQueue
+        self.finishScheduler = self.setupStandardScheduler
+        self.failedCramQueue = []
+        self.requeueCard = self._requeueCramCard
+        self.cardQueue = self._cramCardQueue
+        self.answerCard = self._answerCramCard
+        self.spaceCards = self._spaceCramCards
+        # reuse review early's code
+        self.answerPreSave = self._cramPreSave
+        self.cardLimit = self._cramCardLimit
+        self.scheduler = "cram"
+
+    def _cramPreSave(self, card, ease):
+        # prevent it from appearing in next queue fill
+        card.lastInterval = self.cramLastInterval
+        card.type += 6
+
+    def _spaceCramCards(self, card):
+        self.spacedFacts[card.factId] = time.time() + self.newSpacing
+
+    def _answerCramCard(self, card, ease):
+        self.cramLastInterval = card.lastInterval
+        self._answerCard(card, ease)
+        if ease == 1:
+            self.failedCramQueue.insert(0, [card.id, card.factId])
+
+    def _getCramCardId(self, check=True):
+        self.checkDay()
+        self.fillQueues()
+        if self.failedCardMax and self.failedSoonCount >= self.failedCardMax:
+            return self.failedQueue[-1][0]
+        # card due for review?
+        if self.revNoSpaced():
+            return self.revQueue[-1][0]
+        if self.failedQueue:
+            return self.failedQueue[-1][0]
+        if check:
+            # collapse spaced cards before reverting back to old scheduler
+            self.reset()
+            return self.getCardId(False)
+        # if we're in a custom scheduler, we may need to switch back
+        if self.finishScheduler:
+            self.finishScheduler()
+            self.reset()
+            return self.getCardId()
+
+    def _cramCardQueue(self, card):
+        if self.revQueue and self.revQueue[-1][0] == card.id:
+            return 1
+        else:
+            return 0
+
+    def _requeueCramCard(self, card, oldSuc):
+        if self.cardQueue(card) == 1:
+            self.revQueue.pop()
+        else:
+            self.failedCramQueue.pop()
+
+    def _rebuildCramNewCount(self):
+        self.newCount = 0
+        self.newCountToday = 0
+
+    def _cramCardLimit(self, active, inactive, sql):
+        # inactive is (currently) ignored
+        if isinstance(active, list):
+            return sql.replace(
+                "where", "where +c.id in " + ids2str(active) + " and")
+        else:
+            yes = parseTags(active)
+            if yes:
+                yids = tagIds(self.s, yes).values()
+                return sql.replace(
+                    "where ",
+                    "where +c.id in (select cardId from cardTags where "
+                    "tagId in %s) and " % ids2str(yids))
+            else:
+                return sql
+
+    def _fillCramQueue(self):
+        if self.revCount and not self.revQueue:
+            self.revQueue = self.s.all(self.cardLimit(
+                self.activeCramTags, "", """
+select id, factId from cards c
+where type between 0 and 2
+order by %s
+limit %s""" % (self.cramOrder, self.queueLimit)))
+            self.revQueue.reverse()
+
+    def _rebuildCramCount(self):
+        self.revCount = self.s.scalar(self.cardLimit(
+            self.activeCramTags, "",
+            "select count(*) from cards c where type between 0 and 2"))
+
+    def _rebuildFailedCramCount(self):
+        self.failedSoonCount = len(self.failedCramQueue)
+
+    def _fillFailedCramQueue(self):
+        self.failedQueue = self.failedCramQueue
 
     # Getting the next card
     ##########################################################################
 
     def getCard(self, orm=True):
         "Return the next card object, or None."
-        self.checkDue()
         id = self.getCardId()
         if id:
             return self.cardFromId(id, orm)
+        else:
+            self.stopSession()
 
-    def getCardId(self):
+    def _getCardId(self, check=True):
         "Return the next due card id, or None."
-        # failed card due?
-        if self.delay0 and self.failedNowCount:
-            return self.s.scalar("select id from failedCards limit 1")
-        # failed card queue too big?
-        if (self.failedCardMax and
-            self.failedSoonCount >= self.failedCardMax):
-            return self.s.scalar(
-                "select id from failedCards limit 1")
+        self.checkDay()
+        self.fillQueues()
+        self.updateNewCountToday()
+        if self.failedQueue:
+            # failed card due?
+            if self.delay0:
+                if self.failedQueue[-1][2] + self.delay0 < time.time():
+                    return self.failedQueue[-1][0]
+            # failed card queue too big?
+            if (self.failedCardMax and
+                self.failedSoonCount >= self.failedCardMax):
+                return self.failedQueue[-1][0]
         # distribute new cards?
-        if self._timeForNewCard():
-            id = self._maybeGetNewCard()
-            if id:
-                return id
+        if self.newNoSpaced() and self.timeForNewCard():
+            return self.getNewCard()
         # card due for review?
-        if self.revCount:
-            return self._getRevCard()
+        if self.revNoSpaced():
+            return self.revQueue[-1][0]
         # new cards left?
-        id = self._maybeGetNewCard()
-        if id:
-            return id
-        # review ahead?
-        if self.reviewEarly:
-            id = self.getCardIdAhead()
+        if self.newCountToday:
+            id = self.getNewCard()
             if id:
                 return id
-            else:
-                self.resetAfterReviewEarly()
-                self.checkDue()
+        if check:
+            # check for expired cards, or new day rollover
+            self.updateCutoff()
+            self.reset()
+            return self.getCardId(check=False)
         # display failed cards early/last
-        if self._showFailedLast():
-            id = self.s.scalar(
-                "select id from failedCards limit 1")
-            if id:
-                return id
-
-    def getCardIdAhead(self):
-        "Return the first card that would become due."
-        id = self.s.scalar("""
-select id from cards
-where type = 1 and isDue = 0 and priority in (1,2,3,4)
-order by combinedDue
-limit 1""")
-        return id
+        if not check and self.showFailedLast() and self.failedQueue:
+            return self.failedQueue[-1][0]
+        # if we're in a custom scheduler, we may need to switch back
+        if self.finishScheduler:
+            self.finishScheduler()
+            self.reset()
+            return self.getCardId()
 
     # Get card: helper functions
     ##########################################################################
 
     def _timeForNewCard(self):
         "True if it's time to display a new card when distributing."
+        if not self.newCountToday:
+            return False
         if self.newCardSpacing == NEW_CARDS_LAST:
             return False
         if self.newCardSpacing == NEW_CARDS_FIRST:
             return True
-        # force old if there are very high priority cards
-        if self.s.scalar(
-            "select 1 from cards where type = 1 and isDue = 1 "
-            "and priority = 4 limit 1"):
-            return False
+        # force review if there are very high priority cards
+        if self.revQueue:
+            if self.s.scalar(
+                "select 1 from cards where id = :id and priority = 4",
+                id = self.revQueue[-1][0]):
+                return False
         if self.newCardModulus:
             return self._dailyStats.reps % self.newCardModulus == 0
         else:
             return False
 
-    def _maybeGetNewCard(self):
-        "Get a new card, provided daily new card limit not exceeded."
-        if not self.newCountToday and not self.newEarly:
+    def getNewCard(self):
+        src = None
+        if (self.spacedCards and
+            self.spacedCards[0][0] < time.time()):
+            # spaced card has expired
+            src = 0
+        elif self.newQueue:
+            # card left in new queue
+            src = 1
+        elif self.spacedCards:
+            # card left in spaced queue
+            src = 0
+        else:
+            # only cards spaced to another day left
             return
-        return self._getNewCard()
+        if src == 0:
+            cards = self.spacedCards[0][1]
+            self.newFromCache = True
+            return cards[0]
+        else:
+            self.newFromCache = False
+            return self.newQueue[-1][0]
 
-    def newCardTable(self):
-        return ("acqCardsOld",
-                "acqCardsOld",
-                "acqCardsNew")[self.newCardOrder]
-
-    def revCardTable(self):
-        return ("revCardsOld",
-                "revCardsNew",
-                "revCardsDue",
-                "revCardsRandom")[self.revCardOrder]
-
-    def _getNewCard(self):
-        "Return the next new card id, if exists."
-        return self.s.scalar(
-            "select id from %s limit 1" % self.newCardTable())
-
-    def _getRevCard(self):
-        "Return the next review card id."
-        return self.s.scalar(
-            "select id from %s limit 1" % self.revCardTable())
-
-    def _showFailedLast(self):
+    def showFailedLast(self):
         return self.collapseTime or not self.delay0
 
     def cardFromId(self, id, orm=False):
@@ -265,150 +762,62 @@ limit 1""")
             card = anki.cards.Card()
             if not card.fromDB(self.s, id):
                 return
+        card.deck = self
         card.genFuzz()
         card.startTimer()
         return card
 
-    # Getting cards in bulk
-    ##########################################################################
-    # this is used for the website and ankimini
-    # done in rows for efficiency
-
-    def getCards(self, extraMunge=None):
-        "Get a number of cards and related data for client display."
-        d = self._getCardTables()
-        def munge(row):
-            row = list(row)
-            row[0] = str(row[0])
-            row[1] = str(row[1])
-            row[2] = int(row[2])
-            row[5] = hexifyID(row[5])
-            if extraMunge:
-                return extraMunge(row)
-            return row
-        for type in ('fail', 'rev', 'acq'):
-            d[type] = [munge(x) for x in d[type]]
-        if d['fail'] or d['rev'] or d['acq']:
-            d['stats'] = self.getStats()
-            d['status'] = 'cardsAvailable'
-            d['initialIntervals'] = (
-                self.hardIntervalMin,
-                self.hardIntervalMax,
-                self.midIntervalMin,
-                self.midIntervalMax,
-                self.easyIntervalMin,
-                self.easyIntervalMax,
-                )
-            d['newCardSpacing'] = self.newCardSpacing
-            d['newCardModulus'] = self.newCardModulus
-            return d
-        else:
-            if self.isEmpty():
-                fin = ""
-            else:
-                fin = self.deckFinishedMsg()
-            return {"status": "deckFinished",
-                    "finishedMsg": fin}
-
-    def _getCardTables(self):
-        self.checkDue()
-        sel = """
-select id, factId, modified, question, answer, cardModelId,
-type, due, interval, factor, priority from """
-        new = self.newCardTable()
-        rev = self.revCardTable()
-        d = {}
-        d['fail'] = self.s.all(sel + """
-cards where type = 0 and isDue = 1 and
-combinedDue <= :now limit 30""", now=time.time())
-        d['rev'] = self.s.all(sel + rev + " limit 30")
-        if self.newCountToday and (self.newCardSpacing != NEW_CARDS_LAST or
-                                   not d['rev']):
-            d['acq'] = self.s.all(sel + """
-%s where factId in (select distinct factId from cards
-where factId in (select factId from %s limit 60))""" % (new, new))
-        else:
-            d['acq'] = []
-        if (not d['fail'] and not d['rev'] and not d['acq']):
-            d['fail'] = self.s.all(sel + "failedCards limit 100")
-        return d
-
     # Answering a card
     ##########################################################################
 
-    def answerCard(self, card, ease):
+    def _answerCard(self, card, ease):
         undoName = _("Answer Card")
         self.setUndoStart(undoName)
         now = time.time()
         # old state
         oldState = self.cardState(card)
+        oldQueue = self.cardQueue(card)
         lastDelaySecs = time.time() - card.combinedDue
         lastDelay = lastDelaySecs / 86400.0
         oldSuc = card.successive
         # update card details
         last = card.interval
         card.interval = self.nextInterval(card, ease)
-        if lastDelay >= 0:
-            # keep last interval if reviewing early
-            card.lastInterval = last
+        card.lastInterval = last
         if card.reps:
             # only update if card was not new
             card.lastDue = card.due
         card.due = self.nextDue(card, ease, oldState)
         card.isDue = 0
         card.lastFactor = card.factor
-        if lastDelay >= 0:
-            # don't update factor if learning ahead
+        card.spaceUntil = 0
+        if not self.finishScheduler:
+            # don't update factor in custom schedulers
             self.updateFactor(card, ease)
         # spacing
-        (minSpacing, spaceFactor) = self.s.first("""
-select models.initialSpacing, models.spacing from
-facts, models where facts.modelId = models.id and facts.id = :id""", id=card.factId)
-        minOfOtherCards = self.s.scalar("""
-select min(interval) from cards
-where factId = :fid and id != :id""", fid=card.factId, id=card.id) or 0
-        if minOfOtherCards:
-            space = min(minOfOtherCards, card.interval)
+        self.spaceCards(card)
+        # adjust counts for current card
+        if ease == 1:
+            if card.due < self.failedCutoff:
+                self.failedSoonCount += 1
+        if oldQueue == 0:
+            self.failedSoonCount -= 1
+        elif oldQueue == 1:
+            self.revCount -= 1
         else:
-            space = 0
-        space = space * spaceFactor * 86400.0
-        space = max(minSpacing, space)
-        space += time.time()
-        card.combinedDue = max(card.due, space)
-        # check what other cards we've spaced
-        if self.reviewEarly:
-            extra = ""
-        else:
-            # if not reviewing early, make sure the current card is counted
-            # even if it was not due yet (it's a failed card)
-            extra = "or id = :cid"
-        for (type, count) in self.s.all("""
-select type, count(type) from cards
-where factId = :fid and
-(isDue = 1 %s)
-group by type""" % extra, fid=card.factId, cid=card.id):
-            if type == 0:
-                self.failedSoonCount -= count
-            elif type == 1:
-                self.revCount -= count
-            else:
-                self.newCount -= count
-        # space other cards
-        self.s.statement("""
-update cards set
-spaceUntil = :space,
-combinedDue = max(:space, due),
-modified = :now,
-isDue = 0
-where id != :id and factId = :factId""",
-                         id=card.id, space=space, now=now, factId=card.factId)
-        card.spaceUntil = 0
-        # temp suspend if learning ahead
-        if self.reviewEarly and lastDelay < 0:
-            if oldSuc or lastDelaySecs > self.delay0 or not self._showFailedLast():
-                card.priority = -1
+            self.newCount -= 1
         # card stats
         anki.cards.Card.updateStats(card, ease, oldState)
+        # update type & ensure past cutoff
+        card.type = self.cardType(card)
+        card.relativeDelay = card.type
+        if ease != 1:
+            card.due = max(card.due, self.dueCutoff+1)
+        # allow custom schedulers to munge the card
+        if self.answerPreSave:
+            self.answerPreSave(card, ease)
+        # save
+        card.combinedDue = card.due
         card.toDB(self.s)
         # global/daily stats
         anki.stats.updateAllStats(self.s, self._globalStats, self._dailyStats,
@@ -417,11 +826,35 @@ where id != :id and factId = :factId""",
         entry = CardHistoryEntry(card, ease, lastDelay)
         entry.writeSQL(self.s)
         self.modified = now
+        # remove from queue
+        self.requeueCard(card, oldSuc)
+        # leech handling - we need to do this after the queue, as it may cause
+        # a reset()
         isLeech = self.isLeech(card)
         if isLeech:
             self.handleLeech(card)
         runHook("cardAnswered", card.id, isLeech)
         self.setUndoEnd(undoName)
+
+    def _spaceCards(self, card):
+        new = time.time() + self.newSpacing
+        self.s.statement("""
+update cards set
+combinedDue = (case
+when type = 1 then combinedDue + 86400 * (case
+  when interval*:rev < 1 then 0
+  else interval*:rev
+  end)
+when type = 2 then :new
+end),
+modified = :now, isDue = 0
+where id != :id and factId = :factId
+and combinedDue < :cut
+and type between 1 and 2""",
+                         id=card.id, now=time.time(), factId=card.factId,
+                         cut=self.dueCutoff, new=new, rev=self.revSpacing)
+        # update local cache of seen facts
+        self.spacedFacts[card.factId] = new
 
     def isLeech(self, card):
         no = card.noCount
@@ -437,18 +870,19 @@ where id != :id and factId = :factId""",
             (fmax - no) % (max(fmax/2, 1)) == 0)
 
     def handleLeech(self, card):
-        self.refresh()
+        self.refreshSession()
         scard = self.cardFromId(card.id, True)
         tags = scard.fact.tags
         tags = addTags("Leech", tags)
         scard.fact.tags = canonifyTags(tags)
-        scard.fact.setModified(textChanged=True)
+        scard.fact.setModified(textChanged=True, deck=self)
         self.updateFactTags([scard.fact.id])
         self.s.flush()
         self.s.expunge(scard)
         if self.getBool('suspendLeeches'):
             self.suspendCards([card.id])
-        self.refresh()
+        self.reset()
+        self.refreshSession()
 
     # Interval management
     ##########################################################################
@@ -461,8 +895,10 @@ where id != :id and factId = :factId""",
     def _nextInterval(self, card, delay, ease):
         interval = card.interval
         factor = card.factor
-        # if shown early and not failed
-        if delay < 0 and card.successive:
+        # if shown early
+        if delay < 0:
+            # FIXME: this should recreate lastInterval from interval /
+            # lastFactor, or we lose delay information when reviewing early
             interval = max(card.lastInterval, card.interval + delay)
             if interval < self.midIntervalMin:
                 interval = 0
@@ -509,10 +945,17 @@ where id != :id and factId = :factId""",
     def nextDue(self, card, ease, oldState):
         "Return time when CARD will expire given EASE."
         if ease == 1:
-            if oldState == "mature":
-                due = self.delay1
+            # 600 is a magic value which means no bonus, and is used to ease
+            # upgrades
+            cram = self.scheduler == "cram"
+            if (not cram and oldState == "mature"
+                and self.delay1 and self.delay1 != 600):
+                # user wants a bonus of 1+ days. put the failed cards at the
+                # start of the future day, so that failures that day will come
+                # after the waiting cards
+                return self.failedCutoff + (self.delay1 - 1)*86400
             else:
-                due = self.delay0
+                due = 0
         else:
             due = card.interval * 86400.0
         return due + time.time()
@@ -536,10 +979,12 @@ where id != :id and factId = :factId""",
         "Return an adjusted delay value for CARD based on EASE."
         if self.cardIsNew(card):
             return 0
-        if card.combinedDue <= time.time():
-            return (time.time() - card.due) / 86400.0
+        if card.reps and not card.successive:
+            return 0
+        if card.combinedDue <= self.dueCutoff:
+            return (self.dueCutoff - card.due) / 86400.0
         else:
-            return (time.time() - card.combinedDue) / 86400.0
+            return (self.dueCutoff - card.combinedDue) / 86400.0
 
     def resetCards(self, ids):
         "Reset progress on cards in IDS."
@@ -549,19 +994,19 @@ factor = 2.5, reps = 0, successive = 0, averageTime = 0, reviewTime = 0,
 youngEase0 = 0, youngEase1 = 0, youngEase2 = 0, youngEase3 = 0,
 youngEase4 = 0, matureEase0 = 0, matureEase1 = 0, matureEase2 = 0,
 matureEase3 = 0,matureEase4 = 0, yesCount = 0, noCount = 0,
-spaceUntil = 0, isDue = 0, type = 2,
-combinedDue = created, modified = :now, due = created
+spaceUntil = 0, type = 2, relativeDelay = 2,
+combinedDue = created, modified = :now, due = created, isDue = 0
 where id in %s""" % ids2str(ids), now=time.time(), new=0)
         if self.newCardOrder == NEW_CARDS_RANDOM:
             # we need to re-randomize now
             self.randomizeNewCards(ids)
         self.flushMod()
-        self.refresh()
+        self.refreshSession()
 
     def randomizeNewCards(self, cardIds=None):
         "Randomize 'due' on all new cards."
         now = time.time()
-        query = "select distinct factId from cards where type = 2"
+        query = "select distinct factId from cards where reps = 0"
         if cardIds:
             query += " and id in %s" % ids2str(cardIds)
         fids = self.s.column0(query)
@@ -571,19 +1016,19 @@ where id in %s""" % ids2str(ids), now=time.time(), new=0)
         self.s.statements("""
 update cards
 set due = :rand + ordinal,
-combinedDue = max(:rand + ordinal, spaceUntil),
+combinedDue = :rand + ordinal,
 modified = :now
 where factId = :fid
-and type = 2""", data)
+and relativeDelay = 2""", data)
 
     def orderNewCards(self):
         "Set 'due' to card creation time."
         self.s.statement("""
 update cards set
 due = created,
-combinedDue = max(spaceUntil, due),
+combinedDue = created,
 modified = :now
-where type = 2""", now=time.time())
+where relativeDelay = 2""", now=time.time())
 
     def rescheduleCards(self, ids, min, max):
         "Reset cards and schedule with new interval in days (min, max)."
@@ -607,116 +1052,10 @@ successive = 1,
 yesCount = 1,
 firstAnswered = :t,
 type = 1,
+relativeDelay = 1,
 isDue = 0
 where id = :id""", vals)
         self.flushMod()
-
-    # Queue/cache management
-    ##########################################################################
-
-    def rebuildTypes(self, where=""):
-        "Rebuild the type cache. Only necessary on upgrade."
-        self.s.statement("""
-update cards
-set type = (case
-when successive = 0 and reps != 0
-then 0 -- failed
-when successive != 0 and reps != 0
-then 1 -- review
-else 2 -- new
-end)""" + where)
-
-    def rebuildCounts(self, full=True):
-        # need to check due first, so new due cards are not added later
-        self.checkDue()
-        # global counts
-        if full:
-            self.cardCount = self.s.scalar("select count(*) from cards")
-            self.factCount = self.s.scalar("select count(*) from facts")
-        # due counts
-        self.failedSoonCount = self.s.scalar(
-            "select count(*) from failedCards")
-        self.failedNowCount = self.s.scalar("""
-select count(*) from cards where type = 0 and isDue = 1
-and combinedDue <= :t""", t=time.time())
-        self.revCount = self.s.scalar(
-            "select count(*) from cards where "
-            "type = 1 and priority in (1,2,3,4) and isDue = 1")
-        self.newCount = self.s.scalar(
-            "select count(*) from cards where "
-            "type = 2 and priority in (1,2,3,4) and isDue = 1")
-
-    def forceIndex(self, index):
-        ver = sqlite.sqlite_version.split(".")
-        if int(ver[1]) >= 6 and int(ver[2]) >= 4:
-            # only supported in 3.6.4+
-            return " indexed by " + index + " "
-        return ""
-
-    def checkDue(self):
-        "Mark expired cards due, and update counts."
-        self.checkDailyStats()
-        # mark due & update counts
-        stmt = ("update cards " + self.forceIndex("ix_cards_priorityDue") +
-                "set isDue = 1 where type = %d and isDue = 0 and " +
-                "priority in (1,2,3,4) and combinedDue <= :now")
-        # failed cards
-        self.failedSoonCount += self.s.statement(
-            stmt % 0, now=time.time()+self.delay0).rowcount
-        self.failedNowCount = self.s.scalar("""
-select count(*) from cards where
-type = 0 and isDue = 1 and combinedDue <= :now""", now=time.time())
-        # review
-        self.revCount += self.s.statement(
-            stmt % 1, now=time.time()).rowcount
-        # new
-        self.newCount += self.s.statement(
-            stmt % 2, now=time.time()).rowcount
-        self.newCountToday = max(min(
-            self.newCount, self.newCardsPerDay -
-            self.newCardsToday()), 0)
-
-    def rebuildQueue(self):
-        "Update relative delays based on current time."
-        # setup global/daily stats
-        self._globalStats = globalStats(self)
-        self._dailyStats = dailyStats(self)
-        # mark due cards and update counts
-        self.checkDue()
-        # determine new card distribution
-        if self.newCardSpacing == NEW_CARDS_DISTRIBUTE:
-            if self.newCountToday:
-                self.newCardModulus = (
-                    (self.newCountToday + self.revCount) / self.newCountToday)
-                # if there are cards to review, ensure modulo >= 2
-                if self.revCount:
-                    self.newCardModulus = max(2, self.newCardModulus)
-            else:
-                self.newCardModulus = 0
-        else:
-            self.newCardModulus = 0
-        # determine starting factor for new cards
-        self.averageFactor = (self.s.scalar(
-            "select avg(factor) from cards where type = 1")
-                               or Deck.initialFactor)
-        self.averageFactor = max(self.averageFactor, Deck.minimumAverage)
-        # recache css
-        self.rebuildCSS()
-
-    def checkDailyStats(self):
-        # check if the day has rolled over
-        if genToday(self) != self._dailyStats.day:
-            self._dailyStats = dailyStats(self)
-
-    def resetAfterReviewEarly(self):
-        ids = self.s.column0("select id from cards where priority = -1")
-        if ids:
-            self.updatePriorities(ids)
-            self.flushMod()
-        if self.reviewEarly or self.newEarly:
-            self.reviewEarly = False
-            self.newEarly = False
-            self.checkDue()
 
     # Times
     ##########################################################################
@@ -724,11 +1063,10 @@ type = 0 and isDue = 1 and combinedDue <= :now""", now=time.time())
     def nextDueMsg(self):
         next = self.earliestTime()
         if next:
-            newCount = self.s.scalar("""
-select count() from cards where type = 2
-and priority in (1,2,3,4)""")
+            # all new cards except suspended
+            newCount = self.newCardsDueBy(self.dueCutoff + 86400)
             newCardsTomorrow = min(newCount, self.newCardsPerDay)
-            cards = self.cardsDueBy(time.time() + 86400)
+            cards = self.cardsDueBy(self.dueCutoff + 86400)
             msg = _('''\
 <style>b { color: #00f; }</style>
 At this time tomorrow:<br>
@@ -740,7 +1078,7 @@ At this time tomorrow:<br>
                 'wait': ngettext("There will be <b>%s review</b>.",
                           "There will be <b>%s reviews</b>.", cards) % cards,
                 }
-            if next - time.time() > 86400 and not newCardsTomorrow:
+            if next > (self.dueCutoff+86400) and not newCardsTomorrow:
                 msg = (_("The next review is in <b>%s</b>.") %
                        self.earliestTimeStr())
         else:
@@ -752,9 +1090,20 @@ At this time tomorrow:<br>
 This may be in the past if the deck is not finished.
 If the deck has no (enabled) cards, return None.
 Ignore new cards."""
-        return self.s.scalar("""
-select combinedDue from cards where priority in (1,2,3,4) and
-type in (0, 1) order by combinedDue limit 1""")
+        earliestRev = self.s.scalar(self.cardLimit("revActive", "revInactive", """
+select combinedDue from cards c where type = 1
+order by combinedDue
+limit 1"""))
+        earliestFail = self.s.scalar(self.cardLimit("revActive", "revInactive", """
+select combinedDue+%d from cards c where type = 0
+order by combinedDue
+limit 1""" % self.delay0))
+        if earliestRev and earliestFail:
+            return min(earliestRev, earliestFail)
+        elif earliestRev:
+            return earliestRev
+        else:
+            return earliestFail
 
     def earliestTimeStr(self, next=None):
         """Return the relative time to the earliest card as a string."""
@@ -767,39 +1116,33 @@ type in (0, 1) order by combinedDue limit 1""")
 
     def cardsDueBy(self, time):
         "Number of cards due at TIME. Ignore new cards"
-        return self.s.scalar("""
-select count(id) from cards where combinedDue < :time
-and priority in (1,2,3,4) and type in (0, 1)""", time=time)
+        return self.s.scalar(
+            self.cardLimit(
+            "revActive", "revInactive",
+            "select count(*) from cards c where type between 0 and 1 "
+            "and combinedDue < :lim"), lim=time)
+
+    def newCardsDueBy(self, time):
+        "Number of new cards due at TIME."
+        return self.s.scalar(
+            self.cardLimit(
+            "newActive", "newInactive",
+            "select count(*) from cards c where type = 2 "
+            "and combinedDue < :lim"), lim=time)
 
     def deckFinishedMsg(self):
-        self.resetAfterReviewEarly()
         spaceSusp = ""
         c= self.spacedCardCount()
         if c:
-            spaceSusp += ngettext('There is %d delayed new card.',
-                                  'There are %d delayed new cards.',
-                                  c) % c
-        c2 = self.suspendedCardCount()
+            spaceSusp += ngettext(
+                'There is <b>%d delayed</b> card.',
+                'There are <b>%d delayed</b> cards.', c) % c
+        c2 = self.hiddenCards()
         if c2:
             if spaceSusp:
                 spaceSusp += "<br>"
-            spaceSusp += ngettext('There is %d suspended card.',
-                                  'There are %d suspended cards.',
-                                  c2) % c2
-        c3 = self.inactiveCardCount()
-        if c3:
-            if spaceSusp:
-                spaceSusp += "<br>"
-            spaceSusp += ngettext('There is %d inactive card.',
-                                  'There are %d inactive cards.',
-                                  c3) % c3
-        c4 = self.leechCardCount()
-        if c4:
-            if spaceSusp:
-                spaceSusp += "<br>"
-            spaceSusp += ngettext('There is %d leech.',
-                                  'There are %d leeches.',
-                                  c4) % c4
+            spaceSusp += _(
+                "Some cards are inactive or suspended.")
         if spaceSusp:
             spaceSusp = "<br><br>" + spaceSusp
         return _('''\
@@ -816,7 +1159,7 @@ and priority in (1,2,3,4) and type in (0, 1)""", time=time)
     ##########################################################################
 
     def updateAllPriorities(self, partial=False, dirty=True):
-        "Update all card priorities if changed."
+        "Update all card priorities if changed. Caller must .reset()"
         new = self.updateTagPriorities()
         if not partial:
             new = self.s.all("select id, priority as pri from tags")
@@ -829,14 +1172,14 @@ and priority in (1,2,3,4) and type in (0, 1)""", time=time)
         "Update priority setting on tags table."
         # make sure all priority tags exist
         for s in (self.lowPriority, self.medPriority,
-                  self.highPriority, self.suspended):
+                  self.highPriority):
             tagIds(self.s, parseTags(s))
-        tags = self.s.all("select lower(tag), id, priority from tags")
+        tags = self.s.all("select tag, id, priority from tags")
+        tags = [(x[0].lower(), x[1], x[2]) for x in tags]
         up = {}
         for (type, pri) in ((self.lowPriority, 1),
                             (self.medPriority, 3),
-                            (self.highPriority, 4),
-                            (self.suspended, 0)):
+                            (self.highPriority, 4)):
             for tag in parseTags(type.lower()):
                 up[tag] = pri
         new = []
@@ -851,6 +1194,7 @@ and priority in (1,2,3,4) and type in (0, 1)""", time=time)
         return new
 
     def updatePriorities(self, cardIds, suspend=[], dirty=True):
+        "Update priorities for cardIds. Caller must .reset()."
         # any tags to suspend
         if suspend:
             ids = tagIds(self.s, suspend)
@@ -864,7 +1208,6 @@ and priority in (1,2,3,4) and type in (0, 1)""", time=time)
         cards = self.s.all("""
 select cardTags.cardId,
 case
-when min(tags.priority) = 0 then 0
 when max(tags.priority) > 2 then max(tags.priority)
 when min(tags.priority) = 1 then 1
 else 2 end
@@ -884,11 +1227,6 @@ group by cardTags.cardId""" % limit)
                     "update cards set priority = :pri %s where id in %s "
                     "and priority != :pri and priority >= -2") % (
                     extra, ids2str(cs)), pri=pri, m=time.time())
-        cnt = self.s.execute(
-            "update cards set isDue = 0 where type in (0,1,2) and "
-            "priority = 0 and isDue = 1").rowcount
-        if cnt:
-            self.rebuildCounts(full=False)
 
     def updatePriority(self, card):
         "Update priority on a single card."
@@ -898,47 +1236,50 @@ group by cardTags.cardId""" % limit)
     # Suspending
     ##########################################################################
 
+    # when older clients are upgraded, we can remove the code which touches
+    # priorities & isDue
+
     def suspendCards(self, ids):
+        "Suspend cards. Caller must .reset()"
         self.startProgress()
-        self.s.statement(
-            "update cards set isDue=0, priority=-3, modified=:t "
-            "where id in %s" % ids2str(ids), t=time.time())
-        self.rebuildCounts(full=False)
+        self.s.statement("""
+update cards
+set type = relativeDelay - 3,
+priority = -3, modified = :t, isDue=0
+where type >= 0 and id in %s""" % ids2str(ids), t=time.time())
         self.flushMod()
         self.finishProgress()
 
     def unsuspendCards(self, ids):
+        "Unsuspend cards. Caller must .reset()"
         self.startProgress()
-        self.s.statement(
-            "update cards set priority=0, modified=:t where id in %s" %
+        self.s.statement("""
+update cards set type = relativeDelay, priority=0, modified=:t
+where type < 0 and id in %s""" %
             ids2str(ids), t=time.time())
         self.updatePriorities(ids)
-        self.rebuildCounts(full=False)
         self.flushMod()
         self.finishProgress()
 
-    # Card/fact counts - all in deck, not just due
+    def buryFact(self, fact):
+        "Bury all cards for fact until next session. Caller must .reset()"
+        for card in fact.cards:
+            if card.type in (0,1,2):
+                card.priority = -2
+                card.type += 3
+                card.isDue = 0
+        self.flushMod()
+
+    # Counts
     ##########################################################################
 
-    def suspendedCardCount(self):
+    def hiddenCards(self):
+        "Assumes queue finished. True if some due cards have not been shown."
         return self.s.scalar("""
-select count(id) from cards where priority = -3""")
+select 1 from cards where combinedDue < :now
+and type between 0 and 1 limit 1""", now=self.dueCutoff)
 
-    def inactiveCardCount(self):
-        return self.s.scalar("""
-select count(id) from cards where priority = 0""")
-
-    def leechCardCount(self):
-        return len(self.findCards("is:suspended tag:leech"))
-
-    def seenCardCount(self):
-        return self.s.scalar(
-            "select count(id) from cards where type != 2")
-
-    # Counts related to due cards
-    ##########################################################################
-
-    def newCardsToday(self):
+    def newCardsDoneToday(self):
         return (self._dailyStats.newEase0 +
                 self._dailyStats.newEase1 +
                 self._dailyStats.newEase2 +
@@ -946,11 +1287,10 @@ select count(id) from cards where priority = 0""")
                 self._dailyStats.newEase4)
 
     def spacedCardCount(self):
-        "Number of spaced new cards."
+        "Number of spaced cards."
         return self.s.scalar("""
-select count(cards.id) from cards %s where
-type = 2 and isDue = 0 and priority in (1,2,3,4) and combinedDue > :now
-and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
+select count(cards.id) from cards where
+combinedDue > :now and due < :now""", now=time.time())
 
     def isEmpty(self):
         return not self.cardCount
@@ -968,7 +1308,11 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
     def newCountAll(self):
         "All new cards, including spaced."
         return self.s.scalar(
-            "select count(id) from cards where type = 2")
+            "select count(id) from cards where relativeDelay = 2")
+
+    def seenCardCount(self):
+        return self.s.scalar(
+            "select count(id) from cards where relativeDelay between 0 and 1")
 
     # Card predicates
     ##########################################################################
@@ -1027,15 +1371,6 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
         left += stats['failed'] * stats['dAverageTime'] * factor
         return left
 
-    def queueForCard(self, card):
-        "Return the queue the current card is in."
-        if self.cardIsNew(card):
-            return "new"
-        elif card.successive == 0:
-            return "failed"
-        elif card.reps:
-            return "rev"
-
     # Facts
     ##########################################################################
 
@@ -1045,7 +1380,7 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
             model = self.currentModel
         return anki.facts.Fact(model)
 
-    def addFact(self, fact):
+    def addFact(self, fact, reset=True):
         "Add a fact to the deck. Return list of new cards."
         if not fact.model:
             fact.model = self.currentModel
@@ -1059,6 +1394,7 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
         # proceed
         cards = []
         self.s.save(fact)
+        # update field cache
         self.factCount += 1
         self.flushMod()
         isRandom = self.newCardOrder == NEW_CARDS_RANDOM
@@ -1066,20 +1402,23 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
             due = random.uniform(0, time.time())
         t = time.time()
         for cardModel in cms:
-            created = fact.created + 0.000001*cardModel.ordinal
+            created = fact.created + 0.00001*cardModel.ordinal
             card = anki.cards.Card(fact, cardModel, created)
             if isRandom:
                 card.due = due
                 card.combinedDue = due
             self.flushMod()
             cards.append(card)
+        # update card q/a
+        fact.setModified(True, self)
         self.updateFactTags([fact.id])
+        # this will call reset() which will update counts
         self.updatePriorities([c.id for c in cards])
-        self.cardCount += len(cards)
-        self.newCount += len(cards)
         # keep track of last used tags for convenience
         self.lastTags = fact.tags
         self.flushMod()
+        if reset:
+            self.reset()
         return fact
 
     def availableCardModels(self, fact, checkActive=True):
@@ -1090,19 +1429,28 @@ and due < :now""" % self.forceIndex("ix_cards_priorityDue"), now=time.time())
                ok = True
                for (type, format) in [("q", cardModel.qformat),
                                       ("a", cardModel.aformat)]:
+                   # compat
+                   format = re.sub("%\((.+?)\)s", "{{\\1}}", format)
                    empty = {}
                    local = {}; local.update(fact)
-                   for k in fact.keys():
+                   local['tags'] = u""
+                   local['Tags'] = u""
+                   local['cardModel'] = u""
+                   local['modelName'] = u""
+                   for k in local.keys():
                        empty[k] = u""
                        empty["text:"+k] = u""
-                       local["text:"+k] = u""
+                       local["text:"+k] = local[k]
                    empty['tags'] = ""
                    local['tags'] = fact.tags
                    try:
-                       if format % local == format % empty:
+                       if (render(format, local) ==
+                           render(format, empty)):
                            ok = False
+                           break
                    except (KeyError, TypeError, ValueError):
                        ok = False
+                       break
                if ok or type == "a" and cardModel.allowEmptyAnswer:
                    models.append(cardModel)
         return models
@@ -1119,13 +1467,17 @@ where factId = :fid and cardModelId = :cmid""",
                                  fid=fact.id, cmid=cardModel.id) == 0:
                     # enough for 10 card models assuming 0.00001 timer precision
                     card = anki.cards.Card(
-                        fact, cardModel, created=fact.created+0.000001*cardModel.ordinal)
+                        fact, cardModel,
+                        fact.created+0.0001*cardModel.ordinal)
                     self.updateCardTags([card.id])
                     self.updatePriority(card)
                     self.cardCount += 1
                     self.newCount += 1
                     ids.append(card.id)
-        self.setModified()
+
+        if ids:
+            fact.setModified(textChanged=True, deck=self)
+            self.setModified()
         return ids
 
     def factIsInvalid(self, fact):
@@ -1155,7 +1507,7 @@ where factId = :fid and cardModelId = :cmid""",
         self.setModified()
 
     def deleteFacts(self, ids):
-        "Bulk delete facts by ID. Assume any cards have already been removed."
+        "Bulk delete facts by ID; don't touch cards. Caller must .reset()."
         if not ids:
             return
         self.s.flush()
@@ -1165,7 +1517,6 @@ where factId = :fid and cardModelId = :cmid""",
         self.s.statement("delete from fields where factId in %s" % strids)
         data = [{'id': id, 'time': now} for id in ids]
         self.s.statements("insert into factsDeleted values (:id, :time)", data)
-        self.rebuildCounts()
         self.setModified()
 
     def deleteDanglingFacts(self):
@@ -1176,10 +1527,11 @@ where facts.id not in (select distinct factId from cards)""")
         self.deleteFacts(ids)
         return ids
 
-    def previewFact(self, oldFact):
+    def previewFact(self, oldFact, cms=None):
         "Duplicate fact and generate cards for preview. Don't add to deck."
         # check we have card models available
-        cms = self.availableCardModels(oldFact, checkActive=False)
+        if cms is None:
+            cms = self.availableCardModels(oldFact, checkActive=True)
         if not cms:
             return []
         fact = self.cloneFact(oldFact)
@@ -1188,6 +1540,7 @@ where facts.id not in (select distinct factId from cards)""")
         for cardModel in cms:
             card = anki.cards.Card(fact, cardModel)
             cards.append(card)
+        fact.setModified(textChanged=True, deck=self, media=False)
         return cards
 
     def cloneFact(self, oldFact):
@@ -1207,7 +1560,7 @@ where facts.id not in (select distinct factId from cards)""")
         self.deleteCards([id])
 
     def deleteCards(self, ids):
-        "Bulk delete cards by ID."
+        "Bulk delete cards by ID. Caller must .reset()"
         if not ids:
             return
         self.s.flush()
@@ -1239,8 +1592,7 @@ where facts.id not in (select distinct factId from cards)""")
                          ids2str(unused))
         # remove any dangling facts
         self.deleteDanglingFacts()
-        self.rebuildCounts()
-        self.refresh()
+        self.refreshSession()
         self.flushMod()
         self.finishProgress()
 
@@ -1254,7 +1606,7 @@ where facts.id not in (select distinct factId from cards)""")
         self.flushMod()
 
     def deleteModel(self, model):
-        "Delete MODEL, and delete any referencing cards/facts. Maybe flush."
+        "Delete MODEL, and all its cards/facts. Caller must .reset()."
         if self.s.scalar("select count(id) from models where id=:id",
                          id=model.id):
             # delete facts/cards
@@ -1272,7 +1624,7 @@ facts.id = cards.factId""", id=model.id))
             self.s.statement("insert into modelsDeleted values (:id, :time)",
                              id=model.id, time=time.time())
             self.flushMod()
-            self.refresh()
+            self.refreshSession()
             self.setModified()
 
     def modelUseCount(self, model):
@@ -1289,13 +1641,15 @@ facts.id = cards.factId""", id=model.id))
     def rebuildCSS(self):
         # css for all fields
         def _genCSS(prefix, row):
-            (id, fam, siz, col, align, rtl) = row
+            (id, fam, siz, col, align, rtl, pre) = row
             t = ""
             if fam: t += 'font-family:"%s";' % toPlatformFont(fam)
             if siz: t += 'font-size:%dpx;' % siz
             if col: t += 'color:%s;' % col
             if rtl == "rtl":
                 t += "direction:rtl;unicode-bidi:embed;"
+            if pre:
+                t += "white-space:pre-wrap;"
             if align != -1:
                 if align == 0: align = "center"
                 elif align == 1: align = "left"
@@ -1305,13 +1659,12 @@ facts.id = cards.factId""", id=model.id))
                 t = "%s%s {%s}\n" % (prefix, hexifyID(id), t)
             return t
         css = "".join([_genCSS(".fm", row) for row in self.s.all("""
-select id, quizFontFamily, quizFontSize, quizFontColour, -1, features from fieldModels""")])
-        css += "".join([_genCSS("#cmq", row) for row in self.s.all("""
-select id, questionFontFamily, questionFontSize, questionFontColour,
-questionAlign, 0 from cardModels""")])
-        css += "".join([_genCSS("#cma", row) for row in self.s.all("""
-select id, answerFontFamily, answerFontSize, answerFontColour,
-answerAlign, 0 from cardModels""")])
+select id, quizFontFamily, quizFontSize, quizFontColour, -1,
+  features, editFontFamily from fieldModels""")])
+        cardRows = self.s.all("""
+select id, null, null, null, questionAlign, 0, 0 from cardModels""")
+        css += "".join([_genCSS("#cmq", row) for row in cardRows])
+        css += "".join([_genCSS("#cma", row) for row in cardRows])
         css += "".join([".cmb%s {background:%s;}\n" %
         (hexifyID(row[0]), row[1]) for row in self.s.all("""
 select id, lastFontColour from cardModels""")])
@@ -1345,7 +1698,7 @@ select id from models""")
         return m
 
     def changeModel(self, factIds, newModel, fieldMap, cardMap):
-        "Caller must call reset."
+        "Caller must .reset()"
         self.s.flush()
         fids = ids2str(factIds)
         changed = False
@@ -1427,8 +1780,7 @@ where id in %s""" % ids2str(ids), new=new.id, ord=new.ordinal)
         self.updateProgress()
         self.updatePriorities(cardIds)
         self.updateProgress()
-        self.rebuildCounts()
-        self.refresh()
+        self.refreshSession()
         self.finishProgress()
 
     # Fields
@@ -1447,10 +1799,14 @@ where id in %s""" % ids2str(ids), new=new.id, ord=new.ordinal)
         model.fieldModels.remove(field)
         # update q/a formats
         for cm in model.cardModels:
-            cm.qformat = cm.qformat.replace("%%(%s)s" % field.name, "")
-            cm.qformat = cm.qformat.replace("%%(text:%s)s" % field.name, "")
-            cm.aformat = cm.aformat.replace("%%(%s)s" % field.name, "")
-            cm.aformat = cm.aformat.replace("%%(text:%s)s" % field.name, "")
+            types = ("%%(%s)s" % field.name,
+                     "%%(text:%s)s" % field.name,
+                     # new style
+                     "<<%s>>" % field.name,
+                     "<<text:%s>>" % field.name)
+            for t in types:
+                for fmt in ('qformat', 'aformat'):
+                    setattr(cm, fmt, getattr(cm, fmt).replace(t, ""))
         self.updateCardsFromModel(model)
         model.setModified()
         self.flushMod()
@@ -1475,14 +1831,18 @@ update facts set modified = :t where modelId = :mid"""
     def renameFieldModel(self, model, field, newName):
         "Change FIELD's name in MODEL and update FIELD in all facts."
         for cm in model.cardModels:
-            cm.qformat = cm.qformat.replace(
-                "%%(%s)s" % field.name, "%%(%s)s" % newName)
-            cm.qformat = cm.qformat.replace(
-                "%%(text:%s)s" % field.name, "%%(text:%s)s" % newName)
-            cm.aformat = cm.aformat.replace(
-                "%%(%s)s" % field.name, "%%(%s)s" % newName)
-            cm.aformat = cm.aformat.replace(
-                "%%(text:%s)s" % field.name, "%%(text:%s)s" % newName)
+            types = ("%%(%s)s",
+                     "%%(text:%s)s",
+                     # new styles
+                     "{{%s}}",
+                     "{{text:%s}}",
+                     "{{#%s}}",
+                     "{{^%s}}",
+                     "{{/%s}}")
+            for t in types:
+                for fmt in ('qformat', 'aformat'):
+                    setattr(cm, fmt, getattr(cm, fmt).replace(t%field.name,
+                                                              t%newName))
         field.name = newName
         model.setModified()
         self.flushMod()
@@ -1570,10 +1930,10 @@ and c.id in %s""" % ids2str(ids))
         else:
             mod = ""
         # tags
+        cids = ids2str([x[0] for x in ids])
         tags = dict([(x[0], x[1:]) for x in
                      self.splitTagsList(
-            where="and cards.id in %s" %
-            ids2str([x[0] for x in ids]))])
+            where="and cards.id in %s" % cids)])
         facts = {}
         # fields
         for k, g in groupby(self.s.all("""
@@ -1587,15 +1947,67 @@ order by fields.factId""" % ids2str([x[2] for x in ids])),
         cms = {}
         for c in self.s.query(CardModel).all():
             cms[c.id] = c
-        pend = [formatQA(cid, mid, facts[fid], tags[cid], cms[cmid])
+        pend = [formatQA(cid, mid, facts[fid], tags[cid], cms[cmid], self)
                 for (cid, cmid, fid, mid) in ids]
         if pend:
+            # find existing media references
+            files = {}
+            for txt in self.s.column0(
+                "select question || answer from cards where id in %s" %
+                cids):
+                for f in mediaFiles(txt):
+                    if f in files:
+                        files[f] -= 1
+                    else:
+                        files[f] = -1
+            # determine ref count delta
+            for p in pend:
+                for type in ("question", "answer"):
+                    txt = p[type]
+                    for f in mediaFiles(txt):
+                        if f in files:
+                            files[f] += 1
+                        else:
+                            files[f] = 1
+            # update references - this could be more efficient
+            for (f, cnt) in files.items():
+                if not cnt:
+                    continue
+                updateMediaCount(self, f, cnt)
+            # update q/a
             self.s.execute("""
     update cards set
     question = :question, answer = :answer
     %s
     where id = :id""" % mod, pend)
-        self.flushMod()
+            # update fields cache
+            self.updateFieldCache(facts.keys())
+        if dirty:
+            self.flushMod()
+
+    def updateFieldCache(self, fids):
+        "Add stripped HTML cache for sorting/searching."
+        try:
+            all = self.s.all(
+                ("select factId, group_concat(value, ' ') from fields "
+                 "where factId in %s group by factId") % ids2str(fids))
+        except:
+            # older sqlite doesn't support group_concat. this code taken from
+            # the wm port
+            all=[]
+            for factId in fids:
+                values=self.s.all("select value from fields where value is not NULL and factId=%(factId)i" % {"factId": factId})
+                value_list=[]
+                for row in values:
+                        value_list.append(row[0])
+                concatenated_values=' '.join(value_list)
+                all.append([factId, concatenated_values])
+        r = []
+        from anki.utils import stripHTMLMedia
+        for a in all:
+            r.append({'id':a[0], 'v':stripHTMLMedia(a[1])})
+        self.s.statements(
+            "update facts set spaceUntil=:v where id=:id", r)
 
     def rebuildCardOrdinals(self, ids):
         "Update all card models in IDS. Caller must update model modtime."
@@ -1797,6 +2209,7 @@ and priority = 2
     # these could be optimized to use the tag cache in the future
 
     def addTags(self, ids, tags):
+        "Add tags in bulk. Caller must .reset()"
         self.startProgress()
         tlist = self.factTags(ids)
         newTags = parseTags(tags)
@@ -1822,9 +2235,10 @@ where id = :id""", pending)
         self.updatePriorities(cardIds)
         self.flushMod()
         self.finishProgress()
-        self.refresh()
+        self.refreshSession()
 
     def deleteTags(self, ids, tags):
+        "Delete tags in bulk. Caller must .reset()"
         self.startProgress()
         tlist = self.factTags(ids)
         newTags = parseTags(tags)
@@ -1855,39 +2269,365 @@ where id = :id""", pending)
         self.updatePriorities(cardIds)
         self.flushMod()
         self.finishProgress()
-        self.refresh()
+        self.refreshSession()
 
     # Find
     ##########################################################################
 
+    def allFMFields(self, tolower=False):
+        fields = []
+        try:
+            fields = self.s.column0(
+                "select distinct name from fieldmodels order by name")
+        except:
+            fields = []
+        if tolower is True:
+            for i, v in enumerate(fields):
+                fields[i] = v.lower()
+        return fields
+
     def _parseQuery(self, query):
         tokens = []
         res = []
-        # break query into words or phrases
-        for match in re.findall('"(.+?)"|([^ "]+)', query):
-            tokens.append(match[0] or match[1])
-        for c, token in enumerate(tokens):
-            isNeg = token.startswith("-")
-            if isNeg:
-                token = token[1:]
-            if token.startswith("tag:"):
-                token = token[4:]
-                type = SEARCH_TAG
-            elif token.startswith("is:"):
-                token = token[3:].lower()
-                type = SEARCH_TYPE
-            elif token.startswith("fid:") and len(token) > 4:
-                dec = token[4:]
-                try:
-                    int(dec)
-                    token = token[4:]
-                except:
-                    token = "0"
-                type = SEARCH_FID
+
+        allowedfields = self.allFMFields(True)
+        def addSearchFieldToken(field, value, isNeg, filter):
+            if field.lower() in allowedfields:
+                res.append((field + ':' + value, isNeg, SEARCH_FIELD, filter))
+            elif field in ['question', 'answer']:
+                res.append((field + ':' + value, isNeg, SEARCH_QA, filter))
             else:
-                type = SEARCH_PHRASE
-            res.append((token, isNeg, type))
+                for p in phraselog:
+                    res.append((p['value'], p['is_neg'], p['type'], p['filter']))
+        # break query into words or phraselog
+        # an extra space is added so the loop never ends in the middle
+        # completing a token
+        for match in re.findall(
+            r'(-)?\'(([^\'\\]|\\.)*)\'|(-)?"(([^"\\]|\\.)*)"|(-)?([^ ]+)|([ ]+)',
+            query + ' '):
+            type = ' '
+            if match[1]: type = "'"
+            elif match[4]: type = '"'
+
+            value = (match[1] or match[4] or match[7])
+            isNeg = (match[0] == '-' or match[3] == '-' or match[6] == '-')
+
+            tokens.append({'type': type, 'value': value, 'is_neg': isNeg,
+                           'filter': ('wb' if type == "'" else 'none')})
+        intoken = isNeg = False
+        field = '' #name of the field for field related commands
+        phraselog = [] #log of phrases in case potential command is not a commad
+        for c, token in enumerate(tokens):
+            doprocess = True # only look for commands when this is true
+            #prevent cases such as "field" : value as being processed as a command
+            if len(token['value']) == 0:
+                if intoken is True and type == SEARCH_FIELD and field:
+                #case: fieldname: any thing here check for existance of fieldname
+                    addSearchFieldToken(field, '*', isNeg, 'none')
+                    phraselog = [] # reset phrases since command is completed
+                intoken = doprocess = False
+            if intoken is True:
+                if type == SEARCH_FIELD_EXISTS:
+                #case: field:"value"
+                    res.append((token['value'], isNeg, type, 'none'))
+                    intoken = doprocess = False
+                elif type == SEARCH_FIELD and field:
+                #case: fieldname:"value"
+                    addSearchFieldToken(
+                        field, token['value'], isNeg, token['filter'])
+                    intoken = doprocess = False
+
+                elif type == SEARCH_FIELD and not field:
+                #case: "fieldname":"name" or "field" anything
+                    if token['value'].startswith(":") and len(phraselog) == 1:
+                        #we now know a colon is next, so mark it as field
+                        # and keep looking for the value
+                        field = phraselog[0]['value']
+                        parts = token['value'].split(':', 1)
+                        phraselog.append(
+                            {'value': token['value'], 'is_neg': False,
+                             'type': SEARCH_PHRASE, 'filter': token['filter']})
+                        if parts[1]:
+                            #value is included with the :, so wrap it up
+                            addSearchFieldToken(field, parts[1], isNeg, 'none')
+                            intoken = doprocess = False
+                        doprocess = False
+                    else:
+                    #case: "fieldname"string/"fieldname"tag:name
+                        intoken = False
+                if intoken is False and doprocess is False:
+                #command has been fully processed
+                    phraselog = [] # reset phraselog, since we used it for a command
+            if intoken is False:
+                #include any non-command related phrases in the query
+                for p in phraselog: res.append(
+                    (p['value'], p['is_neg'], p['type'], p['filter']))
+                phraselog = []
+            if intoken is False and doprocess is True:
+                field = ''
+                isNeg = token['is_neg']
+                if token['value'].startswith("tag:"):
+                    token['value'] = token['value'][4:]
+                    type = SEARCH_TAG
+                elif token['value'].startswith("is:"):
+                    token['value'] = token['value'][3:].lower()
+                    type = SEARCH_TYPE
+                elif token['value'].startswith("fid:") and len(token['value']) > 4:
+                    dec = token['value'][4:]
+                    try:
+                        int(dec)
+                        token['value'] = token['value'][4:]
+                    except:
+                        try:
+                            for d in dec.split(","):
+                                int(d)
+                            token['value'] = token['value'][4:]
+                        except:
+                            token['value'] = "0"
+                    type = SEARCH_FID
+                elif token['value'].startswith("card:"):
+                    token['value'] = token['value'][5:]
+                    type = SEARCH_CARD
+                elif token['value'].startswith("show:"):
+                    token['value'] = token['value'][5:].lower()
+                    type = SEARCH_DISTINCT
+                elif token['value'].startswith("field:"):
+                    type = SEARCH_FIELD_EXISTS
+                    parts = token['value'][6:].split(':', 1)
+                    field = parts[0]
+                    if len(parts) == 1 and parts[0]:
+                        token['value'] = parts[0]
+                    elif len(parts) == 1 and not parts[0]:
+                        intoken = True
+                else:
+                    type = SEARCH_FIELD
+                    intoken = True
+                    parts = token['value'].split(':', 1)
+
+                    phraselog.append(
+                        {'value': token['value'], 'is_neg': isNeg,
+                         'type': SEARCH_PHRASE, 'filter': token['filter']})
+                    if len(parts) == 2 and parts[0]:
+                        field = parts[0]
+                        if parts[1]:
+                            #simple fieldname:value case - no need to look for more data
+                            addSearchFieldToken(field, parts[1], isNeg, 'none')
+                            intoken = doprocess = False
+
+                    if intoken is False: phraselog = []
+                if intoken is False and doprocess is True:
+                    res.append((token['value'], isNeg, type, token['filter']))
         return res
+
+    def findCards(self, query):
+        (q, cmquery, showdistinct, filters, args) = self.findCardsWhere(query)
+        (factIdList, cardIdList) = self.findCardsMatchingFilters(filters)
+        query = "select id from cards"
+        hasWhere = False
+        if q:
+            query += " where " + q
+            hasWhere = True
+        if cmquery['pos'] or cmquery['neg']:
+            if hasWhere is False:
+                query += " where "
+                hasWhere = True
+            else: query += " and "
+            if cmquery['pos']:
+                query += (" factId in(select distinct factId from cards "+
+                          "where id in (" + cmquery['pos'] + ")) ")
+                query += " and id in(" + cmquery['pos'] + ") "
+            if cmquery['neg']:
+                query += (" factId not in(select distinct factId from "+
+                          "cards where id in (" + cmquery['neg'] + ")) ")
+        if factIdList is not None:
+            if hasWhere is False:
+                query += " where "
+                hasWhere = True
+            else: query += " and "
+            query += " factId IN %s" % ids2str(factIdList)
+        if cardIdList is not None:
+            if hasWhere is False:
+                query += " where "
+                hasWhere = True
+            else: query += " and "
+            query += " id IN %s" % ids2str(cardIdList)
+        if showdistinct:
+            query += " group by factId"
+        #print query, args
+        return self.s.column0(query, **args)
+
+    def findCardsWhere(self, query):
+        (tquery, fquery, qquery, fidquery, cmquery, sfquery, qaquery,
+         showdistinct, filters, args) = self._findCards(query)
+        q = ""
+        x = []
+        if tquery:
+            x.append(" id in (%s)" % tquery)
+        if fquery:
+            x.append(" factId in (%s)" % fquery)
+        if qquery:
+            x.append(" id in (%s)" % qquery)
+        if fidquery:
+            x.append(" id in (%s)" % fidquery)
+        if sfquery:
+            x.append(" factId in (%s)" % sfquery)
+        if qaquery:
+            x.append(" id in (%s)" % qaquery)
+        if x:
+            q += " and ".join(x)
+        return q, cmquery, showdistinct, filters, args
+
+    def findCardsMatchingFilters(self, filters):
+        factFilters = []
+        fieldFilters = {}
+        cardFilters = {}
+
+        factFilterMatches = []
+        fieldFilterMatches = []
+        cardFilterMatches = []
+
+        if (len(filters) > 0):
+            for filter in filters:
+                if filter['scope'] == 'fact':
+                    regexp = re.compile(
+                        r'\b' + re.escape(filter['value']) + r'\b', flags=re.I)
+                    factFilters.append(
+                        {'value': filter['value'], 'regexp': regexp,
+                         'is_neg': filter['is_neg']})
+                if filter['scope'] == 'field':
+                    fieldName = filter['field'].lower()
+                    if (fieldName in fieldFilters) is False:
+                        fieldFilters[fieldName] = []
+                    regexp = re.compile(
+                        r'\b' + re.escape(filter['value']) + r'\b', flags=re.I)
+                    fieldFilters[fieldName].append(
+                        {'value': filter['value'], 'regexp': regexp,
+                         'is_neg': filter['is_neg']})
+                if filter['scope'] == 'card':
+                    fieldName = filter['field'].lower()
+                    if (fieldName in cardFilters) is False:
+                        cardFilters[fieldName] = []
+                    regexp = re.compile(r'\b' + re.escape(filter['value']) +
+                                        r'\b', flags=re.I)
+                    cardFilters[fieldName].append(
+                        {'value': filter['value'], 'regexp': regexp,
+                         'is_neg': filter['is_neg']})
+
+            if len(factFilters) > 0:
+                fquery = ''
+                args = {}
+                for filter in factFilters:
+                    c = len(args)
+                    if fquery:
+                        if filter['is_neg']: fquery += " except "
+                        else: fquery += " intersect "
+                    elif filter['is_neg']: fquery += "select id from fields except "
+
+                    value = filter['value'].replace("*", "%")
+                    args["_ff_%d" % c] = "%"+value+"%"
+
+                    fquery += (
+                        "select id from fields where value like "+
+                        ":_ff_%d escape '\\'" % c)
+
+                rows = self.s.execute(
+                    'select factId, value from fields where id in (' +
+                    fquery + ')', args)
+                while (1):
+                    row = rows.fetchone()
+                    if row is None: break
+                    doesMatch = False
+                    for filter in factFilters:
+                        res = filter['regexp'].search(row[1])
+                        if ((filter['is_neg'] is False and res) or
+                            (filter['is_neg'] is True and res is None)):
+                            factFilterMatches.append(row[0])
+
+            if len(fieldFilters) > 0:
+                sfquery = ''
+                args = {}
+                for field, filters in fieldFilters.iteritems():
+                    for filter in filters:
+                        c = len(args)
+                        if sfquery:
+                            if filter['is_neg']:  sfquery += " except "
+                            else: sfquery += " intersect "
+                        elif filter['is_neg']: sfquery += "select id from fields except "
+                        field = field.replace("*", "%")
+                        value = filter['value'].replace("*", "%")
+                        args["_ff_%d" % c] = "%"+value+"%"
+
+                        ids = self.s.column0(
+                            "select id from fieldmodels where name like "+
+                            ":field escape '\\'", field=field)
+                        sfquery += ("select id from fields where "+
+                                    "fieldModelId in %s and value like "+
+                                    ":_ff_%d escape '\\'") % (ids2str(ids), c)
+
+                rows = self.s.execute(
+                    'select f.factId, f.value, fm.name from fields as f '+
+                    'left join fieldmodels as fm ON (f.fieldModelId = '+
+                    'fm.id) where f.id in (' + sfquery + ')', args)
+                while (1):
+                    row = rows.fetchone()
+                    if row is None: break
+                    field = row[2].lower()
+                    doesMatch = False
+                    if field in fieldFilters:
+                        for filter in fieldFilters[field]:
+                            res = filter['regexp'].search(row[1])
+                            if ((filter['is_neg'] is False and res) or
+                                (filter['is_neg'] is True and res is None)):
+                                fieldFilterMatches.append(row[0])
+
+
+            if len(cardFilters) > 0:
+                qaquery = ''
+                args = {}
+                for field, filters in cardFilters.iteritems():
+                    for filter in filters:
+                        c = len(args)
+                        if qaquery:
+                            if filter['is_neg']: qaquery += " except "
+                            else: qaquery += " intersect "
+                        elif filter['is_neg']: qaquery += "select id from cards except "
+                        value = value.replace("*", "%")
+                        args["_ff_%d" % c] = "%"+value+"%"
+
+                        if field == 'question':
+                            qaquery += "select id from cards where question "
+                            qaquery += "like :_ff_%d escape '\\'" % c
+                        else:
+                            qaquery += "select id from cards where answer "
+                            qaquery += "like :_ff_%d escape '\\'" % c
+
+                rows = self.s.execute(
+                    'select id, question, answer from cards where id IN (' +
+                    qaquery + ')', args)
+                while (1):
+                    row = rows.fetchone()
+                    if row is None: break
+                    doesMatch = False
+                    if field in cardFilters:
+                        rowValue = row[1] if field == 'question' else row[2]
+                        for filter in cardFilters[field]:
+                            res = filter['regexp'].search(rowValue)
+                            if ((filter['is_neg'] is False and res) or
+                                (filter['is_neg'] is True and res is None)):
+                                cardFilterMatches.append(row[0])
+
+        factIds = None
+        if len(factFilters) > 0 or len(fieldFilters) > 0:
+            factIds = []
+            factIds.extend(factFilterMatches)
+            factIds.extend(fieldFilterMatches)
+
+        cardIds = None
+        if len(cardFilters) > 0:
+            cardIds = []
+            cardIds.extend(cardFilterMatches)
+
+        return (factIds, cardIds)
 
     def _findCards(self, query):
         "Find facts matching QUERY."
@@ -1895,8 +2635,12 @@ where id = :id""", pending)
         fquery = ""
         qquery = ""
         fidquery = ""
+        cmquery = { 'pos': '', 'neg': '' }
+        sfquery = qaquery = ""
+        showdistinct = False
+        filters = []
         args = {}
-        for c, (token, isNeg, type) in enumerate(self._parseQuery(query)):
+        for c, (token, isNeg, type, filter) in enumerate(self._parseQuery(query)):
             if type == SEARCH_TAG:
                 # a tag
                 if tquery:
@@ -1908,15 +2652,13 @@ where id = :id""", pending)
                     tquery += "select id from cards except "
                 if token == "none":
                     tquery += """
-select cards.id from cards, facts where facts.tags = ''
-and cards.factId = facts.id """
+select cards.id from cards, facts where facts.tags = '' and cards.factId = facts.id """
                 else:
                     token = token.replace("*", "%")
-                    ids = self.s.column0(
-                        "select id from tags where tag like :tag", tag=token)
+                    ids = self.s.column0("""
+select id from tags where tag like :tag escape '\\'""", tag=token)
                     tquery += """
-select cardId from cardTags where
-cardTags.tagId in %s""" % ids2str(ids)
+select cardId from cardTags where cardTags.tagId in %s""" % ids2str(ids)
             elif type == SEARCH_TYPE:
                 if qquery:
                     if isNeg:
@@ -1935,17 +2677,19 @@ cardTags.tagId in %s""" % ids2str(ids)
                     qquery += "select id from cards where type = %d" % n
                 elif token == "delayed":
                     qquery += ("select id from cards where "
-                               "due < %d and isDue = 0 and "
-                               "priority in (1,2,3,4)") % time.time()
+                               "due < %d and combinedDue > %d and "
+                               "type in (0,1,2)") % (
+                        self.dueCutoff, self.dueCutoff)
                 elif token == "suspended":
                     qquery += ("select id from cards where "
                                "priority = -3")
-                elif token == "inactive":
-                    qquery += ("select id from cards where "
-                               "priority = 0")
+                elif token == "leech":
+                    qquery += (
+                        "select id from cards where noCount >= (select value "
+                        "from deckvars where key = 'leechFails')")
                 else: # due
                     qquery += ("select id from cards where "
-                               "type in (0,1) and isDue = 1")
+                               "type in (0,1) and combinedDue < %d") % self.dueCutoff
             elif type == SEARCH_FID:
                 if fidquery:
                     if isNeg:
@@ -1954,45 +2698,106 @@ cardTags.tagId in %s""" % ids2str(ids)
                         fidquery += " intersect "
                 elif isNeg:
                     fidquery += "select id from cards except "
-                fidquery += "select id from cards where factId = %s" % token
-            else:
-                # a field
-                if fquery:
-                    if isNeg:
-                        fquery += " except "
-                    else:
-                        fquery += " intersect "
-                elif isNeg:
-                    fquery += "select id from facts except "
+                fidquery += "select id from cards where factId in (%s)" % token
+            elif type == SEARCH_CARD:
                 token = token.replace("*", "%")
-                token = token.replace("?", "_")
-                args["_ff_%d" % c] = "%"+token+"%"
-                q = "select factId from fields where value like :_ff_%d" % c
-                fquery += q
-        return (tquery, fquery, qquery, fidquery, args)
+                ids = self.s.column0("""
+select id from tags where tag like :tag escape '\\'""", tag=token)
+                if isNeg:
+                    if cmquery['neg']:
+                        cmquery['neg'] += " intersect "
+                    cmquery['neg'] += """
+select cardId from cardTags where src = 2 and cardTags.tagId in %s""" % ids2str(ids)
+                else:
+                    if cmquery['pos']:
+                        cmquery['pos'] += " intersect "
+                    cmquery['pos'] += """
+select cardId from cardTags where src = 2 and cardTags.tagId in %s""" % ids2str(ids)
+            elif type == SEARCH_FIELD or type == SEARCH_FIELD_EXISTS:
+                field = value = ''
+                if type == SEARCH_FIELD:
+                    parts = token.split(':', 1);
+                    if len(parts) == 2:
+                        field = parts[0]
+                        value = parts[1]
+                elif type == SEARCH_FIELD_EXISTS:
+                    field = token
+                    value = '*'
+                if (type == SEARCH_FIELD and filter != 'none'):
+                    if field and value:
+                        filters.append(
+                            {'scope': 'field', 'type': filter,
+                             'field': field, 'value': value, 'is_neg': isNeg})
+                else:
+                    if field and value:
+                        if sfquery:
+                            if isNeg:
+                                sfquery += " except "
+                            else:
+                                sfquery += " intersect "
+                        elif isNeg:
+                            sfquery += "select id from facts except "
+                        field = field.replace("*", "%")
+                        value = value.replace("*", "%")
+                        args["_ff_%d" % c] = "%"+value+"%"
+                        ids = self.s.column0("""
+select id from fieldmodels where name like :field escape '\\'""", field=field)
+                        sfquery += """
+select factId from fields where fieldModelId in %s and
+value like :_ff_%d escape '\\'""" % (ids2str(ids), c)
+            elif type == SEARCH_QA:
+                field = value = ''
+                parts = token.split(':', 1);
+                if len(parts) == 2:
+                    field = parts[0]
+                    value = parts[1]
+                if (filter != 'none'):
+                    if field and value:
+                        filters.append(
+                            {'scope': 'card', 'type': filter, 'field': field,
+                             'value': value, 'is_neg': isNeg})
+                else:
+                    if field and value:
+                        if qaquery:
+                            if isNeg:
+                                qaquery += " except "
+                            else:
+                                qaquery += " intersect "
+                        elif isNeg:
+                            qaquery += "select id from cards except "
+                        value = value.replace("*", "%")
+                        args["_ff_%d" % c] = "%"+value+"%"
 
-    def findCardsWhere(self, query):
-        (tquery, fquery, qquery, fidquery, args) = self._findCards(query)
-        q = ""
-        x = []
-        if tquery:
-            x.append(" id in (%s)" % tquery)
-        if fquery:
-            x.append(" factId in (%s)" % fquery)
-        if qquery:
-            x.append(" id in (%s)" % qquery)
-        if fidquery:
-            x.append(" id in (%s)" % fidquery)
-        if x:
-            q += " and ".join(x)
-        return q, args
-
-    def findCards(self, query):
-        q, args = self.findCardsWhere(query)
-        query = "select id from cards"
-        if q:
-            query += " where " + q
-        return self.s.column0(query, **args)
+                        if field == 'question':
+                            qaquery += """
+select id from cards where question like :_ff_%d escape '\\'""" % c
+                        else:
+                            qaquery += """
+select id from cards where answer like :_ff_%d escape '\\'""" % c
+            elif type == SEARCH_DISTINCT:
+                if isNeg is False:
+                    showdistinct = True if token == "one" else False
+                else:
+                    showdistinct = False if token == "one" else True
+            else:
+                if (filter != 'none'):
+                    filters.append(
+                        {'scope': 'fact', 'type': filter,
+                         'value': token, 'is_neg': isNeg})
+                else:
+                    if fquery:
+                        if isNeg:
+                            fquery += " except "
+                        else:
+                            fquery += " intersect "
+                    elif isNeg:
+                        fquery += "select id from facts except "
+                    token = token.replace("*", "%")
+                    args["_ff_%d" % c] = "%"+token+"%"
+                    fquery += """
+select id from facts where spaceUntil like :_ff_%d escape '\\'""" % c
+        return (tquery, fquery, qquery, fidquery, cmquery, sfquery,
+                qaquery, showdistinct, filters, args)
 
     # Find and replace
     ##########################################################################
@@ -2028,6 +2833,23 @@ cardTags.tagId in %s""" % ids2str(ids)
                                           type="facts")
         return len(set([f['fid'] for f in modded]))
 
+    # Find duplicates
+    ##########################################################################
+
+    def findDuplicates(self, fmids):
+        data = self.s.all(
+            "select factId, value from fields where fieldModelId in %s" %
+            ids2str(fmids))
+        vals = {}
+        for (fid, val) in data:
+            if not val.strip():
+                continue
+            if val not in vals:
+                vals[val] = [fid]
+            else:
+                vals[val].append(fid)
+        return [(k,v) for (k,v) in vals.items() if len(v) > 1]
+
     # Progress info
     ##########################################################################
 
@@ -2057,6 +2879,16 @@ cardTags.tagId in %s""" % ids2str(ids)
     def disableProgressHandler(self):
         self.progressHandlerEnabled = False
 
+    # Notifications
+    ##########################################################################
+
+    def notify(self, msg):
+        "Send a notice to all listeners, or display on stdout."
+        if hookEmpty("notify"):
+            pass
+        else:
+            runHook("notify", msg)
+
     # File-related
     ##########################################################################
 
@@ -2076,6 +2908,9 @@ cardTags.tagId in %s""" % ids2str(ids)
         self.sessionStartTime = time.time()
         self.sessionStartReps = self.getStats()['dTotal']
 
+    def stopSession(self):
+        self.sessionStartTime = 0
+
     def sessionLimitReached(self):
         if not self.sessionStartTime:
             # not started
@@ -2091,18 +2926,27 @@ cardTags.tagId in %s""" % ids2str(ids)
     # Meta vars
     ##########################################################################
 
-    def getInt(self, key):
+    def getInt(self, key, type=int):
         ret = self.s.scalar("select value from deckVars where key = :k",
                             k=key)
         if ret is not None:
-            ret = int(ret)
+            ret = type(ret)
         return ret
+
+    def getFloat(self, key):
+        return self.getInt(key, float)
 
     def getBool(self, key):
         ret = self.s.scalar("select value from deckVars where key = :k",
                             k=key)
         if ret is not None:
-            ret = not not int(ret)
+            # hack to work around ankidroid bug
+            if ret.lower() == "true":
+                return True
+            elif ret.lower() == "false":
+                return False
+            else:
+                ret = not not int(ret)
         return ret
 
     def getVar(self, key):
@@ -2124,6 +2968,12 @@ where key = :key""", key=key, value=value):
                              "values (:key, :value)", key=key, value=value)
         if mod:
             self.setModified()
+
+    def setVarDefault(self, key, value):
+        if not self.s.scalar(
+            "select 1 from deckVars where key = :key", key=key):
+            self.s.statement("insert into deckVars (key, value) "
+                             "values (:key, :value)", key=key, value=value)
 
     # Failed card handling
     ##########################################################################
@@ -2147,17 +2997,17 @@ where key = :key""", key=key, value=value):
         elif idx == 4:
             d = 259200
         self.delay0 = d
-        self.delay1 = d
+        self.delay1 = 0
 
     def getFailedCardPolicy(self):
-        if self.delay0 != self.delay1:
+        if self.delay1:
             return 5
         d = self.delay0
         if self.collapseTime == 1:
             if d == 600 and self.failedCardMax == 20:
                 return 0
             return 5
-        if d == 0:
+        if d == 0 and self.failedCardMax == 0:
             return 1
         elif d == 600:
             return 2
@@ -2173,19 +3023,18 @@ where key = :key""", key=key, value=value):
     def mediaDir(self, create=False):
         "Return the media directory if exists. None if couldn't create."
         if self.path:
-            # file-backed
-            if self.forceMediaDir:
-                dir = self.forceMediaDir
+            if self.mediaPrefix:
+                dir = os.path.join(
+                    self.mediaPrefix, os.path.basename(self.path))
             else:
-                dir = re.sub("(?i)\.(anki)$", ".media", self.path)
+                dir = self.path
+            dir = re.sub("(?i)\.(anki)$", ".media", dir)
             if create == None:
                 # don't create, but return dir
                 return dir
-            if dir and not os.path.exists(dir) and create:
+            if not os.path.exists(dir) and create:
                 try:
-                    os.mkdir(dir)
-                    # change to the current dir
-                    os.chdir(dir)
+                    os.makedirs(dir)
                 except OSError:
                     # permission denied
                     return None
@@ -2196,6 +3045,8 @@ where key = :key""", key=key, value=value):
             dir = self.tmpMediaDir
         if not dir or not os.path.exists(dir):
             return None
+        # change to the current dir
+        os.chdir(dir)
         return dir
 
     def addMedia(self, path):
@@ -2240,7 +3091,7 @@ Return new path, relative to media dir."""
         self.s.update(self)
         self.s.refresh(self)
 
-    def refresh(self):
+    def refreshSession(self):
         "Flush and expire all items from the session."
         self.s.flush()
         self.s.expire_all()
@@ -2249,7 +3100,7 @@ Return new path, relative to media dir."""
         "Open a new session. Assumes old session is already closed."
         self.s = SessionHelper(self.Session(), lock=self.needLock)
         self.s.update(self)
-        self.refresh()
+        self.refreshSession()
 
     def closeSession(self):
         "Close the current session, saving any changes. Do nothing if no session."
@@ -2264,6 +3115,7 @@ Return new path, relative to media dir."""
             self.s = None
 
     def setModified(self, newTime=None):
+        #import traceback; traceback.print_stack()
         self.modified = newTime or time.time()
 
     def flushMod(self):
@@ -2317,19 +3169,78 @@ Return new path, relative to media dir."""
         self.finishProgress()
         return newDeck
 
+    # Syncing
+    ##########################################################################
+    # toggling does not bump deck mod time, since it may happen on upgrade,
+    # and the variable is not synced
+
+    def enableSyncing(self):
+        self.syncName = unicode(checksum(self.path.encode("utf-8")))
+        self.s.commit()
+
+    def disableSyncing(self):
+        self.syncName = None
+        self.s.commit()
+
+    def syncingEnabled(self):
+        return self.syncName
+
+    def checkSyncHash(self):
+        if self.syncName and self.syncName != checksum(self.path.encode("utf-8")):
+            self.notify(_("""\
+Because '%s' has been moved or copied, automatic synchronisation \
+has been disabled (ERR-0100).
+
+You can disable this check in Settings>Preferences>Network.""") % self.name())
+            self.disableSyncing()
+            self.syncName = None
+
     # DB maintenance
     ##########################################################################
 
+    def recoverCards(self, ids):
+        "Put cards with damaged facts into new facts."
+        # create a new model in case the user has modified a previous one
+        from anki.stdmodels import RecoveryModel
+        m = RecoveryModel()
+        last = self.currentModel
+        self.addModel(m)
+        def repl(s):
+            # strip field model text
+            return re.sub("<span class=\"fm.*?>(.*?)</span>", "\\1", s)
+        # add new facts, pointing old card at new fact
+        for (id, q, a) in self.s.all("""
+select id, question, answer from cards
+where id in %s""" % ids2str(ids)):
+            f = self.newFact()
+            f['Question'] = repl(q)
+            f['Answer'] = repl(a)
+            try:
+                f.tags = self.s.scalar("""
+select group_concat(tag, " ") from tags t, cardTags ct
+where cardId = :cid and ct.tagId = t.id""", cid=id) or u""
+            except:
+                raise Exception("Your sqlite is too old.")
+            cards = self.addFact(f)
+            # delete the freshly created card and point old card to this fact
+            self.s.statement("delete from cards where id = :id",
+                             id=f.cards[0].id)
+            self.s.statement("""
+update cards set factId = :fid, cardModelId = :cmid, ordinal = 0
+where id = :id""", fid=f.id, cmid=m.cardModels[0].id, id=id)
+        # restore old model
+        self.currentModel = last
+
     def fixIntegrity(self, quick=False):
-        "Responsibility of caller to call rebuildQueue()"
+        "Fix some problems and rebuild caches. Caller must .reset()"
         self.s.commit()
         self.resetUndo()
         problems = []
-        deletedCards = []
+        recover = False
         if quick:
             num = 4
         else:
-            num = 10
+            num = 9
         self.startProgress(num)
         self.updateProgress(_("Checking integrity..."))
         if self.s.scalar("pragma integrity_check") != "ok":
@@ -2375,24 +3286,31 @@ facts.modelId = fieldModels.modelId and fieldModels.id not in
         ids = self.s.column0("""
 select id from cards where factId not in (select id from facts)""")
         if ids:
-            deletedCards.extend(self.s.all(
-                "select question, answer from cards where id in %s" %
-                ids2str(ids)))
-            self.deleteCards(ids)
-            problems.append(ngettext("Deleted %d card with missing fact",
-                            "Deleted %d cards with missing fact", len(ids)) %
+            recover = True
+            self.recoverCards(ids)
+            problems.append(ngettext("Recovered %d card with missing fact",
+                            "Recovered %d cards with missing fact", len(ids)) %
                             len(ids))
         # cards missing a card model?
         ids = self.s.column0("""
 select id from cards where cardModelId not in
 (select id from cardModels)""")
         if ids:
-            deletedCards.extend(self.s.all(
-                "select question, answer from cards where id in %s" %
-                ids2str(ids)))
-            self.deleteCards(ids)
-            problems.append(ngettext("Deleted %d card with no card template",
-                            "Deleted %d cards with no card template", len(ids)) %
+            recover = True
+            self.recoverCards(ids)
+            problems.append(ngettext("Recovered %d card with no card template",
+                            "Recovered %d cards with no card template", len(ids)) %
+                            len(ids))
+        # cards with a card model from the wrong model
+        ids = self.s.column0("""
+select id from cards where cardModelId not in (select cm.id from
+cardModels cm, facts f where cm.modelId = f.modelId and
+f.id = cards.factId)""")
+        if ids:
+            recover = True
+            self.recoverCards(ids)
+            problems.append(ngettext("Recovered %d card with wrong card template",
+                            "Recovered %d cards with wrong card template", len(ids)) %
                             len(ids))
         # facts missing a card?
         ids = self.deleteDanglingFacts()
@@ -2409,13 +3327,9 @@ select id from fields where factId not in (select id from facts)""")
             problems.append(ngettext("Deleted %d dangling field",
                             "Deleted %d dangling fields", len(ids)) %
                             len(ids))
-        for card in deletedCards:
-            problems.append(_("Deleted: ") + "%s %s" % tuple(card))
         self.s.flush()
         if not quick:
-            # fix problems with cards being scheduled when not due
             self.updateProgress()
-            self.s.statement("update cards set isDue = 0")
             # these sometimes end up null on upgrade
             self.s.statement("update models set source = 0 where source is null")
             self.s.statement(
@@ -2453,16 +3367,18 @@ where id = fieldModelId)""")
             # rebuild
             self.updateProgress(_("Rebuilding types..."))
             self.rebuildTypes()
-        self.updateProgress(_("Rebuilding counts..."))
-        self.rebuildCounts()
         # update deck and save
         if not quick:
             self.flushMod()
             self.save()
-        self.refresh()
-        self.rebuildQueue()
+        self.refreshSession()
         self.finishProgress()
         if problems:
+            if recover:
+                problems.append("\n" + _("""\
+Cards with corrupt or missing facts have been placed into new facts. \
+Your scheduling info and card content has been preserved, but the \
+original layout of the facts has been lost."""))
             return "\n".join(problems)
         return "ok"
 
@@ -2613,15 +3529,15 @@ seq > :s and seq <= :e order by seq desc""", s=start, e=end)
             self.finishProgress()
 
     def undo(self):
+        "Undo the last action(s). Caller must .reset()"
         self._undoredo(self.undoStack, self.redoStack)
-        self.refresh()
-        self.rebuildCounts()
+        self.refreshSession()
         runHook("postUndoRedo")
 
     def redo(self):
+        "Redo the last action(s). Caller must .reset()"
         self._undoredo(self.redoStack, self.undoStack)
-        self.refresh()
-        self.rebuildCounts()
+        self.refreshSession()
         runHook("postUndoRedo")
 
     # Dynamic indices
@@ -2630,15 +3546,15 @@ seq > :s and seq <= :e order by seq desc""", s=start, e=end)
     def updateDynamicIndices(self):
         indices = {
             'intervalDesc':
-            '(type, isDue, priority desc, interval desc)',
+            '(type, priority desc, interval desc, factId, combinedDue)',
             'intervalAsc':
-            '(type, isDue, priority desc, interval)',
+            '(type, priority desc, interval, factId, combinedDue)',
             'randomOrder':
-            '(type, isDue, priority desc, factId, ordinal)',
+            '(type, priority desc, factId, ordinal, combinedDue)',
             'dueAsc':
-            '(type, isDue, priority desc, due)',
+            '(type, priority desc, due, factId, combinedDue)',
             'dueDesc':
-            '(type, isDue, priority desc, due desc)',
+            '(type, priority desc, due desc, factId, combinedDue)',
             }
         # determine required
         required = []
@@ -2655,13 +3571,22 @@ seq > :s and seq <= :e order by seq desc""", s=start, e=end)
         if (self.newCardOrder == NEW_CARDS_NEW_FIRST):
             required.append("dueDesc")
         # add/delete
+        analyze = False
         for (k, v) in indices.items():
+            n = "ix_cards_%s2" % k
             if k in required:
-                self.s.statement(
-                    "create index if not exists ix_cards_%s on cards %s" %
-                    (k, v))
+                if not self.s.scalar(
+                    "select 1 from sqlite_master where name = :n", n=n):
+                    self.s.statement(
+                        "create index %s on cards %s" %
+                        (n, v))
+                    analyze = True
             else:
-                self.s.statement("drop index if exists ix_cards_%s" % k)
+                # leave old indices for older clients
+                #self.s.statement("drop index if exists ix_cards_%s" % k)
+                self.s.statement("drop index if exists %s" % n)
+        if analyze:
+            self.s.statement("analyze")
 
 # Shared decks
 ##########################################################################
@@ -2697,7 +3622,7 @@ backupDir = os.path.expanduser("~/.anki/backups")
 
 class DeckStorage(object):
 
-    def Deck(path=None, backup=True, lock=True, pool=True):
+    def Deck(path=None, backup=True, lock=True, pool=True, rebuild=True):
         "Create a new deck or attach to an existing one."
         create = True
         if path is None:
@@ -2712,9 +3637,9 @@ class DeckStorage(object):
         try:
             (engine, session) = DeckStorage._attach(sqlpath, create, pool)
             s = session()
-            metadata.create_all(engine)
             if create:
                 ver = 999
+                metadata.create_all(engine)
                 deck = DeckStorage._init(s)
             else:
                 ver = s.scalar("select version from decks limit 1")
@@ -2737,6 +3662,8 @@ class DeckStorage(object):
                             s.execute("alter table " + st)
                         except:
                             pass
+                if ver < DECK_VERSION:
+                    metadata.create_all(engine)
                 deck = s.query(Deck).get(1)
                 if not deck:
                     raise DeckAccessError(_("Deck missing core table"),
@@ -2758,6 +3685,13 @@ class DeckStorage(object):
             deck.s = SessionHelper(s, lock=lock)
             # force a write lock
             deck.s.execute("update decks set modified = modified")
+            needUnpack = False
+            if deck.utcOffset in (-1, -2):
+                # do the rest later
+                needUnpack = deck.utcOffset == -1
+                # make sure we do this before initVars
+                DeckStorage._setUTCOffset(deck)
+                deck.created = time.time()
             if ver < 27:
                 initTagTables(deck.s)
             if create:
@@ -2773,9 +3707,6 @@ class DeckStorage(object):
                 deck.s.statement("analyze")
                 deck._initVars()
                 deck.updateTagPriorities()
-                # leech control in deck
-                deck.setVar("suspendLeeches", True)
-                deck.setVar("leechFails", 16)
             else:
                 if backup:
                     DeckStorage.backup(deck, path)
@@ -2794,34 +3725,49 @@ class DeckStorage(object):
                                       type="inuse")
             else:
                 raise e
-        if deck.utcOffset == -1:
-            # needs a reset
+        if not rebuild:
+            # minimal startup
+            deck._globalStats = globalStats(deck)
+            deck._dailyStats = dailyStats(deck)
+            return deck
+        if needUnpack:
             deck.startProgress()
-            DeckStorage._setUTCOffset(deck)
             DeckStorage._addIndices(deck)
             for m in deck.models:
                 deck.updateCardsFromModel(m)
-            deck.created = time.time()
             deck.finishProgress()
+        oldMod = deck.modified
         # fix a bug with current model being unset
         if not deck.currentModel and deck.models:
             deck.currentModel = deck.models[0]
         # ensure the necessary indices are available
         deck.updateDynamicIndices()
-        # save counts to determine if we should save deck after check
-        oldc = deck.failedSoonCount + deck.revCount + deck.newCount
-        # update counts
-        deck.rebuildQueue()
-        # unsuspend reviewed early & buried
+        # FIXME: temporary code for upgrade
+        # - ensure cards suspended on older clients are recognized
+        deck.s.statement("""
+update cards set type = type - 3 where type between 0 and 2 and priority = -3""")
+        # - new delay1 handling
+        if deck.delay1 > 7:
+            deck.delay1 = 0
+        # unsuspend buried/rev early - can remove priorities in the future
         ids = deck.s.column0(
-            "select id from cards where type in (0,1,2) and isDue = 0 and "
-            "priority in (-1, -2)")
+            "select id from cards where type > 2 or priority between -2 and -1")
         if ids:
             deck.updatePriorities(ids)
-            deck.checkDue()
-        if ((oldc != deck.failedSoonCount + deck.revCount + deck.newCount) or
-            deck.modifiedSinceSave()):
+            deck.s.statement(
+                "update cards set type = relativeDelay where type > 2")
             deck.s.commit()
+        # check if deck has been moved, and disable syncing
+        deck.checkSyncHash()
+        # determine starting factor for new cards
+        deck.averageFactor = (deck.s.scalar(
+            "select avg(factor) from cards where type = 1")
+                               or Deck.initialFactor)
+        deck.averageFactor = max(deck.averageFactor, Deck.minimumAverage)
+        # rebuild queue
+        deck.reset()
+        # make sure we haven't accidentally bumped the modification time
+        assert deck.modified == oldMod
         return deck
     Deck = staticmethod(Deck)
 
@@ -2859,21 +3805,33 @@ class DeckStorage(object):
 
     def _addIndices(deck):
         "Add indices to the DB."
-        # failed cards, review early
+        # counts, failed cards
         deck.s.statement("""
-create index if not exists ix_cards_duePriority on cards
-(type, isDue, combinedDue, priority)""")
-        # check due
+create index if not exists ix_cards_typeCombined on cards
+(type, combinedDue, factId)""")
+        # scheduler-agnostic type
         deck.s.statement("""
-create index if not exists ix_cards_priorityDue on cards
-(type, isDue, priority, combinedDue)""")
+create index if not exists ix_cards_relativeDelay on cards
+(relativeDelay)""")
+        # index on modified, to speed up sync summaries
+        deck.s.statement("""
+create index if not exists ix_cards_modified on cards
+(modified)""")
+        deck.s.statement("""
+create index if not exists ix_facts_modified on facts
+(modified)""")
+        # priority - temporary index to make compat code faster. this can be
+        # removed when all clients are on 1.2, as can the ones below
+        deck.s.statement("""
+create index if not exists ix_cards_priority on cards
+(priority)""")
         # average factor
         deck.s.statement("""
 create index if not exists ix_cards_factor on cards
 (type, factor)""")
         # card spacing
         deck.s.statement("""
-create index if not exists ix_cards_factId on cards (factId, type)""")
+create index if not exists ix_cards_factId on cards (factId)""")
         # stats
         deck.s.statement("""
 create index if not exists ix_stats_typeDay on stats (type, day)""")
@@ -2899,8 +3857,14 @@ create index if not exists ix_factsDeleted_factId on factsDeleted (factId)""")
         deck.s.statement("""
 create index if not exists ix_mediaDeleted_factId on mediaDeleted (mediaId)""")
         # tags
-        deck.s.statement("""
-create unique index if not exists ix_tags_tag on tags (tag)""")
+        txt = "create unique index if not exists ix_tags_tag on tags (tag)"
+        try:
+            deck.s.statement(txt)
+        except:
+            deck.s.statement("""
+delete from tags where exists (select 1 from tags t2 where tags.tag = t2.tag
+and tags.rowid > t2.rowid)""")
+            deck.s.statement(txt)
         deck.s.statement("""
 create index if not exists ix_cardTags_tagCard on cardTags (tagId, cardId)""")
         deck.s.statement("""
@@ -2970,6 +3934,7 @@ order by priority desc, due desc""")
                 # we're opening a shared deck with no indices - we'll need
                 # them if we want to rebuild the queue
                 DeckStorage._addIndices(deck)
+            oldmod = deck.modified
         else:
             prog = False
         deck.path = path
@@ -3011,7 +3976,7 @@ order by priority desc, due desc""")
             DeckStorage._addIndices(deck)
             # rebuild type and delay cache
             deck.rebuildTypes()
-            deck.rebuildQueue()
+            deck.reset()
             # bump version
             deck.version = 1
             # optimize indices
@@ -3088,10 +4053,6 @@ select filename, size, created, originalPath, description from media""")
                 deck.s.statements("""
 insert into media values (
 :id, :filename, :size, :created, :originalPath, :description)""", h)
-            # rerun check
-            anki.media.rebuildMediaDir(deck, dirty=False)
-            # no need to track deleted media yet
-            deck.s.execute("delete from mediaDeleted")
             deck.version = 9
         if deck.version < 10:
             deck.s.statement("""
@@ -3114,7 +4075,7 @@ alter table models add column source integer not null default 0""")
             DeckStorage._addIndices(deck)
             deck.s.statement("analyze")
         if deck.version < 13:
-            deck.rebuildQueue()
+            deck.reset()
             deck.rebuildCounts()
             # regenerate question/answer cache
             for m in deck.models:
@@ -3303,9 +4264,8 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
                 deck.failedCardMax = 0
             deck.version = 37
             deck.s.commit()
-        # skip 38
         if deck.version < 39:
-            deck.rebuildQueue()
+            deck.reset()
             # manually suspend all suspended cards
             ids = deck.findCards("tag:suspended")
             if ids:
@@ -3313,7 +4273,7 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
                 deck.s.statement(
                     "update cards set isDue=0, priority=-3 "
                     "where id in %s" % ids2str(ids))
-                deck.rebuildCounts(full=False)
+                deck.rebuildCounts()
             # suspended tag obsolete - don't do this yet
             deck.suspended = re.sub(u" ?Suspended ?", u"", deck.suspended)
             deck.updateTagPriorities()
@@ -3324,17 +4284,133 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
             deck.s.statement("update models set features = ''")
             deck.version = 40
             deck.s.commit()
-        # skip 41
-        if deck.version < 42:
-            # leech control in deck
-            if deck.getBool("suspendLeeches") is None:
-                deck.setVar("suspendLeeches", True, mod=False)
-                deck.setVar("leechFails", 16, mod=False)
-            deck.version = 42
-            deck.s.commit()
         if deck.version < 43:
             deck.s.statement("update fieldModels set features = ''")
             deck.version = 43
+            deck.s.commit()
+        if deck.version < 44:
+            # leaner indices
+            deck.s.statement("drop index if exists ix_cards_factId")
+            deck.version = 44
+            deck.s.commit()
+        if deck.version < 48:
+            deck.updateFieldCache(deck.s.column0("select id from facts"))
+            deck.version = 48
+            deck.s.commit()
+        if deck.version < 50:
+            # more new type handling
+            deck.rebuildTypes()
+            deck.version = 50
+            deck.s.commit()
+        if deck.version < 52:
+            dname = deck.name()
+            sname = deck.syncName
+            if sname and dname != sname:
+                deck.notify(_("""\
+When syncing, Anki now uses the same deck name on the server as the deck \
+name on your computer. Because you had '%(dname)s' set to sync to \
+'%(sname)s' on the server, syncing has been temporarily disabled.
+
+If you want to keep your changes to the online version, please use \
+File>Download>Personal Deck to download the online version.
+
+If you want to keep the version on your computer, please enable \
+syncing again via Settings>Deck Properties>Synchronisation.
+
+If you have syncing disabled in the preferences, you can ignore \
+this message. (ERR-0101)""") % {
+                    'sname':sname, 'dname':dname})
+                deck.disableSyncing()
+            elif sname:
+                deck.enableSyncing()
+            deck.version = 52
+            deck.s.commit()
+        if deck.version < 53:
+            if deck.getBool("perDay"):
+                if deck.hardIntervalMin == 0.333:
+                    deck.hardIntervalMin = max(1.0, deck.hardIntervalMin)
+                    deck.hardIntervalMax = max(1.1, deck.hardIntervalMax)
+            deck.version = 53
+            deck.s.commit()
+        if deck.version < 54:
+            # broken versions of the DB orm die if this is a bool with a
+            # non-int value
+            deck.s.statement("update fieldModels set editFontFamily = 1");
+            deck.version = 54
+            deck.s.commit()
+        if deck.version < 57:
+            deck.version = 57
+            deck.s.commit()
+        if deck.version < 61:
+            # do our best to upgrade templates to the new style
+            txt = '''\
+<span style="font-family: %s; font-size: %spx; color: %s; white-space: pre-wrap;">%s</span>'''
+            for m in deck.models:
+                unstyled = []
+                for fm in m.fieldModels:
+                    # find which fields had explicit formatting
+                    if fm.quizFontFamily or fm.quizFontSize or fm.quizFontColour:
+                        pass
+                    else:
+                        unstyled.append(fm.name)
+                    # fill out missing info
+                    fm.quizFontFamily = fm.quizFontFamily or u"Arial"
+                    fm.quizFontSize = fm.quizFontSize or 20
+                    fm.quizFontColour = fm.quizFontColour or "#000000"
+                    fm.editFontSize = fm.editFontSize or 20
+                unstyled = set(unstyled)
+                for cm in m.cardModels:
+                    # embed the old font information into card templates
+                    cm.qformat = txt % (
+                        cm.questionFontFamily,
+                        cm.questionFontSize,
+                        cm.questionFontColour,
+                        cm.qformat)
+                    cm.aformat = txt % (
+                        cm.answerFontFamily,
+                        cm.answerFontSize,
+                        cm.answerFontColour,
+                        cm.aformat)
+                    # escape fields that had no previous styling
+                    for un in unstyled:
+                        cm.qformat = cm.qformat.replace("%("+un+")s", "{{{%s}}}"%un)
+                        cm.aformat = cm.aformat.replace("%("+un+")s", "{{{%s}}}"%un)
+            # rebuild q/a for the above & because latex has changed
+            for m in deck.models:
+                deck.updateCardsFromModel(m, dirty=False)
+            # rebuild the media db based on new format
+            rebuildMediaDir(deck, dirty=False)
+            deck.version = 61
+            deck.s.commit()
+        if deck.version < 62:
+            # updated indices
+            for d in ("intervalDesc", "intervalAsc", "randomOrder",
+                      "dueAsc", "dueDesc"):
+                deck.s.statement("drop index if exists ix_cards_%s2" % d)
+            deck.s.statement("drop index if exists ix_cards_typeCombined")
+            DeckStorage._addIndices(deck)
+            deck.updateDynamicIndices()
+            deck.s.execute("vacuum")
+            deck.version = 62
+            deck.s.commit()
+        if deck.version < 64:
+            # remove old static indices, as all clients should be libanki1.2+
+            for d in ("ix_cards_duePriority",
+                      "ix_cards_priorityDue"):
+                deck.s.statement("drop index if exists %s" % d)
+            # remove old dynamic indices
+            for d in ("intervalDesc", "intervalAsc", "randomOrder",
+                      "dueAsc", "dueDesc"):
+                deck.s.statement("drop index if exists ix_cards_%s" % d)
+            deck.s.execute("analyze")
+            deck.version = 64
+            deck.s.commit()
+            # note: we keep the priority index for now
+        if deck.version < 65:
+            # we weren't correctly setting relativeDelay when answering cards
+            # in previous versions, so ensure everything is set correctly
+            deck.rebuildTypes()
+            deck.version = 65
             deck.s.commit()
         # executing a pragma here is very slow on large decks, so we store
         # our own record
@@ -3346,6 +4422,7 @@ nextFactor, reps, thinkingTime, yesCount, noCount from reviewHistory""")
             deck.setVar("pageSize", 4096, mod=False)
             deck.s.commit()
         if prog:
+            assert deck.modified == oldmod
             deck.finishProgress()
         return deck
     _upgradeDeck = staticmethod(_upgradeDeck)

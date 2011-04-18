@@ -115,6 +115,9 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
       <widget class="QTableView" name="tableView">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -161,10 +164,19 @@
         <enum>QFrame::Raised</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
         <item>
          <widget class="QSplitter" name="splitter2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="childrenCollapsible">
+           <bool>false</bool>
           </property>
           <widget class="QWidget" name="fieldsArea" native="true">
            <property name="sizePolicy">
@@ -226,6 +238,7 @@
     <addaction name="actionInvertSelection"/>
     <addaction name="separator"/>
     <addaction name="actionFindReplace"/>
+    <addaction name="actionFindDuplicates"/>
     <addaction name="separator"/>
     <addaction name="actionFont"/>
    </widget>
@@ -582,7 +595,12 @@
     <string>Card List</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+L</string>
+    <string>Ctrl+Shift+L</string>
+   </property>
+  </action>
+  <action name="actionFindDuplicates">
+   <property name="text">
+    <string>Find &amp;Duplicates...</string>
    </property>
   </action>
  </widget>

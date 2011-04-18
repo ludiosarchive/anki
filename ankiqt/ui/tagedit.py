@@ -12,7 +12,7 @@ class TagEdit(QLineEdit):
         QLineEdit.__init__(self, parent, *args)
         self.model = QStringListModel()
         self.completer = TagCompleter(self.model, parent, self)
-        self.completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
+        self.completer.setCompletionMode(QCompleter.PopupCompletion)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.setCompleter(self.completer)
 
@@ -33,25 +33,6 @@ class TagEdit(QLineEdit):
     def focusOutEvent(self, evt):
         QLineEdit.focusOutEvent(self, evt)
         self.emit(SIGNAL("lostFocus"))
-
-    def keyPressEvent(self, evt):
-        if evt.key() in (Qt.Key_Enter, Qt.Key_Return):
-            oldtxt = self.text()
-            if not self.text():
-                evt.ignore()
-            else:
-                if self.completer.completionCount():
-                    self.setText(
-                        self.completer.pathFromIndex(self.completer.popup().currentIndex()))
-                else:
-                    self.setText(self.completer.completionPrefix())
-                if self.text() == oldtxt:
-                    evt.ignore()
-                else:
-                    evt.accept()
-            self.completer.popup().hide()
-            return
-        QLineEdit.keyPressEvent(self, evt)
 
 class TagCompleter(QCompleter):
 
