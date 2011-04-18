@@ -19,17 +19,14 @@ from anki.hooks import addHook, removeHook
 
 class Sync(QThread):
 
-    def __init__(self, parent, user, pwd, interactive, create,
-                 onlyMerge, sourcesToCheck):
+    def __init__(self, parent, user, pwd, interactive, onlyMerge):
         QThread.__init__(self)
         self.parent = parent
         self.interactive = interactive
         self.user = user
         self.pwd = pwd
-        self.create = create
         self.ok = True
         self.onlyMerge = onlyMerge
-        self.sourcesToCheck = sourcesToCheck
         self.proxy = None
         addHook('fullSyncStarted', self.fullSyncStarted)
         addHook('fullSyncFinished', self.fullSyncFinished)
@@ -59,9 +56,7 @@ class Sync(QThread):
     def error(self, error):
         if getattr(error, 'data', None) is None:
             error.data = {}
-        if error.data.get('type') == 'noResponse':
-            self.emit(SIGNAL("noSyncResponse"))
-        elif error.data.get('type') == 'clockOff':
+        if error.data.get('type') == 'clockOff':
             pass
         else:
             error = self.getErrorMessage(error)
@@ -78,8 +73,26 @@ class Sync(QThread):
             self.emit(SIGNAL("badUserPass"))
         elif error.data.get('status') == "oldVersion":
             msg=_("The sync protocol has changed. Please upgrade.")
+        elif "busy" in error.data.get('status', ''):
+            msg=_("""\
+AnkiWeb is under heavy load at the moment. Please try again in a little while.""")
+        elif error.data.get('type') == 'noResponse':
+            msg=_("""\
+The server didn't reply. Please try again shortly, and if the problem \
+persists, please report it on the forums.""")
+        elif error.data.get('type') == 'connectionError':
+            msg=_("""\
+There was a connection error. If it persists, please try disabling your
+firewall software temporarily, or try again from a different network.
+
+Debugging info: %s""") % error.data.get("exc", "<none>")
         else:
-            msg=_("Unknown error: %s") % traceback.format_exc()
+            tb = traceback.format_exc()
+            if "missingFacts" in tb:
+                msg=_("""Facts were missing after sync, so the \
+sync was aborted. Please report this error.""")
+            else:
+                msg=_("Unknown error: %s") % tb
         return msg
 
     def connect(self, *args):
@@ -87,40 +100,49 @@ class Sync(QThread):
         if not self.proxy:
             self.setStatus(_("Connecting..."), 0)
             proxy = HttpSyncServerProxy(self.user, self.pwd)
-            proxy.sourcesToCheck = self.sourcesToCheck
             proxy.connect("ankiqt-" + ankiqt.appVersion)
             self.proxy = proxy
             # check clock
-            timediff = abs(proxy.timestamp - time.time())
-            if timediff > 300:
-                self.emit(SIGNAL("syncClockOff"), timediff)
+            if proxy.timediff > 300:
+                self.emit(SIGNAL("syncClockOff"), proxy.timediff)
                 raise SyncError(type="clockOff")
         return self.proxy
 
     def syncAllDecks(self):
         decks = self.parent.syncDecks
         for d in decks:
-            try:
-                self.syncDeck(deck=d)
-            except SyncError, e:
+            ret = self.syncDeck(deck=d)
+            if not ret:
+                # failed but not cleaned up
+                break
+            elif ret == -1:
+                # failed and already cleaned up
                 return
+            elif ret == -2:
+                # current deck set not to sync
+                continue
+        self.setStatus(_("Sync Finished."), 0)
+        time.sleep(1)
         self.emit(SIGNAL("syncFinished"))
 
     def syncDeck(self, deck=None):
         try:
             if deck:
                 # multi-mode setup
-                c = sqlite.connect(deck)
+                sqlpath = deck.encode("utf-8")
+                c = sqlite.connect(sqlpath)
                 (syncName, localMod, localSync) = c.execute(
                     "select syncName, modified, lastSync from decks").fetchone()
                 c.close()
                 if not syncName:
-                    return
+                    return -2
+                syncName = os.path.splitext(os.path.basename(deck))[0]
                 path = deck
             else:
                 syncName = self.parent.syncName
                 path = self.parent.deckPath
-                c = sqlite.connect(path)
+                sqlpath = path.encode("utf-8")
+                c = sqlite.connect(sqlpath)
                 (localMod, localSync) = c.execute(
                     "select modified, lastSync from decks").fetchone()
                 c.close()
@@ -129,30 +151,28 @@ class Sync(QThread):
             if "locked" in unicode(e):
                 return
             # unknown error
-            raise
+            self.error(e)
+            return -1
         # ensure deck mods cached
         try:
             proxy = self.connect()
         except SyncError, e:
             self.error(e)
-            if deck:
-                raise
-            else:
-                return
+            return -1
         # exists on server?
+        deckCreated = False
         if not proxy.hasDeck(syncName):
-            if deck:
-                return
-            if self.create:
-                try:
-                    proxy.createDeck(syncName)
-                except SyncError, e:
-                    return self.error(e)
-            else:
+            if self.onlyMerge:
                 keys = [k for (k,v) in proxy.decks.items() if v[1] != -1]
-                self.emit(SIGNAL("noMatchingDeck"), keys, not self.onlyMerge)
+                self.emit(SIGNAL("noMatchingDeck"), keys)
                 self.setStatus("")
                 return
+            try:
+                proxy.createDeck(syncName)
+                deckCreated = True
+            except SyncError, e:
+                self.error(e)
+                return -1
         # check conflicts
         proxy.deckName = syncName
         remoteMod = proxy.modified()
@@ -165,54 +185,67 @@ class Sync(QThread):
             while not self.conflictResolution:
                 time.sleep(0.2)
             if self.conflictResolution == "cancel":
-                if not deck:
-                    # alert we're finished early
-                    self.emit(SIGNAL("syncFinished"))
-                return
+                # alert we're finished early
+                self.emit(SIGNAL("syncFinished"))
+                return -1
         # reopen
         self.setStatus(_("Syncing <b>%s</b>...") % syncName, 0)
         self.deck = None
         try:
             self.deck = DeckStorage.Deck(path)
+            disable = False
+            if deck and not self.deck.syncName:
+                # multi-mode sync and syncing has been disabled by upgrade
+                disable = True
             client = SyncClient(self.deck)
             client.setServer(proxy)
             # need to do anything?
             start = time.time()
-            if client.prepareSync():
+            if client.prepareSync(proxy.timediff) and not disable:
+                if self.deck.lastSync <= 0:
+                    if client.remoteTime > client.localTime:
+                        self.conflictResolution = "keepRemote"
+                    else:
+                        self.conflictResolution = "keepLocal"
                 changes = True
                 # summary
-                self.setStatus(_("Fetching summary from server..."), 0)
-                sums = client.summaries()
-                if self.conflictResolution or client.needFullSync(sums):
+                if not self.conflictResolution and not self.onlyMerge:
+                    self.setStatus(_("Fetching summary from server..."), 0)
+                    sums = client.summaries()
+                if (self.conflictResolution or
+                    self.onlyMerge or client.needFullSync(sums)):
                     self.setStatus(_("Preparing full sync..."), 0)
                     if self.conflictResolution == "keepLocal":
                         client.remoteTime = 0
-                    elif self.conflictResolution == "keepRemote":
+                    elif self.conflictResolution == "keepRemote" or self.onlyMerge:
                         client.localTime = 0
                     lastSync = self.deck.lastSync
                     ret = client.prepareFullSync()
                     if ret[0] == "fromLocal":
                         if not self.conflictResolution:
-                            if lastSync <= 0:
+                            if lastSync <= 0 and not deckCreated:
                                 self.clobberChoice = None
                                 self.emit(SIGNAL("syncClobber"), syncName)
                                 while not self.clobberChoice:
                                     time.sleep(0.2)
                                 if self.clobberChoice == "cancel":
-                                    self.deck.close()
+                                    # disable syncing on this deck
+                                    c = sqlite.connect(sqlpath)
+                                    c.execute(
+                                        "update decks set syncName = null, "
+                                        "lastSync = 0")
+                                    c.commit()
+                                    c.close()
                                     if not deck:
                                         # alert we're finished early
                                         self.emit(SIGNAL("syncFinished"))
-                                    return
+                                    return True
                         self.setStatus(_("Uploading..."), 0)
                         client.fullSyncFromLocal(ret[1], ret[2])
                     else:
                         self.setStatus(_("Downloading..."), 0)
                         client.fullSyncFromServer(ret[1], ret[2])
                     self.setStatus(_("Sync complete."), 0)
-                    # reopen the deck in case we have sources
-                    self.deck = DeckStorage.Deck(path)
-                    client.deck = self.deck
                 else:
                     # diff
                     self.setStatus(_("Determining differences..."), 0)
@@ -226,86 +259,51 @@ class Sync(QThread):
                     # apply reply
                     self.setStatus(_("Applying reply..."), 0)
                     client.applyPayloadReply(res)
-                    # finished. save deck, preserving mod time
-                    self.setStatus(_("Sync complete."))
+                    # now that both sides have successfully applied, tell
+                    # server to save, then save local
+                    client.server.finish()
                     self.deck.lastLoaded = self.deck.modified
-                    self.deck.s.flush()
                     self.deck.s.commit()
+                    self.setStatus(_("Sync complete."))
             else:
                 changes = False
-                if not deck:
+                if disable:
+                    self.setStatus(_("Disabled by upgrade."))
+                elif not deck:
                     self.setStatus(_("No changes found."))
-            # check sources
-            srcChanged = False
-            if self.sourcesToCheck:
-                start = time.time()
-                self.setStatus(_("<br><br>Checking deck subscriptions..."))
-                srcChanged = False
-                for source in self.sourcesToCheck:
-                    proxy.deckName = str(source)
-                    msg = "%s:" % client.syncOneWayDeckName()
-                    if not proxy.hasDeck(str(source)):
-                        self.setStatus(_(" * %s no longer exists.") % msg)
-                        continue
-                    if not client.prepareOneWaySync():
-                        self.setStatus(_(" * %s no changes found.") % msg)
-                        continue
-                    srcChanged = True
-                    self.setStatus(_(" * %s fetching payload...") % msg)
-                    payload = proxy.genOneWayPayload(client.deck.lastSync)
-                    self.setStatus(msg + _(" applied %d modified cards.") %
-                                   len(payload['cards']))
-                    client.applyOneWayPayload(payload)
-                self.setStatus(_("Check complete."))
-                self.deck.s.flush()
-                self.deck.s.commit()
             # close and send signal to main thread
             self.deck.close()
             if not deck:
                 taken = time.time() - start
-                if (changes or srcChanged) and taken < 2.5:
+                if changes and taken < 2.5:
                     time.sleep(2.5 - taken)
                 else:
                     time.sleep(0.25)
                 self.emit(SIGNAL("syncFinished"))
+            return True
         except Exception, e:
             self.ok = False
-            #traceback.print_exc()
             if self.deck:
                 self.deck.close()
-            # cheap hack to ensure message is displayed
-            err = `getattr(e, 'data', None) or e`
-            self.setStatus(_("Syncing failed: %(a)s") % {
-                'a': err})
-            if not deck:
-                self.error(e)
+            self.error(e)
+            return -1
 
-# Choosing a deck to sync to
+# Downloading personal decks
 ##########################################################################
 
 class DeckChooser(QDialog):
 
-    def __init__(self, parent, decks, create):
+    def __init__(self, parent, decks):
         QDialog.__init__(self, parent, Qt.Window)
         self.parent = parent
         self.decks = decks
         self.dialog = ankiqt.forms.syncdeck.Ui_DeckChooser()
         self.dialog.setupUi(self)
-        self.create = create
-        if self.create:
-            self.dialog.topLabel.setText(_("<h1>Synchronize</h1>"))
-        else:
-            self.dialog.topLabel.setText(_("<h1>Open Online Deck</h1>"))
-        if self.create:
-            self.dialog.decks.addItem(QListWidgetItem(
-                _("Create '%s' on server") % self.parent.syncName))
+        self.dialog.topLabel.setText(_("<h1>Download Personal Deck</h1>"))
         self.decks.sort()
         for name in decks:
             name = os.path.splitext(name)[0]
-            if self.create:
-                msg = _("Overwrite '%s' on server") % name
-            else:
-                msg = name
+            msg = name
             item = QListWidgetItem(msg)
             self.dialog.decks.addItem(item)
         self.dialog.decks.setCurrentRow(0)
@@ -320,12 +318,5 @@ class DeckChooser(QDialog):
 
     def accept(self):
         idx = self.dialog.decks.currentRow()
-        if self.create:
-            offset = 1
-        else:
-            offset = 0
-        if idx == 0 and self.create:
-            self.name = self.parent.syncName
-        else:
-            self.name = self.decks[self.dialog.decks.currentRow() - offset]
+        self.name = self.decks[self.dialog.decks.currentRow()]
         self.close()

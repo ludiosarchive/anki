@@ -1,3 +1,2114 @@
+commit f78abf2c346e83474e5654eaeb002407a3d73251
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Mar 28 16:38:42 2011 +0900
+
+    bump version
+
+commit c4e045463bc797fe96259ad506982ef72076f5ae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Mar 4 14:32:17 2011 +0900
+
+    set rd=2 in subscriptions
+
+commit 19a293cf74c91620ea2801c17900a6370dcfcef7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 24 13:20:19 2011 +0900
+
+    don't return a negative delay for failed cards
+
+commit 5e23e168c0c4ffe4b10e43b886f42679f91764e0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 20 14:08:35 2011 +0900
+
+    bump version
+
+commit 0b82e1ab3a7f62a97eeb8b86238994af33b40999
+Merge: c79db60 008c590
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 20 13:47:56 2011 +0900
+
+    Merge branch 'master' of ../stable/lib
+
+commit 008c5904ca2354ce79379b2e398d1f3dd14e2fac
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Feb 20 13:45:45 2011 +0900
+
+    when calculating delay, compare against cutoff, not current time
+
+commit c79db601c6659fd83fd92c973f6c4943d205f7de
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 14 03:22:08 2011 +0900
+
+    typo
+
+commit e9ec7f3649d9c606125c42ff2bb833513bd2988f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 14 03:13:16 2011 +0900
+
+    don't escape remote image links
+    
+    thanks to mark (mhl) for the report
+
+commit 88fdaef93907b821cfb0ed1252041f5fc4e50f3d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 9 21:54:52 2011 +0900
+
+    rely on system-installed setuptools
+
+commit f156f81a845071e1b65434ca7d5cf25a9fa625e3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 9 00:36:16 2011 +0900
+
+    don't add a mature bonus when cramming
+
+commit 88280277291e7f2362ee4258a8c33624b6c712f1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 9 00:23:45 2011 +0900
+
+    when calculating next interval ensure we don't have a negative delay
+
+commit 8a1df1728fe1778e67a2026911d3f94ca0e0d839
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 8 02:45:22 2011 +0900
+
+    rebuildTypes()
+    
+    - ensure we're fixing relativeDelay for suspended cards
+    - remove priority compat code
+
+commit 07db17be8836bfb6252ac87071d469f4aae7dcc1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Feb 7 00:04:39 2011 +0900
+
+    off by one in relativeDelay sync code
+
+commit ff38dad5b23bb00c56a709b651f586cd37791e92
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Feb 4 20:33:13 2011 +0900
+
+    remove redundant code
+
+commit 1b027af4396b2f22a11f271cd07ddc8304e6819d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 3 00:22:03 2011 +0900
+
+    bump version
+
+commit 340b5864c8b38d6862df53b003a9e3aefdeaea47
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 3 00:18:42 2011 +0900
+
+    when deck is finished stop timeboxing timer
+
+commit f3a336a4e41c1c90776631bfde8abc26f3c39903
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 3 00:14:36 2011 +0900
+
+    when exporting a standard anki deck, don't put media in dropbox
+
+commit b8e19d5506fa0494cc1336906a786f31e13341f5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Feb 3 00:10:40 2011 +0900
+
+    don't copy media on export if disabled
+
+commit 1464394d58b66f28c4058c4278f1c580c353c91e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 2 23:52:34 2011 +0900
+
+    when the day rolls over, update due cutoffs too, and rebuild queue
+
+commit e49a9bb5ac3d82b05f48f8959c4b8b25de52337d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 2 23:47:58 2011 +0900
+
+    relative sibling spacing for reviews
+    
+    Anki 1.0 had a similar feature but we do things a bit differently now. The
+    relative spacing applies only to reviews, and spaces cards according to their
+    interval, instead of spacing all cards the same. Any delay < 1 full day is
+    treated as no delay, so with the default 10% setting, reviews with an interval
+    < 10 days are not spaced at all. This should hopefully cut down on support
+    queries for people wondering why many of their cards were delayed, allows the
+    two settings to be documented separately, and does away with the somewhat
+    confusing usage of non-integer new sibling values to disable review spacing.
+
+commit 66e44f494b9efa086e158b032fdcabc363872f61
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 2 22:12:06 2011 +0900
+
+    don't update factor in cram, learn more, etc
+
+commit 338838583e38f1a98b213921b4212c423c1fb15a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 2 22:10:44 2011 +0900
+
+    more last interval preservation into cram scheduler code
+
+commit 09e6e1bd65521f31ef00f351fd1719069b84756a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 2 22:04:12 2011 +0900
+
+    fix media db check freezing interface if no media folder
+
+commit 9bf850c7018b4130c3515e891feecabe38346db1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 2 18:44:49 2011 +0900
+
+    don't allow & in filenames as qt tries to escape them in a string
+
+commit 80bb59024c2e300039d4d8989c63ac9c53d8fbfd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Feb 2 18:36:58 2011 +0900
+
+    utility for percent-escaping images
+
+commit b426ad4271d60cffe236ea63ca2365fc55a8b283
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Feb 1 18:57:44 2011 +0900
+
+    fix html comments in translator's patch
+
+commit 04babfb102ca8c8b367b0da23c7a1daa701d85d5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 31 12:59:48 2011 +0900
+
+    if latex didn't run, prompt user to install
+
+commit e0d5b9d69ea1cab60f37cd29821e4cc07edbcc8d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 30 15:31:29 2011 +0900
+
+    never set lastSync=0 when toggling syncing
+    
+    we should rely on needFullSync() to determine whether a full sync is actually
+    necessary.
+
+commit d362decca21a8a7a13220f0f7c85c17a21cc2079
+Merge: ab94512 b0b9cd2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 30 12:46:13 2011 +0900
+
+    Merge https://github.com/ymasory/libanki
+
+commit b0b9cd2ce3345d52cda61411b5f123497930fbbf
+Author: Yuvi Masory <ymasory@gmail.com>
+Date:   Sat Jan 29 22:40:29 2011 -0500
+
+    suppress indentation
+
+commit ab9451253cdf0e3a322509f4c9163650dd0eac60
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 29 11:01:43 2011 +0900
+
+    now all clients are updated, set delay1 = 0 if 600
+
+commit eb0bb89f44023876d83ae8577426707f12565f55
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 27 08:13:10 2011 +0900
+
+    bump version
+
+commit 523adc468edbff53b1d10262df0b848e2f7b2504
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 27 07:45:45 2011 +0900
+
+    allow user to disable review spacing
+
+commit be8eec52bc53be355aa60be98ccca631d3a8539c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 26 15:06:51 2011 +0900
+
+    make sure latex.py works indepent of gui
+
+commit 942307190ec60af9233b5846b56de4bda2f0e923
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 26 15:04:32 2011 +0900
+
+    catch duplicate tags in upgrade
+
+commit ed5a8b0e3e7eea2dd29bfffee216b8944b9e6fd6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 26 14:36:45 2011 +0900
+
+    make sure created is reset
+
+commit be3f32755ef8deb09e949e64df7b7c8e2892a806
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 26 14:32:53 2011 +0900
+
+    new option for tz reset without unpack
+
+commit 744cf3b16c4290b3f8dc8ab30dd209037a12c595
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 26 13:59:54 2011 +0900
+
+    don't create empty media folder in upgrade
+
+commit 6071f8e209ff9ec1521831385034d514eaecbfe6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 26 12:59:24 2011 +0900
+
+    include latex in alt tags of generated image
+
+commit b533c99375fdfb1d9e637b8781dddf011b18c5e6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 24 09:07:47 2011 +0900
+
+    typo in upgrade code
+
+commit 7a56e26be643b92860e4512b1cc9b37cf9ca578e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 22 07:36:10 2011 +0900
+
+    bump version
+
+commit e042ef5e62b0b75606ee759bc25c6588f98d11ec
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Jan 22 07:36:05 2011 +0900
+
+    make the format upgrading smarter
+
+commit c1d15b8a9ed67af3cfe231b0c9d3b9ca0b8c4bd2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 21 11:02:07 2011 +0900
+
+    clearer message when facts missing after sync
+
+commit 6860bba0de26ca2ddbdde2ee132a88bc4895ce19
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 21 09:36:04 2011 +0900
+
+    ensure failed mature come at the start of the future day
+    
+    - this fixes a state where cards failed on that future day could end up
+      with an earlier due date that the rest of the failed mature cards, leading
+      to the newly failed cards being repeated prematurely
+    - this leads to non-deterministic scheduling of the mature bonus fails, so
+      they are effectively randomized which is probably what most users want
+
+commit 4859778d2c2a07291a8a2224e045c7d53f7d436c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 21 06:41:34 2011 +0900
+
+    preserve old default card-level formatting
+
+commit 0e08092f65464676b96e0783aee9e55fd839fc0a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 20 05:30:13 2011 +0900
+
+    disable callable replacement which isn't supported on older pythons
+
+commit f945e60d6d4aed603751f51f5eda0aff4cb56593
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 19 05:17:39 2011 +0900
+
+    when renaming fields, look for the non-space version instead
+
+commit 0fc662a9199ad237a298317065adf00730fdea0d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 19 02:34:13 2011 +0900
+
+    don't try to delete normalized version
+
+commit bd7f5787cc989cb2b70ab6e079777233bafd1f91
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 19 01:18:27 2011 +0900
+
+    fix a bug with relativeDelay not being set on card answer
+
+commit d57a371ca54b5fc2a4d5a1e2e5be1c98e09a7baa
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 18 04:33:16 2011 +0900
+
+    bump version
+
+commit b8711fe8536fca7d828388cbb5f822694af3bba6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 18 02:22:55 2011 +0900
+
+    fix win32 audio issue when temp dir has foreign chars
+
+commit e55d4768a3b498888072157905fc8dabe42e7c91
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 18 01:18:29 2011 +0900
+
+    normalize for check, but not for db
+
+commit 98fb0f5bb9fab0650be692aaeb4823ec672d2f65
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 17 01:36:19 2011 +0900
+
+    apply selective study to review early
+
+commit 3d5a427f85a97180fac1567d2f77109b59d667ea
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 14 23:08:09 2011 +0900
+
+    fix include&exclude tags case
+
+commit 0a9c498cbd55eacd6ff38c51757aa69893da9b99
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 14 22:49:37 2011 +0900
+
+    fix media db check on non-unicode dir
+
+commit 276ec634b9cd6b30b3f41c5e96be18a6ce33b90c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 14 19:03:02 2011 +0900
+
+    ignore new cards in hiddenCards()
+
+commit f7a813831c684d20de3c2226db575880e6c90e40
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 14 05:28:32 2011 +0900
+
+    don't error out if sound is missing on win32
+
+commit ab5c1621e3d4928da109a9a2ead28998ce9ad5a2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 14 02:54:53 2011 +0900
+
+    bump version
+
+commit 29a53b268f78677d98bc3199ce35a0e60e41dea5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 14 00:31:07 2011 +0900
+
+    strip qt's rtl marker
+
+commit 31df2fac012d45f7cdb0188b075640008d65de4d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 23:32:25 2011 +0900
+
+    work around osx decomposing files on HFS+ partitions. sigh.
+
+commit eec317bfc3172e759484027f6e2cf3eee8b9db06
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 21:27:35 2011 +0900
+
+    work around mplayer on win32 not handling foreign characters
+
+commit 149fbee33eccbf86324eb34586ce8147c4e64b5d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 20:00:35 2011 +0900
+
+    fix new-style template replacement; support cond rendering
+
+commit cdcde2f2d37d327f1a6bdfddbdfcbe8294362fb1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 19:43:38 2011 +0900
+
+    fix unicode warning when invalid template message given
+
+commit 9b7a55d964ab46b7fde64648eb75461f9cdc858d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 19:21:40 2011 +0900
+
+    remove some old indices
+
+commit 0b07707e680e54ed9fd8b841c42cd3355c9a79c7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 07:55:39 2011 +0900
+
+    make sure we don't try to send the queues when bundling deck
+
+commit bef86bdbf31ee6341be7f3cce13f5a87c35d0d73
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 06:21:23 2011 +0900
+
+    make sure default font sizes are set on upgrade
+
+commit 5c0421b6e06a29a033de27fc6ba16acd675f2c03
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 05:54:41 2011 +0900
+
+    bump version
+
+commit 3fe6167d7fc3e123c70784617e56cfce21e0146c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 05:25:20 2011 +0900
+
+    Revert "temp hack to prevent latex generation on ankiweb"
+    
+    This reverts commit a334f839b8f5042c810ae9a1729f1bbf75a8a4ab.
+    
+    fixed on the server side now
+
+commit fdd88080c86d1ed48e70d1f8fa1608639e0468d0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 05:25:05 2011 +0900
+
+    work around ankidroid getbool bug
+
+commit 3f5befc2e74e87770c3fbc944135b27260b2bcc5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 13 04:20:37 2011 +0900
+
+    don't alter lastSync on upgrade
+
+commit a334f839b8f5042c810ae9a1729f1bbf75a8a4ab
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 12 20:36:12 2011 +0900
+
+    temp hack to prevent latex generation on ankiweb
+
+commit 175f3f0a0e4d356014dd4542866bf23ed107ba30
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Jan 12 16:31:02 2011 +0900
+
+    bump version
+
+commit 46a441fc0bb5d5aab04a11bca469ffb9d760641f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 10 19:26:14 2011 +0900
+
+    remove obsolete bulk fetching
+
+commit c534362071f00cab855f212e4b36d41c44691fa5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 10 19:02:33 2011 +0900
+
+    bump version
+
+commit 9af5d4d5ed1b9e3f0245c9c3383503d98f27221c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 10 18:58:59 2011 +0900
+
+    apply limit to new card count
+
+commit 87ffbedf163e130d57b6aecc6109ed2489ded29b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 9 15:23:03 2011 +0900
+
+    remove unused clause in earliestTime()
+
+commit 2ca1627add3957cd86f65f91f5521de82ec83e41
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 9 15:12:17 2011 +0900
+
+    use cardLimit() in cardsDueBy(), not just earliestTime()
+
+commit 82231a71b25de51318717022613778bf4140cf17
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 7 21:43:13 2011 +0900
+
+    bump version
+
+commit 7cb17e6e8d146bdf431e05924287aee32ed538ee
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 7 21:42:24 2011 +0900
+
+    restart mplayer if it's died
+
+commit 2ca27d389f8b836986e681321f94669dc1b1fea0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Jan 7 13:35:15 2011 +0900
+
+    fix local syncing
+
+commit 2e2d93649e8f33de7a393c58fb225ed81831d285
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Jan 6 14:24:30 2011 +0900
+
+    bump version
+
+commit 1f34abc00365da5cfe40c302edec5e522fb8a15e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 4 15:51:24 2011 +0900
+
+    more fixes for skewed clocks
+    
+    if a client with a clock greater than server time synced a deck, the modified
+    time ended up higher than lastSync when the deck was modified on the server.
+    instead we force the modified time to be <= the server time, which is known
+    correct.
+
+commit d717be8849fd97dbf02e43ec594ebffb4958376f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 4 12:32:33 2011 +0900
+
+    move to a thread event to fix race condition
+    
+    The old conditional objects had a problem where the calling code was
+    notifyAll()ing before the helper threads had started waiting.
+
+commit 3a7f8fdc7a75cf39d668bb47763ea829214426c8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Jan 4 11:59:24 2011 +0900
+
+    change win32 mplayer testing location
+
+commit 33cbbdc368bae0669e40854b3debb4e660a33512
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 3 13:46:27 2011 +0900
+
+    bump version number
+
+commit 5a9c75dfe423a7b3d68cd7cefbf55bf705e4a5d3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Jan 3 13:01:05 2011 +0900
+
+    don't stop audio playing on clear
+
+commit a4df2106673962f746371802d0d653dae16ba1f7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 2 22:17:34 2011 +0900
+
+    add group_concat compat code from wm port
+
+commit 545c2cddcdc2267ddf9d9010ed28884fb0cbe944
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 2 19:25:27 2011 +0900
+
+    bump version
+
+commit b235461d8b63bb61cacf2685279ecf610a623c4f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 2 17:43:53 2011 +0900
+
+    space cards to next session if per-day off
+
+commit b45f07158171ae7fd7e93e530d4759161905935a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 2 17:35:17 2011 +0900
+
+    option to limit graphs to selective study
+
+commit 329ab99ff7598ae961b922f4203fe3ff36538ec9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Jan 2 13:05:18 2011 +0900
+
+    add seen card count back for plugins
+
+commit d56bddea2d6ae367c411a1db16eaf644ea4a8ec7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 28 03:53:30 2010 +0900
+
+    refactor sound code
+    
+    this addresses a bug where mplayer was sometimes not being restarted when
+    opening a new deck, and should remove the need for atexit or hacks in the GUI
+    code to make sure mplayer is closed
+
+commit ece9b2eccdc6145aba127d588c40c047761cccae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 27 21:39:20 2010 +0900
+
+    don't limit failed cards to 0 when cramming
+
+commit a18abb0f977dbfbf5ec05a841ff10164f2e09f9c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 27 04:32:25 2010 +0900
+
+    add timestamp to recording files
+
+commit 6f10c588f6cd29f8a1f35c85e97894cf33998b6f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 27 03:01:39 2010 +0900
+
+    bump version number
+
+commit a2606dd70a88a2601b77d9428c9854287956c736
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 26 07:35:15 2010 +0900
+
+    remove some unused calls
+
+commit 9890c775146daab60b3fe2090dd034b52272158a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 26 07:29:31 2010 +0900
+
+    update finished screen to use blanket inactive/suspended msg
+
+commit 856839e0558936682c475ac10739d08fc925a32f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 26 06:01:24 2010 +0900
+
+    include reviews in spaced card count; bold text
+
+commit 63106578cdfd5f59a70786be91504847a5d461b9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 26 05:54:05 2010 +0900
+
+    don't decrement due counts when spacing
+    
+    This works fine if the user is showing all cards, but if they have limited
+    reviews to certain categories, it can result in the counts going negative
+    because we decremented for cards which weren't actually due. Determining if a
+    card was actually due or not is an expensive operation, so instead we leave
+    the counts alone and make sure reviews will finish early if the new/rev counts
+    are non-zero but the queue is empty.
+
+commit 93a67931daea544b300b53cf190a42c6e5bb3c36
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 25 12:48:36 2010 +0900
+
+    bump version number
+
+commit ba235029447c3660069c740ce65f393a9f59b5fc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 25 12:44:06 2010 +0900
+
+    fix a unit test
+
+commit ff5bc721213395e8057a38792a034fc1a74a01eb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 25 12:43:35 2010 +0900
+
+    pass in a 0 timediff if using stock sync()
+
+commit f0bf1989bc8bfa49f2f53585a02930878a66c780
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 25 12:42:28 2010 +0900
+
+    new code to download remote links and replace with local ones
+
+commit 50622a31278408b49e82ba6427fbe286346272f9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 22 08:06:44 2010 +0900
+
+    encode latex after everything else
+
+commit 61812b173d79fdaa97a94c1d9ae56506e089b604
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 21 23:58:36 2010 +0900
+
+    mention syncing disabled case
+
+commit ee7da2bd65567b5fe1680e81a86292899351cd1f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 21 06:41:42 2010 +0900
+
+    update comment
+
+commit afa34d9d39e863df89a6ab3dbbe5e577a57d9a8c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 21 01:45:17 2010 +0900
+
+    bump version
+
+commit 425789535f11a47168a641d0adbea9947f49ff36
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 20 00:37:16 2010 +0900
+
+    don't trim whitespace in sections
+
+commit 5c4d7b1789597389546e3ba7427a4d41d5af6648
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 17 21:29:48 2010 +0900
+
+    don't include http/ftp links in media db
+
+commit 7c45bab35aecf86b7d554146536cb6338186b4dd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 17 21:04:47 2010 +0900
+
+    rate-limit sync progress messages for win32 installs with huge net bufs
+
+commit ca07cb8f263d3fb177aa198b614bdc168bdc105f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 17 04:27:12 2010 +0900
+
+    don't dump upgrade notices on stderr if not attached to gui
+
+commit 400ca9a8a2a9810c3ad3581634077fed548eca5e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 17 03:26:09 2010 +0900
+
+    factor in time difference when determining common point
+
+commit 6860f64f2872502fd5141e71686ca0f16b56b4f2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 17 02:03:35 2010 +0900
+
+    try to recover tags of card, too
+
+commit 1b219679b6818853cfb219e97735ca918d03e545
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 17 01:48:01 2010 +0900
+
+    bump version
+
+commit 5eb00296d52f342e8c4366c1bc5dfb9cf0989300
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 17 01:46:14 2010 +0900
+
+    always space rev cards to the next day
+
+commit 7065abcf4f03b0b8447310de3c75ed69bb6ac92b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 16 22:23:51 2010 +0900
+
+    only collapse failed cards after cutoff updated
+
+commit e4447818ffd99f241ff0b490e11663bfe2af2094
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 16 04:28:31 2010 +0900
+
+    make sure learn more considers inactive cards
+
+commit acb72327b2014165c7715bbf2b73b681200ac264
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 16 01:42:12 2010 +0900
+
+    don't leave stale entries in media db if just scanning
+
+commit 4e5b725166721be0b05448a91e3eadb11fa75d92
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 16 01:22:23 2010 +0900
+
+    and make sure xhtml syntax works too
+
+commit 2a629a179d8c35304d99648bee25f8d734821719
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 16 01:12:45 2010 +0900
+
+    add missing trailing > to img regexp
+
+commit 907fa5c80e7ce5e65232de9d8ce4f38a3b591051
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 15 04:46:40 2010 +0900
+
+    tweak spaceCards()
+
+commit d2e3d7932d3b1aff114bd5f308ea433a45e31de7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 15 03:53:02 2010 +0900
+
+    bump version
+
+commit 0363cc70f445060c45b14ad416dd80f0a0c0db7c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 15 03:52:18 2010 +0900
+
+    preserve more of the old formatting on upgrade
+    
+    because field formatting is always on now, users with custom font
+    sizes/families set only on the card will still have to alter their templates
+    and either configure the fields or replace the references with triple
+    curly braces
+
+commit 09b017bb24eddbdf50c552931f344be1a0968906
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 15 02:03:12 2010 +0900
+
+    not sorting on combinedDue anymore, so don't bother with that upgrade step
+
+commit 9ed9ec79cc13107fdf83639f800601b51b67c570
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 06:56:04 2010 +0900
+
+    make them case-insensitive too
+
+commit 525f44c9c53067405b4935085a37606e089d33e6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 06:54:40 2010 +0900
+
+    more robust img regexp
+
+commit 7ce661ac633d3847f0b372a7d400c70feb7ae4ef
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 06:46:20 2010 +0900
+
+    place cards with corrupt/missing facts into new fact instead of deleting
+
+commit 154bf0cef4d5061e87d87aab97de82d6b19429dd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 04:09:55 2010 +0900
+
+    bump version
+
+commit 0a01d9f867866d6da5203a7d526cacd1e2d4770c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 03:21:05 2010 +0900
+
+    make latex preamble easier to read
+
+commit d0c6db0d62e1a775dfc62dd1b29a91cf8ea0188b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 02:29:21 2010 +0900
+
+    only regenerate indices once during upgrade from 1.0
+
+commit d14761b428b52c2a904f5c018b34f6eec3cabc39
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 02:21:08 2010 +0900
+
+    sort new cards by due not combinedDue; index optimizations
+    
+    - ensure queue filling selects can be satisfied by index alone
+    - sort by due instead of combinedDue so we can decouple card order from
+      new spacing
+
+commit 5de6bb57ed3ef7a9b737b18da9109bd15efc2fc3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Dec 13 00:26:34 2010 +0900
+
+    auto-analyze when we've updated a dynamic index
+
+commit 6563f0cefb58fb0fa11ba8e228b17d83306e4daf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 12 20:07:20 2010 +0900
+
+    update test for new media handling
+
+commit 902800de999756359bed111839f1c8fe7e6889d3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 12 02:00:06 2010 +0900
+
+    answers exceeding 60 seconds now log the full 60 instead of 0
+
+commit cc8dbccf3864f2f30e58609da85fa1b4cd4b633b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 12 00:09:40 2010 +0900
+
+    don't set combinedDue twice in answerCard
+
+commit 49b744f77d79286bef5c79cdd710cdbda03989a1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 22:04:24 2010 +0900
+
+    limit plugin warning to once a session
+
+commit 98597dd56d44d7cf7e013674dd08e257ea27764d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 22:01:07 2010 +0900
+
+    bump version
+
+commit 58b20b0626a6c7f0a6c46aad8e7a1239f8bc29ae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 18:36:01 2010 +0900
+
+    make sure subprocess is available so we can set startupinfo
+
+commit 7ab5a53e38d7694277d6d5d111851d47df06e578
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 17:02:51 2010 +0900
+
+    remove superfluous 0
+
+commit 98304accb0b8f48a31f95fa1301484cd50dacb25
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 16:30:26 2010 +0900
+
+    return actual checksum, or sqlite tries to treat it like an int
+
+commit 35fd3de6fb21cbe657d466056d07cfa770051da1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 15:55:22 2010 +0900
+
+    reset if there were buried cards, since updatePriorities() doesn't
+
+commit 59df94ff7407d7bc40ad842bb6ab33ed9abae94c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 12:54:30 2010 +0900
+
+    add compat code for fact.setModified()
+
+commit 9f276e3163e2c1a1ced58e4fb3fefa861fba83da
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 02:33:25 2010 +0900
+
+    bump version
+
+commit e3838464a21c2ce297e25e1283b835882795cff4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 02:20:36 2010 +0900
+
+    use rec instead of tmp for recording name
+
+commit f42a2e4a00d764cedb494035530e8048129fd23c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 02:17:00 2010 +0900
+
+    rebuild q/a cache to include latex
+
+commit 7a196b3747a6c4353bcdbad6795aea9657725d16
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 02:13:37 2010 +0900
+
+    don't bother to return used media
+
+commit 70eb44bce2ff0fd06c28d656d0def78e0a68f00b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 02:05:00 2010 +0900
+
+    latex improvements
+    
+    - move latex preamble into a deck var and include amsmath by default
+    - include the pre/postamble in the hash, so changes to the preamble result in
+      newly generated images
+
+commit b0f300bb744ce4644df4a93258f777ec7eb687c0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 01:46:29 2010 +0900
+
+    fix latex generation bug caused my mediaDir() always chdiring now
+
+commit 4d2d9eab81927c15705f5365c209bd0b602981f4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 01:40:49 2010 +0900
+
+    generate latex at fact modification, not review
+    
+    - latex now slots in to the formatQA hook to render images in the q/a
+    - moved call() to utils
+    - cache/uncache latex have been obsoleted. User can delete manually, and
+      images will be regenerated with a DB check
+
+commit 0c9672e7b8473646372529d095a87f1113f3b0ea
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Dec 11 00:51:48 2010 +0900
+
+    rewrite media support
+    
+    - media is no longer hashed, and instead stored in the db using its original
+      name
+    - when adding media, its checksum is calculated and used to look for
+      duplicates
+    - duplicate filenames will result in a number tacked on the file
+    - the size column is used to count card references to media. If media is
+      referenced in a fact but not the question or answer, the count will be zero.
+    - there is no guarantee media will be listed in the media db if it is unused
+      on the question & answer
+    - if rebuildMediaDir(delete=True), then entries with zero references are
+      deleted, along with any unused files in the media dir.
+    - rebuildMediaDir() will update the internal checksums, and set the checksum
+      to "" if a file can't be found
+    - rebuildMediaDir() is a lot less destructive now, and will leave alone
+      directories it finds in the media folder (but not look in them either)
+    - rebuildMediaDir() returns more information about the state of media now
+    - the online and mobile clients will need to to make sure that when
+      downloading media, entries with no checksum are non-fatal and should not
+      abort the download process.
+    - the ref count is updated every time the q/a is updated - so the db should be
+      up to date after every add/edit/import
+    - since we look for media on the q/a now, card templates like '<img
+      src="{{{field}}}">' will work now
+    - export original files as gone as it is not needed anymore
+    - move from per-model media URL to deckVar. downloadMissingMedia() uses this
+      now. Deck subscriptions will have to be updated to share media another way.
+    - pass deck in formatQA, as latex support is going to change
+
+commit c4c98470287b3da5088213a14ca62ae8dcb204e0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Dec 10 18:02:18 2010 +0900
+
+    fixed sync unit test
+
+commit 75da977026ec93c589f8844f40f0fb842b6097cb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 9 18:01:16 2010 +0900
+
+    bump version
+
+commit 27ca04fab6cd2cdb1e15170a831150052657e738
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 9 15:34:01 2010 +0900
+
+    support a media prefix
+
+commit 84a98550f0d8a6b8c6f8f55735b85711d09d68a4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 9 12:55:00 2010 +0900
+
+    always change cwd to media dir
+
+commit 1bbffec0d6f3b54d51e9ee2b7a6b9b46fbc5b529
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 9 12:53:01 2010 +0900
+
+    abort download missing media early; remove obsolete forceMediaDir
+
+commit e5d9697d28f4a93174a21561a129656a37ef9745
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 9 12:00:00 2010 +0900
+
+    don't break older clients with new delay1 setting
+
+commit cdac2bf8d7a9f208d2a35050d009f3a7708686fe
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 9 10:43:45 2010 +0900
+
+    workaround card ordering bug from older versions
+
+commit 7fc593a2ceb9abe3262e7deff0024f854c07045a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 8 17:05:19 2010 +0900
+
+    fix tag update
+
+commit 3491a5e3789a5faf9b0253ff96ceee20690c9103
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 8 15:59:16 2010 +0900
+
+    add an index for modified to speed up sync.summary()
+    
+    testing indicates this can produce a 2x performance improvement on lastSync=0,
+    and much more for partial syncs
+
+commit fe97616ecd42478f3ccc49f1a64f5aa4f4c4cb6f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 8 15:38:06 2010 +0900
+
+    add temporary index for priority
+
+commit 05f60c49c8dfd513accd7eb8b1993df06a0d0c52
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 8 15:28:28 2010 +0900
+
+    add rebuild arg for minimal startup
+    
+    this bypasses rebuilding the queue and other startup initialization and thus
+    loads the deck considerably faster. This is useful when you want to perform
+    operations on the deck like syncing, but don't need the ability to review
+    cards
+
+commit 044f28af5a7d15fc242658cd49ad6fb4b62ec1d5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 8 13:57:58 2010 +0900
+
+    fix unit tests now that post sync .reset() is explicit
+
+commit 878c9abb839248cc57bd013cdb21bdb02cf3ee32
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 18:04:53 2010 +0900
+
+    bump version
+
+commit 9f91e904b2efd73f06d5194db5ac572754e123e8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 17:18:17 2010 +0900
+
+    re-enable locked check
+
+commit 1a5c8d2435d06715ce51ac335e7db3607ae6ab87
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 17:13:25 2010 +0900
+
+    fix from marcus for "field":value search
+
+commit 0194296839dedba5c52930627ac85f5ade4041e3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 16:55:03 2010 +0900
+
+    failed cards at end if !delay0 && !failedCardMax
+
+commit a383223e02e0d3932ed397e5eeee4fde9e9e628d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 16:48:49 2010 +0900
+
+    provide more info in sync error messages; catch zlib decode errors
+
+commit 2013e7e4ff5e602cc5ebf4af0c1ae41094c52066
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 14:35:16 2010 +0900
+
+    conditional delete of css
+
+commit 15763f8f3cab7d57926c04d4258fbbfeb0b10ab6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 11:59:02 2010 +0900
+
+    make sure we don't commit during a sync
+    
+    updateDynamicIndices() is done on next deck load anyway
+
+commit 039af66a9df26ce4a60ea1862ba70f916a4957bf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 11:56:43 2010 +0900
+
+    don't rebuild counts in applyPayload(), as the deck will be reopened
+
+commit 4c8f2d3b47d94d8e5a848d9145fe9f0253ce96db
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 11:02:23 2010 +0900
+
+    add finish() command to sync protocol
+
+commit 0af8da9cb80dfef7ea994bb8a4a686324d289c17
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 09:20:31 2010 +0900
+
+    sync updates
+    
+    - set lastSync on successful upload, not before it
+    - make sure source file is closed
+    - use v2 sync protocol
+
+commit da97701b2df6ac83d7d1bfb61c02176dc7dfc808
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 09:19:09 2010 +0900
+
+    disable lastSync fudging again
+
+commit 2a8ef89ee5e82caee496de88e27650e740013a61
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Dec 7 07:26:33 2010 +0900
+
+    remove unused binding
+
+commit a2cd19f49a0bdd1e0712a7affce657db865ed800
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Dec 5 17:43:54 2010 +0900
+
+    tell users how they can disable the move check
+
+commit 458357548f8e5ae8b57ec679d3255c0807c3b806
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 2 23:38:06 2010 +0900
+
+    more sqlalchemy workarounds
+
+commit a23098c92c60266a78fd56afd30a7b41cbf07e42
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 2 09:55:06 2010 +0900
+
+    bump version
+
+commit 9259718fd5f86a67d805fe76fad1e30745ef7410
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 2 07:23:54 2010 +0900
+
+    set syncName after full download
+
+commit 7dd57887d0be1b1fe4473534f81341e97a4af07b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 2 06:48:45 2010 +0900
+
+    update learn more for new spacing
+
+commit b5dd8a9f4bef089362d8a91089b97a3273d82615
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 2 06:47:16 2010 +0900
+
+    update cram code for new spacing
+
+commit bac4acdaa8907d2acd67ed4740e5f60ef5a33544
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Dec 2 06:33:40 2010 +0900
+
+    reworked handling of spaced cards; add cms argument to previewFact()
+    
+    - obsolete spaceUntil - it serves no useful purpose
+    - the old per-model spacing variables are obsolete, as the new approach
+      requires uniform spacing across all models for new cards
+    - introduce a new per-deck variable: newSpacing
+    - don't fill new queue if we've done today's cards
+    - still need to check cramming / review early
+    
+    newSpacing is a time in seconds to delay introduction of sibling new cards.
+    It can be applied as many times as necessary as there is no harm in new cards
+    being delayed repeatedly. Because the default queue length is 200 and it can
+    take quite some time for the spaced cards to be placed in the queue again, we
+    use a separate array to track spaced new cards provided the configured delay
+    is less than 20 minutes. At times under 20 minutes this number is not a
+    guaranteed minimum spacing - if the new card queue is empty the spaced cards
+    will be flushed before checking the new queue again, as otherwise we end up
+    trying to fill on every repetition. The due counts no longer decrease by more
+    than one if the spacing is less than the due cutoff, since that confused some
+    users.
+    
+    Review cards are now placed at the end of the current review queue, and will
+    never be rescheduled to a different day. The old approach had a number of
+    problems:
+    
+    - the more card models you had, the more likely a card would be spaced
+      multiple times, resulting in you forgetting the card before you get a chance
+      to review it
+    - spacing was applied even if the due card was already late
+    - repeatedly failing one card over a period of days or weeks would also stave
+      the other cards of attention
+
+commit 53fbc9b3ee629d2afc006e7c26939d1f33236956
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 1 02:54:21 2010 +0900
+
+    if spacing is disabled, don't decrement counts
+
+commit bb901dfa168413e5fd56539c16e25eaf6d8515e2
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 1 02:42:13 2010 +0900
+
+    make sure all fields have a font set
+
+commit 9fed5e2bc149e193875bce30452d778fa5492388
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Dec 1 01:21:05 2010 +0900
+
+    work around sqlalchemy problem
+
+commit 2352502807a986759560e101d220a2b8e58c6024
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 30 03:35:45 2010 +0900
+
+    bump version
+
+commit ae388595da8001aaec26acce3d3d583a787750cb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 30 03:28:08 2010 +0900
+
+    add whitespace preservation flag; only show active card models when previewing
+
+commit a5af8fb8e9bcf60b15dd50ef5c9821e9760d30ae
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 29 22:51:55 2010 +0900
+
+    convert pystache to private library since it doesn't behave like upstream
+
+commit dfb21a0f711dd737a4fa1602af2df1921f3fba0b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 29 22:40:20 2010 +0900
+
+    {{{text}}} is returned without field formatting but html intact
+
+commit da1cfa52b18eb3d6737dfef0a761346296dc020a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 29 22:33:05 2010 +0900
+
+    mention editFontFamily unused
+
+commit b349a96fa5bb6f2fa856c90cca0db24e60f4e3b8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 29 22:27:19 2010 +0900
+
+    drop most of the per-card formatting
+
+commit 74a0998a3624aba9b3e3433ad5f1d8974680821c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 28 18:21:00 2010 +0900
+
+    bump version
+
+commit 255deb9e9e4fe89770e7aa4d31d65fc9e5620968
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 28 18:14:09 2010 +0900
+
+    elaborate on debug msg
+
+commit 1293520c332ffc1619770353cbf1cfa62c4141a7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 28 04:31:59 2010 +0900
+
+    package pystache
+
+commit 689a74426651118d1f39b49abb7ab5f227fb3782
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 28 02:32:59 2010 +0900
+
+    bump version
+
+commit 850d883ab406adf003d30bb3530f86b7b53dfc64
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 28 02:26:53 2010 +0900
+
+    update rest of code to recognize&use new rendering
+
+commit ac8f613acadf10318c4e47eade095e69ec35e921
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 28 02:06:54 2010 +0900
+
+    use pystache for template rendering; autoconvert old style for now
+
+commit 5c3a63d84ba8f82b636fbe75e4cd98ea673f6a34
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 28 02:06:22 2010 +0900
+
+    catch errors or missing fields when rendering template
+
+commit 9f6a21e0a74e11079bd148d13957e872975794d5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 27 20:58:19 2010 +0900
+
+    switch raw and escaped modifiers
+
+commit 6d787a92f1e004b6bfc731be4db2bc68ae982c44
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 27 20:48:34 2010 +0900
+
+    disable partial rendering
+
+commit 9e790ce74773c1a1e04374558413650e79b2592a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 27 14:16:29 2010 +0900
+
+    add pystache
+
+commit f247133ed8a9ac6e4a9dc3955611a16496b95b08
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 27 13:14:16 2010 +0900
+
+    make syncName work with foreign chars
+
+commit ca9aeaa086510ff0fe5b742860a69ba9db32f89d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 23:35:26 2010 +0900
+
+    don't allow mature delay over a week for now; fix delay being reset to 0
+
+commit 386de21f8767e3406559c7cfda0f8aca60c75f6b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 21:59:09 2010 +0900
+
+    don't fudge matplotlib path on win32
+
+commit e58d7f8dac02855b2cd582ae1b0aebbd10b0045d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 04:20:40 2010 +0900
+
+    bump version
+
+commit 84b99b1ae509fa9f1dc6dd36dd6b86d3949e8177
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 03:49:01 2010 +0900
+
+    don't allow tags to be prefixed with a colon, as this breaks sqlite
+
+commit 3aa787a1461c6d24084e7f6c74ff291673229136
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 03:39:58 2010 +0900
+
+    remove print statement
+
+commit 00087ed101143548fc21bf2788c042722fbfcc00
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 03:26:02 2010 +0900
+
+    find duplicates support
+
+commit d5390181376be2c931cc710e442a444d540672bd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 03:25:32 2010 +0900
+
+    support multiple facts in fid: query
+
+commit 367143f4f371af7184a248a29f73f61025752fbb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 01:49:10 2010 +0900
+
+    make sure to set cards as not due when resetting/rescheduling for old clients
+
+commit f4a35e9b0317e3d6ddd1d4028d788797215da1a3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 01:48:54 2010 +0900
+
+    support tags: at the top of file to import; fix comment stripping
+
+commit e3dd736460c2d9dfafbdb900343cfa4d79b9d60b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 26 01:36:24 2010 +0900
+
+    add ability to update fields when importing
+
+commit dd00d1a5e1896842a969c13beabaa2b352a8db33
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 25 21:56:08 2010 +0900
+
+    when rebuilding tag priorities, don't include obsolote suspended
+
+commit 8f18299cc5b67d1ae2d7b69d312bb1991a3d1cac
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Nov 24 05:39:06 2010 +0900
+
+    typo
+
+commit f698481c19134c063b3c98961ef38ad90d2784d8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Nov 24 05:32:09 2010 +0900
+
+    don't keep changing the hard interval on load
+    
+    only adjust it if it looks like the defaults haven't been changed
+
+commit 6bdca8b3c64e2705b323dd94517b1b5ec365955b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Nov 24 05:14:07 2010 +0900
+
+    fix available card limiting when using %(tags)s, %(cardModel), etc
+
+commit 45dfc97e9f7fb808829076fae7d0349a63aed4af
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Nov 24 05:09:00 2010 +0900
+
+    add axis labels to graphs
+    
+    note that due to limitations in the graphing library, these can't be
+    translated at the moment.
+
+commit 33567edb3ed31a21a7d38b298bf9fb12d6b1bc2f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Nov 24 04:30:55 2010 +0900
+
+    numerous graph changes
+    
+    - use bar graphs instead of line graphs for 3 months or less
+    - easier to read shades of blue for reps graph
+    - simplify day cutoff calculation
+    - fix off by one bug in work done data
+    - add missing entries when calculating cumulative due
+
+commit 7491cfc521f9b2a987d69bd4892fdd67ce0484f6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 23 23:12:34 2010 +0900
+
+    new syncName handling
+    
+    - the local deck name must now match the online deck
+    - syncName is a hash of the current deck's path or None
+    - the hash is checked on deck load, and if it is different (because the deck
+      was copied or moved), syncing is disabled. This should prevent people from
+      accidentally clobbering their online decks
+
+commit 6ec898ca4b2ad4c5977291a9792f52041ab733e8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 23 17:41:36 2010 +0900
+
+    Require explicit reset for most queue-modifying functions
+    
+    When you call operations like deleteCards(), suspendCards() and so on, it is
+    now necessary to call deck.reset() afterwards. This allows the calling code to
+    delay a reset if necessary. If the calling code calls a function that says the
+    caller must reset, the caller should be sure to call .reset() and fetch the
+    current card again. Failure to do the latter will result in answerCard()
+    attempting to remove the card from the queue, when the queue has been cleared.
+
+commit 943c9a0e5faf6156837379997d4dd826a76a15a8
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 23 15:33:54 2010 +0900
+
+    make sure the finished message displays cards due tomorrow
+
+commit 03503cd9b94932f0223aa78e0dbc522bb39fa2c5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 22 08:09:20 2010 +0900
+
+    fix cram from ids case
+
+commit b03f30c27915943f0c3c98dc7e9c680607cb2826
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 21 14:24:46 2010 +0900
+
+    no need to adjust hardInterval in upgrade; handled in deck open
+
+commit 76135dc8beff99fdb3e3256bf565e0f476d2451c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 21 13:39:28 2010 +0900
+
+    updated failed card handling when cramming
+    
+    - temp suspend all answered cards, regardless of type
+    - fails influence the standard scheduling too
+
+commit 37e269ab81820285a768cbf76df4f02e2f94eb07
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 21 12:58:14 2010 +0900
+
+    bump version for coming development release
+
+commit 937d6a6513627ed9231156c9d6467440428d0fb5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 21 12:32:58 2010 +0900
+
+    update earliestTime() for new failed cards handling
+
+commit b4493f0ec8b4b7252383562a036e17a7a73f8142
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 21 12:25:54 2010 +0900
+
+    user may set young delay to more than a day
+
+commit 8e9d14a0fdc685c35c8ea11b1601ef86fdbb0970
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 16 18:04:04 2010 +0900
+
+    avoid passing the second fade argument, as it seems to be more robust
+
+commit c2f2225b7f6840d74c8f3182018c84773d90dc45
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 16 11:27:27 2010 +0900
+
+    update combinedDue for the current card object, not just for the db
+
+commit 0afec850c0393b8c62087b1ab401f396ea906f4c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 15 14:29:52 2010 +0900
+
+    on second thought, avoid suspended cards or this will bite us in the future
+
+commit 1cd5125d4e45c21d6fcb7a2ffa63058207cc6067
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 15 14:27:52 2010 +0900
+
+    remove the rest of the obsolote rebuildTypes() code
+
+commit 26470c997e33060c0266fc38df0593ba9d1f0ec7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 15 14:07:13 2010 +0900
+
+    remove unused where clause from rebuildTypes()
+
+commit 6d2e32e2df990eee1b8b3e0861b9c386856ada6a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 14 08:16:07 2010 +0900
+
+    finished message should use cutoff + 24hrs
+
+commit 6f8a5d6a24d2ec6568c7f58ec82e85ac843d996a
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 14 08:11:28 2010 +0900
+
+    fix wrong priority code in rebuildTypes()
+
+commit aa753d35a502b7820f1905a9aaf074686fc1df99
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 14 07:37:51 2010 +0900
+
+    don't include suspended cards in graphs
+
+commit 1f8adc791a96333f96fa562c1ea71185bab4a290
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 13 21:39:52 2010 +0900
+
+    a few failed cards related fixes
+    
+    - make sure cardLimit() matches on sql statements that are broken over lines
+    - fix logic in getCardId()
+    - don't increment failed count if delay1>0 and card was mature
+
+commit 7502fba5cea112daacb152d26fd5c619c15b7713
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 13 21:15:41 2010 +0900
+
+    change failed card handling
+    
+    The old delay1 behaviour isn't easy to achieve with the queue code, as we only
+    refresh the queue when it's emptied, and if the user has delay1 set to say 9
+    hours, failed mature cards sitting in the queue could prevent subsequent young
+    failures from being displayed. Instead we convert delay1 to a count in days in
+    which to offset failed mature cards. 0 means the same time as delay0, 1 means
+    show the card a day later, and so on. This means users will lose the ability
+    to delay mature cards for x number of minutes more than young cards, but a
+    scan of AnkiOnline decks indicates that's not often done.
+    
+    We also need to use a separate cutoff for failed cards, since we need to be
+    able to display them as they expire if the user has disabled per-day
+    scheduling.
+    
+    And instead of marking cards as due in the future, we set their due time to
+    the current time, and move the delay0 calculation to getCardId(). This means
+    that if the user changes their failed card settings from say 1 hour to 10
+    minutes, the changes apply to the currently failed cards and not just cards
+    failed in the future.
+
+commit b69fd48768a760fec18305d65a308e93a733db06
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 13 18:39:24 2010 +0900
+
+    more type handling updates; don't munge counts on sync
+    
+    In various parts of the code we need to get all cards of a given category
+    (new, failed, etc) regardless of whether they're suspended, buried, etc. So we
+    store the true type in the obsolete relativeDelay column and add in index for
+    it, because it's cheaper than putting indices on reps & successive.
+
+commit 268d2645fd9079996f90bf4c8edf90f640013263
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 13 16:33:39 2010 +0900
+
+    delete cards that have the wrong card model
+
+commit 274017036afe0ef6e0c1d794dcff1984ef8a6868
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 13 12:00:01 2010 +0900
+
+    add sanity limits to cutoff calculation
+
+commit 4a35dbe6b20ec9f618c77ebe89e650105fbc1b37
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 12 13:05:43 2010 +0900
+
+    python2.7/win32 fix for latex
+
+commit 919353c57d8903d7ec08c4167119804aa756fd36
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 12 12:51:53 2010 +0900
+
+    only require due to be past cutoff if the card was passed
+
+commit 3a7f3434640914b3b25277fefcfcd917bc042956
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 12 12:50:07 2010 +0900
+
+    fix typo - been writing too much javascript lately!
+
+commit 1b411938bf9dcf136a1ac156edc6493b449fd26c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 12 12:49:30 2010 +0900
+
+    add inactive argument to cramCardTags() so it performs like standard
+
+commit 6ed0bc91bb14975a2d12a5773ebfe4557877f619
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Nov 8 09:22:36 2010 +0900
+
+    update sync url
+
+commit 9d6b0f35f4b1c57801e2b38b27a154cd9c3b68c6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Nov 7 06:48:35 2010 +0900
+
+    ensure cards are scheduled past cutoff, more
+    
+    - because the cutoff adds a few hours past midnight, it's possible for a card
+      that's scheduled for 1.0 days ahead to fall within the current cutoff, so we
+      need to make sure that doesn't happen
+    - set spaceUntil=0 when answering card again
+    - fix randomizeNewCards() query. the whole codebase needs auditing for type
+      references which need updating
+
+commit 61610d83518be46b915201563656272e53b77100
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 6 08:57:47 2010 +0900
+
+    adjust some queries so sqlite uses the correct index
+
+commit e0d46f0f12fb413139ebafaf9c6475dc3c0f9f2b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 6 07:46:49 2010 +0900
+
+    be resilient if spaceUntil sent wrong
+
+commit 328a1a86a4fbc8df73a0e111e43a365b27bd3ed5
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Nov 6 06:03:34 2010 +0900
+
+    make sure we reset rev early cards too on deck load
+
+commit 172505a7075636ab435bb981f8d57431cf846e5b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Nov 5 02:40:30 2010 +0900
+
+    fix broken card type calculation in error msg
+
+commit 4c5072994657b2e2a89d9993e5db58cef86ee306
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 4 02:32:37 2010 +0900
+
+    temp debug info for requeueCard()
+
+commit b766a9164e339692991a30908acc70fb4a2fbad0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 4 02:28:08 2010 +0900
+
+    fix thinko in previous answerCard() update
+
+commit 4524fd84fed0815d7242a9be6877ecf40ca0438c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 4 02:23:01 2010 +0900
+
+    collapse spacing when cramming
+
+commit cc12c8c573c0daab830207f74bc29811fc9824e9
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Nov 4 01:51:16 2010 +0900
+
+    need to rebuild counts when cutoff updated
+
+commit 0535f0561cb96215cc94a959eaf4653354624cd6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Nov 3 23:45:44 2010 +0900
+
+    redundant code in answerCard()
+
+commit 3f3f797348d3b2c28ce1b7768d184ab4bc4dce04
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Nov 3 00:29:27 2010 +0900
+
+    don't space failed cards; make sure card type is calculated after stats update
+
+commit 46790f2e929f391a6a4c9ebccecab7485f09d5bf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 2 22:34:10 2010 +0900
+
+    remove (incorrect) code in sync, is covered on deck load anyway
+
+commit a68334220a88ef2c74d652338e519f5cbee848ee
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 2 22:30:57 2010 +0900
+
+    fix suspensions
+
+commit 73119c93cf7175f5d8e28e421cf72b36ebd5e155
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 2 02:32:59 2010 +0900
+
+    restore inactive tags with a more efficient query
+
+commit 37c15a320ed8a62794cc0732bb09c5505955ae0b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 2 02:04:54 2010 +0900
+
+    make sure we don't fail if attempting to reset revearly cards before upgrade
+
+commit 2c5ac66083882a7b50df183a323747d333bee409
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Nov 2 01:59:20 2010 +0900
+
+    type/priority changes, cram/rev early refactor, more
+    
+    * Adjust type to remove cards from the queues, so we don't have to rebuild
+      priorities to restore them:
+    
+    Type -= 3 when suspending
+    Type += 3 when burying
+    Type += 6 when cramming / reviewing early
+    
+    We still need to adjust priorities for backwards compatibility, but this can
+    be removed in the future.
+    
+    * Factor out scheduler-specific code in answerCard(), so the different
+      schedulers are now fully modular
+    
+    * Differentiate between a card's current queue and its type
+    
+    * Make sure dueCutoff cuts off at the chosen offset instead of midnight
+
+commit 785ddc3786bcd0c8c6d354378d5c21761cb0690d
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 31 18:57:40 2010 +0900
+
+    make sure to set card limit on scheduler change
+
+commit ce828613578b653a4022f3ec5c0341aab7aec7fc
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 31 18:17:49 2010 +0900
+
+    make sure to update field cache when adding fact
+
+commit c4a1f807ecae3916d2db828e2accfb3118016bf6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 31 18:12:16 2010 +0900
+
+    update cram for new cardActive() handling
+
+commit cc8f619458a0d64dabda2720525e5c4404ca1a01
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Oct 29 21:17:33 2010 +0900
+
+    remove support for inactive tags
+    
+    Unlike active tags, they are not able to be implemented efficiently, and they
+    duplicate the functionality of manually suspending cards
+
+commit 2967819882bf2538db70ad02a13889c3a0c14d41
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Oct 29 19:41:40 2010 +0900
+
+    fix fid queries
+
+commit 621d11a6da7f3405acf28cb04e4873a0f7ce84d3
+Author: Damien Elmes <git@ichi2.net>
+Date:   Fri Oct 29 01:05:33 2010 +0900
+
+    don't generate cards if the question is blank, again
+
+commit 7e6f4907b08acdd875c4b568e70ab3108e7b79cf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Oct 28 20:33:19 2010 +0900
+
+    make sure we don't count/grab cards multiple times
+
+commit 46ba2db87a335fbd2f3029519a25c0aaf59782fa
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 27 21:22:29 2010 +0900
+
+    use new field cache so we can ignore html in std search
+
+commit 731c4100f9883e1081e9e1e357d08b8c4544ee27
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 27 21:06:45 2010 +0900
+
+    wrap the remaining really long lines
+
+commit 4cce768c702fb02b092f62699a61f3575087871b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 27 21:03:48 2010 +0900
+
+    update search code for new scheduler
+
+commit 8c7322c9747d16278cd34095b804a70ee4a3f791
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 27 20:54:42 2010 +0900
+
+    merge marcus' searching code
+
+commit 34d6efe1dfdb28bdfe1b7c14169bb41b0a5c47a6
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 27 20:12:00 2010 +0900
+
+    marcus: handle html entities properly when stripping html
+
+commit 8ce0ff5b8be22286afa8460e447e6afc4e1c0a51
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 27 19:00:49 2010 +0900
+
+    add a field cache for searching without html
+
+commit 9f9841cb22dda7436cfecb258a23a8f4f1c9e1d7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Oct 26 20:21:59 2010 +0900
+
+    use a join instead of a subquery as sqlite can optimize it better
+
+commit c50b7e61cb3fe8b71b6ac85a98a87d88bf3249e1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Oct 26 20:10:05 2010 +0900
+
+    new indices, make sure to set type when reviewing early
+    
+    - new type, combinedDue for failed cards & count checks
+    - only reset() on deck load if not already done
+    - remove isDue from dynamic indices but leave old ones around for now
+
+commit ea3bf14019f3207d3444187fdfc48fa6a311cd23
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Oct 26 12:54:58 2010 +0900
+
+    if using no points of precision, take the floor
+
+commit 5bc7c390a0d54b4eb5741572c3d133b452265f84
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Oct 26 11:46:35 2010 +0900
+
+    make sure to respect failed card timing, fix default hard times
+
+commit 27b7ccb41f08af6b1d53da1c4df458cf1eb7fb2c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 25 15:46:58 2010 +0900
+
+    set deck vars before updating the cutoff
+
+commit 71de076309db6ee2291c6226e77842d7dfb8649f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 25 15:38:50 2010 +0900
+
+    no need to adjust types when rebuilding priorities
+
+commit c1d79b856fe2ef594d8c8d8f370aa4a64497ed0e
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 25 15:36:43 2010 +0900
+
+    superfluous rowcount
+
+commit 33e6a1714135850ec6f45939c2f31dfac9c111b7
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 25 15:28:59 2010 +0900
+
+    make sure to set isDue=0 for spaced cards too, for backwards compat
+
+commit b0e4748a1c4b78fdc3d2ed8f02ea41de6a0bdd51
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 25 14:35:05 2010 +0900
+
+    make sure to update combinedDue with the new value
+
+commit de18f59474772e8264d589e1ddbb359b8e59b0bb
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 14:21:21 2010 +0900
+
+    compat hack for suspended cards on older platforms
+
+commit 1f20442921fdb97bc92dce0283a3b7ca0f5f4cea
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 13:26:51 2010 +0900
+
+    require dingsbums decks to use a different name so we don't conflict
+
+commit ecc99780e47309d46da6ec74add363a101eb3505
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 13:06:16 2010 +0900
+
+    add bury support
+
+commit 1d89be0a1eb5bf4b728f35565a817218b1f36c4c
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 13:01:13 2010 +0900
+
+    make sure to set isDue=0 when answering a card for compatibility reasons
+
+commit 4c76d25b05affef054bb43ec0467f2b9066ddacf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 12:55:33 2010 +0900
+
+    remove obsolete 'inactive' from findCards()
+
+commit a3040d1fb4f28050da896ade50a749b4b9b983dd
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 12:32:40 2010 +0900
+
+    suspend leeches after they've been removed from the queue
+
+commit fbae42d8ef61aa5294fe1c78d0368615301dd666
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 12:26:18 2010 +0900
+
+    tweak deck stats for new scheduling
+
+commit 1e2d88dccf5ebd4253126c89f126d5bbe6752f30
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Oct 24 11:47:47 2010 +0900
+
+    make sure to consider active tags when calculating next due card
+
+commit 057414f404615e62749584cd93b3785e1d0e2221
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Oct 23 16:15:42 2010 +0900
+
+    use same active/inactive limits for failed queue
+
+commit d1f1f914ada0bb413d63f0a89398ee251528f9b1
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Oct 23 13:58:03 2010 +0900
+
+    python2.7 win32 compat fix
+
+commit df2ae3b63bd7fe9dd08efbe3eb2547a970837263
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 20 18:03:10 2010 +0900
+
+    give each scheduler a name
+
+commit 94ad0cb95efcea21e60572da5993a2e1b10fc7a4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Wed Oct 20 13:12:17 2010 +0900
+
+    new cram code, remove refs to inactive cards
+    
+    - cramming is now a separate scheduler type
+    - correctly answering a card while cramming causes its scheduling to be
+      changed in the standard review too
+    - options to sort cards by earliest modified, ordered, random
+    - render priority 0 obsolete, as it's all done at queue generation time now
+
+commit 30a6f04708ab1a6d4a6cb2f41b283dba61554fee
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Oct 19 19:45:57 2010 +0900
+
+    make queue limit configurable, fix bulk fetching of cards for ankionline
+
+commit b7e3d87e5de78f27df0715099214c7a34e719504
+Author: Damien Elmes <git@ichi2.net>
+Date:   Tue Oct 19 19:17:52 2010 +0900
+
+    new active/inactive handling, bigger queues
+    
+    - separate categories for new & review cards
+    - 'only these tags' + 'none of these tags'
+
+commit be4dea39b17622d1e5b5ae73d9a2830db5319781
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 18 18:01:19 2010 +0900
+
+    more scheduler updates
+    
+    - reimplement reviewEarly and newEarly by replacing parts of the scheduler,
+      instead of adding special conditions
+    - remove references to isDue and priority (1,2,3,4) which is not necessary
+      anymore
+    - add option to switch between per-day scheduling and due now scheduling
+    - newCardsToday() -> newCardsDoneToday()
+    - don't decrement counts for suspended cards
+    - make sure to update type when suspending/unsuspending
+    - fix findCards()
+    - set hardInterval = 1-1.1 on upgrade, or the default per day scheduling doesn't
+      make sense
+
+commit ad743d850db60f0ccf2362046c661c003a46d2be
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 18 13:26:34 2010 +0900
+
+    start work on scheduling refactor
+    
+    Previously we used getCard() to fetch a card at the time. This required a
+    number of indices to perform efficiently, and the indices were expensive in
+    terms of disk space and time required to keep them up to date. Instead we now
+    gather a bunch of cards at once.
+    
+    - Drop checkDue()/isDue so writes are not necessary to the DB when checking
+    for due cards
+    - Due counts checked on deck load, and only updated once a day or at the end
+    of a session. This prevents cards from expiring during reviews, leading to
+    confusing undo behaviour and due counts that go up instead of down as you
+    review. The default will be to only expire cards once a day, which represents
+    a change from the way things were done previously.
+    - Set deck var defaults on deck load/create instead of upgrade, which should
+    fix upgrade issues
+    - The scheduling code can now have bits and pieces switched out, which should
+    make review early / cram etc easier to integrate
+    - Cards with priority <= 0 now have their type incremented by three, so we can
+    get access to schedulable cards with a single column.
+    - rebuildQueue() -> reset()
+    - refresh() -> refreshSession()
+    - Views and many of the indices on the cards table are now obsolete and will
+      be removed in the future. I won't remove them straight away, so as to not
+      break backward compatibility.
+    - Use bigger intervals between successive card templates, as the previous
+    intervals were too small to represent in doubles in some circumstances
+    
+    Still to do:
+    
+    - review early
+    - learn more
+    - failing mature cards where delay1 > delay0
+
+commit 747a28556a6056b5ea9adda5fe3bf8f3f6ce3d84
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Oct 18 11:34:02 2010 +0900
+
+    when determining which card templates to use, replace text: too
+
+commit 8df9111b50af890f86aceb4c97be79d02c08d67b
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Oct 16 10:29:39 2010 +0900
+
+    only copy used media on import/export
+
+commit e010ef8062b64c3ed34c67c6851b020082d5870f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sat Oct 2 14:47:33 2010 +0900
+
+    add clock skew compensation again
+    
+    this has the negative effect of causing multiple full syncs if syncing
+    multiple times within a 5 minute period of the previous full sync, but it
+    makes it much less likely that people's due counts will fall out of sync
+
+commit 99ba3f09c8ce4477405d88a2c78bc7d31da2a0bf
+Author: Damien Elmes <git@ichi2.net>
+Date:   Sun Sep 12 12:21:39 2010 +0900
+
+    catch missing facts at end of sync
+
+commit 1f239c1e67c937c34c4a1f2a9da9b12d6edee5b4
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Sep 2 11:45:33 2010 +0900
+
+    direct user to help page when file not in utf-8
+
+commit ea32bce31cfb1757e5367330b572a51ef529362f
+Author: Damien Elmes <git@ichi2.net>
+Date:   Mon Aug 30 20:40:28 2010 +0900
+
+    support escaped quotes in csv file, ignore bom marker
+
+commit 4437024eccf613fa127aca3559b8beee63728db0
+Author: Damien Elmes <git@ichi2.net>
+Date:   Thu Aug 26 18:38:08 2010 +0900
+
+    fix a bug caused by sqlite not understanding unicode case
+
 commit c916478868371a8433c4bc047723de5232b89d6e
 Author: Damien Elmes <git@ichi2.net>
 Date:   Thu Aug 19 13:42:19 2010 +0900

@@ -18,8 +18,8 @@ from anki.cards import cardsTable
 from anki.facts import factsTable, fieldsTable
 from anki.lang import _
 from anki.utils import genID, canonifyTags
+from anki.utils import canonifyTags, ids2str
 from anki.errors import *
-from anki.utils import canonifyTags
 from anki.deck import NEW_CARDS_RANDOM
 
 # Base importer
@@ -35,6 +35,9 @@ class Importer(object):
 
     needMapper = True
     tagDuplicates = False
+    # if set, update instead of regular importing
+    # (foreignCardFieldIndex, fieldModelId)
+    updateKey = None
     multipleCardsAllowed = True
     needDelimiter = False
 
@@ -48,7 +51,9 @@ class Importer(object):
         self.tagsToAdd = u""
 
     def doImport(self):
-        "Import."
+        "Import. Caller must .reset()"
+        if self.updateKey is not None:
+            return self.doUpdate()
         random = self.deck.newCardOrder == NEW_CARDS_RANDOM
         num = 7
         if random:
@@ -67,6 +72,85 @@ class Importer(object):
         self.deck.finishProgress()
         if c:
             self.deck.setModified()
+
+    def doUpdate(self):
+        self.deck.startProgress(8)
+        # grab the data from the external file
+        self.deck.updateProgress(_("Updating..."))
+        cards = self.foreignCards()
+        # grab data from db
+        self.deck.updateProgress()
+        fields = self.deck.s.all("""
+select factId, value from fields where fieldModelId = :id
+and value != ''""",
+                               id=self.updateKey[1])
+        # hash it
+        self.deck.updateProgress()
+        vhash = {}
+        fids = []
+        for (fid, val) in fields:
+            fids.append(fid)
+            vhash[val] = fid
+        # prepare tags
+        tagsIdx = None
+        try:
+            tagsIdx = self.mapping.index(0)
+            for c in cards:
+                c.tags = canonifyTags(self.tagsToAdd + " " + c.fields[tagsIdx])
+        except ValueError:
+            pass
+        # look for matches
+        self.deck.updateProgress()
+        upcards = []
+        newcards = []
+        for c in cards:
+            v = c.fields[self.updateKey[0]]
+            if v in vhash:
+                # ignore empty keys
+                if v:
+                    # fid, card
+                    upcards.append((vhash[v], c))
+            else:
+                newcards.append(c)
+        # update fields
+        for fm in self.model.fieldModels:
+            if fm.id == self.updateKey[1]:
+                # don't update key
+                continue
+            try:
+                index = self.mapping.index(fm)
+            except ValueError:
+                # not mapped
+                continue
+            data = [{'fid': fid,
+                     'fmid': fm.id,
+                     'v': c.fields[index]}
+                    for (fid, c) in upcards]
+            self.deck.s.execute("""
+update fields set value = :v where factId = :fid and fieldModelId = :fmid""",
+                                data)
+        # update tags
+        self.deck.updateProgress()
+        if tagsIdx is not None:
+            data = [{'fid': fid,
+                     't': c.fields[tagsIdx]}
+                    for (fid, c) in upcards]
+            self.deck.s.execute(
+                "update facts set tags = :t where id = :fid",
+                data)
+        # rebuild caches
+        self.deck.updateProgress()
+        cids = self.deck.s.column0(
+            "select id from cards where factId in %s" %
+            ids2str(fids))
+        self.deck.updateCardTags(cids)
+        self.deck.updateProgress()
+        self.deck.updatePriorities(cids)
+        self.deck.updateProgress()
+        self.deck.updateCardsFromFactIds(fids)
+        self.total = len(fids)
+        self.deck.setModified()
+        self.deck.finishProgress()
 
     def fields(self):
         "The number of fields."
@@ -150,7 +234,7 @@ The current importer only supports a single active card template. Please disable
             if not tmp:
                 tmp.append(time.time())
             else:
-                tmp[0] += 0.00001
+                tmp[0] += 0.0001
             d['created'] = tmp[0]
             factCreated[d['id']] = d['created']
             return d
@@ -191,8 +275,8 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
                     'cardModelId': cm.id,
                     'ordinal': cm.ordinal,
                     'question': u"",
-                    'answer': u"",
-                    'type': 2},cards[m]) for m in range(len(cards))]
+                    'answer': u""
+                    },cards[m]) for m in range(len(cards))]
                 self.deck.s.execute(cardsTable.insert(),
                                     data)
         self.deck.updateProgress()
@@ -204,7 +288,7 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         "Add any scheduling metadata to cards"
         if 'fields' in card.__dict__:
             del card.fields
-        t = data['factCreated'] + data['ordinal'] * 0.000001
+        t = data['factCreated'] + data['ordinal'] * 0.00001
         data['created'] = t
         data['modified'] = t
         data['due'] = t
@@ -212,7 +296,14 @@ where factId in (%s)""" % ",".join([str(s) for s in factIds]))
         data['tags'] = u""
         self.cardIds.append(data['id'])
         data['combinedDue'] = data['due']
-        data['isDue'] = data['combinedDue'] < time.time()
+        if data.get('successive', 0):
+            t = 1
+        elif data.get('reps', 0):
+            t = 0
+        else:
+            t = 2
+        data['type'] = t
+        data['relativeDelay'] = t
         return data
 
     def stripInvalid(self, cards):
@@ -278,5 +369,5 @@ Importers = (
     (_("Mnemosyne Deck (*.mem)"), Mnemosyne10Importer),
     (_("CueCard Deck (*.wcu)"), WCUImporter),
     (_("Supermemo XML export (*.xml)"), SupermemoXmlImporter),
-    (_("DingsBums?! Deck (*.xml)"), DingsBumsImporter),
+    (_("DingsBums?! Deck (*.dbxml)"), DingsBumsImporter),
     )

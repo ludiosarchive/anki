@@ -6,15 +6,14 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 appName="Anki"
-appVersion="1.0.1"
-appWebsite="http://ichi2.net/anki/download/"
+appVersion="1.2.8"
+appWebsite="http://ankisrs.net/"
 appWiki="http://ichi2.net/anki/wiki/"
-appHelpSite="http://ichi2.net/anki/wiki/AnkiWiki"
+appHelpSite="http://ankisrs.net/docs/"
 appIssueTracker="http://code.google.com/p/anki/issues/list"
 appForum="http://groups.google.com/group/ankisrs/topics"
-appReleaseNotes="http://ichi2.net/anki/changes.html"
-appMoreDecks="http://ichi2.net/anki/wiki/PreMadeDecks"
-appDonate="http://ichi2.net/anki/donate.html"
+appReleaseNotes="http://ankisrs.net/changes.html"
+appDonate="http://ankisrs.net/support/"
 
 modDir=os.path.dirname(os.path.abspath(__file__))
 runningDir=os.path.split(modDir)[0]
@@ -124,11 +123,9 @@ def run():
     sys.path.append(modDir)
     # jpeg module
     rd = runningDir
-    if sys.platform.startswith("darwin"):
+    if sys.platform.startswith("darwin") and getattr(sys, 'frozen', None):
         rd = os.path.abspath(runningDir + "/../../..")
         QCoreApplication.setLibraryPaths(QStringList([rd]))
-    else:
-        QCoreApplication.addLibraryPath(runningDir)
 
     app = AnkiApp(sys.argv)
     QCoreApplication.setApplicationName("Anki")
@@ -190,15 +187,6 @@ def run():
     mw = ui.main.AnkiQt(app, conf, args)
 
     app.exec_()
-
-    if sys.platform.startswith("darwin"):
-        # buggy on osx
-        from anki.sound import stopMplayer
-        stopMplayer()
-        os._exit(0)
-    else:
-        # ensure we kill any other threads
-        sys.exit(0)
 
 if __name__ == "__main__":
     run()

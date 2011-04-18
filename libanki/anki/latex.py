@@ -8,16 +8,12 @@ Latex support
 """
 __docformat__ = 'restructuredtext'
 
-import re, tempfile, os, sys, subprocess, stat, time, shutil
-from anki.utils import genID, checksum
+import re, tempfile, os, sys, shutil, cgi, subprocess
+from anki.utils import genID, checksum, call
+from anki.hooks import addHook
 from htmlentitydefs import entitydefs
+from anki.lang import _
 
-latexPreamble = ("\\documentclass[12pt]{article}\n"
-                 "\\special{papersize=3in,5in}"
-                 "\\usepackage[utf8]{inputenc}"
-                 "\\pagestyle{empty}\n"
-                 "\\begin{document}")
-latexPostamble = "\\end{document}"
 latexDviPngCmd = ["dvipng", "-D", "200", "-T", "tight"]
 
 regexps = {
@@ -56,87 +52,60 @@ def stripLatex(text):
         text = text.replace(match.group(), "")
     return text
 
-def call(argv, wait=True, **kwargs):
-    try:
-        o = subprocess.Popen(argv, **kwargs)
-    except OSError:
-        # command not found
-        return -1
-    if wait:
-        while 1:
-            try:
-                ret = o.wait()
-            except OSError:
-                # interrupted system call
-                continue
-            break
-    else:
-        ret = 0
-    return ret
-
 def latexImgFile(deck, latexCode):
     key = checksum(latexCode)
     return "latex-%s.png" % key
 
-def mungeLatex(latex):
-    "Convert entities, fix newlines, and convert to utf8."
+def mungeLatex(deck, latex):
+    "Convert entities, fix newlines, convert to utf8, and wrap pre/postamble."
     for match in re.compile("&([a-z]+);", re.IGNORECASE).finditer(latex):
         if match.group(1) in entitydefs:
             latex = latex.replace(match.group(), entitydefs[match.group(1)])
     latex = re.sub("<br( /)?>", "\n", latex)
+    latex = (deck.getVar("latexPre") + "\n" +
+             latex + "\n" +
+             deck.getVar("latexPost"))
     latex = latex.encode("utf-8")
     return latex
-
-def deleteAllLatexImages(deck):
-    mdir = deck.mediaDir()
-    if not mdir:
-        return
-    deck.startProgress()
-    for c, f in enumerate(os.listdir(mdir)):
-        if f.startswith("latex-"):
-            os.unlink(os.path.join(mdir, f))
-        if c % 100 == 0:
-            deck.updateProgress()
-    deck.finishProgress()
-
-def cacheAllLatexImages(deck):
-    deck.startProgress()
-    fields = deck.s.column0("select value from fields")
-    for c, field in enumerate(fields):
-        if c % 10 == 0:
-            deck.updateProgress()
-        renderLatex(deck, field)
-    deck.finishProgress()
 
 def buildImg(deck, latex):
     log = open(os.path.join(tmpdir, "latex_log.txt"), "w+")
     texpath = os.path.join(tmpdir, "tmp.tex")
     texfile = file(texpath, "w")
-    texfile.write(latexPreamble + "\n")
-    texfile.write(latex + "\n")
-    texfile.write(latexPostamble + "\n")
+    texfile.write(latex)
     texfile.close()
     # make sure we have a valid mediaDir
-    deck.mediaDir(create=True)
+    mdir = deck.mediaDir(create=True)
     oldcwd = os.getcwd()
     if sys.platform == "win32":
         si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        try:
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        except:
+            si.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW
     else:
         si = None
     try:
         os.chdir(tmpdir)
-        errmsg = _("Error executing %s.\n") + _(
-            "A log file is available here:\n%s") % tmpdir
+        def errmsg(type):
+            msg = _("Error executing %s.\n") % type
+            try:
+                log = open(os.path.join(tmpdir, "latex_log.txt")).read()
+                msg += "<small><pre>" + cgi.escape(log) + "</pre></small>"
+            except:
+                msg += _("Have you installed latex and dvipng?")
+                pass
+            return msg
         if call(["latex", "-interaction=nonstopmode",
                  "tmp.tex"], stdout=log, stderr=log, startupinfo=si):
-            return (False, errmsg % "latex")
+            return (False, errmsg("latex"))
         if call(latexDviPngCmd + ["tmp.dvi", "-o", "tmp.png"],
                 stdout=log, stderr=log, startupinfo=si):
-            return (False, errmsg % "dvipng")
+            return (False, errmsg("dvipng"))
         # add to media
         target = latexImgFile(deck, latex)
-        shutil.copy2("tmp.png", os.path.join(deck.mediaDir(), target))
+        shutil.copy2(os.path.join(tmpdir, "tmp.png"),
+                     os.path.join(mdir, target))
         return (True, target)
     finally:
         os.chdir(oldcwd)
@@ -153,9 +122,15 @@ def imageForLatex(deck, latex, build=True):
 
 def imgLink(deck, latex, build=True):
     "Parse LATEX and return a HTML image representing the output."
-    latex = mungeLatex(latex)
-    (ok, img) = imageForLatex(deck, latex, build)
+    munged = mungeLatex(deck, latex)
+    (ok, img) = imageForLatex(deck, munged, build)
     if ok:
-        return '<img src="%s">' % img
+        return '<img src="%s" alt="%s">' % (img, latex)
     else:
         return img
+
+def formatQA(html, type, cid, mid, fact, tags, cm, deck):
+    return renderLatex(deck, html)
+
+# setup q/a filter
+addHook("formatQA", formatQA)
