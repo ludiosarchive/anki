@@ -6,31 +6,96 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>369</width>
-    <height>393</height>
+    <width>341</width>
+    <height>348</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Inactive Tags</string>
+   <string>Selective Study</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="label">
+    <widget class="QCheckBox" name="activeCheck">
      <property name="text">
-      <string>Cards with any of the selected tags below will not be shown.</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
+      <string>Show only cards with any of these tags:</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <widget class="QListWidget" name="activeList">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>2</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::MultiSelection</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="inactiveCheck">
+     <property name="text">
+      <string>Hide cards with any of these tags:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="inactiveList">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>2</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::MultiSelection</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QListWidget" name="list">
-       <property name="selectionMode">
-        <enum>QAbstractItemView::MultiSelection</enum>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
+       <property name="title">
+        <string>Change settings for:</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QRadioButton" name="newButton">
+          <property name="text">
+           <string>New Cards</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="revButton">
+          <property name="text">
+           <string>Reviews</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="bothButton">
+          <property name="text">
+           <string>Both</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
@@ -56,8 +121,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>358</x>
+     <y>264</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -78,6 +143,38 @@
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>activeCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>activeList</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>133</x>
+     <y>18</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>133</x>
+     <y>85</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>inactiveCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>inactiveList</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>146</x>
+     <y>213</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>68</x>
+     <y>276</y>
     </hint>
    </hints>
   </connection>

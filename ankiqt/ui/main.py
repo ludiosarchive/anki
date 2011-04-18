@@ -9,17 +9,20 @@ from operator import itemgetter
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtWebKit import QWebPage
+from PyQt4 import pyqtconfig
+QtConfig = pyqtconfig.Configuration()
 from anki import DeckStorage
 from anki.errors import *
 from anki.sound import hasSound, playFromText, clearAudioQueue, stripSounds
-from anki.utils import addTags, deleteTags, parseTags, canonifyTags, stripHTML
-from anki.media import rebuildMediaDir, downloadMissing
-from anki.db import OperationalError, SessionHelper
+from anki.utils import addTags, deleteTags, parseTags, canonifyTags, \
+     stripHTML, checksum
+from anki.media import rebuildMediaDir, downloadMissing, downloadRemote
+from anki.db import OperationalError, SessionHelper, sqlite
 from anki.stdmodels import BasicModel
 from anki.hooks import runHook, addHook, removeHook, _hooks, wrap
 from anki.deck import newCardOrderLabels, newCardSchedulingLabels
 from anki.deck import revCardOrderLabels, failedCardOptionLabels
-import anki.latex
+from ankiqt.ui.utils import saveGeom, restoreGeom, saveState, restoreState
 import anki.lang
 import anki.deck
 import ankiqt
@@ -35,6 +38,9 @@ class AnkiQt(QMainWindow):
             self.reviewingStarted = False
             if sys.platform.startswith("darwin"):
                 qt_mac_set_menubar_icons(False)
+            elif sys.platform.startswith("win32"):
+                # make sure they're picked up on bundle
+                from ctypes import windll, wintypes
             ankiqt.mw = self
             self.app = app
             self.config = config
@@ -53,6 +59,7 @@ class AnkiQt(QMainWindow):
             self.setupSystemHacks()
             self.setupSound()
             self.setupTray()
+            self.setupSync()
             self.connectMenuActions()
             ui.splash.update()
             self.setupViews()
@@ -64,17 +71,25 @@ class AnkiQt(QMainWindow):
             self.setupProgressInfo()
             self.setupBackups()
             if self.config['mainWindowState']:
-                self.restoreGeometry(self.config['mainWindowGeom'])
-                self.restoreState(self.config['mainWindowState'])
+                restoreGeom(self, "mainWindow", 21)
+                restoreState(self, "mainWindow")
             else:
                 self.resize(500, 500)
             # load deck
             ui.splash.update()
             self.setupErrorHandler()
             self.setupMisc()
-            # activate & raise is useful when run from the command line on osx
-            self.activateWindow()
-            self.raise_()
+            # check if we've been updated
+            if "version" not in self.config:
+                # could be new user, or upgrade from older version
+                # which didn't have version variable
+                self.appUpdated = "first"
+            elif self.config['version'] != ankiqt.appVersion:
+                self.appUpdated = self.config['version']
+            else:
+                self.appUpdated = False
+            if self.appUpdated:
+                self.config['version'] = ankiqt.appVersion
             # plugins might be looking at this
             self.state = "noDeck"
             self.loadPlugins()
@@ -104,6 +119,9 @@ class AnkiQt(QMainWindow):
                 ui.utils.showWarning(
                     _("Broken plugin:\n\n%s") %
                     unicode(traceback.format_exc(), "utf-8", "replace"))
+            # activate & raise is useful when run from the command line on osx
+            self.activateWindow()
+            self.raise_()
         except:
             ui.utils.showInfo("Error during startup:\n%s" %
                               traceback.format_exc())
@@ -125,7 +143,7 @@ class AnkiQt(QMainWindow):
         self.mainWin.mainStack.addWidget(self.mainWin.mainText)
         self.help = ui.help.HelpArea(self.mainWin.helpFrame, self.config, self)
         self.connect(self.mainWin.mainText.pageAction(QWebPage.Reload),
-                     SIGNAL("activated()"),
+                     SIGNAL("triggered()"),
                      self.onReload)
         # congrats
         self.connect(self.mainWin.learnMoreButton,
@@ -148,6 +166,14 @@ class AnkiQt(QMainWindow):
             self.mainWin.noticeButton.setFixedHeight(20)
         addHook("cardAnswered", self.onCardAnsweredHook)
         addHook("undoEnd", self.maybeEnableUndo)
+        addHook("notify", self.onNotify)
+
+    def onNotify(self, msg):
+        if self.mainThread != QThread.currentThread():
+            # decks may be opened in a sync thread
+            sys.stderr.write(msg + "\n")
+        else:
+            ui.utils.showInfo(msg)
 
     def setNotice(self, str=""):
         if str:
@@ -190,7 +216,11 @@ class AnkiQt(QMainWindow):
             def getError(self):
                 p = self.pool
                 self.pool = ""
-                return unicode(p, 'utf8', 'replace')
+                try:
+                    return unicode(p, 'utf8', 'replace')
+                except TypeError:
+                    # already unicode
+                    return p
 
         self.errorPipe = ErrorPipe(self)
         sys.stderr = self.errorPipe
@@ -209,6 +239,12 @@ class AnkiQt(QMainWindow):
             if "Audio player not found" in error:
                 ui.utils.showInfo(
                     _("Couldn't play sound. Please install mplayer."))
+                return
+            if "ERR-0100" in error:
+                ui.utils.showInfo(error)
+                return
+            if "ERR-0101" in error:
+                ui.utils.showInfo(error)
                 return
             stdText = _("""\
 
@@ -271,15 +307,14 @@ Please do not file a bug report with Anki.<br>""")
         self.views = self.viewsBackup
         self.viewsBackup = None
 
-    def reset(self, count=True, priorities=False):
+    def reset(self, count=True, priorities=False, runHooks=True):
         if self.deck:
-            self.deck.refresh()
+            self.deck.refreshSession()
             if priorities:
                 self.deck.updateAllPriorities()
-            if count:
-                self.deck.rebuildCounts()
-            self.deck.rebuildQueue()
-            runHook("guiReset")
+            self.deck.reset()
+            if runHooks:
+                runHook("guiReset")
             self.moveToState("initial")
 
     def moveToState(self, state):
@@ -329,21 +364,27 @@ Please do not file a bug report with Anki.<br>""")
             if self.deck.isEmpty():
                 return self.moveToState("deckEmpty")
             else:
-                if not self.deck.reviewEarly:
+                # timeboxing only supported using the standard scheduler
+                if not self.deck.finishScheduler:
                     if (self.config['showStudyScreen'] and
                         not self.deck.sessionStartTime):
                         return self.moveToState("studyScreen")
                     if self.deck.sessionLimitReached():
-                        return self.moveToState("studyScreen")
+                        self.showToolTip(_("Session limit reached."))
+                        self.moveToState("studyScreen")
+                        # switch to timeboxing screen
+                        self.mainWin.tabWidget.setCurrentIndex(2)
+                        return
                 if not self.currentCard:
                     self.currentCard = self.deck.getCard()
                 if self.currentCard:
                     if self.lastCard:
                         if self.lastCard.id == self.currentCard.id:
-                            if self.currentCard.combinedDue > time.time():
-                                # if the same card is being shown and it's not
-                                # due yet, give up
-                                return self.moveToState("deckFinished")
+                            pass
+                            # if self.currentCard.combinedDue > time.time():
+                            #     # if the same card is being shown and it's not
+                            #     # due yet, give up
+                            #     return self.moveToState("deckFinished")
                     self.enableCardMenuItems()
                     return self.moveToState("showQuestion")
                 else:
@@ -366,8 +407,8 @@ Please do not file a bug report with Anki.<br>""")
             runHook('deckFinished')
         elif state == "showQuestion":
             self.reviewingStarted = True
-            if self.deck.mediaDir():
-                os.chdir(self.deck.mediaDir())
+            # ensure cwd set to media dir
+            self.deck.mediaDir()
             self.showAnswerButton()
             self.updateMarkAction()
             runHook('showQuestion')
@@ -384,13 +425,11 @@ Please do not file a bug report with Anki.<br>""")
             self.mainWin.actionRepeatAudio.setEnabled(True)
             self.editor.saveFieldsNow()
             self.mainWin.buttonStack.show()
-            self.deck.refresh()
-            if self.currentCard.priority == 0:
-                return self.moveToState("auto")
-            return self.moveToState("showQuestion")
+            return self.reset()
         elif state == "studyScreen":
             self.currentCard = None
-            self.deck.resetAfterReviewEarly()
+            if self.deck.finishScheduler:
+                self.deck.finishScheduler()
             self.disableCardMenuItems()
             self.showStudyScreen()
         self.updateViews(state)
@@ -460,8 +499,6 @@ Please do not file a bug report with Anki.<br>""")
         self.deck.s.expunge(self.currentCard)
         # answer
         self.deck.answerCard(self.currentCard, quality)
-        self.lastScheduledTime = anki.utils.fmtTimeSpan(
-            self.currentCard.due - time.time())
         self.lastQuality = quality
         self.lastCard = self.currentCard
         self.currentCard = None
@@ -502,8 +539,6 @@ Please do not file a bug report with Anki.<br>""")
                 c = self.deck.getCard()
                 if c:
                     return self.moveToState("auto")
-                new = self.deck.newCardTable()
-                rev = self.deck.revCardTable()
                 sys.stderr.write("""\
 earliest time returned %f
 
@@ -511,22 +546,10 @@ please report this error, but it's not serious.
 closing and opening your deck should fix it.
 
 counts are %d %d %d
-according to the db %d %d %d
-failed:
-%s
-rev:
-%s
-new:
-%s""" % (delay,
+""" % (delay,
          self.deck.failedSoonCount,
          self.deck.revCount,
-         self.deck.newCountToday,
-         self.deck.s.scalar("select count(*) from failedCards"),
-         self.deck.s.scalar("select count(*) from %s" % rev),
-         self.deck.s.scalar("select count(*) from %s" % new),
-         self.deck.s.all("select * from failedCards limit 2"),
-         self.deck.s.all("select * from %s limit 2" % rev),
-         self.deck.s.all("select * from %s limit 2" % new)))
+         self.deck.newCountToday))
                 return
             t = QTimer(self)
             t.setSingleShot(True)
@@ -613,12 +636,6 @@ new:
         self.typeAnswerField = QLineEditNoUndo(self)
         self.typeAnswerField.setObjectName("typeAnswerField")
         self.typeAnswerField.setFixedWidth(351)
-        f = QFont()
-        f.setPixelSize(self.config['typeAnswerFontSize'])
-        self.typeAnswerField.setFont(f)
-        # add some extra space as layout is wrong on osx
-        self.typeAnswerField.setFixedHeight(
-            self.typeAnswerField.sizeHint().height() + 10)
         vbox = QVBoxLayout()
         vbox.setSpacing(0)
         vbox.setContentsMargins(0,0,0,0)
@@ -698,8 +715,7 @@ new:
         anki.deck.backupDir = os.path.join(
             self.config.configPath, "backups")
 
-    def loadDeck(self, deckPath, sync=True, interactive=True, uprecent=True,
-                 media=None):
+    def loadDeck(self, deckPath, sync=True, interactive=True, uprecent=True):
         "Load a deck and update the user interface. Maybe sync."
         self.reviewingStarted = False
         # return True on success
@@ -726,14 +742,13 @@ File is corrupt or not an Anki database. Click help for more info.\n
 Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
             self.moveToState("noDeck")
             return 0
-        if media is not None:
-            self.deck.forceMediaDir = media
         if uprecent:
             self.updateRecentFiles(self.deck.path)
         if (sync and self.config['syncOnLoad']
             and self.deck.syncName):
             if self.syncDeck(interactive=False):
                 return True
+        self.setupMedia(self.deck)
         try:
             self.deck.initUndo()
             self.moveToState("initial")
@@ -769,7 +784,6 @@ Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
             r = self.loadDeck(path, interactive=False, sync=False)
             if r:
                 return r
-        self.onNew(initial=True)
 
     def getDefaultDir(self, save=False):
         "Try and get default dir from most recently opened file."
@@ -825,24 +839,25 @@ Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
     ##########################################################################
 
     def onClose(self):
+        # allow focusOut to save
         if self.inMainWindow() or not self.app.activeWindow():
-            isCram = self.isCramming()
-            self.saveAndClose(hideWelcome=isCram)
-            if isCram:
-                self.loadDeck(self.config['recentDeckPaths'][0])
+            self.saveAndClose()
         else:
             self.app.activeWindow().close()
 
     def saveAndClose(self, hideWelcome=False, parent=None):
         "(Auto)save and close. Prompt if necessary. True if okay to proceed."
+        # allow any focusOut()s to run first
+        self.setFocus()
         if not parent:
             parent = self
         self.hideWelcome = hideWelcome
         self.closeAllDeckWindows()
         synced = False
         if self.deck is not None:
-            if self.deck.reviewEarly:
-                self.deck.resetAfterReviewEarly()
+            if self.deck.finishScheduler:
+                self.deck.finishScheduler()
+                self.deck.reset()
             # update counts
             for d in self.browserDecks:
                 if d['path'] == self.deck.path:
@@ -854,7 +869,7 @@ Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
             if self.deck.modifiedSinceSave():
                 if (self.deck.path is None or
                     (not self.config['saveOnClose'] and
-                     not self.config['syncOnClose'])):
+                     not self.config['syncOnLoad'])):
                     # backed in memory or autosave/sync off, must confirm
                     while 1:
                         res = ui.unsaved.ask(parent)
@@ -867,7 +882,7 @@ Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
                         else:
                             break
             # auto sync (saving automatically)
-            if self.config['syncOnClose'] and self.deck.syncName:
+            if self.config['syncOnLoad'] and self.deck.syncName:
                 # force save, the user may not have set passwd/etc
                 self.deck.save()
                 if self.syncDeck(False, reload=False):
@@ -878,7 +893,7 @@ Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
                     self.hideWelcome = False
                     return True
             # auto save
-            if self.config['saveOnClose'] or self.config['syncOnClose']:
+            if self.config['saveOnClose'] or self.config['syncOnLoad']:
                 if self.deck:
                     self.save()
             # close if the deck wasn't already closed by a failed sync
@@ -892,20 +907,54 @@ Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
         return True
 
     def inMainWindow(self):
+        if not self.app.activeWindow():
+            # make sure window is shown
+            self.setWindowState(self.windowState() & ~Qt.WindowMinimized)
+        return True
+        # FIXME: no longer necessary?
         return self.app.activeWindow() == self
 
-    def onNew(self, initial=False, path=None):
+    def onNew(self, path=None, prompt=None):
         if not self.inMainWindow() and not path: return
         if not self.saveAndClose(hideWelcome=True): return
-        if initial:
-            path = os.path.join(self.documentDir, "mydeck.anki")
+        register = not path
+        bad = ":/\\"
+        name = _("mydeck")
+        if not path:
+            if not prompt:
+                prompt = _("Please give your deck a name:")
+            while 1:
+                name = ui.utils.getOnlyText(
+                    prompt, default=name, title=_("New Deck"))
+                if not name:
+                    self.moveToState("noDeck")
+                    return
+                found = False
+                for c in bad:
+                    if c in name:
+                        ui.utils.showInfo(
+                            _("Sorry, '%s' can't be used in deck names.") % c)
+                        found = True
+                        break
+                if found:
+                    continue
+                if not name.endswith(".anki"):
+                    name += ".anki"
+                break
+            path = os.path.join(self.documentDir, name)
             if os.path.exists(path):
-                # load mydeck instead
-                return self.loadDeck(path)
+                if ui.utils.askUser(_("That deck already exists. Overwrite?"),
+                                    defaultno=True):
+                    os.unlink(path)
+                else:
+                    self.moveToState("noDeck")
+                    return
         self.deck = DeckStorage.Deck(path)
         self.deck.initUndo()
         self.deck.addModel(BasicModel())
         self.deck.save()
+        if register:
+            self.updateRecentFiles(self.deck.path)
         self.browserLastRefreshed = 0
         self.moveToState("initial")
 
@@ -1038,7 +1087,7 @@ Debug info:\n%s""") % traceback.format_exc(), help="DeckErrors")
             self.toolTipTimer = None
 
     def save(self, required=False):
-        if not self.deck.modifiedSinceSave():
+        if not self.deck.modifiedSinceSave() and self.deck.path:
             return True
         if not self.deck.path:
             if required:
@@ -1149,7 +1198,11 @@ your deck."""))
                     'reps': deck._dailyStats.reps,
                     })
                 deck.close()
-                os.utime(d, (mod, mod))
+                try:
+                    os.utime(d, (mod, mod))
+                except:
+                    # some misbehaving filesystems may fail here
+                    pass
             except Exception, e:
                 if "File is in use" in unicode(e):
                     continue
@@ -1254,8 +1307,10 @@ your deck."""))
                 openButton = QPushButton(_("Open"))
                 if c < 9:
                     if sys.platform.startswith("darwin"):
-                        extra = _(" (Command+Option+%d)") % (c+1)
-                        openButton.setShortcut(_("Ctrl+Alt+%d" % (c+1)))
+                        extra = ""
+                        # appears to be broken on osx
+                        #extra = _(" (Command+Option+%d)") % (c+1)
+                        #openButton.setShortcut(_("Ctrl+Alt+%d" % (c+1)))
                     else:
                         extra = _(" (Alt+%d)") % (c+1)
                         openButton.setShortcut(_("Alt+%d" % (c+1)))
@@ -1269,19 +1324,17 @@ your deck."""))
                     focusButton = openButton
                 # more
                 moreButton = QPushButton(_("More"))
-                if sys.platform.startswith("darwin"):
-                    moreButton.setFixedWidth(80)
                 if sys.platform.startswith("win32") and \
                    self.config['alternativeTheme']:
                         moreButton.setFixedHeight(24)
                 moreMenu = QMenu()
                 a = moreMenu.addAction(QIcon(":/icons/edit-undo.png"),
                                        _("Hide From List"))
-                a.connect(a, SIGNAL("activated()"),
+                a.connect(a, SIGNAL("triggered()"),
                           lambda c=c: self.onDeckBrowserForget(c))
                 a = moreMenu.addAction(QIcon(":/icons/editdelete.png"),
                                        _("Delete"))
-                a.connect(a, SIGNAL("activated()"),
+                a.connect(a, SIGNAL("triggered()"),
                           lambda c=c: self.onDeckBrowserDelete(c))
                 moreButton.setMenu(moreMenu)
                 self.moreMenus.append(moreMenu)
@@ -1298,7 +1351,7 @@ your deck."""))
             moreMenu = QMenu()
             a = moreMenu.addAction(QIcon(":/icons/edit-undo.png"),
                                    _("Forget Inaccessible Decks"))
-            a.connect(a, SIGNAL("activated()"),
+            a.connect(a, SIGNAL("triggered()"),
                       self.onDeckBrowserForgetInaccessible)
             more.setMenu(moreMenu)
             layout.addWidget(more, c+3, 6)
@@ -1310,17 +1363,28 @@ your deck."""))
             # summarize
             reps = 0
             mins = 0
-            due = 0
+            revC = 0
+            newC = 0
             for d in self.browserDecks:
                 reps += d['reps']
                 mins += d['time']
-            self.mainWin.deckBrowserSummary.setText(ngettext(
+                revC += d['due']
+                newC += d['new']
+            line1 = ngettext(
                 "Studied <b>%(reps)d card</b> in <b>%(time)s</b> today.",
                 "Studied <b>%(reps)d cards</b> in <b>%(time)s</b> today.",
                 reps) % {
                 'reps': reps,
                 'time': anki.utils.fmtTimeSpan(mins, point=2),
-                })
+                }
+            rev = ngettext(
+                "<b><font color=#0000ff>%d</font></b> review",
+                "<b><font color=#0000ff>%d</font></b> reviews",
+                revC) % revC
+            new = ngettext("<b>%d</b> new card", "<b>%d</b> new cards", newC) % newC
+            line2 = _("Due: %(rev)s, %(new)s") % {
+                'rev': rev, 'new': new}
+            self.mainWin.deckBrowserSummary.setText(line1 + "<br>" + line2)
         else:
             l = QLabel(_("""\
 <br>
@@ -1339,15 +1403,19 @@ later by using File>Close.
         self.switchToDecksScreen()
 
     def onDeckBrowserForget(self, c):
-        if ui.utils.askUser(_("Hide %s from the list?") % self.browserDecks[c]['name'],
-                            help="DeckBrowser"):
+        if ui.utils.askUser(_("""\
+Hide %s from the list? You can File>Open it again later.""") %
+                            self.browserDecks[c]['name']):
             self.config['recentDeckPaths'].remove(self.browserDecks[c]['path'])
             del self.browserDecks[c]
             self.doLater(100, self.showDeckBrowser)
 
     def onDeckBrowserDelete(self, c):
         deck = self.browserDecks[c]['path']
-        if ui.utils.askUser(_("Delete %s?") % self.browserDecks[c]['name']):
+        if ui.utils.askUser(_("""\
+Delete %s? If this deck is synchronized the online version will \
+not be touched.""") %
+                            self.browserDecks[c]['name']):
             del self.browserDecks[c]
             os.unlink(deck)
             try:
@@ -1390,7 +1458,7 @@ later by using File>Close.
         if not self.saveAndClose(hideWelcome=True):
             event.ignore()
         else:
-            if self.config['syncOnProgramClose']:
+            if self.config['syncOnProgramOpen']:
                 self.hideWelcome = True
                 self.syncDeck(interactive=False)
             self.prepareForExit()
@@ -1442,8 +1510,10 @@ later by using File>Close.
     def setupEditor(self):
         self.editor = ui.facteditor.FactEditor(
             self, self.mainWin.fieldsArea, self.deck)
+        self.editor.clayout.setShortcut("")
         self.editor.onFactValid = self.onFactValid
         self.editor.onFactInvalid = self.onFactInvalid
+        self.editor.resetOnEdit = False
         # editor
         self.connect(self.mainWin.saveEditorButton, SIGNAL("clicked()"),
                      lambda: self.moveToState("saveEdit"))
@@ -1453,6 +1523,7 @@ later by using File>Close.
         self.mainWin.buttonStack.hide()
         self.switchToEditScreen()
         self.editor.setFact(self.currentCard.fact)
+        self.editor.card = self.currentCard
 
     def onFactValid(self, fact):
         self.mainWin.saveEditorButton.setEnabled(True)
@@ -1464,6 +1535,7 @@ later by using File>Close.
     ##########################################################################
 
     def setupStudyScreen(self):
+        self.mainWin.buttonStack.hide()
         self.mainWin.newCardOrder.insertItems(
             0, QStringList(newCardOrderLabels().values()))
         self.mainWin.newCardScheduling.insertItems(
@@ -1474,9 +1546,10 @@ later by using File>Close.
                      SIGNAL("clicked()"),
                      lambda: QDesktopServices.openUrl(QUrl(
             ankiqt.appWiki + "StudyOptions")))
-        self.mainWin.optionsBox.setShown(False)
         self.connect(self.mainWin.minuteLimit,
                      SIGNAL("textChanged(QString)"), self.onMinuteLimitChanged)
+        self.connect(self.mainWin.questionLimit,
+                     SIGNAL("textChanged(QString)"), self.onQuestionLimitChanged)
         self.connect(self.mainWin.newPerDay,
                      SIGNAL("textChanged(QString)"), self.onNewLimitChanged)
         self.connect(self.mainWin.startReviewingButton,
@@ -1484,6 +1557,31 @@ later by using File>Close.
                      self.onStartReview)
         self.connect(self.mainWin.newCardOrder,
                      SIGNAL("activated(int)"), self.onNewCardOrderChanged)
+        self.connect(self.mainWin.failedCardMax,
+                     SIGNAL("editingFinished()"),
+                     self.onFailedMaxChanged)
+        self.connect(self.mainWin.newCategories,
+                     SIGNAL("clicked()"), self.onNewCategoriesClicked)
+        self.connect(self.mainWin.revCategories,
+                     SIGNAL("clicked()"), self.onRevCategoriesClicked)
+        self.mainWin.tabWidget.setCurrentIndex(self.config['studyOptionsScreen'])
+
+    def onNewCategoriesClicked(self):
+        ui.activetags.show(self, "new")
+
+    def onRevCategoriesClicked(self):
+        ui.activetags.show(self, "rev")
+
+    def onFailedMaxChanged(self):
+        try:
+            v = int(self.mainWin.failedCardMax.text())
+            if v == 1 or v < 0:
+                v = 2
+            self.deck.failedCardMax = v
+        except ValueError:
+            pass
+        self.mainWin.failedCardMax.setText(str(self.deck.failedCardMax))
+        self.deck.flushMod()
 
     def onMinuteLimitChanged(self, qstr):
         try:
@@ -1491,6 +1589,17 @@ later by using File>Close.
             if self.deck.sessionTimeLimit == val:
                 return
             self.deck.sessionTimeLimit = val
+        except ValueError:
+            pass
+        self.deck.flushMod()
+        self.updateStudyStats()
+
+    def onQuestionLimitChanged(self, qstr):
+        try:
+            val = int(self.mainWin.questionLimit.text())
+            if self.deck.sessionRepLimit == val:
+                return
+            self.deck.sessionRepLimit = val
         except ValueError:
             pass
         self.deck.flushMod()
@@ -1504,8 +1613,8 @@ later by using File>Close.
             self.deck.newCardsPerDay = val
         except ValueError:
             pass
-        self.deck.checkDue()
         self.deck.flushMod()
+        self.deck.reset()
         self.statusView.redraw()
         self.updateStudyStats()
 
@@ -1530,14 +1639,29 @@ later by using File>Close.
             self.deck.finishProgress()
             uf(self.deck, 'newCardOrder', ncOrd)
 
+    def updateActives(self):
+        labels = [
+            _("Show All Due Cards"),
+            _("Show Chosen Categories")
+            ]
+        if self.deck.getVar("newActive") or self.deck.getVar("newInactive"):
+            new = labels[1]
+        else:
+            new = labels[0]
+        self.mainWin.newCategoryLabel.setText(new)
+        if self.deck.getVar("revActive") or self.deck.getVar("revInactive"):
+            rev = labels[1]
+        else:
+            rev = labels[0]
+        self.mainWin.revCategoryLabel.setText(rev)
+
     def updateStudyStats(self):
+        self.mainWin.buttonStack.hide()
+        self.deck.reset()
+        self.updateActives()
         wasReached = self.deck.sessionLimitReached()
         sessionColour = '<font color=#0000ff>%s</font>'
         cardColour = '<font color=#0000ff>%s</font>'
-        if not wasReached:
-            top = _("<h1>Study Options</h1>")
-        else:
-            top = _("<h1>Well done!</h1>")
         # top label
         h = {}
         s = self.deck.getStats()
@@ -1572,17 +1696,20 @@ day = :d""", d=yesterday)
             anki.utils.fmtTimeSpan(ttoday, short=True, point=1))
         h['timeTodayChg'] = str(anki.utils.fmtTimeSpan(
             tyest, short=True, point=1))
-        h['cs_header'] = _("Cards/session:")
-        h['cd_header'] = _("Cards/day:")
-        h['td_header'] = _("Time/day:")
-        h['rd_header'] = _("Reviews due:")
-        h['ntod_header'] = _("New today:")
-        h['ntot_header'] = _("New total:")
+        h['cs_header'] = "<b>" + _("Cards/session:") + "</b>"
+        h['cd_header'] = "<b>" + _("Cards/day:") + "</b>"
+        h['td_header'] = "<b>" + _("Time/day:") + "</b>"
+        h['rd_header'] = "<b>" + _("Reviews due:") + "</b>"
+        h['ntod_header'] = "<b>" + _("New today:") + "</b>"
+        h['ntot_header'] = "<b>" + _("New total:") + "</b>"
         stats1 = ("""\
 <table>
-<tr><td width=80>%(cs_header)s</td><td width=50><b>%(repsInSesChg)s</b></td>
-<td><b>%(repsInSes)s</b></td></tr>
- <tr><td>%(cd_header)s</td><td><b>%(repsTodayChg)s</b></td>
+<tr><td width=150>%(cs_header)s</td><td width=50><b>%(repsInSesChg)s</b></td>
+<td><b>%(repsInSes)s</b></td></tr></table>
+<hr>
+<table>
+<tr><td width=150>
+%(cd_header)s</td><td width=50><b>%(repsTodayChg)s</b></td>
 <td><b>%(repsToday)s</b></td></tr>
 <tr><td>%(td_header)s</td><td><b>%(timeTodayChg)s</b></td>
 <td><b>%(timeToday)s</b></td></tr>
@@ -1590,7 +1717,7 @@ day = :d""", d=yesterday)
 
         stats2 = ("""\
 <table>
-<tr><td width=100>%(rd_header)s</td><td align=right><b>%(ret)s</b></td></tr>
+<tr><td width=180>%(rd_header)s</td><td align=right><b>%(ret)s</b></td></tr>
 <tr><td>%(ntod_header)s</td><td align=right><b>%(new)s</b></td></tr>
 <tr><td>%(ntot_header)s</td><td align=right>%(newof)s</td></tr>
 </table>""") % h
@@ -1601,10 +1728,11 @@ day = :d""", d=yesterday)
             self.haveYesterday = True
             stats1 = (
                 "<td>%s</td><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>" % stats1)
-        self.mainWin.optionsLabel.setText(top + """\
+        self.mainWin.optionsLabel.setText("""\
 <p><table><tr>
 %s
-<td>%s</td></tr></table>""" % (stats1, stats2))
+</tr><tr>
+<td><hr>%s<hr></td></tr></table>""" % (stats1, stats2))
         h['tt_header'] = _("Session Statistics")
         h['cs_tip'] = _("The number of cards you studied in the current \
 session (blue) and previous session (black)")
@@ -1630,22 +1758,12 @@ learnt today")
     def showStudyScreen(self):
         # forget last card
         self.lastCard = None
-        self.mainWin.optionsButton.setChecked(self.config['showStudyOptions'])
-        self.mainWin.optionsBox.setShown(self.config['showStudyOptions'])
         self.switchToStudyScreen()
         self.updateStudyStats()
-        # start reviewing button
-        self.mainWin.buttonStack.hide()
-        if self.reviewingStarted:
-            self.mainWin.startReviewingButton.setText(_("Continue &Reviewing"))
-        else:
-            self.mainWin.startReviewingButton.setText(_("Start &Reviewing"))
         self.mainWin.startReviewingButton.setFocus()
         self.setupStudyOptions()
+        self.mainWin.studyOptionsFrame.setMaximumWidth(500)
         self.mainWin.studyOptionsFrame.show()
-        if self.haveYesterday:
-            size = self.mainWin.optionsLabel.sizeHint().width() + 50
-            self.mainWin.studyOptionsFrame.setFixedWidth(size)
 
     def setupStudyOptions(self):
         self.mainWin.newPerDay.setText(str(self.deck.newCardsPerDay))
@@ -1664,6 +1782,7 @@ learnt today")
             labels = failedCardOptionLabels().values()[0:-1]
         self.mainWin.failedCardsOption.insertItems(0, labels)
         self.mainWin.failedCardsOption.setCurrentIndex(self.deck.getFailedCardPolicy())
+        self.mainWin.failedCardMax.setText(unicode(self.deck.failedCardMax))
 
     def onStartReview(self):
         def uf(obj, field, value):
@@ -1673,26 +1792,20 @@ learnt today")
         self.mainWin.studyOptionsFrame.hide()
         # make sure the size is updated before button stack shown
         self.app.processEvents()
-        self.config['showStudyOptions'] = self.mainWin.optionsButton.isChecked()
-        try:
-            uf(self.deck, 'newCardsPerDay', int(self.mainWin.newPerDay.text()))
-            uf(self.deck, 'sessionTimeLimit', min(float(
-                self.mainWin.minuteLimit.text()), 3600) * 60)
-            uf(self.deck, 'sessionRepLimit',
-               int(self.mainWin.questionLimit.text()))
-        except (ValueError, OverflowError):
-            pass
         uf(self.deck, 'newCardSpacing',
            self.mainWin.newCardScheduling.currentIndex())
         uf(self.deck, 'revCardOrder',
            self.mainWin.revCardOrder.currentIndex())
-        if (self.deck.getFailedCardPolicy() !=
+        pol = self.deck.getFailedCardPolicy()
+        if (pol != 5 and pol !=
             self.mainWin.failedCardsOption.currentIndex()):
             self.deck.setFailedCardPolicy(
                 self.mainWin.failedCardsOption.currentIndex())
             self.deck.flushMod()
-        self.deck.rebuildQueue()
-        self.deck.startSession()
+        self.deck.reset()
+        if not self.deck.finishScheduler:
+            self.deck.startSession()
+        self.config['studyOptionsScreen'] = self.mainWin.tabWidget.currentIndex()
         self.moveToState("getQuestion")
 
     def onStudyOptions(self):
@@ -1706,20 +1819,15 @@ learnt today")
 
     def setupToolbar(self):
         mw = self.mainWin
-        if self.config['simpleToolbar']:
-            self.removeToolBar(mw.toolBar)
-            mw.toolBar.hide()
-            mw.toolBar = QToolBar(self)
-            mw.toolBar.setObjectName("toolBar")
-            mw.toolBar.addAction(mw.actionAddcards)
-            mw.toolBar.addAction(mw.actionEditCurrent)
-            mw.toolBar.addAction(mw.actionEditdeck)
-            mw.toolBar.addAction(mw.actionStudyOptions)
-            mw.toolBar.addAction(mw.actionGraphs)
-            mw.toolBar.addAction(mw.actionMarkCard)
-            mw.toolBar.addAction(mw.actionRepeatAudio)
-            mw.toolBar.addAction(mw.actionClose)
-            self.addToolBar(Qt.TopToolBarArea, mw.toolBar)
+        mw.toolBar.addAction(mw.actionAddcards)
+        mw.toolBar.addAction(mw.actionEditCurrent)
+        mw.toolBar.addAction(mw.actionEditLayout)
+        mw.toolBar.addAction(mw.actionEditdeck)
+        mw.toolBar.addAction(mw.actionStudyOptions)
+        mw.toolBar.addAction(mw.actionGraphs)
+        mw.toolBar.addAction(mw.actionMarkCard)
+        mw.toolBar.addAction(mw.actionRepeatAudio)
+        mw.toolBar.addAction(mw.actionClose)
         mw.toolBar.setIconSize(QSize(self.config['iconSize'],
                                      self.config['iconSize']))
         toggle = mw.toolBar.toggleViewAction()
@@ -1790,18 +1898,14 @@ learnt today")
         else:
             self.currentCard.fact.tags = canonifyTags(addTags(
                 "Marked", self.currentCard.fact.tags))
-        self.currentCard.fact.setModified(textChanged=True)
+        self.currentCard.fact.setModified(textChanged=True, deck=self.deck)
         self.deck.updateFactTags([self.currentCard.fact.id])
-        for card in self.currentCard.fact.cards:
-            self.deck.updatePriority(card)
         self.deck.setModified()
 
     def onSuspend(self):
         undo = _("Suspend")
         self.deck.setUndoStart(undo)
         self.deck.suspendCards([self.currentCard.id])
-        self.deck.setModified()
-        self.lastScheduledTime = None
         self.reset()
         self.deck.setUndoEnd(undo)
 
@@ -1818,53 +1922,39 @@ learnt today")
     def onBuryFact(self):
         undo = _("Bury")
         self.deck.setUndoStart(undo)
-        for card in self.currentCard.fact.cards:
-            if card.priority > 0:
-                card.priority = -2
-                card.isDue = 0
-        self.deck.flushMod()
+        self.deck.buryFact(self.currentCard.fact)
         self.reset()
         self.deck.setUndoEnd(undo)
 
     def onUndo(self):
+        name = self.deck.undoName()
         self.deck.undo()
-        self.reset(count=False)
+        self.reset()
+        if name == "Answer Card":
+            self.setStatus(_("Card placed back in queue."))
 
     def onRedo(self):
         self.deck.redo()
-        self.reset(count=False)
+        self.reset()
 
     # Other menu operations
     ##########################################################################
 
     def onAddCard(self):
-        if self.isCramming():
-            ui.utils.showInfo(_("""\
-You are currently cramming. Please close this deck first."""))
-            return
         ui.dialogs.get("AddCards", self)
-
-    def cramEditWarning(self):
-        self.showToolTip(_("""\
-<h1>Cramming</h1>
-You are currently cramming. Any edits you make to this deck
-will be lost when you close the deck."""))
 
     def onEditDeck(self):
         ui.dialogs.get("CardList", self)
-        if self.isCramming():
-            self.cramEditWarning()
 
     def onEditCurrent(self):
-        if self.isCramming():
-            self.cramEditWarning()
         self.moveToState("editCurrentFact")
+
+    def onCardLayout(self):
+        ui.clayout.CardLayout(self, 0, self.currentCard.fact,
+                              card=self.currentCard)
 
     def onDeckProperties(self):
         self.deckProperties = ui.deckproperties.DeckProperties(self, self.deck)
-
-    def onDisplayProperties(self):
-        ui.dialogs.get("DisplayProperties", self)
 
     def onPrefs(self):
         ui.preferences.Preferences(self, self.config)
@@ -1884,20 +1974,20 @@ will be lost when you close the deck."""))
     def onDonate(self):
         QDesktopServices.openUrl(QUrl(ankiqt.appDonate))
 
-    def onActiveTags(self):
-        ui.activetags.show(self)
-
     # Importing & exporting
     ##########################################################################
 
     def onImport(self):
-        if self.isCramming():
-            ui.utils.showInfo(_("""\
-You are currently cramming. Please close this deck first."""))
-            return
         if self.deck is None:
-            self.onNew()
-        ui.importing.ImportDialog(self)
+            self.onNew(prompt=_("""\
+Importing copies cards to the current deck,
+so we need to create a new deck first.
+
+Please give your deck a name:"""))
+        if not self.deck:
+            return
+        if self.deck.path:
+            ui.importing.ImportDialog(self)
 
     def onExport(self):
         ui.exporting.ExportDialog(self)
@@ -1919,59 +2009,48 @@ You are currently cramming. Please close this deck first."""))
         e.exportInto(path)
         return (e, path)
 
-    def isCramming(self):
-        return self.deck is not None and self.deck.name() == "cram"
-
     def onCram(self, cardIds=[]):
-        if self.isCramming():
-            ui.utils.showInfo(
-                _("Already cramming. Please close this deck first."))
-            return
-        if not self.save(required=True):
-            return
-        if not cardIds:
-            (s, ret) = ui.utils.getTag(self, self.deck, _("Tags to cram:"),
-                                       help="CramMode", tags="all")
-            if not ret:
-                return
-            s = unicode(s)
-            # open tmp deck
-            (e, path) = self._copyToTmpDeck(tags=s)
-        else:
-            (e, path) = self._copyToTmpDeck(ids=cardIds)
-        if not e.exportedCards:
-            ui.utils.showInfo(_("No cards matched the provided tags."))
-            return
-        if self.config['randomizeOnCram']:
-            n = 3
-        else:
-            n = 2
-        p = ui.utils.ProgressWin(self, n, 0, _("Cram"))
-        p.update(_("Loading deck..."))
-        oldMedia = self.deck.mediaDir()
-        self.deck.close()
-        self.deck = None
-        self.loadDeck(path, media=oldMedia)
-        self.config['recentDeckPaths'].pop(0)
-        self.deck.newCardsPerDay = 99999
-        self.deck.delay0 = 300
-        self.deck.delay1 = 600
-        self.deck.hardIntervalMin = 0.01388
-        self.deck.hardIntervalMax = 0.02083
-        self.deck.midIntervalMin = 0.0416
-        self.deck.midIntervalMax = 0.0486
-        self.deck.easyIntervalMin = 0.2083
-        self.deck.easyIntervalMax = 0.25
-        self.deck.newCardOrder = 0
-        self.deck.syncName = None
-        self.deck.collapseTime = 1
-        p.update()
-        self.deck.updateDynamicIndices()
-        if self.config['randomizeOnCram']:
-            p.update(_("Randomizing..."))
-            self.deck.randomizeNewCards()
-        self.reset()
-        p.finish()
+        te = ui.tagedit.TagEdit(self)
+        te.setDeck(self.deck, "all")
+        diag = ui.utils.GetTextDialog(
+            self, _("Tags to cram:"), help="CramMode", edit=te)
+        l = diag.layout()
+        g = QGroupBox(_("Review Mode"))
+        l.insertWidget(2, g)
+        box = QVBoxLayout()
+        g.setLayout(box)
+        keep = QRadioButton(_("Show oldest modified first"))
+        box.addWidget(keep)
+        keep.setChecked(True)
+        diag.setTabOrder(diag.l, keep)
+        order = QRadioButton(_("Show in order added"))
+        box.addWidget(order)
+        random = QRadioButton(_("Show in random order"))
+        box.addWidget(random)
+        # hide tag list if we have ids
+        if cardIds:
+            diag.l.hide()
+            diag.qlabel.hide()
+        if diag.exec_():
+            if keep.isChecked():
+                order = "type, modified"
+            elif order.isChecked():
+                order = "created"
+            else:
+                order = "random()"
+            if cardIds:
+                active = cardIds
+            else:
+                active = unicode(diag.l.text())
+            self.deck.setupCramScheduler(active, order)
+            if self.state == "studyScreen":
+                self.onStartReview()
+            else:
+                self.deck.reset()
+                self.deck.getCard() # so scheduler will reset if empty
+                self.moveToState("initial")
+            if not self.deck.finishScheduler:
+                ui.utils.showInfo(_("No cards matched the provided tags."))
 
     def onShare(self, tags):
         pwd = os.getcwd()
@@ -1982,48 +2061,45 @@ You are currently cramming. Please close this deck first."""))
             return
         self.deck.startProgress()
         self.deck.updateProgress()
-        d = DeckStorage.Deck(path)
+        d = DeckStorage.Deck(path, backup=False)
         # reset scheduling to defaults
         d.newCardsPerDay = 20
         d.delay0 = 600
-        d.delay1 = 600
+        d.delay1 = 0
         d.delay2 = 0
-        d.hardIntervalMin = 0.333
-        d.hardIntervalMax = 0.5
+        d.hardIntervalMin = 1.0
+        d.hardIntervalMax = 1.1
         d.midIntervalMin = 3.0
         d.midIntervalMax = 5.0
         d.easyIntervalMin = 7.0
         d.easyIntervalMax = 9.0
         d.syncName = None
-        d.suspended = u""
+        d.setVar("newActive", u"")
+        d.setVar("newInactive", u"")
+        d.setVar("revActive", u"")
+        d.setVar("revInactive", u"")
         self.deck.updateProgress()
         # unsuspend cards
-        d.unsuspendCards(d.s.column0("select id from cards where priority = -3"))
+        d.unsuspendCards(d.s.column0("select id from cards where type < 0"))
         self.deck.updateProgress()
-        d.updateAllPriorities()
-        d.utcOffset = -1
+        d.utcOffset = -2
         d.flushMod()
         d.save()
         self.deck.updateProgress()
-        # remove indices
-        indices = d.s.column0(
-            "select name from sqlite_master where type = 'index' "
-            "and sql != ''")
-        for i in indices:
-            d.s.statement("drop index %s" % i)
-        # and q/a cache
-        d.s.statement("update cards set question = '', answer = ''")
+        # media
+        d.s.statement("update deckVars set value = '' where key = 'mediaURL'")
         self.deck.updateProgress()
         d.s.statement("vacuum")
         self.deck.updateProgress()
         nfacts = d.factCount
-        mdir = d.mediaDir()
+        mdir = self.deck.mediaDir()
         d.close()
         dir = os.path.dirname(path)
         zippath = os.path.join(dir, "shared-%d.zip" % time.time())
         # zip it up
         zip = zipfile.ZipFile(zippath, "w", zipfile.ZIP_DEFLATED)
         zip.writestr("facts", str(nfacts))
+        zip.writestr("version", str(2))
         readmep = os.path.join(dir, "README.html")
         readme = open(readmep, "w")
         readme.write('''\
@@ -2041,9 +2117,8 @@ it to your friends.
         if mdir:
             for f in os.listdir(mdir):
                 zip.write(os.path.join(mdir, f),
-                          str(os.path.join("shared.media/", f)))
+                          os.path.join("shared.media/", f))
             os.chdir(pwd)
-            shutil.rmtree(mdir)
         os.chdir(pwd)
         self.deck.updateProgress()
         zip.close()
@@ -2055,13 +2130,13 @@ it to your friends.
     ##########################################################################
 
     def onLearnMore(self):
-        self.deck.newEarly = True
+        self.deck.setupLearnMoreScheduler()
         self.reset()
         self.showToolTip(_("""\
 <h1>Learning More</h1>Click the stopwatch at the top to finish."""))
 
     def onReviewEarly(self):
-        self.deck.reviewEarly = True
+        self.deck.setupReviewEarlyScheduler()
         self.reset()
         self.showToolTip(_("""\
 <h1>Reviewing Early</h1>Click the stopwatch at the top to finish."""))
@@ -2104,10 +2179,13 @@ it to your friends.
     # Syncing
     ##########################################################################
 
-    def syncDeck(self, interactive=True, create=False, onlyMerge=False,
-                 reload=True, checkSources=True):
+    def setupSync(self):
+        if not self.config['syncDisableWhenMoved']:
+            anki.deck.Deck.checkSyncHash = lambda self: True
+
+    def syncDeck(self, interactive=True, onlyMerge=False, reload=True):
         "Synchronise a deck with the server."
-        if not self.inMainWindow() and interactive: return
+        if not self.inMainWindow() and interactive and interactive!=-1: return
         self.setNotice()
         # vet input
         if interactive:
@@ -2122,35 +2200,38 @@ it to your friends.
                     return
         if self.deck and not self.deck.syncName:
             if interactive:
-                self.onDeckProperties()
-                self.deckProperties.dialog.qtabwidget.setCurrentIndex(1)
-                self.showToolTip(_("Enable syncing, choose a name, then sync again."))
-            return
+                if (not self.config['mediaLocation']
+                    and self.deck.s.scalar("select 1 from media limit 1")):
+                    ui.utils.showInfo(_("""\
+Syncing sounds and images requires a free file synchronization service like \
+DropBox. Click help to learn more, and OK to continue syncing."""),
+                                      help="SyncingMedia")
+                # enable syncing
+                self.deck.enableSyncing()
+            else:
+                return
         if self.deck is None and getattr(self, 'deckPath', None) is None:
             # sync all decks
             self.loadAfterSync = -1
             self.syncName = None
-            self.sourcesToCheck = []
             self.syncDecks = self.decksToSync()
+            if not self.syncDecks:
+                if interactive:
+                    ui.utils.showInfo(_("""\
+Please open a deck and run File>Sync. After you do this once, the deck \
+will sync automatically from then on."""))
+                return
         else:
             # sync one deck
             # hide all deck-associated dialogs
             self.closeAllDeckWindows()
-
             if self.deck:
                 # save first, so we can rollback on failure
                 self.deck.save()
                 # store data we need before closing the deck
                 self.deckPath = self.deck.path
-                self.syncName = self.deck.syncName or self.deck.name()
+                self.syncName = self.deck.name()
                 self.lastSync = self.deck.lastSync
-                if checkSources:
-                    self.sourcesToCheck = self.deck.s.column0(
-                        "select id from sources where syncPeriod != -1 "
-                        "and syncPeriod = 0 or :t - lastSync > syncPeriod",
-                        t=time.time())
-                else:
-                    self.sourcesToCheck = []
                 self.deck.close()
                 self.deck = None
                 self.loadAfterSync = reload
@@ -2159,11 +2240,9 @@ it to your friends.
         self.state = "nostate"
         import gc; gc.collect()
         self.mainWin.welcomeText.setText(u"")
-        self.syncThread = ui.sync.Sync(self, u, p, interactive, create,
-                                       onlyMerge, self.sourcesToCheck)
+        self.syncThread = ui.sync.Sync(self, u, p, interactive, onlyMerge)
         self.connect(self.syncThread, SIGNAL("setStatus"), self.setSyncStatus)
         self.connect(self.syncThread, SIGNAL("showWarning"), self.showSyncWarning)
-        self.connect(self.syncThread, SIGNAL("noSyncResponse"), self.noSyncResponse)
         self.connect(self.syncThread, SIGNAL("moveToState"), self.moveToState)
         self.connect(self.syncThread, SIGNAL("noMatchingDeck"), self.selectSyncDeck)
         self.connect(self.syncThread, SIGNAL("syncClockOff"), self.syncClockOff)
@@ -2217,7 +2296,7 @@ you want to do?""" % deckName),
         diag = ui.utils.askUserDialog(_("""\
 You are about to upload <b>%s</b>
 to AnkiOnline. This will overwrite
-the online version if one exists.
+the online copy of this deck.
 Are you sure?""" % deckName),
                           [_("Upload"),
                            _("Cancel")])
@@ -2231,51 +2310,79 @@ Are you sure?""" % deckName),
     def onSyncFinished(self):
         "Reopen after sync finished."
         self.mainWin.buttonStack.show()
-        if self.hideWelcome:
-            # no deck load & no deck browser, as we're about to quit or do
-            # something manually
-            pass
-        else:
-            if self.loadAfterSync == -1:
-                # after sync all, so refresh browser list
-                self.browserLastRefreshed = 0
+        try:
+            try:
+                if self.hideWelcome:
+                    # no deck load & no deck browser, as we're about to quit or do
+                    # something manually
+                    pass
+                else:
+                    if self.loadAfterSync == -1:
+                        # after sync all, so refresh browser list
+                        self.browserLastRefreshed = 0
+                        self.moveToState("noDeck")
+                    elif self.loadAfterSync and self.deckPath:
+                        if self.loadAfterSync == 2:
+                            name = re.sub("[<>]", "", self.syncName)
+                            p = os.path.join(self.documentDir, name + ".anki")
+                            shutil.copy2(self.deckPath, p)
+                            self.deckPath = p
+                            # since we've moved the deck, we have to set sync path
+                            # ourselves
+                            c = sqlite.connect(p)
+                            v = c.execute(
+                                "select version from decks").fetchone()[0]
+                            if v >= 52:
+                                # deck has bene upgraded already, so we can
+                                # use a checksum
+                                name = checksum(p.encode("utf-8"))
+                            else:
+                                # FIXME: compat code because deck hasn't been
+                                # upgraded yet. can be deleted in the future.
+                                # strip off .anki part
+                                name = os.path.splitext(
+                                    os.path.basename(p))[0]
+                            c.execute("update decks set syncName = ?", (name,))
+                            c.commit()
+                            c.close()
+                        self.loadDeck(self.deckPath, sync=False)
+                    else:
+                        self.moveToState("noDeck")
+            except:
                 self.moveToState("noDeck")
-            elif self.loadAfterSync:
-                if self.loadAfterSync == 2:
-                    name = re.sub("[<>]", "", self.syncName)
-                    p = os.path.join(self.documentDir, name + ".anki")
-                    if os.path.exists(p):
-                        p = os.path.join(self.documentDir,
-                                         name + "%d.anki" % time.time())
-                    shutil.copy2(self.deckPath, p)
-                    self.deckPath = p
-                self.loadDeck(self.deckPath, sync=False)
-                self.deck.syncName = self.syncName
-                self.deck.s.flush()
-                self.deck.s.commit()
-            else:
-                self.moveToState("noDeck")
-        self.deckPath = None
-        self.syncFinished = True
+                raise
+        finally:
+            self.deckPath = None
+            self.syncFinished = True
 
-    def selectSyncDeck(self, decks, create=True):
-        name = ui.sync.DeckChooser(self, decks, create).getName()
+    def selectSyncDeck(self, decks):
+        name = ui.sync.DeckChooser(self, decks).getName()
         self.syncName = name
         if name:
             # name chosen
-            onlyMerge = self.loadAfterSync == 2
-            self.syncDeck(create=True, interactive=False, onlyMerge=onlyMerge)
-        else:
-            if not create:
-                self.syncFinished = True
-                self.cleanNewDeck()
+            p = os.path.join(self.documentDir, name + ".anki")
+            if os.path.exists(p):
+                d = ui.utils.askUserDialog(_("""\
+This deck already exists on your computer. Overwrite the local copy?"""),
+                                         ["Overwrite", "Cancel"])
+                d.setDefault(1)
+                if d.run() == "Overwrite":
+                    self.syncDeck(interactive=False, onlyMerge=True)
+                else:
+                    self.syncFinished = True
+                    self.cleanNewDeck()
             else:
-                self.onSyncFinished()
+                self.syncDeck(interactive=False, onlyMerge=True)
+            return
+        self.syncFinished = True
+        self.cleanNewDeck()
 
     def cleanNewDeck(self):
         "Unload a new deck if an initial sync failed."
         self.deck = None
-        self.moveToState("initial")
+        self.deckPath = None
+        self.moveToState("noDeck")
+        self.syncFinished = True
 
     def setSyncStatus(self, text, *args):
         self.mainWin.welcomeText.append("<font size=+2>" + text + "</font>")
@@ -2297,12 +2404,6 @@ Are you sure?""" % deckName),
     def badUserPass(self):
         ui.preferences.Preferences(self, self.config).dialog.tabWidget.\
                                          setCurrentIndex(1)
-
-    def noSyncResponse(self):
-        msg = _("Sync Failed. Please check your internet connection.")
-        if self.config['proxyHost']:
-            msg += _(" (and proxy settings)")
-        self.setNotice(msg)
 
     def openSyncProgress(self):
         self.syncProgressDialog = QProgressDialog(_("Syncing Media..."),
@@ -2354,7 +2455,6 @@ Are you sure?""" % deckName),
         "Close",
         "Addcards",
         "Editdeck",
-        "DisplayProperties",
         "DeckProperties",
         "Undo",
         "Redo",
@@ -2362,7 +2462,7 @@ Are you sure?""" % deckName),
         "Graphs",
         "Dstats",
         "Cstats",
-        "ActiveTags",
+        "Cram",
         "StudyOptions",
         )
 
@@ -2386,7 +2486,6 @@ Are you sure?""" % deckName),
         self.connect(m.actionExit, s, self, SLOT("close()"))
         self.connect(m.actionSyncdeck, s, self.syncDeck)
         self.connect(m.actionDeckProperties, s, self.onDeckProperties)
-        self.connect(m.actionDisplayProperties, s,self.onDisplayProperties)
         self.connect(m.actionAddcards, s, self.onAddCard)
         self.connect(m.actionEditdeck, s, self.onEditDeck)
         self.connect(m.actionEditCurrent, s, self.onEditCurrent)
@@ -2394,6 +2493,7 @@ Are you sure?""" % deckName),
         self.connect(m.actionDstats, s, self.onDeckStats)
         self.connect(m.actionCstats, s, self.onCardStats)
         self.connect(m.actionGraphs, s, self.onShowGraph)
+        self.connect(m.actionEditLayout, s, self.onCardLayout)
         self.connect(m.actionAbout, s, self.onAbout)
         self.connect(m.actionReportbug, s, self.onReportBug)
         self.connect(m.actionForum, s, self.onForum)
@@ -2410,19 +2510,16 @@ Are you sure?""" % deckName),
         self.connect(m.actionOptimizeDatabase, s, self.onOptimizeDB)
         self.connect(m.actionCheckMediaDatabase, s, self.onCheckMediaDB)
         self.connect(m.actionDownloadMissingMedia, s, self.onDownloadMissingMedia)
+        self.connect(m.actionLocalizeMedia, s, self.onLocalizeMedia)
         self.connect(m.actionCram, s, self.onCram)
         self.connect(m.actionOpenPluginFolder, s, self.onOpenPluginFolder)
         self.connect(m.actionEnableAllPlugins, s, self.onEnableAllPlugins)
         self.connect(m.actionDisableAllPlugins, s, self.onDisableAllPlugins)
-        self.connect(m.actionActiveTags, s, self.onActiveTags)
         self.connect(m.actionReleaseNotes, s, self.onReleaseNotes)
-        self.connect(m.actionCacheLatex, s, self.onCacheLatex)
-        self.connect(m.actionUncacheLatex, s, self.onUncacheLatex)
         self.connect(m.actionStudyOptions, s, self.onStudyOptions)
         self.connect(m.actionDonate, s, self.onDonate)
         self.connect(m.actionRecordNoiseProfile, s, self.onRecordNoiseProfile)
         self.connect(m.actionBuryFact, s, self.onBuryFact)
-        self.connect(m.actionExportOriginalFiles, s, self.onExportOriginal)
 
     def enableDeckMenuItems(self, enabled=True):
         "setEnabled deck-related items."
@@ -2474,6 +2571,7 @@ Are you sure?""" % deckName),
     def disableCardMenuItems(self):
         self.maybeEnableUndo()
         self.mainWin.actionEditCurrent.setEnabled(False)
+        self.mainWin.actionEditLayout.setEnabled(False)
 	self.mainWin.actionMarkCard.setEnabled(False)
 	self.mainWin.actionSuspendCard.setEnabled(False)
 	self.mainWin.actionDelete.setEnabled(False)
@@ -2486,6 +2584,7 @@ Are you sure?""" % deckName),
         snd = (hasSound(self.currentCard.question) or
                (hasSound(self.currentCard.answer) and
                 self.state != "getQuestion"))
+	self.mainWin.actionEditLayout.setEnabled(True)
         self.mainWin.actionRepeatAudio.setEnabled(snd)
 	self.mainWin.actionMarkCard.setEnabled(True)
 	self.mainWin.actionSuspendCard.setEnabled(True)
@@ -2517,12 +2616,16 @@ Are you sure?""" % deckName),
     def setupAutoUpdate(self):
         self.autoUpdate = ui.update.LatestVersionFinder(self)
         self.connect(self.autoUpdate, SIGNAL("newVerAvail"), self.newVerAvail)
+        self.connect(self.autoUpdate, SIGNAL("newMsg"), self.newMsg)
         self.connect(self.autoUpdate, SIGNAL("clockIsOff"), self.clockIsOff)
         self.autoUpdate.start()
 
-    def newVerAvail(self, version):
-        if self.config['suppressUpdate'] < version['latestVersion']:
-            ui.update.askAndUpdate(self, version)
+    def newVerAvail(self, data):
+        if self.config['suppressUpdate'] < data['latestVersion']:
+            ui.update.askAndUpdate(self, data)
+
+    def newMsg(self, data):
+        ui.update.showMessages(self, data)
 
     def clockIsOff(self, diff):
         if diff < 0:
@@ -2557,9 +2660,14 @@ Are you sure?""" % deckName),
 
     def pluginsFolder(self):
         dir = self.config.configPath
+        if sys.platform.startswith("win32"):
+            dir = dir.encode(sys.getfilesystemencoding())
         return os.path.join(dir, "plugins")
 
     def loadPlugins(self):
+        if sys.platform.startswith("win32"):
+            self.clearPluginCache()
+        self.disableObsoletePlugins()
         plugdir = self.pluginsFolder()
         sys.path.insert(0, plugdir)
         plugins = self.enabledPlugins()
@@ -2574,6 +2682,45 @@ Are you sure?""" % deckName),
                 traceback.print_exc()
         self.checkForUpdatedPlugins()
         self.disableCardMenuItems()
+
+    def clearPluginCache(self):
+        "Clear .pyc files which may cause crashes if Python version updated."
+        dir = self.pluginsFolder()
+        for curdir, dirs, files in os.walk(dir):
+            for f in files:
+                if not f.endswith(".pyc"):
+                    continue
+                os.unlink(os.path.join(curdir, f))
+
+    def disableObsoletePlugins(self):
+        dir = self.pluginsFolder()
+        native = _(
+            "The %s plugin has been disabled, as Anki supports "+
+            "this natively now.")
+        plugins = [
+            ("Custom Media Directory.py",
+             (native % "custom media folder") + _(""" \
+Please visit Settings>Preferences.""")),
+            ("Regenerate Reading Field.py", _("""\
+The regenerate reading field plugin has been disabled, as the Japanese \
+support plugin supports this now. Please download the latest version.""")),
+            ("Sync LaTeX with iPhone client.py",
+             native % "sync LaTeX"),
+            ("Incremental Reading.py",
+             _("""The incremental reading plugin has been disabled because \
+it needs updates.""")),
+            ("Learn Mode.py", _("""\
+The learn mode plugin has been disabled because it needs to be rewritten \
+to work with this version of Anki."""))
+            ]
+        for p in plugins:
+            path = os.path.join(dir, p[0])
+            if os.path.exists(path):
+                new = path.replace(".py", ".disabled")
+                if os.path.exists(new):
+                    os.unlink(new)
+                os.rename(path, new)
+                ui.utils.showInfo(p[1])
 
     def rebuildPluginsMenu(self):
         if getattr(self, "pluginActions", None) is None:
@@ -2611,10 +2758,9 @@ Are you sure?""" % deckName),
         if path is None:
             path = self.pluginsFolder()
         if sys.platform == "win32":
-            # reuse our process handling code from latex
-            anki.latex.call(["explorer", path.encode(
-                sys.getfilesystemencoding())],
-                            wait=False)
+            if isinstance(path, unicode):
+                path = path.encode(sys.getfilesystemencoding())
+            anki.utils.call(["explorer", path], wait=False)
         else:
             QDesktopServices.openUrl(QUrl("file://" + path))
 
@@ -2700,7 +2846,7 @@ Are you sure?""" % deckName),
             playFromText(self.currentCard.answer)
 
     def onRecordNoiseProfile(self):
-        from ui.sound import recordNoiseProfile
+        from ankiqt.ui.sound import recordNoiseProfile
         recordNoiseProfile(self)
 
     # Progress info
@@ -2798,6 +2944,114 @@ Are you sure?""" % deckName),
             self.setEnabled(True)
             self.updatingBusy = False
 
+    # Media locations
+    ##########################################################################
+
+    def setupMedia(self, deck):
+        prefix = self.config['mediaLocation']
+        prev = deck.getVar("mediaLocation") or ""
+        # set the media prefix
+        if not prefix:
+            next = ""
+        elif prefix == "dropbox":
+            p = self.dropboxFolder()
+            next = os.path.join(p, "Public", "Anki")
+        else:
+            next = prefix
+        # check if the media has moved
+        migrateFrom = None
+        if prev != next:
+            # check if they were using plugin
+            if not prev:
+                p = self.dropboxFolder()
+                p = os.path.join(p, "Public")
+                deck.mediaPrefix = p
+                migrateFrom = deck.mediaDir()
+            if not migrateFrom:
+                # find the old location
+                deck.mediaPrefix = prev
+                dir = deck.mediaDir()
+                if dir and os.listdir(dir):
+                    # it contains files; we'll need to migrate
+                    migrateFrom = dir
+        # setup new folder
+        deck.mediaPrefix = next
+        if migrateFrom:
+            # force creation of new folder
+            dir = deck.mediaDir(create=True)
+            # migrate old files
+            self.migrateMedia(migrateFrom, dir)
+        else:
+            # chdir if dir exists
+            dir = deck.mediaDir()
+        # update location
+        deck.setVar("mediaLocation", next, mod=False)
+        if dir and prefix == "dropbox":
+            self.setupDropbox(deck)
+
+    def migrateMedia(self, from_, to):
+        if from_ == to:
+            return
+        files = os.listdir(from_)
+        skipped = False
+        for f in files:
+            src = os.path.join(from_, f)
+            dst = os.path.join(to, f)
+            if not os.path.isfile(src):
+                skipped = True
+                continue
+            if not os.path.exists(dst):
+                shutil.copy2(src, dst)
+        if not skipped:
+            # everything copied, we can remove old folder
+            shutil.rmtree(from_, ignore_errors=True)
+
+    def dropboxFolder(self):
+        try:
+            import ankiqt.ui.dropbox as db
+            p = db.getPath()
+        except:
+            if sys.platform.startswith("win32"):
+                s = QSettings(QSettings.UserScope, "Microsoft", "Windows")
+                s.beginGroup("CurrentVersion/Explorer/Shell Folders")
+                p = os.path.join(unicode(s.value("Personal").toString()),
+                                 "My Dropbox")
+            else:
+                p = os.path.expanduser("~/Dropbox")
+        return p
+
+    def setupDropbox(self, deck):
+        if not self.config['dropboxPublicFolder']:
+            # put a file in the folder
+            open(os.path.join(
+                deck.mediaPrefix, "right-click-me.txt"), "w").write("")
+            # tell user what to do
+            ui.utils.showInfo(_("""\
+A file called right-click-me.txt has been placed in DropBox's public folder. \
+After clicking OK, this folder will appear. Please right click on the file (\
+command+click on a Mac), choose DropBox>Copy Public Link, and paste the \
+link into Anki."""))
+            # open folder and text prompt
+            self.onOpenPluginFolder(deck.mediaPrefix)
+            txt = ui.utils.getText(_("Paste path here:"), parent=self)
+            if txt[0]:
+                fail = False
+                if not txt[0].lower().startswith("http"):
+                    fail = True
+                if not txt[0].lower().endswith("right-click-me.txt"):
+                    fail = True
+                if fail:
+                    ui.utils.showInfo(_("""\
+That doesn't appear to be a public link. You'll be asked again when the deck \
+is next loaded."""))
+                else:
+                    self.config['dropboxPublicFolder'] = os.path.dirname(txt[0])
+        if self.config['dropboxPublicFolder']:
+            # update media url
+            deck.setVar(
+                "mediaURL", self.config['dropboxPublicFolder'] + "/" +
+                os.path.basename(deck.mediaDir()) + "/")
+
     # Advanced features
     ##########################################################################
 
@@ -2843,68 +3097,84 @@ Proceed?""")):
         ui.utils.showInfo(_("Database optimized.\nShrunk by %dKB") % (size/1024.0))
 
     def onCheckMediaDB(self):
-        if self.isCramming():
-            ui.utils.showInfo(_("""\
-You are currently cramming. Please close this deck first."""))
-            return
         mb = QMessageBox(self)
         mb.setWindowTitle(_("Anki"))
         mb.setIcon(QMessageBox.Warning)
         mb.setText(_("""\
-This operation:<br>
- - deletes files not referenced by cards<br>
- - either tags cards, or deletes references to missing files<br>
- - renames files to a string of numbers and letters<br>
- - updates checksums for files which have been changed<br>
-<br>
-<b>This operation is not undoable.</b><br>
-Consider backing up your media directory first."""))
-        bTag = QPushButton(_("Tag Cards"))
-        mb.addButton(bTag, QMessageBox.RejectRole)
-        bDelete = QPushButton(_("Delete Refs"))
+This operation looks through the content of your cards for media, and \
+registers it so that it can be used with the online and mobile clients.
+
+If you choose Scan+Delete, any media in your media folder that is not \
+used by cards will be deleted. Please note that media is only \
+counted as used if it appears on the question or answer of a card. If \
+media is in a field that is not on your cards, the media will \
+be deleted, and there is no way to undo this. Please make a backup if in \
+doubt."""))
+        bScan = QPushButton(_("Scan"))
+        mb.addButton(bScan, QMessageBox.RejectRole)
+        bDelete = QPushButton(_("Scan+Delete"))
         mb.addButton(bDelete, QMessageBox.RejectRole)
         bCancel = QPushButton(_("Cancel"))
         mb.addButton(bCancel, QMessageBox.RejectRole)
         mb.exec_()
-        if mb.clickedButton() == bTag:
-            (missing, unused) = rebuildMediaDir(self.deck, False)
+        if mb.clickedButton() == bScan:
+            delete = False
         elif mb.clickedButton() == bDelete:
-            (missing, unused) = rebuildMediaDir(self.deck, True)
+            delete = True
         else:
             return
-        ui.utils.showInfo(
-                ngettext("%d missing reference.", "%d missing references.",
-                    missing) % missing + "\n" +
-                ngettext("%d unused file removed.", "%d unused files removed.",
-                    unused) % unused)
+        (nohave, unused) = rebuildMediaDir(self.deck, delete=delete)
+        # generate report
+        report = ""
+        if nohave:
+            report += _(
+                "Used on cards but missing from media folder:")
+            report += "\n" + "\n".join(nohave)
+        if unused:
+            if report:
+                report += "\n\n"
+            if delete:
+                report += _("Deleted unused:")
+            else:
+                report += _(
+                    "In media folder but not used by any cards:")
+            report += "\n" + "\n".join(unused)
+        if not report:
+            report = _("No unused or missing files found.")
+        ui.utils.showText(report, parent=self, type="text")
 
     def onDownloadMissingMedia(self):
         res = downloadMissing(self.deck)
         if res is None:
-            ui.utils.showInfo(_("No media URLs defined for this deck."),
+            ui.utils.showInfo(_("No media URL defined for this deck."),
                               help="MediaSupport")
             return
-        ui.utils.showInfo(ngettext("%d missing file found.<br>",
-                                   "%d missing files found.<br>", res[0]) % res[0] +
-                          _("%d successfully retrieved.")
-                          % res[1], parent=self)
+        if res[0] == True:
+            # success
+            (grabbed, missing) = res[1:]
+            msg = _("%d successfully retrieved.") % grabbed
+            if missing:
+                msg += "\n" + ngettext("%d missing.", "%d missing.", missing) % missing
+        else:
+            msg = _("Unable to download %s\nDownload aborted.") % res[1]
+        ui.utils.showInfo(msg)
+
+    def onLocalizeMedia(self):
+        if not ui.utils.askUser(_("""\
+This will look for remote images and sounds on your cards, download them to \
+your media folder, and convert the links to local ones. \
+It can take a long time. Proceed?""")):
+            return
+        res = downloadRemote(self.deck)
+        count = len(res[0])
+        msg = ngettext("%d successfully downloaded.",
+            "%d successfully downloaded.", count) % count
+        if len(res[1]):
+            msg += "\n\n" + _("Couldn't find:") + "\n" + "\n".join(res[1])
+        ui.utils.showText(msg, parent=self, type="text")
 
     def addHook(self, *args):
         addHook(*args)
-
-    def onCacheLatex(self):
-        anki.latex.cacheAllLatexImages(self.deck)
-
-    def onUncacheLatex(self):
-        if ui.utils.askUser(_("Delete LaTeX image cache?")):
-            anki.latex.deleteAllLatexImages(self.deck)
-
-    def onExportOriginal(self):
-        cnt = anki.media.exportOriginalFiles(self.deck)
-        ui.utils.showInfo(ngettext(
-            "%(a)d file exported to %(b)s.originals folder.",
-            "%(a)d files exported to %(b)s.originals folder.",
-            cnt) % {'a': cnt, 'b': self.deck.name()})
 
     # System specific misc
     ##########################################################################
@@ -2968,8 +3238,6 @@ Consider backing up your media directory first."""))
     def changeLayoutSpacing(self):
         if sys.platform.startswith("darwin"):
             self.mainWin.studyOptionsReviewBar.setContentsMargins(0, 20, 0, 0)
-            self.mainWin.optionsBox.layout().setSpacing(10)
-            self.mainWin.optionsBox.layout().setContentsMargins(4, 10, 4, 4)
 
     # Proxy support
     ##########################################################################
@@ -2995,6 +3263,14 @@ Consider backing up your media directory first."""))
         # if they've just upgraded, set created time based on deck age
         if time.time() - self.config['created'] < 60 and self.deck:
             self.config['created'] = self.deck.created
+        # tweaks for small screens
+        if self.config['optimizeSmall']:
+            p = self.mainWin.deckBrowserOuterFrame.sizePolicy()
+            p.setHorizontalStretch(1)
+            self.mainWin.deckBrowserOuterFrame.setSizePolicy(p)
+            self.mainWin.decksLabel.hide()
+            self.mainWin.decksLine.hide()
+            self.mainWin.studyOptsLabel.hide()
 
     def setupBackups(self):
         # set backups
