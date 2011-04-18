@@ -11,35 +11,40 @@ fi
 
 mkdir -p ankiqt/forms
 
-if [ xDarwin = x$(uname) ]
-then
-    if [ -e /Library/Frameworks/Python.framework/Versions/2.5/bin/pyuic4 ]
-    then
+pyuic=`which pyuic4`
+pyrcc=`which pyrcc4`
+
+if [ $? != 0 ]; then
+  if [ xDarwin = x$(uname) ]
+  then
+      if [ -e /Library/Frameworks/Python.framework/Versions/2.5/bin/pyuic4 ]
+      then
         pyuic=/Library/Frameworks/Python.framework/Versions/2.5/bin/pyuic4
         pyrcc=/Library/Frameworks/Python.framework/Versions/2.5/bin/pyrcc4
-    elif [ -e /opt/local/Library/Frameworks/Python.framework/Versions/2.5/bin/pyuic4 ]
-    then
+      elif [ -e /opt/local/Library/Frameworks/Python.framework/Versions/2.5/bin/pyuic4 ]
+      then
         pyuic=/opt/local/Library/Frameworks/Python.framework/Versions/2.5/bin/pyuic4
         pyrcc=/opt/local/Library/Frameworks/Python.framework/Versions/2.5/bin/pyrcc4
-    elif [ -e /System/Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4 ]
-    then
+      elif [ -e /System/Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4 ]
+      then
         pyuic=/System/Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4
         pyrcc=/System/Library/Frameworks/Python.framework/Versions/2.6/bin/pyrcc4
-    elif [ -e /Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4 ]
-    then
+      elif [ -e /Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4 ]
+      then
         pyuic=/Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4
         pyrcc=/Library/Frameworks/Python.framework/Versions/2.6/bin/pyrcc4
-    elif [ -f /opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4 ]
-    then
+      elif [ -f /opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4 ]
+      then
         pyuic=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pyuic4
         pyrcc=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pyrcc4
-    else
-        echo 'Unable to find pyuic4. Try `port install py-pyqt4`?'
-        exit
-    fi
-else
-    pyuic=pyuic4
-    pyrcc=pyrcc4
+      else
+        echo 'Unable to find pyuic4. If you use macports try `port install py-pyqt4`. If you use homebrew try `brew install pyqt`.'
+        exit 1
+      fi
+   else
+     echo "Unable to find pyuic4 on your path!  Please install it and try this script again."
+     exit 1
+   fi
 fi
 
 init=ankiqt/forms/__init__.py
@@ -66,9 +71,6 @@ done
 echo "]" >> $init
 cat $temp >> $init
 rm $temp
-
-# use older integer format so qt4.4 still works
-sed -i 's/setProperty("value", 14)/setProperty("value", QtCore.QVariant(14))/' ankiqt/forms/displayproperties.py
 
 echo "Building resources.."
 $pyrcc icons.qrc -o icons_rc.py

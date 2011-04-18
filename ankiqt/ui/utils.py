@@ -5,7 +5,6 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 from anki.sound import playFromText, stripSounds
-from anki.latex import renderLatex, stripLatex
 from ankiqt import ui
 
 import re, os, sys, urllib, time
@@ -41,25 +40,28 @@ def showInfo(text, parent=None, help="", func=None):
         else:
             break
 
-def showText(text, parent=None):
+def showText(txt, parent=None, type="text"):
     if not parent:
         parent = ankiqt.mw
-    d = QDialog(parent)
-    d.setWindowTitle("Anki")
-    v = QVBoxLayout()
-    l = QLabel(text)
-    l.setWordWrap(True)
-    l.setTextInteractionFlags(Qt.TextSelectableByMouse)
-    v.addWidget(l)
-    buts = QDialogButtonBox.Ok
-    b = QDialogButtonBox(buts)
-    v.addWidget(b)
-    d.setLayout(v)
-    d.connect(b.button(QDialogButtonBox.Ok),
-              SIGNAL("clicked()"), d.accept)
-    d.exec_()
+    diag = QDialog(parent)
+    diag.setWindowTitle("Anki")
+    layout = QVBoxLayout(diag)
+    diag.setLayout(layout)
+    text = QTextEdit()
+    text.setReadOnly(True)
+    if type == "text":
+        text.setPlainText(txt)
+    else:
+        text.setHtml(txt)
+    layout.addWidget(text)
+    box = QDialogButtonBox(QDialogButtonBox.Close)
+    layout.addWidget(box)
+    diag.connect(box, SIGNAL("rejected()"), diag, SLOT("reject()"))
+    diag.setMinimumHeight(400)
+    diag.setMinimumWidth(500)
+    diag.exec_()
 
-def askUser(text, parent=None, help=""):
+def askUser(text, parent=None, help="", defaultno=False):
     "Show a yes/no question. Return true if yes."
     if not parent:
         parent = ankiqt.mw
@@ -67,8 +69,12 @@ def askUser(text, parent=None, help=""):
     if help:
         sb |= QMessageBox.Help
     while 1:
+        if defaultno:
+            default = QMessageBox.No
+        else:
+            default = QMessageBox.Yes
         r = QMessageBox.question(parent, "Anki", text, sb,
-                                 QMessageBox.Yes)
+                                 default)
         if r == QMessageBox.Help:
             openWikiLink(help)
         else:
@@ -115,16 +121,21 @@ def askUserDialog(text, buttons, parent=None, help=""):
 
 class GetTextDialog(QDialog):
 
-    def __init__(self, parent, question, help=None, edit=None):
+    def __init__(self, parent, question, help=None, edit=None, default=u"",
+                 title="Anki"):
         QDialog.__init__(self, parent, Qt.Window)
-        self.setWindowTitle("Anki")
+        self.setWindowTitle(title)
         self.question = question
         self.help = help
+        self.qlabel = QLabel(question)
         v = QVBoxLayout()
-        v.addWidget(QLabel(question))
+        v.addWidget(self.qlabel)
         if not edit:
             edit = QLineEdit()
         self.l = edit
+        if default:
+            self.l.setText(default)
+            self.l.selectAll()
         v.addWidget(self.l)
         buts = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         if help:
@@ -149,10 +160,11 @@ class GetTextDialog(QDialog):
     def helpRequested(self):
         QDesktopServices.openUrl(QUrl(ankiqt.appWiki + self.help))
 
-def getText(prompt, parent=None, help=None, edit=None):
+def getText(prompt, parent=None, help=None, edit=None, default=u"", title="Anki"):
     if not parent:
         parent = ankiqt.mw
-    d = GetTextDialog(parent, prompt, help=help, edit=edit)
+    d = GetTextDialog(parent, prompt, help=help, edit=edit,
+                      default=default, title=title)
     ret = d.exec_()
     return (unicode(d.l.text()), ret)
 
@@ -203,10 +215,17 @@ def saveGeom(widget, key):
     key += "Geom"
     ankiqt.mw.config[key] = widget.saveGeometry()
 
-def restoreGeom(widget, key):
+def restoreGeom(widget, key, offset=None):
     key += "Geom"
     if ankiqt.mw.config.get(key):
         widget.restoreGeometry(ankiqt.mw.config[key])
+        if sys.platform.startswith("darwin") and offset:
+            from ankiqt.ui.main import QtConfig as q
+            minor = (q.qt_version & 0x00ff00) >> 8
+            if minor > 6:
+                # bug in osx toolkit
+                s = widget.size()
+                widget.resize(s.width(), s.height()+offset*2)
 
 def saveState(widget, key):
     key += "State"
@@ -236,13 +255,9 @@ def restoreHeader(widget, key):
         widget.restoreState(ankiqt.mw.config[key])
 
 def mungeQA(deck, txt):
-    txt = renderLatex(deck, txt)
     txt = stripSounds(txt)
-    # webkit currently doesn't handle bold/underline properly
-    txt = txt.replace("font-weight: 600;",
-                      "font-weight: 900;")
-    txt = txt.replace("text-decoration: underline;",
-                      "border-bottom: 1px solid #000;")
+    # osx webkit doesn't understand font weight 600
+    txt = re.sub("font-weight:.+?;", "font-weight: bold;", txt)
     return txt
 
 def applyStyles(widget):

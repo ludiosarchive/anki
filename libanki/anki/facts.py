@@ -11,8 +11,8 @@ __docformat__ = 'restructuredtext'
 import time
 from anki.db import *
 from anki.errors import *
-from anki.models import Model, FieldModel, fieldModelsTable, formatQA
-from anki.utils import genID
+from anki.models import Model, FieldModel, fieldModelsTable
+from anki.utils import genID, stripHTMLMedia
 from anki.hooks import runHook
 
 # Fields in a fact
@@ -56,8 +56,9 @@ factsTable = Table(
     Column('created', Float, nullable=False, default=time.time),
     Column('modified', Float, nullable=False, default=time.time),
     Column('tags', UnicodeText, nullable=False, default=u""),
-    # the following two fields are obsolete and now stored in cards table
-    Column('spaceUntil', Float, nullable=False, default=0),
+    # spaceUntil is reused as a html-stripped cache of the fields
+    Column('spaceUntil', UnicodeText, nullable=False, default=u""),
+    # obsolete
     Column('lastCardId', Integer, ForeignKey(
     "cards.id", use_alter=True, name="lastCardIdfk")))
 
@@ -128,18 +129,23 @@ class Fact(object):
     def focusLost(self, field):
         runHook('fact.focusLost', self, field)
 
-    def setModified(self, textChanged=False):
+    def setModified(self, textChanged=False, deck=None, media=True):
         "Mark modified and update cards."
         self.modified = time.time()
         if textChanged:
-            d = {}
-            for f in self.model.fieldModels:
-                d[f.name] = (f.id, self[f.name])
+            if not deck:
+                # FIXME: compat code
+                import ankiqt
+                if not getattr(ankiqt, 'setModWarningShown', None):
+                    import sys; sys.stderr.write(
+                        "plugin needs to pass deck to fact.setModified()")
+                    ankiqt.setModWarningShown = True
+                deck = ankiqt.mw.deck
+            assert deck
+            self.spaceUntil = stripHTMLMedia(u" ".join(
+                self.values()))
             for card in self.cards:
-                qa = formatQA(None, self.modelId, d, card.splitTags(), card.cardModel)
-                card.question = qa['question']
-                card.answer = qa['answer']
-                card.setModified()
+                card.rebuildQA(deck)
 
 # Fact deletions
 ##########################################################################

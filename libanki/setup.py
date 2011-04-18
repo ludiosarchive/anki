@@ -1,5 +1,3 @@
-from ez_setup import use_setuptools
-use_setuptools()
 from setuptools import setup, find_packages
 import sys, os
 
@@ -24,7 +22,7 @@ setup(name='anki',
       author_email='anki@ichi2.net',
       url='http://ichi2.net/anki/index.html',
       license='GPLv3',
-      packages=["anki", "anki.importing"],
+      packages=["anki", "anki.importing", "anki.template"],
       package_data={'anki': ['locale/*/*/*'],},
       include_package_data=True,
       zip_safe=False,

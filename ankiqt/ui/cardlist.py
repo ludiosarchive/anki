@@ -5,14 +5,15 @@
 import sre_constants
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtWebKit import QWebPage
 import time, types, sys, re
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 import anki, anki.utils, ankiqt.forms
 from ankiqt import ui
 from anki.cards import cardsTable, Card
 from anki.facts import factsTable, fieldsTable, Fact
 from anki.utils import fmtTimeSpan, parseTags, findTag, addTags, deleteTags, \
-     stripHTML, ids2str
+     stripHTMLAlt, ids2str
 from ankiqt.ui.utils import saveGeom, restoreGeom, saveSplitter, restoreSplitter
 from ankiqt.ui.utils import saveHeader, restoreHeader, saveState, \
      restoreState, applyStyles
@@ -88,16 +89,23 @@ class DeckModel(QAbstractTableModel):
                 # not cached yet
                 self.updateCard(index)
             s = self.columns[index.column()][1](index)
+            s = self.limitContent(s)
             s = s.replace("<br>", u" ")
             s = s.replace("<br />", u" ")
-            s = s.replace("\n", u"  ")
-            s = stripHTML(s)
+            s = s.replace("\n", u" ")
             s = re.sub("\[sound:[^]]+\]", "", s)
-            s = s.replace("&amp;", "&")
+            s = stripHTMLAlt(s)
             s = s.strip()
             return QVariant(s)
         else:
             return QVariant()
+
+    def limitContent(self, txt):
+        if "<c>" in txt:
+            matches = re.findall("(?s)<c>(.*?)</c>", txt)
+            return " ".join(matches)
+        else:
+            return txt
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Vertical:
@@ -223,7 +231,7 @@ facts.id = cards.factId), firstAnswered from cards where id = :id""",
         reps = self.cards[index.row()][CARD_REPS]
         secs = d - time.time()
         if secs <= 0:
-            if not reps:
+            if not reps and self.deck.newCardOrder == 0:
                 return _("(new card)")
             else:
                 return _("%s ago") % fmtTimeSpan(abs(secs), pad=0)
@@ -323,15 +331,6 @@ class StatusDelegate(QItemDelegate):
             painter.save()
             painter.fillRect(option.rect, brush)
             painter.restore()
-        if row[CARD_PRIORITY] == 0:
-            # custom render
-            if index.row() % 2 == 0:
-                brush = QBrush(QColor(COLOUR_INACTIVE1))
-            else:
-                brush = QBrush(QColor(COLOUR_INACTIVE2))
-            painter.save()
-            painter.fillRect(option.rect, brush)
-            painter.restore()
         elif "Marked" in row[CARD_TAGS]:
             if index.row() % 2 == 0:
                 brush = QBrush(QColor(COLOUR_MARKED1))
@@ -360,9 +359,10 @@ class EditDeck(QMainWindow):
         self.dialog = ankiqt.forms.cardlist.Ui_MainWindow()
         self.dialog.setupUi(self)
         self.setUnifiedTitleAndToolBarOnMac(True)
-        restoreGeom(self, "editor")
+        restoreGeom(self, "editor", 38)
         restoreState(self, "editor")
         restoreSplitter(self.dialog.splitter, "editor")
+        self.dialog.splitter.setChildrenCollapsible(False)
         # toolbar
         self.dialog.toolBar.setIconSize(QSize(self.config['iconSize'],
                                               self.config['iconSize']))
@@ -433,9 +433,9 @@ class EditDeck(QMainWindow):
                      self.reverseOrder)
 
     def drawTags(self):
-        self.dialog.tagList.view().setFixedWidth(200)
         self.dialog.tagList.setMaxVisibleItems(30)
-        self.dialog.tagList.setFixedWidth(130)
+        self.dialog.tagList.view().setMinimumWidth(200)
+        self.dialog.tagList.setFixedWidth(170)
         self.dialog.tagList.clear()
         alltags = [None, "Marked", None, None, "Leech", None, None]
         # system tags
@@ -598,7 +598,7 @@ class EditDeck(QMainWindow):
             "cur": len(self.model.cards),
             "tot": self.deck.cardCount,
             "sel": ngettext("%d selected", "%d selected", selected) % selected
-            } + " - " + self.parent.deck.name())
+            } + " - " + self.deck.name())
 
     def onEvent(self, type='field'):
         if self.deck.undoAvailable():
@@ -613,11 +613,14 @@ class EditDeck(QMainWindow):
             self.dialog.actionRedo.setEnabled(True)
         else:
             self.dialog.actionRedo.setEnabled(False)
-        # update list
-        if self.currentRow and self.model.cards:
-            self.model.updateCard(self.currentRow)
-        if type == "tag":
-            self.drawTags()
+        if type=="all":
+            self.updateAfterCardChange()
+        else:
+            # update list
+            if self.currentRow and self.model.cards:
+                self.model.updateCard(self.currentRow)
+            if type == "tag":
+                self.drawTags()
 
     def filterTextChanged(self):
         interval = 300
@@ -704,6 +707,7 @@ class EditDeck(QMainWindow):
         self.connect(self.dialog.actionInvertSelection, SIGNAL("triggered()"), self.invertSelection)
         self.connect(self.dialog.actionSelectFacts, SIGNAL("triggered()"), self.selectFacts)
         self.connect(self.dialog.actionFindReplace, SIGNAL("triggered()"), self.onFindReplace)
+        self.connect(self.dialog.actionFindDuplicates, SIGNAL("triggered()"), self.onFindDupes)
         # jumps
         self.connect(self.dialog.actionFirstCard, SIGNAL("triggered()"), self.onFirstCard)
         self.connect(self.dialog.actionLastCard, SIGNAL("triggered()"), self.onLastCard)
@@ -728,10 +732,6 @@ class EditDeck(QMainWindow):
         saveHeader(self.dialog.tableView.horizontalHeader(), "editor")
         self.hide()
         ui.dialogs.close("CardList")
-        if self.parent.currentCard:
-            self.parent.moveToState("showQuestion")
-        else:
-            self.parent.moveToState("auto")
         self.teardownHooks()
         return True
 
@@ -766,6 +766,7 @@ class EditDeck(QMainWindow):
             return
         fact = self.currentCard.fact
         self.editor.setFact(fact, True)
+        self.editor.card = self.currentCard
         self.showCardInfo(self.currentCard)
         self.onEvent()
         self.updateToggles()
@@ -799,12 +800,12 @@ where id in (%s)""" % ",".join([
             ",".join([str(s) for s in self.selectedFacts()]))
 
     def updateAfterCardChange(self):
-        "Refresh info like stats on current card"
+        "Refresh info like stats on current card, and rebuild mw queue."
         self.currentRow = self.dialog.tableView.currentIndex()
         self.rowChanged(self.currentRow, None)
         self.model.refresh()
         self.drawTags()
-        self.parent.moveToState("auto")
+        self.parent.reset()
 
     # Menu options
     ######################################################################
@@ -817,6 +818,9 @@ where id in (%s)""" % ",".join([
         except:
             # card has been deleted
             return
+        # ensure the change timer doesn't fire after deletion but before reset
+        self.editor.saveFieldsNow()
+        self.editor.fact = None
         self.dialog.tableView.setFocus()
         self.deck.setUndoStart(n)
         self.deck.deleteCards(cards)
@@ -827,6 +831,8 @@ where id in (%s)""" % ",".join([
         self.updateAfterCardChange()
 
     def addTags(self, tags=None, label=None):
+        # focus lost hook may not have chance to fire
+        self.editor.saveFieldsNow()
         if tags is None:
             (tags, r) = ui.utils.getTag(self, self.deck, _("Enter tags to add:"))
         else:
@@ -842,6 +848,8 @@ where id in (%s)""" % ",".join([
         self.updateAfterCardChange()
 
     def deleteTags(self, tags=None, label=None):
+        # focus lost hook may not have chance to fire
+        self.editor.saveFieldsNow()
         if tags is None:
             (tags, r) = ui.utils.getTag(self, self.deck, _("Enter tags to delete:"))
         else:
@@ -861,9 +869,11 @@ where id in (%s)""" % ",".join([
         self.dialog.actionToggleMark.setChecked(self.isMarked())
 
     def isSuspended(self):
-        return self.currentCard and self.currentCard.priority == -3
+        return self.currentCard and self.currentCard.type < 0
 
     def onSuspend(self, sus):
+        # focus lost hook may not have chance to fire
+        self.editor.saveFieldsNow()
         if sus:
             self._onSuspend()
         else:
@@ -874,18 +884,22 @@ where id in (%s)""" % ",".join([
         self.parent.setProgressParent(self)
         self.deck.setUndoStart(n)
         self.deck.suspendCards(self.selectedCards())
+        self.parent.reset()
         self.deck.setUndoEnd(n)
         self.parent.setProgressParent(None)
         self.model.refresh()
+        self.updateAfterCardChange()
 
     def _onUnsuspend(self):
         n = _("Unsuspend")
         self.parent.setProgressParent(self)
         self.deck.setUndoStart(n)
         self.deck.unsuspendCards(self.selectedCards())
+        self.parent.reset()
         self.deck.setUndoEnd(n)
         self.parent.setProgressParent(None)
         self.model.refresh()
+        self.updateAfterCardChange()
 
     def isMarked(self):
         return self.currentCard and "Marked" in self.currentCard.fact.tags
@@ -924,8 +938,7 @@ where id in (%s)""" % ",".join([
                     return
                 self.deck.rescheduleCards(self.selectedCards(), min, max)
         finally:
-            self.deck.rebuildCounts(full=False)
-            self.deck.rebuildQueue()
+            self.deck.reset()
             self.deck.setUndoEnd(n)
         self.updateAfterCardChange()
 
@@ -969,12 +982,8 @@ where id in %s""" % ids2str(sf))
         self.updateAfterCardChange()
 
     def cram(self):
-        if ui.utils.askUser(
-            _("Cram selected cards in new deck?"),
-            help="CramMode",
-            parent=self):
-            self.close()
-            self.parent.onCram(self.selectedCards())
+        self.close()
+        self.parent.onCram(self.selectedCards())
 
     def onChangeModel(self):
         sf = self.selectedFacts()
@@ -1133,6 +1142,81 @@ where id in %s""" % ids2str(sf))
     def onFindReplaceHelp(self):
         QDesktopServices.openUrl(QUrl(ankiqt.appWiki +
                                       "Browser#FindReplace"))
+    # Edit: finding dupes
+    ######################################################################
+
+    def onFindDupes(self):
+        win = QDialog(self)
+        dialog = ankiqt.forms.finddupes.Ui_Dialog()
+        dialog.setupUi(win)
+        restoreGeom(win, "findDupes")
+        fields = sorted(self.currentCard.fact.model.fieldModels, key=attrgetter("name"))
+        # per-model data
+        data = self.deck.s.all("""
+select fm.id, m.name || '>' || fm.name from fieldmodels fm, models m
+where fm.modelId = m.id""")
+        data.sort(key=itemgetter(1))
+        # all-model data
+        data2 = self.deck.s.all("""
+select fm.id, fm.name from fieldmodels fm""")
+        byName = {}
+        for d in data2:
+            if d[1] in byName:
+                byName[d[1]].append(d[0])
+            else:
+                byName[d[1]] = [d[0]]
+        names = byName.keys()
+        names.sort()
+        alldata = [(byName[n], n) for n in names] + data
+        dialog.searchArea.addItems(QStringList([d[1] for d in alldata]))
+        # links
+        dialog.webView.page().setLinkDelegationPolicy(
+            QWebPage.DelegateAllLinks)
+        self.connect(dialog.webView,
+                     SIGNAL("linkClicked(QUrl)"),
+                     self.dupeLinkClicked)
+
+        def onFin(code):
+            saveGeom(win, "findDupes")
+        self.connect(win, SIGNAL("finished(int)"), onFin)
+
+        def onClick():
+            idx = dialog.searchArea.currentIndex()
+            data = alldata[idx]
+            if isinstance(data[0], list):
+                # all models
+                fmids = data[0]
+            else:
+                # single model
+                fmids = [data[0]]
+            self.duplicatesReport(dialog.webView, fmids)
+
+        self.connect(dialog.searchButton, SIGNAL("clicked()"),
+                     onClick)
+        win.show()
+
+    def duplicatesReport(self, web, fmids):
+        self.deck.startProgress(2)
+        self.deck.updateProgress(_("Finding..."))
+        res = self.deck.findDuplicates(fmids)
+        t = "<html><body>"
+        t += _("Duplicate Groups: %d") % len(res)
+        t += "<p><ol>"
+
+        for group in res:
+            t += '<li><a href="%s">%s</a>' % (
+                "fid:" + ",".join(str(id) for id in group[1]),
+                group[0])
+
+        t += "</ol>"
+        t += "</body></html>"
+        web.setHtml(t)
+        self.deck.finishProgress()
+
+    def dupeLinkClicked(self, link):
+        self.dialog.filterEdit.setText(str(link.toString()))
+        self.updateSearch()
+        self.onFact()
 
     # Jumping
     ######################################################################

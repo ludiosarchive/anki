@@ -8,16 +8,13 @@ from PyQt4.QtSvg import *
 from PyQt4.QtWebKit import QWebPage
 import re, os, sys, tempfile, urllib2, ctypes
 from anki.utils import stripHTML, tidyHTML, canonifyTags
-from anki.sound import playFromText, clearAudioQueue
 from ankiqt.ui.sound import getAudio
 import anki.sound
 from ankiqt import ui
 import ankiqt
-from ankiqt.ui.utils import mungeQA, saveGeom, restoreGeom, getBase
+from ankiqt.ui.utils import mungeQA, saveGeom, restoreGeom
 from anki.hooks import addHook, removeHook, runHook, runFilter
 from sqlalchemy.exceptions import InvalidRequestError
-from PyQt4 import pyqtconfig
-QtConfig = pyqtconfig.Configuration()
 
 clozeColour = "#0000ff"
 
@@ -50,6 +47,8 @@ class FactEditor(object):
         self.lastFocusedEdit = None
         self.changeTimer = None
         self.lastCloze = None
+        self.resetOnEdit = True
+        self.card=None
         addHook("deckClosed", self.deckClosedHook)
         addHook("guiReset", self.refresh)
         addHook("colourChanged", self.colourChanged)
@@ -59,14 +58,15 @@ class FactEditor(object):
         removeHook("guiReset", self.refresh)
         removeHook("colourChanged", self.colourChanged)
 
-    def setFact(self, fact, noFocus=False, check=False, scroll=False):
+    def setFact(self, fact, noFocus=False, check=False, scroll=False,
+                forceRedraw=False):
         "Make FACT the current fact."
         self.fact = fact
         self.factState = None
         if self.changeTimer:
             self.changeTimer.stop()
             self.changeTimer = None
-        if self.needToRedraw():
+        if self.needToRedraw() or forceRedraw:
             if self.fact:
                 self.drawFields(noFocus, check)
             else:
@@ -92,7 +92,7 @@ class FactEditor(object):
             except InvalidRequestError:
                 # not attached to session yet, add cards dialog will handle
                 return
-            self.setFact(self.fact, check=True)
+            self.setFact(self.fact, check=True, forceRedraw=True)
 
     def focusFirst(self):
         if self.focusTarget:
@@ -107,6 +107,9 @@ class FactEditor(object):
     def setupFields(self):
         # init for later
         self.fields = {}
+        # button styles for mac
+        self.plastiqueStyle = QStyleFactory.create("plastique")
+        self.widget.setStyle(self.plastiqueStyle)
         # top level vbox
         self.fieldsBox = QVBoxLayout(self.widget)
         self.fieldsBox.setMargin(0)
@@ -116,6 +119,20 @@ class FactEditor(object):
         self.iconsBox2 = QHBoxLayout()
         self.fieldsBox.addLayout(self.iconsBox)
         self.fieldsBox.addLayout(self.iconsBox2)
+        # card layout
+        self.iconsBox.addItem(QSpacerItem(20,1, QSizePolicy.Expanding))
+        self.clayout = QPushButton(_("Card Layout"))
+        self.clayout.connect(self.clayout, SIGNAL("clicked()"), self.onCardLayout)
+        self.clayout.setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
+        self.clayout.setFixedHeight(20)
+        # self.clayout.setFixedWidth(48)
+        self.clayout.setIcon(QIcon(":/icons/layout.png"))
+        #self.clayout.setIconSize(QSize(32,32))
+        self.clayout.setToolTip(_("Edit how cards are displayed (F2)"))
+        self.clayout.setShortcut(_("F2"))
+        self.clayout.setFocusPolicy(Qt.NoFocus)
+        self.iconsBox.addWidget(self.clayout)
+        self.clayout.setStyle(self.plastiqueStyle)
         # scrollarea
         self.fieldsScroll = QScrollArea()
         self.fieldsScroll.setWidgetResizable(True)
@@ -134,15 +151,13 @@ class FactEditor(object):
         self.fieldsBox.addLayout(self.tagsBox)
         # icons
         self.iconsBox.setMargin(0)
-        self.iconsBox.addItem(QSpacerItem(20,1, QSizePolicy.Expanding))
         self.iconsBox2.setMargin(0)
-        self.iconsBox2.setMargin(0)
-        self.iconsBox2.addItem(QSpacerItem(20,1, QSizePolicy.Expanding))
-        # button styles for mac
-        self.plastiqueStyle = QStyleFactory.create("plastique")
-        self.widget.setStyle(self.plastiqueStyle)
         # bold
+        spc = QSpacerItem(5,5)
+        self.iconsBox.addItem(spc)
         self.bold = QPushButton()
+        self.bold.setFixedHeight(20)
+        self.bold.setFixedWidth(20)
         self.bold.setCheckable(True)
         self.bold.connect(self.bold, SIGNAL("toggled(bool)"), self.toggleBold)
         self.bold.setIcon(QIcon(":/icons/text_bold.png"))
@@ -154,6 +169,8 @@ class FactEditor(object):
         self.bold.setStyle(self.plastiqueStyle)
         # italic
         self.italic = QPushButton(self.widget)
+        self.italic.setFixedHeight(20)
+        self.italic.setFixedWidth(20)
         self.italic.setCheckable(True)
         self.italic.connect(self.italic, SIGNAL("toggled(bool)"), self.toggleItalic)
         self.italic.setIcon(QIcon(":/icons/text_italic.png"))
@@ -165,6 +182,8 @@ class FactEditor(object):
         self.italic.setStyle(self.plastiqueStyle)
         # underline
         self.underline = QPushButton(self.widget)
+        self.underline.setFixedHeight(20)
+        self.underline.setFixedWidth(20)
         self.underline.setCheckable(True)
         self.underline.connect(self.underline, SIGNAL("toggled(bool)"), self.toggleUnderline)
         self.underline.setIcon(QIcon(":/icons/text_under.png"))
@@ -176,75 +195,34 @@ class FactEditor(object):
         self.underline.setStyle(self.plastiqueStyle)
         # foreground color
         self.foreground = QPushButton()
-        self.foreground.connect(self.foreground, SIGNAL("clicked()"), self.setForeground)
-        self.foreground.setToolTip(_("Set colour (F7 then F7)"))
-        self.foreground.setShortcut(_("F7, F7"))
+        self.foreground.connect(self.foreground, SIGNAL("clicked()"), self.onForeground)
+        self.foreground.setToolTip(
+            _("Set colour (F7; repeat to choose next; F6 to use)"))
+        self.foreground.setShortcut(_("F7"))
         self.foreground.setFocusPolicy(Qt.NoFocus)
         self.foreground.setEnabled(False)
-        self.foreground.setFixedWidth(30)
-        self.foreground.setFixedHeight(26)
+        self.foreground.setFixedWidth(20)
+        self.foreground.setFixedHeight(20)
         self.foregroundFrame = QFrame()
         self.foregroundFrame.setAutoFillBackground(True)
+        self.colourChanged()
         hbox = QHBoxLayout()
         hbox.addWidget(self.foregroundFrame)
         hbox.setMargin(5)
         self.foreground.setLayout(hbox)
         self.iconsBox.addWidget(self.foreground)
         self.foreground.setStyle(self.plastiqueStyle)
-        # picker
-        vbox = QVBoxLayout()
-        vbox.setMargin(0)
-        vbox.setSpacing(0)
-        hbox = QHBoxLayout()
-        hbox.setMargin(0)
-        hbox.setSpacing(0)
-        self.fleft = QPushButton()
-        self.fleft.connect(self.fleft, SIGNAL("clicked()"), self.previousForeground)
-        self.fleft.setToolTip(_("Previous colour (F7 then F6)"))
-        self.fleft.setText("<")
-        self.fleft.setShortcut(_("F7, F6"))
-        self.fleft.setFocusPolicy(Qt.NoFocus)
-        self.fleft.setEnabled(False)
-        self.fleft.setFixedWidth(15)
-        self.fleft.setFixedHeight(14)
-        hbox.addWidget(self.fleft)
-        self.fleft.setStyle(self.plastiqueStyle)
-        self.fright = QPushButton()
-        self.fright.connect(self.fright, SIGNAL("clicked()"), self.nextForeground)
-        self.fright.setToolTip(_("Next colour (F7 then F8)"))
-        self.fright.setText(">")
-        self.fright.setShortcut(_("F7, F8"))
-        self.fright.setFocusPolicy(Qt.NoFocus)
-        self.fright.setEnabled(False)
-        self.fright.setFixedWidth(15)
-        self.fright.setFixedHeight(14)
-        hbox.addWidget(self.fright)
-        self.fright.setStyle(self.plastiqueStyle)
-        vbox.addLayout(hbox)
-        self.fchoose = QPushButton()
-        self.fchoose.connect(self.fchoose, SIGNAL("clicked()"), self.selectForeground)
-        self.fchoose.setToolTip(_("Choose colour (F7 then F5)"))
-        self.fchoose.setText("+")
-        self.fchoose.setShortcut(_("F7, F5"))
-        self.fchoose.setFocusPolicy(Qt.NoFocus)
-        self.fchoose.setEnabled(False)
-        self.fchoose.setFixedWidth(30)
-        self.fchoose.setFixedHeight(12)
-        vbox.addWidget(self.fchoose)
-        self.fchoose.setStyle(self.plastiqueStyle)
-        self.iconsBox.addLayout(vbox)
+        self.iconsBox.addItem(QSpacerItem(5,1, QSizePolicy.Fixed))
         # cloze
-        spc = QSpacerItem(5,5)
-        self.iconsBox.addItem(spc)
         self.cloze = QPushButton(self.widget)
+        self.cloze.setFixedHeight(20)
         self.clozeSC = QShortcut(QKeySequence(_("F9")), self.widget)
         self.cloze.connect(self.cloze, SIGNAL("clicked()"),
                                   self.onCloze)
         self.cloze.connect(self.clozeSC, SIGNAL("activated()"),
                                   self.onCloze)
         self.cloze.setToolTip(_("Cloze (F9)"))
-        self.cloze.setFixedWidth(30)
-        self.cloze.setFixedHeight(26)
+        self.cloze.setFixedWidth(24)
         self.cloze.setText("[...]")
         self.cloze.setFocusPolicy(Qt.NoFocus)
         self.cloze.setEnabled(False)
@@ -252,6 +230,8 @@ class FactEditor(object):
         self.cloze.setStyle(self.plastiqueStyle)
         # pictures
         self.addPicture = QPushButton(self.widget)
+        self.addPicture.setFixedHeight(20)
+        self.addPicture.setFixedWidth(20)
         self.addPicture.connect(self.addPicture, SIGNAL("clicked()"), self.onAddPicture)
         self.addPicture.setFocusPolicy(Qt.NoFocus)
         self.addPicture.setShortcut(_("F3"))
@@ -262,6 +242,8 @@ class FactEditor(object):
         self.addPicture.setStyle(self.plastiqueStyle)
         # sounds
         self.addSound = QPushButton(self.widget)
+        self.addSound.setFixedHeight(20)
+        self.addSound.setFixedWidth(20)
         self.addSound.connect(self.addSound, SIGNAL("clicked()"), self.onAddSound)
         self.addSound.setFocusPolicy(Qt.NoFocus)
         self.addSound.setShortcut(_("F4"))
@@ -272,6 +254,8 @@ class FactEditor(object):
         self.addSound.setStyle(self.plastiqueStyle)
         # sounds
         self.recSound = QPushButton(self.widget)
+        self.recSound.setFixedHeight(20)
+        self.recSound.setFixedWidth(20)
         self.recSound.connect(self.recSound, SIGNAL("clicked()"), self.onRecSound)
         self.recSound.setFocusPolicy(Qt.NoFocus)
         self.recSound.setShortcut(_("F5"))
@@ -280,35 +264,23 @@ class FactEditor(object):
         self.recSound.setToolTip(_("Record audio (F5)"))
         self.iconsBox.addWidget(self.recSound)
         self.recSound.setStyle(self.plastiqueStyle)
-        # preview
-        spc = QSpacerItem(5,5)
-        self.iconsBox.addItem(spc)
-        self.preview = QPushButton(self.widget)
-        self.previewSC = QShortcut(QKeySequence(_("F2")), self.widget)
-        self.preview.connect(self.preview, SIGNAL("clicked()"),
-                                  self.onPreview)
-        self.preview.connect(self.previewSC, SIGNAL("activated()"),
-                                  self.onPreview)
-        self.preview.setToolTip(_("Preview (F2)"))
-        self.preview.setIcon(QIcon(":/icons/document-preview.png"))
-        self.preview.setFocusPolicy(Qt.NoFocus)
-        self.iconsBox.addWidget(self.preview)
-        self.preview.setStyle(self.plastiqueStyle)
         # more
         self.more = QPushButton(self.widget)
+        self.more.setFixedHeight(20)
+        self.more.setFixedWidth(20)
         self.more.connect(self.more, SIGNAL("clicked()"),
                                   self.onMore)
         self.more.setToolTip(_("Show advanced options"))
         self.more.setText(">>")
         self.more.setFocusPolicy(Qt.NoFocus)
-        self.more.setFixedWidth(30)
-        self.more.setFixedHeight(26)
         self.iconsBox.addWidget(self.more)
         self.more.setStyle(self.plastiqueStyle)
         # latex
-        spc = QSpacerItem(5,5)
+        spc = QSpacerItem(5,5, QSizePolicy.Expanding)
         self.iconsBox2.addItem(spc)
         self.latex = QPushButton(self.widget)
+        self.latex.setFixedHeight(20)
+        self.latex.setFixedWidth(20)
         self.latex.setToolTip(_("Latex (Ctrl+l then l)"))
         self.latexSC = QShortcut(QKeySequence(_("Ctrl+l, l")), self.widget)
         self.latex.connect(self.latex, SIGNAL("clicked()"), self.insertLatex)
@@ -320,6 +292,8 @@ class FactEditor(object):
         self.latex.setStyle(self.plastiqueStyle)
         # latex eqn
         self.latexEqn = QPushButton(self.widget)
+        self.latexEqn.setFixedHeight(20)
+        self.latexEqn.setFixedWidth(20)
         self.latexEqn.setToolTip(_("Latex equation (Ctrl+l then e)"))
         self.latexEqnSC = QShortcut(QKeySequence(_("Ctrl+l, e")), self.widget)
         self.latexEqn.connect(self.latexEqn, SIGNAL("clicked()"), self.insertLatexEqn)
@@ -331,6 +305,8 @@ class FactEditor(object):
         self.latexEqn.setStyle(self.plastiqueStyle)
         # latex math env
         self.latexMathEnv = QPushButton(self.widget)
+        self.latexMathEnv.setFixedHeight(20)
+        self.latexMathEnv.setFixedWidth(20)
         self.latexMathEnv.setToolTip(_("Latex math environment (Ctrl+l then m)"))
         self.latexMathEnvSC = QShortcut(QKeySequence(_("Ctrl+l, m")), self.widget)
         self.latexMathEnv.connect(self.latexMathEnv, SIGNAL("clicked()"),
@@ -344,6 +320,8 @@ class FactEditor(object):
         self.latexMathEnv.setStyle(self.plastiqueStyle)
         # html
         self.htmlEdit = QPushButton(self.widget)
+        self.htmlEdit.setFixedHeight(20)
+        self.htmlEdit.setFixedWidth(20)
         self.htmlEdit.setToolTip(_("HTML Editor (Ctrl+F9)"))
         self.htmlEditSC = QShortcut(QKeySequence(_("Ctrl+F9")), self.widget)
         self.htmlEdit.connect(self.htmlEdit, SIGNAL("clicked()"),
@@ -361,8 +339,6 @@ class FactEditor(object):
         # show advanced buttons?
         if not ankiqt.mw.config['factEditorAdvanced']:
             self.onMore(False)
-        # set initial colour
-        self._updateForegroundButton(ankiqt.mw.config['recentColours'][-1])
 
     def _makeGrid(self):
         "Rebuild the grid to avoid trigging QT bugs."
@@ -370,6 +346,7 @@ class FactEditor(object):
         self.fieldsGrid = QGridLayout(self.fieldsFrame)
         self.fieldsFrame.setLayout(self.fieldsGrid)
         self.fieldsGrid.setMargin(0)
+        self.fieldsGrid.setSpacing(5)
 
     def drawField(self, field, n):
         # label
@@ -383,7 +360,6 @@ class FactEditor(object):
         w.setMinimumSize(20, 60)
         w.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         w.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        w.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         if field.fieldModel.features:
             w.setLayoutDirection(Qt.RightToLeft)
         else:
@@ -468,13 +444,11 @@ class FactEditor(object):
                 # apply fonts
                 font = QFont()
                 # family
-                family = (field.fieldModel.editFontFamily or
-                          field.fieldModel.quizFontFamily)
+                family = field.fieldModel.quizFontFamily
                 if family:
                     font.setFamily(family)
                 # size
-                size = (field.fieldModel.editFontSize or
-                        field.fieldModel.quizFontSize)
+                size = field.fieldModel.editFontSize
                 if size:
                     font.setPixelSize(size)
                 w.setFont(font)
@@ -495,23 +469,26 @@ class FactEditor(object):
                 self.fact[f.name] = v
                 modified = True
         if modified:
-            self.fact.setModified(textChanged=True)
+            self.fact.setModified(textChanged=True, deck=self.deck)
             if not self.fact.isNew():
                 self.deck.setModified()
         self.deck.setUndoEnd(n)
+        return modified
 
     def onFocusLost(self, widget):
         from ankiqt import mw
-        if self.fact is None:
+        if not self.fact:
             # editor or deck closed
             return
         if mw.inDbHandler:
             return
-        self.saveFields()
+        modified = self.saveFields()
         field = self.widgets[widget]
         self.fact.focusLost(field)
-        self.fact.setModified(textChanged=True)
+        self.fact.setModified(textChanged=True, deck=self.deck)
         self.loadFields(font=False)
+        if modified and self.resetOnEdit:
+            ankiqt.mw.reset(runHooks=False)
 
     def onTextChanged(self):
         interval = 250
@@ -533,10 +510,7 @@ class FactEditor(object):
         if mw.inDbHandler:
             self.changeTimer.start(interval)
             return
-        self.saveFields()
         self.checkValid()
-        if self.onChange:
-            self.onChange('field')
         self.changeTimer = None
 
     def saveFieldsNow(self):
@@ -563,11 +537,11 @@ class FactEditor(object):
         for field in self.fact.fields:
             p = QPalette()
             p.setColor(QPalette.Text, QColor("#000000"))
-            if not self.fact.fieldValid(field):
+            if not self.fieldValid(field):
                 empty.append(field)
                 p.setColor(QPalette.Base, QColor("#ffffcc"))
                 self.fields[field.name][1].setPalette(p)
-            elif not self.fact.fieldUnique(field, self.deck.s):
+            elif not self.fieldUnique(field):
                 dupe.append(field)
                 p.setColor(QPalette.Base, QColor("#ffcccc"))
                 self.fields[field.name][1].setPalette(p)
@@ -585,6 +559,24 @@ class FactEditor(object):
                 self.onFactInvalid(self.fact)
             self.factState = "invalid"
 
+    def textForField(self, field):
+        "Current edited value for field."
+        w = self.fields[field.name][1]
+        v = tidyHTML(unicode(w.toHtml()))
+        return v
+
+    def fieldValid(self, field):
+        return not (field.fieldModel.required and
+                    not self.textForField(field).strip())
+
+    def fieldUnique(self, field):
+        if not field.fieldModel.unique:
+            return True
+        req = ("select value from fields "
+               "where fieldModelId = :fmid and value = :val and id != :id")
+        return not self.deck.s.scalar(
+            req, val=self.textForField(field), fmid=field.fieldModel.id, id=field.id)
+
     def onTagChange(self):
         if not self.fact:
             return
@@ -594,8 +586,10 @@ class FactEditor(object):
             self.deck.s.flush()
             self.deck.updateFactTags([self.fact.id])
             self.deck.updatePriorities([c.id for c in self.fact.cards])
-            self.fact.setModified(textChanged=True)
+            self.fact.setModified(textChanged=True, deck=self.deck)
             self.deck.flushMod()
+            if self.resetOnEdit:
+                ankiqt.mw.reset(runHooks=False)
         if self.onChange:
             self.onChange('tag')
 
@@ -627,9 +621,6 @@ class FactEditor(object):
         self.italic.setEnabled(val)
         self.underline.setEnabled(val)
         self.foreground.setEnabled(val)
-        self.fchoose.setEnabled(val)
-        self.fleft.setEnabled(val)
-        self.fright.setEnabled(val)
         self.addPicture.setEnabled(val)
         self.addSound.setEnabled(val)
         self.latex.setEnabled(val)
@@ -667,7 +658,6 @@ class FactEditor(object):
             w.setFontUnderline(bool)
 
     def _updateForegroundButton(self, txtcol):
-        # FIXME: working on mac?
         self.foregroundFrame.setPalette(QPalette(QColor(txtcol)))
         self.foregroundFrame.setStyleSheet("* {background-color: %s}" %
                                            txtcol)
@@ -676,83 +666,129 @@ class FactEditor(object):
         recent = ankiqt.mw.config['recentColours']
         self._updateForegroundButton(recent[-1])
 
-    def setForeground(self, w=None):
-        recent = ankiqt.mw.config['recentColours']
-        if not w:
-            w = self.focusedEdit()
-        if w:
-            w.setTextColor(QColor(recent[-1]))
-            self.fontChanged = True
+    def onForeground(self):
+        self.lastFocusedEdit = self.focusedEdit()
+        p = ColourPopup(self.parent)
+        p.move(self.foreground.mapToGlobal(QPoint(0,0)))
+        g = QGridLayout(p)
+        g.setMargin(4)
+        g.setSpacing(0)
+        p.setLayout(g)
+        lastWidget = None
+        self.colourNext = QShortcut(QKeySequence("F7"), p)
+        p.connect(self.colourNext, SIGNAL("activated()"),
+                  self.onNextColour)
+        self.colourChoose = QShortcut(QKeySequence("F6"), p)
+        p.connect(self.colourChoose, SIGNAL("activated()"),
+                  self.onChooseColourKey)
+        for n, c in enumerate(reversed(ankiqt.mw.config['recentColours'])):
+            col = QToolButton()
+            col.setAutoRaise(True)
+            col.setFixedWidth(64)
+            col.setFixedHeight(16)
+            col.setAutoFillBackground(True)
+            col.setPalette(QPalette(QColor(c)))
+            col.setStyleSheet("* {background-color: %s}" %
+                              c)
+            col.connect(col, SIGNAL("clicked()"),
+                        lambda c=c: self.onChooseColour(c))
+            g.addWidget(col, n, 0)
+            if lastWidget:
+                p.setTabOrder(lastWidget, col)
+            lastWidget = col
+            but = QPushButton("X")
+            but.setFixedWidth(16)
+            but.setFixedHeight(16)
+            but.setAutoDefault(False)
+            but.connect(but, SIGNAL("clicked()"),
+                        lambda c=c: self.onRemoveColour(c))
+            g.addWidget(but, n, 1)
+        spc = QSpacerItem(5,10, QSizePolicy.Fixed)
+        g.addItem(spc, n+1, 0)
+        cb = QPushButton(_("+"))
+        cb.connect(cb, SIGNAL("clicked()"), self.onNewColour)
+        cb.setFixedWidth(80)
+        cb.setFixedHeight(16)
+        cb.setAutoDefault(False)
+        g.addWidget(cb, n+2, 0, 1, 2)
+        self.colourDiag = p
+        p.show()
 
-    def previousForeground(self):
+    def onRemoveColour(self, colour):
         recent = ankiqt.mw.config['recentColours']
-        last = recent.pop()
-        recent.insert(0, last)
+        recent.remove(colour)
+        if not recent:
+            recent.append("#000000")
+        self.colourDiag.close()
+        self.onForeground()
         runHook("colourChanged")
-        self.setForeground()
 
-    def nextForeground(self):
+    def onNextColour(self):
+        try:
+            self.colourDiag.focusWidget().nextInFocusChain().setFocus()
+        except:
+            ui.utils.showInfo("Your Qt version is too old to support this.")
+
+    def onChooseColourKey(self):
+        try:
+            self.colourDiag.focusWidget().click()
+        except:
+            # dialog focused
+            pass
+
+    def onChooseColour(self, colour):
         recent = ankiqt.mw.config['recentColours']
-        last = recent.pop(0)
-        recent.append(last)
+        recent.remove(colour)
+        recent.append(colour)
+        w = self.lastFocusedEdit
+        w.setTextColor(QColor(colour))
+        self.fontChanged = True
+        self.colourDiag.close()
         runHook("colourChanged")
-        self.setForeground()
 
-    def selectForeground(self):
-        w = self.focusedEdit()
+    def onNewColour(self):
+        new = QColorDialog.getColor(Qt.white, self.parent)
+        self.parent.raise_()
         recent = ankiqt.mw.config['recentColours']
-        new = QColorDialog.getColor(QColor(recent[-1]),
-                                    self.parent)
         if new.isValid():
             txtcol = unicode(new.name())
-            if txtcol in recent:
-                recent.remove(txtcol)
-            recent.append(txtcol)
+            if txtcol not in recent:
+                recent.append(txtcol)
             runHook("colourChanged")
-            self.setForeground(w)
-
-    def _needExtraWord(self):
-        ver = QtConfig.qt_version >> 8
-        if ver == 0x404:
-            # qt4.4 behaviour is wrong
-            return False
-        return True
+            self.onChooseColour(txtcol)
 
     def insertLatex(self):
         w = self.focusedEdit()
         if w:
             selected = w.textCursor().selectedText()
             self.deck.mediaDir(create=True)
+            cur = w.textCursor()
+            pos = cur.position()
             w.insertHtml("[latex]%s[/latex]" % selected)
-            w.moveCursor(QTextCursor.PreviousWord)
-            if self._needExtraWord():
-                w.moveCursor(QTextCursor.PreviousWord)
-            w.moveCursor(QTextCursor.PreviousCharacter)
-            w.moveCursor(QTextCursor.PreviousCharacter)
+            cur.setPosition(pos+7)
+            w.setTextCursor(cur)
 
     def insertLatexEqn(self):
         w = self.focusedEdit()
         if w:
             selected = w.textCursor().selectedText()
             self.deck.mediaDir(create=True)
+            cur = w.textCursor()
+            pos = cur.position()
             w.insertHtml("[$]%s[/$]" % selected)
-            w.moveCursor(QTextCursor.PreviousWord)
-            if self._needExtraWord():
-                w.moveCursor(QTextCursor.PreviousWord)
-            w.moveCursor(QTextCursor.PreviousCharacter)
-            w.moveCursor(QTextCursor.PreviousCharacter)
+            cur.setPosition(pos+3)
+            w.setTextCursor(cur)
 
     def insertLatexMathEnv(self):
         w = self.focusedEdit()
         if w:
             selected = w.textCursor().selectedText()
             self.deck.mediaDir(create=True)
+            cur = w.textCursor()
+            pos = cur.position()
             w.insertHtml("[$$]%s[/$$]" % selected)
-            w.moveCursor(QTextCursor.PreviousWord)
-            if self._needExtraWord():
-                w.moveCursor(QTextCursor.PreviousWord)
-            w.moveCursor(QTextCursor.PreviousCharacter)
-            w.moveCursor(QTextCursor.PreviousCharacter)
+            cur.setPosition(pos+4)
+            w.setTextCursor(cur)
 
     def onMore(self, toggle=None):
         if toggle is None:
@@ -763,8 +799,9 @@ class FactEditor(object):
         self.latexMathEnv.setShown(toggle)
         self.htmlEdit.setShown(toggle)
 
-    def onPreview(self):
-        PreviewDialog(self.parent, self.deck, self.fact)
+    def onCardLayout(self):
+        self.saveFields()
+        ui.clayout.CardLayout(self.parent, self, self.fact, self.card)
 
     # FIXME: in some future version, we should use a different delimiter, as
     # [sound] et al conflicts
@@ -918,14 +955,17 @@ class FactEditor(object):
             return
         self._addSound(file, widget=w)
 
-    def _addSound(self, file, widget=None):
+    def _addSound(self, file, widget=None, copy=True):
         self.initMedia()
         if widget:
             w = widget
         else:
             w = self.focusedEdit()
-        path = self._addMedia(file)
-        self.maybeDelete(path, file)
+        if copy:
+            path = self._addMedia(file)
+            self.maybeDelete(path, file)
+        else:
+            path = file
         anki.sound.play(path)
         w.insertHtml('[sound:%s]' % path)
 
@@ -952,13 +992,14 @@ to enable recording.'''), parent=self.parent)
                 return
             raise
         if file:
-            self._addSound(unicode(file), widget=w)
+            self._addSound(file, w, copy=False)
 
 class FactEdit(QTextEdit):
 
     def __init__(self, parent, *args):
         QTextEdit.__init__(self, *args)
         self.parent = parent
+        self._tmpDir = None
         if sys.platform.startswith("win32"):
             self._ownLayout = None
 
@@ -969,13 +1010,18 @@ class FactEdit(QTextEdit):
                 source.hasHtml())
 
     def insertFromMimeData(self, source):
+        if self._insertFromMimeData(source):
+            self.emit(SIGNAL("lostFocus"))
+
+    def _insertFromMimeData(self, source):
         pics = ("jpg", "jpeg", "png", "tif", "tiff", "gif")
         audio =  ("wav", "mp3", "ogg", "flac")
         errtxt = _("An error occured while opening %s")
         if source.hasHtml() and "qrichtext" in unicode(source.html()):
             self.insertHtml(source.html())
-            return
-        if source.hasText():
+            return True
+        if source.hasText() and (ankiqt.mw.config['stripHTML'] or
+                                 not source.hasHtml()):
             txt = unicode(source.text())
             l = txt.lower()
             if l.startswith("http://") or l.startswith("file://"):
@@ -991,64 +1037,70 @@ class FactEdit(QTextEdit):
                     ext = txt.split(".")[-1].lower()
                     try:
                         if ext in pics:
-                            name = self._retrieveURL(txt, ext)
+                            name = self._retrieveURL(txt)
                             self.parent._addPicture(name, widget=self)
                         elif ext in audio:
-                            name = self._retrieveURL(txt, ext)
+                            name = self._retrieveURL(txt)
                             self.parent._addSound(name, widget=self)
                         else:
                             # not image or sound, treat as plain text
                             self.insertPlainText(source.text())
+                        return True
                     except urllib2.URLError, e:
                         ui.utils.showWarning(errtxt % e)
-                    return
             else:
                 self.insertPlainText(source.text())
-                return
+                return True
         if source.hasImage():
             im = QImage(source.imageData())
             if im.hasAlphaChannel():
-                (fd, name) = tempfile.mkstemp(prefix="anki", suffix=".png")
+                (fd, name) = tempfile.mkstemp(prefix="paste", suffix=".png")
                 uname = unicode(name, sys.getfilesystemencoding())
                 im.save(uname)
             else:
-                (fd, name) = tempfile.mkstemp(prefix="anki", suffix=".jpg")
+                (fd, name) = tempfile.mkstemp(prefix="paste", suffix=".jpg")
                 uname = unicode(name, sys.getfilesystemencoding())
                 im.save(uname, None, 95)
             self.parent._addPicture(uname, widget=self)
-            return
+            return True
         if source.hasUrls():
             for url in source.urls():
                 url = unicode(url.toString())
                 ext = url.split(".")[-1].lower()
                 try:
                     if ext in pics:
-                        name = self._retrieveURL(url, ext)
+                        name = self._retrieveURL(url)
                         self.parent._addPicture(name, widget=self)
                     elif ext in audio:
-                        name = self._retrieveURL(url, ext)
+                        name = self._retrieveURL(url)
                         self.parent._addSound(name, widget=self)
                 except urllib2.URLError, e:
                     ui.utils.showWarning(errtxt % e)
-            return
+            return True
         if source.hasHtml():
             self.insertHtml(self.simplifyHTML(unicode(source.html())))
-            return
+            return True
 
-    def _retrieveURL(self, url, ext):
+    def _retrieveURL(self, url):
         req = urllib2.Request(url, None, {
             'User-Agent': 'Mozilla/5.0 (compatible; Anki/%s)' %
             ankiqt.appVersion })
         filecontents = urllib2.urlopen(req).read()
-        (fd, name) = tempfile.mkstemp(prefix="anki", suffix=".%s" %
-                                      ext.encode("ascii"))
-        file = os.fdopen(fd, "wb")
+        path = os.path.join(self.tmpDir(), os.path.basename(url))
+        file = open(path, "wb")
         file.write(filecontents)
-        file.flush()
-        return unicode(name, sys.getfilesystemencoding())
+        file.close()
+        return path
+
+    def tmpDir(self):
+        if not self._tmpDir:
+            self._tmpDir = tempfile.mkdtemp(prefix="anki")
+        return self._tmpDir
 
     def simplifyHTML(self, html):
         "Remove all style information and P tags."
+        if not ankiqt.mw.config['stripHTML']:
+            return html
         html = re.sub("\n", " ", html)
         html = re.sub("<br ?/?>", "\n", html)
         html = re.sub("<p ?/?>", "\n\n", html)
@@ -1063,7 +1115,7 @@ class FactEdit(QTextEdit):
         self.parent.lastFocusedEdit = self
         self.parent.resetFormatButtons()
         self.parent.disableButtons()
-        if sys.platform.startswith("win32"):
+        if ankiqt.mw.config['preserveKeyboard'] and sys.platform.startswith("win32"):
             self._ownLayout = GetKeyboardLayout(0)
             ActivateKeyboardLayout(self._programLayout, 0)
         self.emit(SIGNAL("lostFocus"))
@@ -1083,66 +1135,18 @@ class FactEdit(QTextEdit):
         QTextEdit.focusInEvent(self, evt)
         self.parent.formatChanged(None)
         self.parent.enableButtons()
-        if sys.platform.startswith("win32"):
+        if ankiqt.mw.config['preserveKeyboard'] and sys.platform.startswith("win32"):
             self._programLayout = GetKeyboardLayout(0)
             if self._ownLayout == None:
                 self._ownLayout = self._programLayout
             ActivateKeyboardLayout(self._ownLayout, 0)
 
-class PreviewDialog(QDialog):
+class ColourPopup(QDialog):
 
-    def __init__(self, parent, deck, fact, *args):
-        QDialog.__init__(self, parent, *args)
-        self.deck = deck
-        self.fact = fact
-        cards = self.deck.previewFact(self.fact)
-        if not cards:
-            ui.utils.showInfo(_("No cards to preview."),
-                              parent=parent)
-            return
-        self.cards = cards
-        self.currentCard = 0
-        self.dialog = ankiqt.forms.previewcards.Ui_Dialog()
-        self.dialog.setupUi(self)
-        self.dialog.webView.page().setLinkDelegationPolicy(
-            QWebPage.DelegateExternalLinks)
-        self.connect(self.dialog.webView,
-                     SIGNAL("linkClicked(QUrl)"),
-                     self.linkClicked)
-        self.dialog.comboBox.addItems(QStringList(
-            [c.cardModel.name for c in self.cards]))
-        self.connect(self.dialog.comboBox, SIGNAL("activated(int)"),
-                     self.onChange)
-        self.updateCard()
-        restoreGeom(self, "preview")
-        self.exec_()
+    def __init__(self, parent):
+        QDialog.__init__(self, parent, Qt.FramelessWindowHint)
 
-    def linkClicked(self, url):
-        QDesktopServices.openUrl(QUrl(url))
-
-    def updateCard(self):
-        c = self.cards[self.currentCard]
-        styles = (self.deck.css +
-                  ("\nhtml { background: %s }" % c.cardModel.lastFontColour) +
-                  "\ndiv { white-space: pre-wrap; }")
-        styles = runFilter("addStyles", styles, c)
-        self.dialog.webView.setHtml(
-            ('<html><head>%s</head><body>' % getBase(self.deck, c)) +
-            "<style>" + styles + "</style>" +
-            runFilter("drawQuestion", mungeQA(self.deck, c.htmlQuestion()),
-                      c) +
-            "<br><br><hr><br><br>" +
-            runFilter("drawAnswer", mungeQA(self.deck, c.htmlAnswer()),
-                      c)
-            + "</body></html>")
-        clearAudioQueue()
-        playFromText(c.question)
-        playFromText(c.answer)
-
-    def onChange(self, idx):
-        self.currentCard = idx
-        self.updateCard()
-
-    def reject(self):
-        saveGeom(self, "preview")
-        QDialog.reject(self)
+    def event(self, evt):
+        if evt.type() == QEvent.WindowDeactivate:
+            self.close()
+        return QDialog.event(self, evt)
