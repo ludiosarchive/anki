@@ -5,6 +5,7 @@ ankiqt/forms/*.py				usr/share/anki/ankiqt/forms
 ankiqt/ui/*.py					usr/share/anki/ankiqt/ui
 libanki/anki/*.py				usr/share/anki/anki
 libanki/anki/importing/*.py			usr/share/anki/anki/importing
+libanki/anki/template/*.py			usr/share/anki/anki/template
 
 ankiqt/locale/*/				usr/share/locale
 libanki/anki/locale/*/				usr/share/locale
