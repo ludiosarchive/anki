@@ -1,3 +1,12 @@
+anki (1.2.8-1) unstable; urgency=low
+
+  * Imported Upstream version 1.2.8 (Closes: #622862)
+  * Bump Standards-Version to 3.9.2, no changes necessary
+  * Update debian/anki.install and debian/copyright to reflect inclusion of
+    Pystache
+
+ -- Andreas Bombe <aeb@debian.org>  Tue, 19 Apr 2011 03:07:06 +0200
+
 anki (1.0.1-1) unstable; urgency=low
 
   * Imported Upstream version 1.0.1 (Closes: #598167)
