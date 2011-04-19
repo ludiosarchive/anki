@@ -6,14 +6,14 @@ Description: Disable check for new upstream version
 Forwarded: not-needed
 
 diff --git a/ankiqt/ui/main.py b/ankiqt/ui/main.py
-index 75f47ba..ba3d51a 100755
+index 3f2089a..80d4cb4 100755
 --- a/ankiqt/ui/main.py
 +++ b/ankiqt/ui/main.py
-@@ -2515,6 +2515,7 @@ Are you sure?""" % deckName),
+@@ -2614,6 +2614,7 @@ This deck already exists on your computer. Overwrite the local copy?"""),
      ##########################################################################
  
      def setupAutoUpdate(self):
 +        return  # do not lookup latest upstream version in Debian packaged anki
          self.autoUpdate = ui.update.LatestVersionFinder(self)
          self.connect(self.autoUpdate, SIGNAL("newVerAvail"), self.newVerAvail)
-         self.connect(self.autoUpdate, SIGNAL("clockIsOff"), self.clockIsOff)
+         self.connect(self.autoUpdate, SIGNAL("newMsg"), self.newMsg)

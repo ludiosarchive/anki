@@ -5,10 +5,10 @@ Description: Use getlocale(LC_MESSAGES) for default interface locale
  LC_* fields are set.
 
 diff --git a/ankiqt/config.py b/ankiqt/config.py
-index d3d3ce9..0075139 100644
+index 25f8dfe..aec85c6 100644
 --- a/ankiqt/config.py
 +++ b/ankiqt/config.py
-@@ -116,7 +116,7 @@ class Config(dict):
+@@ -122,7 +122,7 @@ class Config(dict):
                  self[k] = v
          if not self['interfaceLang']:
              # guess interface and target languages

@@ -5,10 +5,10 @@ Description: Set file paths to the installed locations
 Forwarded: not-needed
 
 diff --git a/ankiqt/ui/main.py b/ankiqt/ui/main.py
-index 75f47ba..c16d39c 100755
+index 3f2089a..bbc17f6 100755
 --- a/ankiqt/ui/main.py
 +++ b/ankiqt/ui/main.py
-@@ -2075,7 +2075,7 @@ it to your friends.
+@@ -2150,7 +2150,7 @@ it to your friends.
              locale.setlocale(locale.LC_ALL, '')
          except:
              pass
