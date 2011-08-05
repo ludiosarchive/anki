@@ -1,3 +1,4 @@
 version=3
 
-http://code.google.com/p/anki/downloads/list http://anki.googlecode.com/files/anki-(.*)\.tgz
+opts=downloadurlmangle=s'code.google.com//'' \
+http://code.google.com/p/anki/downloads/list //anki.googlecode.com/files/anki-(.*)\.tgz
