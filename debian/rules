@@ -1,6 +1,8 @@
 #!/usr/bin/make -f
 
 build:
+build-arch:
+build-indep:
 
 binary: binary-arch binary-indep
 binary-arch:
@@ -31,4 +33,4 @@ clean:
 	find -name \*.py[co] -exec rm {} \;
 	dh_clean
 
-.PHONY: build clean binary binary-arch binary-indep
+.PHONY: build build-arch build-indep clean binary binary-arch binary-indep
