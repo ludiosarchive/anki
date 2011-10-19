@@ -10,4 +10,5 @@ libanki/anki/template/*.py			usr/share/anki/anki/template
 ankiqt/locale/*/				usr/share/locale
 libanki/anki/locale/*/				usr/share/locale
 debian/anki.xpm					usr/share/pixmaps
+debian/anki.svg					usr/share/icons/hicolor/scalable/apps
 anki.desktop					usr/share/applications
