@@ -1,3 +1,15 @@
+anki (1.2.9-2) unstable; urgency=low
+
+  * Install SVG icon based on icons/anki-logo.svg
+  * Note origins of icon files in debian/copyright
+  * Change homepage field to http://ankisrs.net/ (Closes: 653888)
+  * Migrate from python-support to dh_python2
+  * Increase debhelper compatibility level to v8
+  * Only remove executable bits from files under usr/share/anki instead of
+    usr/share in binary-indep rule
+
+ -- Andreas Bombe <aeb@debian.org>  Sat, 07 Jan 2012 02:51:38 +0100
+
 anki (1.2.9-1) unstable; urgency=low
 
   * Imported Upstream version 1.2.9
