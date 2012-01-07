@@ -19,6 +19,10 @@ License:
 On Debian systems, the complete text of the GNU General Public License version 3
 can be found in /usr/share/common-licenses/GPL-3.
 
+The icon file debian/anki.xpm is a simple format conversion of icons/anki.png,
+the icon file debian/anki.svg is a copy of icons/anki-logo.svg with all
+elements that are invisible when displayed as an icon removed.
+
 Anki embeds a copy of Pystache in the directory libanki/anki/template.  Its
 license is:
 
