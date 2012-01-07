@@ -21,7 +21,7 @@ binary-indep:
 	dh_installman debian/anki.1
 	dh_icons
 	dh_compress
-	find debian/anki/usr/share -type f -perm -1 -exec chmod a-x {} \;
+	find debian/anki/usr/share/anki -type f -perm -1 -exec chmod a-x {} \;
 	dh_fixperms
 	dh_installdeb
 	dh_gencontrol
