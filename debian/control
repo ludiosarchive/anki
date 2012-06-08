@@ -1,6 +1,6 @@
 Source: anki
 Maintainer: Andreas Bombe <aeb@debian.org>
-Section: misc
+Section: education
 Priority: optional
 Build-Depends: debhelper (>= 8)
 Build-Depends-Indep: python (>= 2.6.6-3~)
