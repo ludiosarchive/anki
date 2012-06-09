@@ -1,3 +1,16 @@
+anki (1.2.11-1) unstable; urgency=low
+
+  * Imported Upstream version 1.2.11
+  * Upstream release fixes Unicode warning from SQLAlchemy
+    (Closes: 675405)
+  * Bump Standards-Version to 3.9.3
+  * Change archive section to education
+  * Increase python-sqlalchemy dependency version to 0.5.3 because
+    module sqlalchemy.exc first appeared in 0.5.0 and there is a known
+    issue with old versions of pysqlite solved in 0.5.3 (Closes: 673032)
+
+ -- Andreas Bombe <aeb@debian.org>  Sat, 09 Jun 2012 02:00:08 +0200
+
 anki (1.2.9-2) unstable; urgency=low
 
   * Install SVG icon based on icons/anki-logo.svg
