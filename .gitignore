@@ -3,6 +3,9 @@
 *\#
 *~
 .*.sw[a-p]
+
+/.pc
+
 /icons_rc.py
 ankiqt/forms
 /docs/manual.html
