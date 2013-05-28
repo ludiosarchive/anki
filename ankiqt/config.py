@@ -122,7 +122,7 @@ class Config(dict):
                 self[k] = v
         if not self['interfaceLang']:
             # guess interface and target languages
-            (lang, enc) = locale.getlocale(locale.LC_MESSAGES)
+            (lang, enc) = locale.getdefaultlocale()
             self['interfaceLang'] = lang
 
     def getDbPath(self):

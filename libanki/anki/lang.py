@@ -8,6 +8,7 @@ Internationalisation
 """
 __docformat__ = 'restructuredtext'
 
+import os, sys
 import gettext
 import threading
 
@@ -31,7 +32,11 @@ def ngettext(single, plural, n):
     return localTranslation().ungettext(single, plural, n)
 
 def setLang(lang, local=True):
-    localeDir = "/usr/share/locale"
+    base = os.path.dirname(os.path.abspath(__file__))
+    localeDir = os.path.join(base, "locale")
+    if not os.path.exists(localeDir):
+        localeDir = os.path.join(
+            os.path.dirname(sys.argv[0]), "locale")
     trans = gettext.translation('libanki', localeDir,
                                 languages=[lang],
                                 fallback=True)
