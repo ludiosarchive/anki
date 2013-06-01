@@ -10,6 +10,7 @@ thirdparty/send2trash/*.py	usr/share/anki/send2trash
 
 locale/*/			usr/share/locale
 locale/*.qm			usr/share/anki/locale
-debian/anki.xpm			usr/share/pixmaps
+anki.xpm			usr/share/pixmaps
+anki.png			usr/share/pixmaps
 debian/anki.svg			usr/share/icons/hicolor/scalable/apps
 anki.desktop			usr/share/applications
