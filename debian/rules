@@ -18,7 +18,7 @@ binary-indep:
 	dh_installdocs README README.development
 	dh_installmenu
 	dh_python2
-	dh_installman debian/anki.1
+	dh_installman anki.1
 	dh_icons
 	dh_compress
 	find debian/anki/usr/share/anki -type f -perm -1 -exec chmod a-x {} \;
