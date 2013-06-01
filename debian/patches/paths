@@ -1,27 +1,44 @@
 Author: Andreas Bombe <aeb@debian.org>
 Description: Set file paths to the installed locations
- Currently there is only the locale files where the directory is simply set to
- /usr/share/locale, the standard directory the locales are installed to.
+ Currently only the locale files are diverted from the upstream location. The
+ directory for the gettext files is simply set to /usr/share/locale, the
+ directory for the Qt .qm files is kept as /usr/share/anki/locale.
+ are installed to. 
 Forwarded: not-needed
 
-diff --git a/ankiqt/ui/main.py b/ankiqt/ui/main.py
-index 3f2089a..bbc17f6 100755
---- a/ankiqt/ui/main.py
-+++ b/ankiqt/ui/main.py
-@@ -2150,7 +2150,7 @@ it to your friends.
-             locale.setlocale(locale.LC_ALL, '')
-         except:
-             pass
--        languageDir=os.path.join(ankiqt.modDir, "locale")
-+        languageDir="/usr/share/locale"
-         self.languageTrans = gettext.translation('ankiqt', languageDir,
-                                             languages=[self.config["interfaceLang"]],
-                                             fallback=True)
-diff --git a/libanki/anki/lang.py b/libanki/anki/lang.py
-index ff24518..f3fb968 100644
---- a/libanki/anki/lang.py
-+++ b/libanki/anki/lang.py
-@@ -8,7 +8,6 @@ Internationalisation
+Index: git_anki/anki/lang.py
+===================================================================
+--- git_anki.orig/anki/lang.py	2013-06-08 23:32:40.372014626 +0200
++++ git_anki/anki/lang.py	2013-06-08 23:32:40.365014626 +0200
+@@ -2,7 +2,7 @@
+ # Copyright: Damien Elmes <anki@ichi2.net>
+ # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+ 
+-import os, sys, re
++import re
+ import gettext
+ import threading
+ 
+@@ -69,13 +69,7 @@
+     return localTranslation().ungettext(single, plural, n)
+ 
+ def langDir():
+-    dir = os.path.join(os.path.dirname(
+-        os.path.abspath(__file__)), "locale")
+-    if not os.path.isdir(dir):
+-        dir = os.path.join(os.path.dirname(sys.argv[0]), "locale")
+-    if not os.path.isdir(dir):
+-        dir = "/usr/share/anki/locale"
+-    return dir
++    return "/usr/share/locale"
+ 
+ def setLang(lang, local=True):
+     trans = gettext.translation(
+Index: git_anki/oldanki/lang.py
+===================================================================
+--- git_anki.orig/oldanki/lang.py	2013-06-08 23:32:40.372014626 +0200
++++ git_anki/oldanki/lang.py	2013-06-08 23:32:40.365014626 +0200
+@@ -8,7 +8,6 @@
  """
  __docformat__ = 'restructuredtext'
  
@@ -29,7 +46,7 @@ index ff24518..f3fb968 100644
  import gettext
  import threading
  
-@@ -32,11 +31,7 @@ def ngettext(single, plural, n):
+@@ -32,11 +31,7 @@
      return localTranslation().ungettext(single, plural, n)
  
  def setLang(lang, local=True):
@@ -42,3 +59,16 @@ index ff24518..f3fb968 100644
      trans = gettext.translation('libanki', localeDir,
                                  languages=[lang],
                                  fallback=True)
+Index: git_anki/aqt/__init__.py
+===================================================================
+--- git_anki.orig/aqt/__init__.py	2013-06-08 23:32:40.372014626 +0200
++++ git_anki/aqt/__init__.py	2013-06-08 23:32:40.366014626 +0200
+@@ -98,7 +98,7 @@
+         app.setLayoutDirection(Qt.LeftToRight)
+     # qt
+     _qtrans = QTranslator()
+-    if _qtrans.load("qt_" + lang, dir):
++    if _qtrans.load("qt_" + lang, "/usr/share/anki/locale"):
+         app.installTranslator(_qtrans)
+ 
+ # App initialisation

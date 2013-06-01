@@ -15,7 +15,7 @@ binary-indep:
 	dh_install
 	cp debian/anki-launcher debian/anki/usr/bin/anki
 	dh_installchangelogs
-	dh_installdocs README README.development README.translating CREDITS
+	dh_installdocs README README.development
 	dh_installmenu
 	dh_python2
 	dh_installman debian/anki.1

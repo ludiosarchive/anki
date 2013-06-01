@@ -4,16 +4,16 @@ Description: Use getlocale(LC_MESSAGES) for default interface locale
  set. Using getdefaultlocale() will yield possibly undesired locales if other
  LC_* fields are set.
 
-diff --git a/ankiqt/config.py b/ankiqt/config.py
-index 25f8dfe..aec85c6 100644
---- a/ankiqt/config.py
-+++ b/ankiqt/config.py
-@@ -122,7 +122,7 @@ class Config(dict):
-                 self[k] = v
-         if not self['interfaceLang']:
-             # guess interface and target languages
+Index: git_anki/aqt/profiles.py
+===================================================================
+--- git_anki.orig/aqt/profiles.py	2013-06-08 23:33:01.525014359 +0200
++++ git_anki/aqt/profiles.py	2013-06-08 23:33:01.519014359 +0200
+@@ -244,7 +244,7 @@
+         d.connect(d, SIGNAL("rejected()"), lambda: True)
+         # default to the system language
+         try:
 -            (lang, enc) = locale.getdefaultlocale()
 +            (lang, enc) = locale.getlocale(locale.LC_MESSAGES)
-             self['interfaceLang'] = lang
- 
-     def getDbPath(self):
+         except:
+             # fails on osx
+             lang = "en"
