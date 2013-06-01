@@ -1,37 +1,22 @@
 #!/usr/bin/make -f
 
-build:
-build-arch:
-build-indep:
+%:
+	dh $@ --with python2
 
-binary: binary-arch binary-indep
-binary-arch:
+override_dh_auto_build:
+	# standard make target only prints help message
 
-binary-indep:
-	dh_testdir
-	dh_testroot
-	dh_clean
-	dh_installdirs usr/bin
+override_dh_auto_install:
+	# prevent Makefile install target being run
+
+override_dh_install:
 	dh_install
 	cp debian/anki-launcher debian/anki/usr/bin/anki
-	dh_installchangelogs
-	dh_installdocs README README.development
-	dh_installmenu
-	dh_python2
-	dh_installman anki.1
-	dh_icons
-	dh_compress
+
+override_dh_fixperms:
 	find debian/anki/usr/share/anki -type f -perm -1 -exec chmod a-x {} \;
 	dh_fixperms
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
 
-clean:
-	dh_testdir
-	dh_testroot
-	find -name \*.py[co] -exec rm {} \;
+override_dh_clean:
+	find . -type f -a -name '*.py[co]' -exec rm -f {} \;
 	dh_clean
-
-.PHONY: build build-arch build-indep clean binary binary-arch binary-indep
