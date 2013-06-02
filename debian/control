@@ -13,7 +13,8 @@ Package: anki
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends},
 	python-qt4 (>= 4.7), python-simplejson (>= 1.7.3),
-	python-sqlalchemy (>= 0.5.3), python-beautifulsoup, python-pyaudio
+	python-sqlalchemy (>= 0.5.3), python-beautifulsoup, python-pyaudio,
+	libjs-jquery, libjs-jquery-ui, libjs-jquery-flot
 Recommends: python-matplotlib, kakasi
 Suggests: dvipng
 Description: extensible flashcard learning program

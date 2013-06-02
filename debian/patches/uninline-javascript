@@ -1,0 +1,23 @@
+Description: Replace minified Javascript with references to libjs packages
+ The Javascript packages in the original anki.js are minified versions
+ of JQuery and related packages without their corresponding sources.
+ The dfsg repackaging of the source archive removes the JQuery content,
+ so this patch just adds the initialization of the strings from the
+ files provided by the libjs-jquery* packages.
+Author: Andreas Bombe
+Forwarded: not-needed
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: git_anki/anki/js.py
+===================================================================
+--- git_anki.orig/anki/js.py	2013-06-08 23:33:29.955014000 +0200
++++ git_anki/anki/js.py	2013-06-08 23:34:37.965013142 +0200
+@@ -1 +1,8 @@
++jquery = file('/usr/share/javascript/jquery/jquery.js').read()
++
++plot = ''.join([file('/usr/share/javascript/jquery-flot/jquery.flot.min.js').read(),
++        file('/usr/share/javascript/jquery-flot/jquery.flot.stack.min.js').read()])
++
++ui = file('/usr/share/javascript/jquery-ui/jquery-ui.min.js').read()
++
+ browserSel = '''/* CSS Browser Selector v0.4.0 (Nov 02, 2010) Rafael Lima (http://rafael.adm.br) */function css_browser_selector(u){var ua=u.toLowerCase(),is=function(t){return ua.indexOf(t)>-1},g='gecko',w='webkit',s='safari',o='opera',m='mobile',h=document.documentElement,b=[(!(/opera|webtv/i.test(ua))&&/msie\s(\d)/.test(ua))?('ie ie'+RegExp.$1):is('firefox/2')?g+' ff2':is('firefox/3.5')?g+' ff3 ff3_5':is('firefox/3.6')?g+' ff3 ff3_6':is('firefox/3')?g+' ff3':is('gecko/')?g:is('opera')?o+(/version\/(\d+)/.test(ua)?' '+o+RegExp.$1:(/opera(\s|\/)(\d+)/.test(ua)?' '+o+RegExp.$2:'')):is('konqueror')?'konqueror':is('blackberry')?m+' blackberry':is('android')?m+' android':is('chrome')?w+' chrome':is('iron')?w+' iron':is('applewebkit/')?w+' '+s+(/version\/(\d+)/.test(ua)?' '+s+RegExp.$1:''):is('mozilla/')?g:'',is('j2me')?m+' j2me':is('iphone')?m+' iphone':is('ipod')?m+' ipod':is('ipad')?m+' ipad':is('mac')?'mac':is('darwin')?'mac':is('webtv')?'webtv':is('win')?'win'+(is('windows nt 6.0')?' vista':''):is('freebsd')?'freebsd':(is('x11')||is('linux'))?'linux':'','js']; c = b.join(' '); h.className += ' '+c; return c;}; css_browser_selector(navigator.userAgent);'''
