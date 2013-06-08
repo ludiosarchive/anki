@@ -1,0 +1,8 @@
+The original source archive contains a number of its dependencies for easy
+installation, including compiled binaries without source, as well as minified
+Javascript without corresponding source code. This necessitates repackaging for
+DFSG compliance of the source package. In order to turn an upstream source
+archive into a format as used by this packaging, perform the following steps:
+
+* Remove the contents of the "thirdparty" directory except for "send2trash"
+* In anki/js.py, remove all lines except the one starting with "browserSel"
