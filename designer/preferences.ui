@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>365</width>
-    <height>440</height>
+    <width>405</width>
+    <height>450</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,133 +28,155 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="spacing">
-        <number>6</number>
+        <number>12</number>
        </property>
-       <item>
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>&lt;b&gt;Language&lt;/b&gt;</string>
-         </property>
-         <property name="wordWrap">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QComboBox" name="interfaceLang">
-         <property name="minimumSize">
-          <size>
-           <width>300</width>
-           <height>0</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_2">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="focusPolicy">
-          <enum>Qt::TabFocus</enum>
-         </property>
-         <property name="text">
-          <string>&lt;b&gt;Reviewing&lt;/b&gt;</string>
-         </property>
-         <property name="wordWrap">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="showDivider">
-         <property name="text">
-          <string>Show divider between question and answer</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="splitQA">
-         <property name="text">
-          <string>Put space between question and answer</string>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QCheckBox" name="showEstimates">
          <property name="text">
-          <string>Show next time before answer</string>
+          <string>Show next review time above answer buttons</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="showProgress">
          <property name="text">
-          <string>Show due count and progress during review</string>
+          <string>Show remaining card count during review</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="preventEdits">
+        <widget class="QCheckBox" name="stripHTML">
          <property name="text">
-          <string>Prevent edits until answer shown</string>
+          <string>Strip HTML when pasting text</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="autoplaySounds">
+        <widget class="QCheckBox" name="pastePNG">
          <property name="text">
-          <string>Automatically play audio</string>
+          <string>Paste clipboard images as PNG</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_6">
-         <property name="text">
-          <string>&lt;b&gt;Media&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QComboBox" name="mediaChoice"/>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <widget class="QComboBox" name="useCurrent">
          <item>
-          <widget class="QLabel" name="mediaPrefix">
+          <property name="text">
+           <string>When adding, default to current deck</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Change deck depending on note type</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="newSpread"/>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_23">
            <property name="text">
-            <string>Prefix:</string>
+            <string>Next day starts at</string>
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QLineEdit" name="mediaPath"/>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="dayOffset">
+           <property name="maximumSize">
+            <size>
+             <width>60</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="maximum">
+            <number>23</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_24">
+           <property name="text">
+            <string>Learn ahead limit</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="lrnCutoff">
+           <property name="maximumSize">
+            <size>
+             <width>60</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="maximum">
+            <number>999</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="label_29">
+           <property name="text">
+            <string>mins</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_30">
+           <property name="text">
+            <string>Timebox time limit</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="timeLimit">
+           <property name="maximum">
+            <number>9999</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="label_39">
+           <property name="text">
+            <string>mins</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_40">
+           <property name="text">
+            <string>hours past midnight</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
        <item>
-        <spacer name="verticalSpacer">
+        <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Preferred</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>0</height>
+           <height>20</height>
           </size>
          </property>
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="label_3">
+        <widget class="QPushButton" name="profilePass">
          <property name="text">
-          <string>Some settings will take effect after you restart Anki.</string>
+          <string>Profile Password...</string>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -173,31 +195,12 @@
          <property name="spacing">
           <number>10</number>
          </property>
-         <property name="margin">
-          <number>0</number>
-         </property>
          <item>
           <layout class="QVBoxLayout">
-           <property name="spacing">
-            <number>6</number>
-           </property>
-           <property name="margin">
-            <number>0</number>
-           </property>
            <item>
-            <layout class="QGridLayout">
-             <property name="margin">
-              <number>0</number>
-             </property>
-             <property name="spacing">
-              <number>6</number>
-             </property>
-            </layout>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_16">
+            <widget class="QLabel" name="syncLabel">
              <property name="text">
-              <string>&lt;b&gt;Synchronisation&lt;/b&gt;&lt;a href=&quot;http://anki.ichi2.net/&quot;&gt;&lt;br&gt;Create a free account&lt;/a&gt;.</string>
+              <string>&lt;b&gt;Synchronisation&lt;/b&gt;</string>
              </property>
              <property name="wordWrap">
               <bool>true</bool>
@@ -208,129 +211,54 @@
             </widget>
            </item>
            <item>
-            <layout class="QGridLayout">
-             <property name="margin">
-              <number>0</number>
+            <widget class="QCheckBox" name="syncMedia">
+             <property name="text">
+              <string>Synchronize audio and images too</string>
              </property>
-             <property name="spacing">
-              <number>6</number>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="syncOnProgramOpen">
+             <property name="text">
+              <string>Automatically sync on profile open/close</string>
              </property>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_18">
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="fullSync">
+             <property name="text">
+              <string>On next sync, force changes in one direction</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="QPushButton" name="syncDeauth">
                <property name="text">
-                <string>Password</string>
+                <string>Deauthorize</string>
+               </property>
+               <property name="autoDefault">
+                <bool>false</bool>
                </property>
               </widget>
              </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_17">
-               <property name="text">
-                <string>Username</string>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLineEdit" name="syncUser"/>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLineEdit" name="syncPass">
-               <property name="echoMode">
-                <enum>QLineEdit::Password</enum>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>1</height>
+                </size>
                </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="2">
-              <widget class="QCheckBox" name="syncOnOpen">
-               <property name="text">
-                <string>Sync on deck open/close</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QCheckBox" name="syncOnProgramOpen">
-               <property name="text">
-                <string>Sync on program open/close</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0" colspan="2">
-              <widget class="QCheckBox" name="disableWhenMoved">
-               <property name="text">
-                <string>Disable sync when deck moved</string>
-               </property>
-              </widget>
+              </spacer>
              </item>
             </layout>
            </item>
           </layout>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_13">
-         <property name="text">
-          <string>&lt;b&gt;Proxy&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QGridLayout" name="gridLayout_3">
-         <property name="verticalSpacing">
-          <number>6</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_14">
-           <property name="text">
-            <string>Host</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="proxyHost"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_19">
-           <property name="text">
-            <string>Username</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="proxyUser"/>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_20">
-           <property name="text">
-            <string>Password</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="proxyPass">
-           <property name="echoMode">
-            <enum>QLineEdit::Password</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="label_15">
-           <property name="text">
-            <string>Port</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QSpinBox" name="proxyPort">
-           <property name="minimumSize">
-            <size>
-             <width>60</width>
-             <height>0</height>
-            </size>
-           </property>
-          </widget>
          </item>
         </layout>
        </item>
@@ -347,108 +275,20 @@
          </property>
         </spacer>
        </item>
-       <item>
-        <widget class="QLabel" name="label_12">
-         <property name="text">
-          <string>Some settings will take effect after you restart Anki.</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab">
       <attribute name="title">
-       <string>Saving</string>
+       <string>Backups</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <property name="spacing">
         <number>10</number>
        </property>
        <item>
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>&lt;b&gt;Autosaving&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QGridLayout" name="gridLayout">
-         <property name="spacing">
-          <number>6</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="saveAfterEvery">
-           <property name="text">
-            <string>Save after answering</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QSpinBox" name="saveAfterEveryNum">
-           <property name="maximumSize">
-            <size>
-             <width>60</width>
-             <height>16777215</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QCheckBox" name="saveAfterAdding">
-           <property name="text">
-            <string>Save after adding</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QSpinBox" name="saveAfterAddingNum">
-           <property name="maximumSize">
-            <size>
-             <width>60</width>
-             <height>16777215</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0" colspan="2">
-          <widget class="QCheckBox" name="saveWhenClosing">
-           <property name="text">
-            <string>Save when closing</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="label_5">
-           <property name="text">
-            <string>cards</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QLabel" name="label_7">
-           <property name="text">
-            <string>facts</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
         <widget class="QLabel" name="label_9">
          <property name="text">
-          <string>&lt;b&gt;Backups&lt;/b&gt;&lt;br&gt;Decks are backed up when they are opened or synchronised, and only if they have been modified since the last backup.</string>
+          <string>&lt;b&gt;Backups&lt;/b&gt;&lt;br&gt;Anki will create a backup of your collection each time it is closed or synchronized.</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
@@ -483,7 +323,7 @@
          <item row="0" column="2">
           <widget class="QLabel" name="label_11">
            <property name="text">
-            <string>backups of each deck</string>
+            <string>backups</string>
            </property>
           </widget>
          </item>
@@ -506,6 +346,16 @@
         <widget class="QLabel" name="openBackupFolder">
          <property name="text">
           <string>&lt;a href=&quot;backups&quot;&gt;Open backup folder&lt;/a&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Note: Media is not backed up. Please create a periodic backup of your Anki folder to be safe.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -534,160 +384,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_3">
-      <attribute name="title">
-       <string>Advanced</string>
-      </attribute>
-      <layout class="QVBoxLayout">
-       <item>
-        <layout class="QGridLayout">
-         <item row="4" column="0">
-          <widget class="QCheckBox" name="showTimer">
-           <property name="text">
-            <string>Show timer</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QCheckBox" name="alternativeTheme">
-           <property name="text">
-            <string>Alternative theme</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="0">
-          <widget class="QCheckBox" name="showStudyOptions">
-           <property name="text">
-            <string>Show study options on deck load</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0">
-          <widget class="QCheckBox" name="showTray">
-           <property name="text">
-            <string>Show tray icon</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="0">
-          <widget class="QCheckBox" name="addZeroSpace">
-           <property name="text">
-            <string>Add hidden char to text (fixes Thai on OSX)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0">
-          <widget class="QCheckBox" name="openLastDeck">
-           <property name="text">
-            <string>Always open last deck on startup</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="0">
-          <widget class="QCheckBox" name="deckBrowserOrder">
-           <property name="text">
-            <string>Show decks with cards due first in browser</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="0">
-          <widget class="QCheckBox" name="deleteMedia">
-           <property name="text">
-            <string>Delete original media on add</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QCheckBox" name="colourTimes">
-           <property name="text">
-            <string>Colour next times</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QCheckBox" name="stripHTML">
-           <property name="text">
-            <string>Strip HTML when pasting text</string>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="0">
-          <widget class="QCheckBox" name="optimizeSmall">
-           <property name="text">
-            <string>Optimize for small screens</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Preferred</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>10</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QLabel" name="label_22">
-           <property name="text">
-            <string>Max deck name length in deck browser:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="deckBrowserLen"/>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>Some settings will take effect after you restart Anki.</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
     </widget>
    </item>
    <item>
@@ -703,45 +399,22 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>tabWidget</tabstop>
-  <tabstop>interfaceLang</tabstop>
-  <tabstop>label_2</tabstop>
-  <tabstop>showDivider</tabstop>
-  <tabstop>splitQA</tabstop>
   <tabstop>showEstimates</tabstop>
   <tabstop>showProgress</tabstop>
-  <tabstop>preventEdits</tabstop>
-  <tabstop>autoplaySounds</tabstop>
-  <tabstop>mediaChoice</tabstop>
-  <tabstop>mediaPath</tabstop>
-  <tabstop>syncUser</tabstop>
-  <tabstop>syncPass</tabstop>
-  <tabstop>syncOnOpen</tabstop>
-  <tabstop>syncOnProgramOpen</tabstop>
-  <tabstop>disableWhenMoved</tabstop>
-  <tabstop>proxyHost</tabstop>
-  <tabstop>proxyPort</tabstop>
-  <tabstop>proxyUser</tabstop>
-  <tabstop>proxyPass</tabstop>
-  <tabstop>saveAfterEvery</tabstop>
-  <tabstop>saveAfterEveryNum</tabstop>
-  <tabstop>saveAfterAdding</tabstop>
-  <tabstop>saveAfterAddingNum</tabstop>
-  <tabstop>saveWhenClosing</tabstop>
-  <tabstop>numBackups</tabstop>
-  <tabstop>alternativeTheme</tabstop>
-  <tabstop>colourTimes</tabstop>
-  <tabstop>showTimer</tabstop>
-  <tabstop>showTray</tabstop>
   <tabstop>stripHTML</tabstop>
-  <tabstop>showStudyOptions</tabstop>
-  <tabstop>openLastDeck</tabstop>
-  <tabstop>deckBrowserOrder</tabstop>
-  <tabstop>optimizeSmall</tabstop>
-  <tabstop>deleteMedia</tabstop>
-  <tabstop>addZeroSpace</tabstop>
-  <tabstop>deckBrowserLen</tabstop>
+  <tabstop>pastePNG</tabstop>
+  <tabstop>useCurrent</tabstop>
+  <tabstop>newSpread</tabstop>
+  <tabstop>dayOffset</tabstop>
+  <tabstop>lrnCutoff</tabstop>
+  <tabstop>timeLimit</tabstop>
+  <tabstop>profilePass</tabstop>
+  <tabstop>syncMedia</tabstop>
+  <tabstop>syncOnProgramOpen</tabstop>
+  <tabstop>syncDeauth</tabstop>
+  <tabstop>numBackups</tabstop>
   <tabstop>buttonBox</tabstop>
+  <tabstop>tabWidget</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -752,8 +425,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>279</x>
-     <y>457</y>
+     <x>285</x>
+     <y>439</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -768,8 +441,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>326</x>
-     <y>457</y>
+     <x>332</x>
+     <y>439</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
