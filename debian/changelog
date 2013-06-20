@@ -1,3 +1,21 @@
+anki (2.0.11+dfsg-1) unstable; urgency=low
+
+  * Imported Upstream version 2.0.11+dfsg (Closes: 698663)
+  * Adapt patches, launcher and install paths to new upstream code layout
+  * Install upstream anki.xpm and anki.png, remove anki.xpm from Debian
+    directory
+  * Move to debhelper 9
+  * Install upstream man page and remove debian/anki.1
+  * Replace explicit calls to debhelper tools in debian/rules with dh sequencer
+  * Add python-pyaudio to Depends and increase python-qt4 dependency to >= 4.7
+  * Bump Standards-Version to 3.9.4
+  * Replace inlined minified Javascript with references to libjs-jquery* files
+  * Remove kakasi from Recommends, it is used only in downloaded plugins
+  * Rewrite debian/copyright in DEP-5 format and update for new upstream release
+  * Add README.source to explain DFSG repackaging
+
+ -- Andreas Bombe <aeb@debian.org>  Thu, 20 Jun 2013 02:12:12 +0200
+
 anki (1.2.11-1) unstable; urgency=low
 
   * Imported Upstream version 1.2.11
