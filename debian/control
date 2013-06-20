@@ -12,7 +12,7 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/anki.git
 Package: anki
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends},
-	python-qt4 (>= 4.7), python-simplejson (>= 1.7.3),
+	python-qt4 (>= 4.7), python-simplejson (>= 1.7.3), python-httplib2,
 	python-sqlalchemy (>= 0.5.3), python-beautifulsoup, python-pyaudio,
 	libjs-jquery, libjs-jquery-ui, libjs-jquery-flot
 Recommends: python-matplotlib
