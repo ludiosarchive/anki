@@ -9,7 +9,6 @@ oldanki/template/*.py		usr/share/anki/oldanki/template
 thirdparty/send2trash/*.py	usr/share/anki/send2trash
 
 locale/*/			usr/share/locale
-locale/*.qm			usr/share/anki/locale
 anki.xpm			usr/share/pixmaps
 anki.png			usr/share/pixmaps
 debian/anki.svg			usr/share/icons/hicolor/scalable/apps

@@ -8,8 +8,8 @@ Forwarded: not-needed
 
 Index: git_anki/anki/lang.py
 ===================================================================
---- git_anki.orig/anki/lang.py	2013-06-08 23:32:40.372014626 +0200
-+++ git_anki/anki/lang.py	2013-06-08 23:32:40.365014626 +0200
+--- git_anki.orig/anki/lang.py	2013-07-21 15:37:08.184407303 +0200
++++ git_anki/anki/lang.py	2013-07-21 15:37:08.179407302 +0200
 @@ -2,7 +2,7 @@
  # Copyright: Damien Elmes <anki@ichi2.net>
  # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
@@ -36,8 +36,8 @@ Index: git_anki/anki/lang.py
      trans = gettext.translation(
 Index: git_anki/oldanki/lang.py
 ===================================================================
---- git_anki.orig/oldanki/lang.py	2013-06-08 23:32:40.372014626 +0200
-+++ git_anki/oldanki/lang.py	2013-06-08 23:32:40.365014626 +0200
+--- git_anki.orig/oldanki/lang.py	2013-07-21 15:37:08.184407303 +0200
++++ git_anki/oldanki/lang.py	2013-07-21 15:37:08.179407302 +0200
 @@ -8,7 +8,6 @@
  """
  __docformat__ = 'restructuredtext'
@@ -61,14 +61,14 @@ Index: git_anki/oldanki/lang.py
                                  fallback=True)
 Index: git_anki/aqt/__init__.py
 ===================================================================
---- git_anki.orig/aqt/__init__.py	2013-06-08 23:32:40.372014626 +0200
-+++ git_anki/aqt/__init__.py	2013-06-08 23:32:40.366014626 +0200
+--- git_anki.orig/aqt/__init__.py	2013-07-21 15:37:08.184407303 +0200
++++ git_anki/aqt/__init__.py	2013-07-21 15:39:10.876419356 +0200
 @@ -98,7 +98,7 @@
          app.setLayoutDirection(Qt.LeftToRight)
      # qt
      _qtrans = QTranslator()
 -    if _qtrans.load("qt_" + lang, dir):
-+    if _qtrans.load("qt_" + lang, "/usr/share/anki/locale"):
++    if _qtrans.load("qt_" + lang, "/usr/share/qt4/translations"):
          app.installTranslator(_qtrans)
  
  # App initialisation
