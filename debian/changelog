@@ -1,3 +1,11 @@
+anki (2.0.11+dfsg-3) unstable; urgency=low
+
+  * Use standard translations of core QT4 instead of installing our own version
+  * Add missing load of pie chart plugin in Debian modified anki/js.py
+    (Closes: 716774)
+
+ -- Andreas Bombe <aeb@debian.org>  Sun, 21 Jul 2013 16:50:10 +0200
+
 anki (2.0.11+dfsg-2) unstable; urgency=low
 
   * Add missing dependency on python-httplib2 (Closes: 712930)
