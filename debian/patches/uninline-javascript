@@ -10,13 +10,14 @@ Forwarded: not-needed
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 Index: git_anki/anki/js.py
 ===================================================================
---- git_anki.orig/anki/js.py	2013-06-08 23:33:29.955014000 +0200
-+++ git_anki/anki/js.py	2013-06-08 23:34:37.965013142 +0200
-@@ -1 +1,8 @@
+--- git_anki.orig/anki/js.py	2013-07-21 16:09:49.322599963 +0200
++++ git_anki/anki/js.py	2013-07-21 16:36:50.914759267 +0200
+@@ -1 +1,9 @@
 +jquery = file('/usr/share/javascript/jquery/jquery.js').read()
 +
 +plot = ''.join([file('/usr/share/javascript/jquery-flot/jquery.flot.min.js').read(),
-+        file('/usr/share/javascript/jquery-flot/jquery.flot.stack.min.js').read()])
++        file('/usr/share/javascript/jquery-flot/jquery.flot.stack.min.js').read(),
++        file('/usr/share/javascript/jquery-flot/jquery.flot.pie.min.js').read()])
 +
 +ui = file('/usr/share/javascript/jquery-ui/jquery-ui.min.js').read()
 +
