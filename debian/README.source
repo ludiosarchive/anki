@@ -6,3 +6,4 @@ archive into a format as used by this packaging, perform the following steps:
 
 * Remove the contents of the "thirdparty" directory except for "send2trash"
 * In anki/js.py, remove all lines except the one starting with "browserSel"
+* Remove qt_*.qm from locale
