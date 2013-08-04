@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+from anki.lang import _
 
 from aqt.qt import *
 import re, os, urllib2, ctypes
 from anki.utils import stripHTML, isWin, isMac, namedtmp, json, stripHTMLMedia
-from anki.sound import play
+import anki.sound
 from anki.hooks import runHook, runFilter
 from aqt.sound import getAudio
 from aqt.webview import AnkiWebView
@@ -15,12 +16,6 @@ import aqt
 import anki.js
 from BeautifulSoup import BeautifulSoup
 import urllib
-
-# fixme: when tab order returns to the webview, the previously focused field
-# is focused, which is not good when the user is tabbing through the dialog
-# fixme: set rtl in div css
-
-# fixme: commit from tag area causes error
 
 pics = ("jpg", "jpeg", "png", "tif", "tiff", "gif", "svg")
 audio =  ("wav", "mp3", "ogg", "flac", "mp4", "swf", "mov", "mpeg", "mkv")
@@ -264,72 +259,6 @@ document.onclick = function (evt) {
 </body></html>
 """
 
-def _filterHTML(html):
-    doc = BeautifulSoup(html)
-    # remove implicit regular font style from outermost element
-    if doc.span:
-        try:
-            attrs = doc.span['style'].split(";")
-        except (KeyError, TypeError):
-            attrs = []
-        if attrs:
-            new = []
-            for attr in attrs:
-                sattr = attr.strip()
-                if sattr and sattr not in ("font-style: normal", "font-weight: normal"):
-                    new.append(sattr)
-            doc.span['style'] = ";".join(new)
-    # filter out implicit formatting from webkit
-    for tag in doc("span", "Apple-style-span"):
-        preserve = ""
-        for item in tag['style'].split(";"):
-            try:
-                k, v = item.split(":")
-            except ValueError:
-                continue
-            if k.strip() == "color" and not v.strip() == "rgb(0, 0, 0)":
-                preserve += "color:%s;" % v
-            if k.strip() in ("font-weight", "font-style"):
-                preserve += item + ";"
-        if preserve:
-            # preserve colour attribute, delete implicit class
-            tag['style'] = preserve
-            del tag['class']
-        else:
-            # strip completely
-            tag.replaceWithChildren()
-    for tag in doc("font", "Apple-style-span"):
-        # strip all but colour attr from implicit font tags
-        if 'color' in dict(tag.attrs):
-            for attr in tag.attrs:
-                if attr != "color":
-                    del tag[attr]
-            # and apple class
-            del tag['class']
-        else:
-            # remove completely
-            tag.replaceWithChildren()
-    # now images
-    for tag in doc("img"):
-        # turn file:/// links into relative ones
-        try:
-            if tag['src'].lower().startswith("file://"):
-                tag['src'] = os.path.basename(tag['src'])
-        except KeyError:
-            # for some bizarre reason, mnemosyne removes src elements
-            # from missing media
-            pass
-        # strip all other attributes, including implicit max-width
-        for attr, val in tag.attrs:
-            if attr != "src":
-                del tag[attr]
-    # strip superfluous elements
-    for elem in "html", "head", "body", "meta":
-        for tag in doc(elem):
-            tag.replaceWithChildren()
-    html = unicode(doc)
-    return html
-
 # caller is responsible for resetting note on reset
 class Editor(object):
     def __init__(self, mw, widget, parentWindow, addMode=False):
@@ -488,9 +417,16 @@ class Editor(object):
             ord = self.card.ord
         else:
             ord = 0
-        CardLayout(self.mw, self.note, ord=ord, parent=self.parentWindow,
+        # passing parentWindow leads to crash on windows at the moment
+        if isWin:
+            parent=None
+        else:
+            parent=self.parentWindow
+        CardLayout(self.mw, self.note, ord=ord, parent=parent,
                addMode=self.addMode)
         self.loadNote()
+        if isWin:
+            self.parentWindow.activateWindow()
 
     # JS->Python bridge
     ######################################################################
@@ -551,7 +487,7 @@ class Editor(object):
     def mungeHTML(self, txt):
         if txt == "<br>":
             txt = ""
-        return _filterHTML(txt)
+        return self._filterHTML(txt, localize=False)
 
     # Setting/unsetting the current note
     ######################################################################
@@ -824,24 +760,18 @@ to a cloze type first, via Edit>Change Note Type."""))
         self.web.eval("setFormat('inserthtml', %s);" % json.dumps(html))
 
     def _addMedia(self, path, canDelete=False):
-        "Add to media folder and return basename."
+        "Add to media folder and return local img or sound tag."
         # copy to media folder
-        name = self.mw.col.media.addFile(path)
+        fname = self.mw.col.media.addFile(path)
         # remove original?
         if canDelete and self.mw.pm.profile['deleteMedia']:
-            if os.path.abspath(name) != os.path.abspath(path):
+            if os.path.abspath(fname) != os.path.abspath(path):
                 try:
                     os.unlink(path)
                 except:
                     pass
         # return a local html link
-        ext = name.split(".")[-1].lower()
-        if ext in pics:
-            name = urllib.quote(name.encode("utf8"))
-            return '<img src="%s">' % name
-        else:
-            anki.sound.play(name)
-            return '[sound:%s]' % name
+        return self.fnameToLink(fname)
 
     def onRecSound(self):
         try:
@@ -852,6 +782,133 @@ to a cloze type first, via Edit>Change Note Type."""))
                         "\n\n" + unicode(e))
             return
         self.addMedia(file)
+
+    # Media downloads
+    ######################################################################
+
+    def urlToLink(self, url):
+        fname = self.urlToFile(url)
+        if not fname:
+            return ""
+        return self.fnameToLink(fname)
+
+    def fnameToLink(self, fname):
+        ext = fname.split(".")[-1].lower()
+        if ext in pics:
+            name = urllib.quote(fname.encode("utf8"))
+            return '<img src="%s">' % name
+        else:
+            anki.sound.play(fname)
+            return '[sound:%s]' % fname
+
+    def urlToFile(self, url):
+        l = url.lower()
+        for suffix in pics+audio:
+            if l.endswith(suffix):
+                return self._retrieveURL(url)
+            # not a supported type; return link verbatim
+        return
+
+    def isURL(self, s):
+        s = s.lower()
+        return (s.startswith("http://")
+            or s.startswith("https://")
+            or s.startswith("ftp://"))
+
+    def _retrieveURL(self, url):
+        "Download file into media folder and return local filename or None."
+        # urllib is picky with local file links
+        if url.lower().startswith("file://"):
+            url = url.replace("%", "%25")
+            url = url.replace("#", "%23")
+            # fetch it into a temporary folder
+        self.mw.progress.start(
+            immediate=True, parent=self.parentWindow)
+        try:
+            req = urllib2.Request(url, None, {
+                'User-Agent': 'Mozilla/5.0 (compatible; Anki)'})
+            filecontents = urllib2.urlopen(req).read()
+        except urllib2.URLError, e:
+            showWarning(_("An error occurred while opening %s") % e)
+            return
+        finally:
+            self.mw.progress.finish()
+        path = unicode(urllib2.unquote(url.encode("utf8")), "utf8")
+        return self.mw.col.media.writeData(path, filecontents)
+
+    # HTML filtering
+    ######################################################################
+
+    def _filterHTML(self, html, localize=False):
+        doc = BeautifulSoup(html)
+        # remove implicit regular font style from outermost element
+        if doc.span:
+            try:
+                attrs = doc.span['style'].split(";")
+            except (KeyError, TypeError):
+                attrs = []
+            if attrs:
+                new = []
+                for attr in attrs:
+                    sattr = attr.strip()
+                    if sattr and sattr not in ("font-style: normal", "font-weight: normal"):
+                        new.append(sattr)
+                doc.span['style'] = ";".join(new)
+            # filter out implicit formatting from webkit
+        for tag in doc("span", "Apple-style-span"):
+            preserve = ""
+            for item in tag['style'].split(";"):
+                try:
+                    k, v = item.split(":")
+                except ValueError:
+                    continue
+                if k.strip() == "color" and not v.strip() == "rgb(0, 0, 0)":
+                    preserve += "color:%s;" % v
+                if k.strip() in ("font-weight", "font-style"):
+                    preserve += item + ";"
+            if preserve:
+                # preserve colour attribute, delete implicit class
+                tag['style'] = preserve
+                del tag['class']
+            else:
+                # strip completely
+                tag.replaceWithChildren()
+        for tag in doc("font", "Apple-style-span"):
+            # strip all but colour attr from implicit font tags
+            if 'color' in dict(tag.attrs):
+                for attr in tag.attrs:
+                    if attr != "color":
+                        del tag[attr]
+                    # and apple class
+                del tag['class']
+            else:
+                # remove completely
+                tag.replaceWithChildren()
+            # now images
+        for tag in doc("img"):
+            # turn file:/// links into relative ones
+            try:
+                if tag['src'].lower().startswith("file://"):
+                    tag['src'] = os.path.basename(tag['src'])
+                if localize and self.isURL(tag['src']):
+                    # convert remote image links to local ones
+                    fname = self.urlToFile(tag['src'])
+                    if fname:
+                        tag['src'] = fname
+            except KeyError:
+                # for some bizarre reason, mnemosyne removes src elements
+                # from missing media
+                pass
+                # strip all other attributes, including implicit max-width
+            for attr, val in tag.attrs:
+                if attr != "src":
+                    del tag[attr]
+            # strip superfluous elements
+        for elem in "html", "head", "body", "meta":
+            for tag in doc(elem):
+                tag.replaceWithChildren()
+        html = unicode(doc)
+        return html
 
     # Advanced menu
     ######################################################################
@@ -922,7 +979,6 @@ class EditorWebView(AnkiWebView):
     def __init__(self, parent, editor):
         AnkiWebView.__init__(self)
         self.editor = editor
-        self.errtxt = _("An error occured while opening %s")
         self.strip = self.editor.mw.pm.profile['stripHTML']
 
     def keyPressEvent(self, evt):
@@ -946,17 +1002,17 @@ class EditorWebView(AnkiWebView):
         self._flagAnkiText()
 
     def onPaste(self):
-        mime = self.prepareClip()
+        mime = self.mungeClip()
         self.triggerPageAction(QWebPage.Paste)
-        self.restoreClip(mime)
+        self.restoreClip()
 
     def mouseReleaseEvent(self, evt):
         if not isMac and not isWin and evt.button() == Qt.MidButton:
             # middle click on x11; munge the clipboard before standard
             # handling
-            mime = self.prepareClip(mode=QClipboard.Selection)
+            mime = self.mungeClip(mode=QClipboard.Selection)
             AnkiWebView.mouseReleaseEvent(self, evt)
-            self.restoreClip(mime, mode=QClipboard.Selection)
+            self.restoreClip(mode=QClipboard.Selection)
         else:
             AnkiWebView.mouseReleaseEvent(self, evt)
 
@@ -981,7 +1037,7 @@ class EditorWebView(AnkiWebView):
         if evt.source():
             if oldmime.hasHtml():
                 mime = QMimeData()
-                mime.setHtml(_filterHTML(oldmime.html()))
+                mime.setHtml(self.editor._filterHTML(oldmime.html()))
             else:
                 # old qt on linux won't give us html when dragging an image;
                 # in that case just do the default action (which is to ignore
@@ -998,27 +1054,20 @@ class EditorWebView(AnkiWebView):
         self.eval("dropTarget.focus();")
         self.setFocus()
 
-    def prepareClip(self, mode=QClipboard.Clipboard):
+    def mungeClip(self, mode=QClipboard.Clipboard):
         clip = self.editor.mw.app.clipboard()
         mime = clip.mimeData(mode=mode)
-        if mime.hasHtml() and mime.html().startswith("<!--anki-->"):
-            # pasting from another field, filter extraneous webkit formatting
-            html = mime.html()[11:]
-            html = _filterHTML(html)
-            mime.setHtml(html)
-            return
         self.saveClip(mode=mode)
         mime = self._processMime(mime)
         clip.setMimeData(mime, mode=mode)
+        return mime
 
-    def restoreClip(self, mime, mode=QClipboard.Clipboard):
-        if not mime:
-            return
+    def restoreClip(self, mode=QClipboard.Clipboard):
         clip = self.editor.mw.app.clipboard()
-        clip.setMimeData(mime, mode=mode)
+        clip.setMimeData(self.savedClip, mode=mode)
 
     def saveClip(self, mode):
-        # we don't own the clipboard object, so we need to copy it
+        # we don't own the clipboard object, so we need to copy it or we'll crash
         mime = self.editor.mw.app.clipboard().mimeData(mode=mode)
         n = QMimeData()
         if mime.hasText():
@@ -1029,7 +1078,7 @@ class EditorWebView(AnkiWebView):
             n.setUrls(mime.urls())
         if mime.hasImage():
             n.setImageData(mime.imageData())
-        return n
+        self.savedClip = n
 
     def _processMime(self, mime):
         # print "html=%s image=%s urls=%s txt=%s" % (
@@ -1037,17 +1086,14 @@ class EditorWebView(AnkiWebView):
         # print "html", mime.html()
         # print "urls", mime.urls()
         # print "text", mime.text()
-        if mime.hasUrls():
-            return self._processUrls(mime)
-        elif mime.hasText() and (self.strip or not mime.hasHtml()):
+        if mime.hasHtml():
+            return self._processHtml(mime)
+        elif mime.hasText():
             return self._processText(mime)
-        # we currently aren't able to extract images from html, so we prioritize
-        # images over html in cases where we have both. this is a hack until
-        # issue 92 is implemented
+        elif mime.hasUrls():
+            return self._processUrls(mime)
         elif mime.hasImage():
             return self._processImage(mime)
-        elif mime.hasHtml():
-            return self._processHtml(mime)
         else:
             # nothing
             return QMimeData()
@@ -1056,49 +1102,54 @@ class EditorWebView(AnkiWebView):
         url = mime.urls()[0].toString()
         # chrome likes to give us the URL twice with a \n
         url = url.splitlines()[0]
-        link = self._localizedMediaLink(url)
         mime = QMimeData()
+        link = self.editor.urlToLink(url)
         if link:
             mime.setHtml(link)
         return mime
 
-    def _localizedMediaLink(self, url):
-        l = url.lower()
-        for suffix in pics+audio:
-            if l.endswith(suffix):
-                return self._retrieveURL(url)
-        # not a supported type; return link verbatim
-        return url
-
     def _processText(self, mime):
         txt = unicode(mime.text())
-        l = txt.lower()
         html = None
         # if the user is pasting an image or sound link, convert it to local
-        if l.startswith("http://") or l.startswith("https://") or l.startswith("file://"):
+        if self.editor.isURL(txt):
             txt = txt.split("\r\n")[0]
-            html = self._localizedMediaLink(txt)
-            if not html:
-                return QMimeData()
-            if html == txt:
-                # wasn't of a supported media type; don't change
-                html = None
+            html = self.editor.urlToLink(txt)
         new = QMimeData()
         if html:
             new.setHtml(html)
         else:
-            new.setText(mime.text())
+            new.setText(txt)
         return new
 
     def _processHtml(self, mime):
         html = mime.html()
-        if self.strip:
-            html = stripHTML(html)
+        newMime = QMimeData()
+        if self.strip and not html.startswith("<!--anki-->"):
+            # special case for google images: if after stripping there's no text
+            # and there are image links, we'll paste those as html instead
+            if not stripHTML(html).strip():
+                newHtml = ""
+                mid = self.editor.note.mid
+                for url in self.editor.mw.col.media.filesInStr(
+                    mid, html, includeRemote=True):
+                    newHtml += self.editor.urlToLink(url)
+                if not newHtml and mime.hasImage():
+                    return self._processImage(mime)
+                newMime.setHtml(newHtml)
+            else:
+                # use .text() if available so newlines are preserved; otherwise strip
+                if mime.hasText():
+                    return self._processText(mime)
+                else:
+                    newMime.setText(stripHTML(mime.text()))
         else:
-            html = _filterHTML(html)
-        mime = QMimeData()
-        mime.setHtml(html)
-        return mime
+            if html.startswith("<!--anki-->"):
+                html = html[11:]
+            # no html stripping
+            html = self.editor._filterHTML(html, localize=True)
+            newMime.setHtml(html)
+        return newMime
 
     def _processImage(self, mime):
         im = QImage(mime.imageData())
@@ -1115,35 +1166,6 @@ class EditorWebView(AnkiWebView):
         mime = QMimeData()
         mime.setHtml(self.editor._addMedia(uname+ext))
         return mime
-
-    def _retrieveURL(self, url):
-        # is it media?
-        ext = url.split(".")[-1].lower()
-        if ext not in pics and ext not in audio:
-            return
-        if url.lower().startswith("file://"):
-            url = url.replace("%", "%25")
-            url = url.replace("#", "%23")
-        # fetch it into a temporary folder
-        self.editor.mw.progress.start(
-            immediate=True, parent=self.editor.parentWindow)
-        try:
-            req = urllib2.Request(url, None, {
-                'User-Agent': 'Mozilla/5.0 (compatible; Anki)'})
-            filecontents = urllib2.urlopen(req).read()
-        except urllib2.URLError, e:
-            showWarning(self.errtxt % e)
-            return
-        finally:
-            self.editor.mw.progress.finish()
-        path = unicode(urllib2.unquote(url.encode("utf8")), "utf8")
-        for badChar in "#%\"":
-            path = path.replace(badChar, "")
-        path = namedtmp(os.path.basename(path))
-        file = open(path, "wb")
-        file.write(filecontents)
-        file.close()
-        return self.editor._addMedia(path)
 
     def _flagAnkiText(self):
         # add a comment in the clipboard html so we can tell text is copied
@@ -1163,4 +1185,5 @@ class EditorWebView(AnkiWebView):
         a.connect(a, SIGNAL("triggered()"), self.onCopy)
         a = m.addAction(_("Paste"))
         a.connect(a, SIGNAL("triggered()"), self.onPaste)
+        runHook("EditorWebView.contextMenuEvent", self, m)
         m.popup(QCursor.pos())

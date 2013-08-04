@@ -60,11 +60,7 @@ def _imgLink(col, latex, model):
 
 def _latexFromHtml(col, latex):
     "Convert entities and fix newlines."
-    # entitydefs defines nbsp as \xa0 instead of a standard space, so we
-    # replace it first
-    latex = latex.replace("&nbsp;", " ")
     latex = re.sub("<br( /)?>|<div>", "\n", latex)
-    latex = re.sub("<.+?>", "", latex)
     latex = stripHTML(latex)
     return latex
 
@@ -75,9 +71,10 @@ def _buildImg(col, latex, fname, model):
              model["latexPost"])
     latex = latex.encode("utf8")
     # it's only really secure if run in a jail, but these are the most common
+    tmplatex = latex.replace("\\includegraphics", "")
     for bad in ("write18", "\\readline", "\\input", "\\include", "\\catcode",
                 "\\openout", "\\write", "\\loop", "\\def", "\\shipout"):
-        if bad in latex:
+        if bad in tmplatex:
             return _("""\
 For security reasons, '%s' is not allowed on cards. You can still use \
 it by placing the command in a different package, and importing that \

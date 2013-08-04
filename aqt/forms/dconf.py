@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/dconf.ui'
 #
-# Created: Thu Jun 13 11:28:15 2013
+# Created: Fri Jul 19 17:21:24 2013
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -111,7 +111,7 @@ class Ui_Dialog(object):
         self.label_8.setObjectName(_fromUtf8("label_8"))
         self.gridLayout.addWidget(self.label_8, 1, 0, 1, 1)
         self.lrnFactor = QtGui.QSpinBox(self.tab)
-        self.lrnFactor.setMinimum(100)
+        self.lrnFactor.setMinimum(130)
         self.lrnFactor.setMaximum(999)
         self.lrnFactor.setObjectName(_fromUtf8("lrnFactor"))
         self.gridLayout.addWidget(self.lrnFactor, 5, 1, 1, 1)
