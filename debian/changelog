@@ -1,3 +1,10 @@
+anki (2.0.12+dfsg-1) unstable; urgency=low
+
+  * Imported Upstream version 2.0.12+dfsg
+  * Remove unneeded locale/qt_*.qm files from DFSG repackaging
+
+ -- Andreas Bombe <aeb@debian.org>  Sun, 04 Aug 2013 15:46:45 +0200
+
 anki (2.0.11+dfsg-3) unstable; urgency=low
 
   * Use standard translations of core QT4 instead of installing our own version
