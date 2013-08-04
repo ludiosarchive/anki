@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/setgroup.ui'
 #
-# Created: Sat Dec 22 09:16:23 2012
+# Created: Thu Jul 11 18:24:38 2013
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!

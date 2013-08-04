@@ -191,7 +191,7 @@ function _typeAnsPress() {
         # grab the question and play audio
         if c.isEmpty():
             q = _("""\
-The front of this card is empty. Please run Tools>Maintenance>Empty Cards.""")
+The front of this card is empty. Please run Tools>Empty Cards.""")
         else:
             q = c.q()
         if self.autoplay(c):
@@ -693,6 +693,7 @@ function showAnswer(txt) {
             a = m.addAction(label)
             a.setShortcut(QKeySequence(scut))
             a.connect(a, SIGNAL("triggered()"), func)
+        runHook("Reviewer.contextMenuEvent",self,m)
         m.exec_(QCursor.pos())
 
     def onOptions(self):

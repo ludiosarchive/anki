@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/addmodel.ui'
 #
-# Created: Sat Dec 22 09:16:21 2012
+# Created: Thu Jul 11 18:24:36 2013
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
