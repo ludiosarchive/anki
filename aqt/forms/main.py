@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/main.ui'
 #
-# Created: Thu Jul 18 18:08:52 2013
+# Created: Sat Oct 12 02:10:52 2013
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -139,7 +139,7 @@ class Ui_MainWindow(object):
         self.actionAbout.setText(_("&About..."))
         self.actionUndo.setText(_("&Undo"))
         self.actionUndo.setShortcut(_("Ctrl+Z"))
-        self.actionCheckMediaDatabase.setText(_("&Unused Media..."))
+        self.actionCheckMediaDatabase.setText(_("Check &Media..."))
         self.actionCheckMediaDatabase.setStatusTip(_("Check the files in the media directory"))
         self.actionOpenPluginFolder.setText(_("&Open Add-ons Folder..."))
         self.actionDonate.setText(_("&Support Anki..."))

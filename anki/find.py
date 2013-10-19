@@ -257,7 +257,7 @@ select distinct(n.id) from cards c, notes n where c.nid=n.id and """+preds
                 return "queue in (1, 3)"
             return "type = %d" % n
         elif val == "suspended":
-            return "c.queue = -1"
+            return "c.queue in (-1, -2)"
         elif val == "due":
             return """
 (c.queue in (2,3) and c.due <= %d) or
@@ -512,7 +512,7 @@ def fieldNames(col, downcase=True):
 
 # Find duplicates
 ##########################################################################
-
+# returns array of ("dupestr", [nids])
 def findDupes(col, fieldName, search=""):
     # limit search to notes with applicable field name
     if search:
@@ -538,6 +538,7 @@ def findDupes(col, fieldName, search=""):
         if ord is None:
             continue
         val = flds[ord]
+        val = stripHTMLMedia(val)
         # empty does not count as duplicate
         if not val:
             continue

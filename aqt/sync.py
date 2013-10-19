@@ -2,14 +2,19 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 from __future__ import division
+import socket
+import time
+import traceback
+import gc
+
 from aqt.qt import *
-import   socket, time, traceback, gc
 import aqt
 from anki import Collection
 from anki.sync import Syncer, RemoteServer, FullSyncer, MediaSyncer, \
     RemoteMediaServer
 from anki.hooks import addHook, remHook
 from aqt.utils import tooltip, askUserDialog, showWarning, showText, showInfo
+
 
 # Sync manager
 ######################################################################
@@ -26,6 +31,7 @@ class SyncManager(QObject):
             auth = self._getUserPass()
             if not auth:
                 return
+            self.pm.profile['syncUser'] = auth[0]
             self._sync(auth)
         else:
             self._sync()
@@ -50,6 +56,10 @@ class SyncManager(QObject):
             self.mw.app.processEvents()
             self.thread.wait(100)
         self.mw.progress.finish()
+        if self.thread.syncMsg:
+            showText(self.thread.syncMsg)
+        if self.thread.uname:
+            self.pm.profile['syncUser'] = self.thread.uname
         def delayedInfo():
             if self._didFullUp and not self._didError:
                 showInfo(_("""\
@@ -139,24 +149,24 @@ and try again.""")
             return _("""\
 The connection to AnkiWeb timed out. Please check your network \
 connection and try again.""")
-        elif "500" in err:
+        elif "code: 500" in err:
             return _("""\
 AnkiWeb encountered an error. Please try again in a few minutes, and if \
 the problem persists, please file a bug report.""")
-        elif "501" in err:
+        elif "code: 501" in err:
             return _("""\
 Please upgrade to the latest version of Anki.""")
         # 502 is technically due to the server restarting, but we reuse the
         # error message
-        elif "502" in err:
+        elif "code: 502" in err:
             return _("AnkiWeb is under maintenance. Please try again in a few minutes.")
-        elif "503" in err:
+        elif "code: 503" in err:
             return _("""\
 AnkiWeb is too busy at the moment. Please try again in a few minutes.""")
-        elif "504" in err:
+        elif "code: 504" in err:
             return _("504 gateway timeout error received. Please try temporarily disabling your antivirus.")
-        elif "409" in err:
-            return _("A previous sync failed; please try again in a few minutes.")
+        elif "code: 409" in err:
+            return _("Only one client can access AnkiWeb at a time. If a previous sync failed, please try again in a few minutes.")
         elif "10061" in err or "10013" in err:
             return _(
                 "Antivirus or firewall software is preventing Anki from connecting to the internet.")
@@ -164,8 +174,10 @@ AnkiWeb is too busy at the moment. Please try again in a few minutes.""")
             return _(
                 "Server not found. Either your connection is down, or antivirus/firewall "
                 "software is blocking Anki from connecting to the internet.")
-        elif "407" in err:
+        elif "code: 407" in err:
             return _("Proxy authentication required.")
+        elif "code: 413" in err:
+            return _("Your collection or a media file is too large to sync.")
         return err
 
     def _getUserPass(self):
@@ -270,6 +282,8 @@ class SyncThread(QThread):
             return
         self.server = RemoteServer(self.hkey)
         self.client = Syncer(self.col, self.server)
+        self.syncMsg = ""
+        self.uname = ""
         self.sentTotal = 0
         self.recvTotal = 0
         # throttle updates; qt doesn't handle lots of posted events well
@@ -349,8 +363,14 @@ class SyncThread(QThread):
         # save and note success state
         if ret == "noChanges":
             self.fireEvent("noChanges")
-        else:
+        elif ret == "success":
             self.fireEvent("success")
+        elif ret == "serverAbort":
+            self.fireEvent("error", self.client.syncMsg)
+        else:
+            self.fireEvent("error", "Unknown sync return code.")
+        self.syncMsg = self.client.syncMsg
+        self.uname = self.client.uname
         # then move on to media sync
         self._syncMedia()
 

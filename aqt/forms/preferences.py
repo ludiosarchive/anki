@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/preferences.ui'
 #
-# Created: Thu Jul 18 18:08:52 2013
+# Created: Tue Oct 15 21:12:50 2013
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -120,6 +120,10 @@ class Ui_Preferences(object):
         self.syncDeauth.setAutoDefault(False)
         self.syncDeauth.setObjectName(_fromUtf8("syncDeauth"))
         self.horizontalLayout.addWidget(self.syncDeauth)
+        self.syncUser = QtGui.QLabel(self.tab_2)
+        self.syncUser.setText(_fromUtf8(""))
+        self.syncUser.setObjectName(_fromUtf8("syncUser"))
+        self.horizontalLayout.addWidget(self.syncUser)
         spacerItem1 = QtGui.QSpacerItem(40, 1, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem1)
         self.vboxlayout.addLayout(self.horizontalLayout)

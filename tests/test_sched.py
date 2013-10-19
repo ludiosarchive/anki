@@ -1,9 +1,14 @@
 # coding: utf-8
 
-import time, copy
+import time, copy, sys
 from tests.shared import  getEmptyDeck
 from anki.utils import  intTime
 from anki.hooks import addHook
+
+def test_clock():
+    d = getEmptyDeck()
+    if (d.sched.dayCutoff - intTime()) < 10*60:
+        raise Exception("Unit tests will fail around the day rollover.")
 
 def checkRevIvl(d, c, targetIvl):
     min, max = d.sched._fuzzIvlRange(targetIvl)
@@ -768,76 +773,6 @@ def test_cram_resched():
     # c = d.sched.getCard()
     # d.sched.answerCard(c, 2)
     # print c.__dict__
-
-def test_adjIvl():
-    d = getEmptyDeck()
-    d.sched._spreadRev = False
-    # add two more templates and set second active
-    m = d.models.current(); mm = d.models
-    t = mm.newTemplate("Reverse")
-    t['qfmt'] = "{{Back}}"
-    t['afmt'] = "{{Front}}"
-    mm.addTemplate(m, t)
-    mm.save(m)
-    t = d.models.newTemplate(m)
-    t['name'] = "f2"
-    t['qfmt'] = "{{Front}}"
-    t['afmt'] = "{{Back}}"
-    d.models.addTemplate(m, t)
-    t = d.models.newTemplate(m)
-    t['name'] = "f3"
-    t['qfmt'] = "{{Front}}"
-    t['afmt'] = "{{Back}}"
-    d.models.addTemplate(m, t)
-    d.models.save(m)
-    # create a new note; it should have 4 cards
-    f = d.newNote()
-    f['Front'] = "1"; f['Back'] = "1"
-    d.addNote(f)
-    assert d.cardCount() == 4
-    d.reset()
-    # immediately remove first; it should get ideal ivl
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 4
-    # with the default settings, second card should be -1
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 3
-    # and third +1
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 5
-    # fourth exceeds default settings, so gets ideal again
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 4
-    # try again with another note
-    f = d.newNote()
-    f['Front'] = "2"; f['Back'] = "2"
-    d.addNote(f)
-    d.reset()
-    # set a minSpacing of 0
-    conf = d.sched._cardConf(c)
-    conf['rev']['minSpace'] = 0
-    # first card gets ideal
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 4
-    # and second too, because it's below the threshold
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 4
-    # if we increase the ivl minSpace isn't needed
-    conf['new']['ints'][1] = 20
-    # ideal..
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 20
-    # adjusted
-    c = d.sched.getCard()
-    d.sched.answerCard(c, 3)
-    assert c.ivl == 19
 
 def test_ordcycle():
     d = getEmptyDeck()

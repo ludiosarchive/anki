@@ -36,6 +36,7 @@ DYN_LAPSES = 4
 DYN_ADDED = 5
 DYN_DUE = 6
 DYN_REVADDED = 7
+DYN_DUEPRIORITY = 8
 
 # model types
 MODEL_STD = 0
@@ -46,7 +47,7 @@ SCHEMA_VERSION = 11
 SYNC_ZIP_SIZE = int(2.5*1024*1024)
 SYNC_ZIP_COUNT = 100
 SYNC_URL = os.environ.get("SYNC_URL") or "https://ankiweb.net/sync/"
-SYNC_VER = 5
+SYNC_VER = 8
 
 HELP_SITE="http://ankisrs.net/docs/manual.html"
 
@@ -83,4 +84,5 @@ def dynOrderLabels():
         5: _("Order added"),
         6: _("Order due"),
         7: _("Latest added first"),
+        8: _("Relative overdueness"),
         }
