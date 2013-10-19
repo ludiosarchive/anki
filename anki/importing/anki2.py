@@ -3,14 +3,16 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 import os
+import unicodedata
 from anki import Collection
 from anki.utils import intTime, splitFields, joinFields, incGuid
 from anki.importing.base import Importer
 from anki.lang import _
 from anki.lang import ngettext
 
-MID = 2
 GUID = 1
+MID = 2
+MOD = 3
 
 class Anki2Importer(Importer):
 
@@ -63,9 +65,11 @@ class Anki2Importer(Importer):
         self._changedGuids = {}
         # iterate over source collection
         add = []
+        update = []
         dirty = []
         usn = self.dst.usn()
         dupes = 0
+        dupesIgnored = []
         for note in self.src.db.execute(
             "select * from notes"):
             # turn the db result into a mutable list
@@ -85,22 +89,43 @@ class Anki2Importer(Importer):
                 # note we have the added the guid
                 self._notes[note[GUID]] = (note[0], note[3], note[MID])
             else:
+                # a duplicate or changed schema - safe to update?
                 dupes += 1
-                ## update existing note - not yet tested; for post 2.0
-                # newer = note[3] > mod
-                # if self.allowUpdate and self._mid(mid) == mid and newer:
-                #     localNid = self._notes[guid][0]
-                #     note[0] = localNid
-                #     note[4] = usn
-                #     add.append(note)
-                #     dirty.append(note[0])
+                if self.allowUpdate:
+                    oldNid, oldMod, oldMid = self._notes[note[GUID]]
+                    # will update if incoming note more recent
+                    if oldMod < note[MOD]:
+                        # safe if note types identical
+                        if oldMid == note[MID]:
+                            # incoming note should use existing id
+                            note[0] = oldNid
+                            note[4] = usn
+                            note[6] = self._mungeMedia(note[MID], note[6])
+                            update.append(note)
+                            dirty.append(note[0])
+                        else:
+                            dupesIgnored.append("%s: %s" % (
+                                self.col.models.get(oldMid)['name'],
+                                note[6].replace("\x1f", ",")
+                            ))
         if dupes:
-            self.log.append(_("Already in collection: %s.") % (ngettext(
-                "%d note", "%d notes", dupes) % dupes))
+            up = len(update)
+            self.log.append(_("Updated %(a)d of %(b)d existing notes.") % dict(
+                a=len(update), b=dupes))
+            if dupesIgnored:
+                self.log.append(_("Some updates were ignored because note type has changed:"))
+                self.log.extend(dupesIgnored)
+        # export info for calling code
+        self.dupes = dupes
+        self.added = len(add)
+        self.updated = len(update)
         # add to col
         self.dst.db.executemany(
             "insert or replace into notes values (?,?,?,?,?,?,?,?,?,?,?)",
             add)
+        self.dst.db.executemany(
+            "insert or replace into notes values (?,?,?,?,?,?,?,?,?,?,?)",
+            update)
         self.dst.updateFieldCache(dirty)
         self.dst.tags.registerNotes(dirty)
 
@@ -325,7 +350,8 @@ insert or ignore into revlog values (?,?,?,?,?,?,?,?,?)""", revlog)
         return self._mediaData(fname, self.dst.media.dir())
 
     def _writeDstMedia(self, fname, data):
-        path = os.path.join(self.dst.media.dir(), fname)
+        path = os.path.join(self.dst.media.dir(),
+                            unicodedata.normalize("NFC", fname))
         try:
             open(path, "wb").write(data)
         except (OSError, IOError):
