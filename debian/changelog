@@ -1,3 +1,11 @@
+anki (2.0.15+dfsg-1) unstable; urgency=low
+
+  * Imported Upstream version 2.0.15+dfsg
+  * Change Vcs fields in control file to canonical addresses for Debian
+    collab-maint
+
+ -- Andreas Bombe <aeb@debian.org>  Thu, 24 Oct 2013 23:58:57 +0200
+
 anki (2.0.14+dfsg-1) unstable; urgency=low
 
   * Imported Upstream version 2.0.14+dfsg
