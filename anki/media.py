@@ -45,7 +45,10 @@ class MediaManager(object):
         except OSError:
             # cwd doesn't exist
             self._oldcwd = None
-        os.chdir(self._dir)
+        try:
+            os.chdir(self._dir)
+        except OSError:
+            raise Exception("invalidTempFolder")
         # change database
         self.connect()
 
@@ -225,7 +228,7 @@ class MediaManager(object):
             nfcFile = unicodedata.normalize("NFC", file)
             # we enforce NFC fs encoding on non-macs; on macs we'll have gotten
             # NFD so we use the above variable for comparing references
-            if not isMac:
+            if not isMac and local:
                 if file != nfcFile:
                     # delete if we already have the NFC form, otherwise rename
                     if os.path.exists(nfcFile):
