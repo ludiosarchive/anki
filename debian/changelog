@@ -1,3 +1,9 @@
+anki (2.0.16+dfsg-1) unstable; urgency=low
+
+  * Imported Upstream version 2.0.16+dfsg
+
+ -- Andreas Bombe <aeb@debian.org>  Mon, 04 Nov 2013 22:37:34 +0100
+
 anki (2.0.15+dfsg-1) unstable; urgency=low
 
   * Imported Upstream version 2.0.15+dfsg
