@@ -2,7 +2,6 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-import os
 import re
 import urllib
 import unicodedata
@@ -22,9 +21,9 @@ class MediaManager(object):
     soundRegexps = ["(?i)(\[sound:(?P<fname>[^]]+)\])"]
     imgRegexps = [
         # src element quoted case
-        "(?i)(<img[^>]+src=(?P<str>[\"'])(?P<fname>[^>]+?)(?P=str)[^>]*>)",
+        "(?i)(<img[^>]* src=(?P<str>[\"'])(?P<fname>[^>]+?)(?P=str)[^>]*>)",
         # unquoted case
-        "(?i)(<img[^>]+src=(?!['\"])(?P<fname>[^ >]+)[^>]*?>)",
+        "(?i)(<img[^>]* src=(?!['\"])(?P<fname>[^ >]+)[^>]*?>)",
     ]
     regexps = soundRegexps + imgRegexps
 
@@ -218,6 +217,7 @@ class MediaManager(object):
             files = os.listdir(mdir)
         else:
             files = local
+        renamedFiles = False
         for file in files:
             if not local:
                 if not os.path.isfile(file):
@@ -237,14 +237,20 @@ class MediaManager(object):
                     # delete if we already have the NFC form, otherwise rename
                     if os.path.exists(nfcFile):
                         os.unlink(file)
+                        renamedFiles = True
                     else:
                         os.rename(file, nfcFile)
+                        renamedFiles = True
                     file = nfcFile
             # compare
             if nfcFile not in allRefs:
                 unused.append(file)
             else:
                 allRefs.discard(nfcFile)
+        # if we renamed any files to nfc format, we must rerun the check
+        # to make sure the renamed files are not marked as unused
+        if renamedFiles:
+            return self.check(local=local)
         nohave = [x for x in allRefs if not x.startswith("_")]
         return (nohave, unused, invalid)
 
@@ -342,7 +348,7 @@ class MediaManager(object):
     def hasIllegal(self, str):
         # a file that couldn't be decoded to unicode is considered invalid
         if not isinstance(str, unicode):
-            return False
+            return True
         return not not re.search(self._illegalCharReg, str)
 
     # Media syncing - bundling zip files to send to server
@@ -374,7 +380,7 @@ class MediaManager(object):
             z.write(fname, str(cnt))
             files[str(cnt)] = unicodedata.normalize("NFC", fname)
             sz += os.path.getsize(fname)
-            if sz > SYNC_ZIP_SIZE or cnt > SYNC_ZIP_COUNT:
+            if sz >= SYNC_ZIP_SIZE or cnt >= SYNC_ZIP_COUNT:
                 break
             cnt += 1
         z.writestr("_meta", json.dumps(files))
@@ -505,8 +511,12 @@ create table log (fname text primary key, type int);
         need = []
         remove = []
         for f in files:
-            if self.db.scalar("select 1 from log where fname=?", f):
-                remove.append((f,))
+            if isMac:
+                name = unicodedata.normalize("NFD", f)
+            else:
+                name = f
+            if self.db.scalar("select 1 from log where fname=?", name):
+                remove.append((name,))
             else:
                 need.append(f)
         self.db.executemany("delete from log where fname=?", remove)

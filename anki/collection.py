@@ -161,6 +161,7 @@ crt=?, mod=?, scm=?, dty=?, usn=?, ls=?, conf=?""",
             self.db.close()
             self.db = None
             self.media.close()
+            self._closeLog()
 
     def reopen(self):
         "Reconnect to DB (after changing threads, etc)."
@@ -168,6 +169,7 @@ crt=?, mod=?, scm=?, dty=?, usn=?, ls=?, conf=?""",
         if not self.db:
             self.db = anki.db.DB(self.path)
             self.media.connect()
+            self._openLog()
 
     def rollback(self):
         self.db.rollback()
@@ -741,6 +743,16 @@ select id from cards where nid not in (select id from notes)""")
                 ngettext("Deleted %d card with missing note.",
                          "Deleted %d cards with missing note.", cnt) % cnt)
             self.remCards(ids)
+        # cards with odue set when it shouldn't be
+        ids = self.db.list("""
+select id from cards where odue > 0 and (type=1 or queue=2) and not odid""")
+        if ids:
+            cnt = len(ids)
+            problems.append(
+                ngettext("Fixed %d card with invalid properties.",
+                         "Fixed %d cards with invalid properties.", cnt) % cnt)
+            self.db.execute("update cards set odue=0 where id in "+
+                ids2str(ids))
         # tags
         self.tags.registerNotes()
         # field cache

@@ -638,6 +638,7 @@ class Browser(QMainWindow):
         noSort = ("question", "answer", "template", "deck", "note", "noteTags")
         if type in noSort:
             if type == "template":
+                # fixme: change to 'card:1' to be clearer in future dev round
                 showInfo(_("""\
 This column can't be sorted on, but you can search for individual card types, \
 such as 'card:Card 1'."""))
@@ -716,6 +717,8 @@ by clicking on one on the left."""))
                 hh.setResizeMode(i, QHeaderView.Stretch)
             else:
                 hh.setResizeMode(i, QHeaderView.Interactive)
+        # this must be set post-resize or it doesn't work
+        hh.setCascadingSectionResizes(False)
 
     def onColumnMoved(self, a, b, c):
         self.setColumnSizes()

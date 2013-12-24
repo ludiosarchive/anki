@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/browser.ui'
 #
-# Created: Fri Sep 27 13:31:23 2013
+# Created: Tue Nov 26 04:55:52 2013
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -100,7 +100,7 @@ class Ui_Dialog(object):
         self.tableView.setAlternatingRowColors(True)
         self.tableView.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableView.setObjectName(_fromUtf8("tableView"))
-        self.tableView.horizontalHeader().setCascadingSectionResizes(True)
+        self.tableView.horizontalHeader().setCascadingSectionResizes(False)
         self.tableView.horizontalHeader().setHighlightSections(False)
         self.tableView.horizontalHeader().setMinimumSectionSize(20)
         self.tableView.horizontalHeader().setSortIndicatorShown(True)
