@@ -1,3 +1,10 @@
+anki (2.0.20+dfsg-1) unstable; urgency=medium
+
+  * Imported Upstream version 2.0.20+dfsg
+  * Bump Standards-Version to 3.9.5
+
+ -- Andreas Bombe <aeb@debian.org>  Tue, 24 Dec 2013 01:19:42 +0100
+
 anki (2.0.18+dfsg-1) unstable; urgency=low
 
   * Imported Upstream version 2.0.18+dfsg
