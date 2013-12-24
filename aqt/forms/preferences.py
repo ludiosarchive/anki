@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/preferences.ui'
 #
-# Created: Tue Oct 15 21:12:50 2013
+# Created: Fri Dec  6 13:34:40 2013
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -157,6 +157,9 @@ class Ui_Preferences(object):
         spacerItem3 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_2.addItem(spacerItem3, 0, 3, 1, 1)
         self.verticalLayout_3.addLayout(self.gridLayout_2)
+        self.compressBackups = QtGui.QCheckBox(self.tab)
+        self.compressBackups.setObjectName(_fromUtf8("compressBackups"))
+        self.verticalLayout_3.addWidget(self.compressBackups)
         self.openBackupFolder = QtGui.QLabel(self.tab)
         self.openBackupFolder.setObjectName(_fromUtf8("openBackupFolder"))
         self.verticalLayout_3.addWidget(self.openBackupFolder)
@@ -224,6 +227,7 @@ class Ui_Preferences(object):
         self.label_9.setText(_("<b>Backups</b><br>Anki will create a backup of your collection each time it is closed or synchronized."))
         self.label_10.setText(_("Keep"))
         self.label_11.setText(_("backups"))
+        self.compressBackups.setText(_("Compress backups (slower)"))
         self.openBackupFolder.setText(_("<a href=\"backups\">Open backup folder</a>"))
         self.label_4.setText(_("Note: Media is not backed up. Please create a periodic backup of your Anki folder to be safe."))
         self.label_21.setText(_("Some settings will take effect after you restart Anki."))
