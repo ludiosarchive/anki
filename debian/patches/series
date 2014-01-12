@@ -2,3 +2,4 @@ no-version-nag
 paths
 default-locale
 uninline-javascript
+fix-traceback-import

@@ -1,0 +1,12 @@
+Index: git_anki/aqt/main.py
+===================================================================
+--- git_anki.orig/aqt/main.py	2014-01-13 00:44:07.862984931 +0100
++++ git_anki/aqt/main.py	2014-01-13 00:46:26.914268891 +0100
+@@ -24,6 +24,7 @@
+ 
+ class AnkiQt(QMainWindow):
+     def __init__(self, app, profileManager, args):
++        import traceback
+         QMainWindow.__init__(self)
+         self.state = "startup"
+         aqt.mw = self
