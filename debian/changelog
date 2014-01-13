@@ -1,3 +1,10 @@
+anki (2.0.20+dfsg-2) unstable; urgency=medium
+
+  * Add patch fix-traceback-import to add required "import traceback" at the
+    beginning of AnkiQt's __init__() (Closes: 734465)
+
+ -- Andreas Bombe <aeb@debian.org>  Mon, 13 Jan 2014 01:03:42 +0100
+
 anki (2.0.20+dfsg-1) unstable; urgency=medium
 
   * Imported Upstream version 2.0.20+dfsg
