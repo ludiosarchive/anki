@@ -96,10 +96,14 @@ class DataModel(QAbstractTableModel):
             return
         elif role == Qt.DisplayRole and section < len(self.activeCols):
             type = self.columnType(section)
+            txt = None
             for stype, name in self.browser.columns:
                 if type == stype:
                     txt = name
                     break
+            # handle case where extension has set an invalid column type
+            if not txt:
+                txt = self.browser.columns[0][1]
             return txt
         else:
             return
@@ -712,11 +716,9 @@ by clicking on one on the left."""))
 
     def setColumnSizes(self):
         hh = self.form.tableView.horizontalHeader()
-        for i in range(len(self.model.activeCols)):
-            if hh.visualIndex(i) == len(self.model.activeCols) - 1:
-                hh.setResizeMode(i, QHeaderView.Stretch)
-            else:
-                hh.setResizeMode(i, QHeaderView.Interactive)
+        hh.setResizeMode(QHeaderView.Interactive)
+        hh.setResizeMode(hh.logicalIndex(len(self.model.activeCols)-1),
+                         QHeaderView.Stretch)
         # this must be set post-resize or it doesn't work
         hh.setCascadingSectionResizes(False)
 
@@ -727,9 +729,10 @@ by clicking on one on the left."""))
     ######################################################################
 
     class CallbackItem(QTreeWidgetItem):
-        def __init__(self, root, name, onclick):
+        def __init__(self, root, name, onclick, oncollapse=None):
             QTreeWidgetItem.__init__(self, root, [name])
             self.onclick = onclick
+            self.oncollapse = oncollapse
 
     def setupTree(self):
         self.connect(
@@ -739,6 +742,12 @@ by clicking on one on the left."""))
         p.setColor(QPalette.Base, QColor("#d6dde0"))
         self.form.tree.setPalette(p)
         self.buildTree()
+        self.connect(
+            self.form.tree, SIGNAL("itemExpanded(QTreeWidgetItem*)"),
+            lambda item: self.onTreeCollapse(item))
+        self.connect(
+            self.form.tree, SIGNAL("itemCollapsed(QTreeWidgetItem*)"),
+            lambda item: self.onTreeCollapse(item))
 
     def buildTree(self):
         self.form.tree.clear()
@@ -747,14 +756,16 @@ by clicking on one on the left."""))
         self._decksTree(root)
         self._modelTree(root)
         self._userTagTree(root)
-        self.form.tree.expandAll()
-        self.form.tree.setItemsExpandable(False)
         self.form.tree.setIndentation(15)
 
     def onTreeClick(self, item, col):
         if getattr(item, 'onclick', None):
             item.onclick()
 
+    def onTreeCollapse(self, item):
+        if getattr(item, 'oncollapse', None):
+            item.oncollapse()
+            
     def setFilter(self, *args):
         if len(args) == 1:
             txt = args[0]
@@ -817,10 +828,13 @@ by clicking on one on the left."""))
         def fillGroups(root, grps, head=""):
             for g in grps:
                 item = self.CallbackItem(
-                    root, g[0], lambda g=g: self.setFilter(
-                        "deck", head+g[0]))
+                    root, g[0],
+                    lambda g=g: self.setFilter("deck", head+g[0]),
+                    lambda g=g: self.mw.col.decks.collapseBrowser(g[1]))
                 item.setIcon(0, QIcon(":/icons/deck16.png"))
                 newhead = head + g[0]+"::"
+                collapsed = self.mw.col.decks.get(g[1]).get('browserCollapsed', False)
+                item.setExpanded(not collapsed)
                 fillGroups(item, g[5], newhead)
         fillGroups(root, grps)
 
@@ -847,7 +861,7 @@ by clicking on one on the left."""))
         d = QDialog(self)
         l = QVBoxLayout()
         l.setMargin(0)
-        w = AnkiWebView()
+        w = AnkiWebView(canCopy=True)
         l.addWidget(w)
         w.stdHtml(info + "<p>" + reps)
         bb = QDialogButtonBox(QDialogButtonBox.Close)
@@ -982,8 +996,7 @@ where id in %s""" % ids2str(sf))
         c(self._previewWindow, SIGNAL("finished(int)"), self._onPreviewFinished)
         vbox = QVBoxLayout()
         vbox.setMargin(0)
-        self._previewWeb = AnkiWebView()
-        self._previewWeb.setFocusPolicy(Qt.NoFocus)
+        self._previewWeb = AnkiWebView(True)
         vbox.addWidget(self._previewWeb)
         bbox = QDialogButtonBox()
         self._previewPrev = bbox.addButton("<", QDialogButtonBox.ActionRole)
@@ -1193,7 +1206,9 @@ update cards set usn=?, mod=?, did=? where id in """ + scids,
         frm = aqt.forms.reposition.Ui_Dialog()
         frm.setupUi(d)
         (pmin, pmax) = self.col.db.first(
-            "select min(due), max(due) from cards where type=0")
+            "select min(due), max(due) from cards where type=0 and odid=0")
+        pmin = pmin or 0
+        pmax = pmax or 0
         txt = _("Queue top: %d") % pmin
         txt += "\n" + _("Queue bottom: %d") % pmax
         frm.label.setText(txt)
