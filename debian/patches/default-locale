@@ -6,9 +6,9 @@ Description: Use getlocale(LC_MESSAGES) for default interface locale
 
 Index: git_anki/aqt/profiles.py
 ===================================================================
---- git_anki.orig/aqt/profiles.py	2013-11-22 20:37:44.827476291 +0100
-+++ git_anki/aqt/profiles.py	2013-11-22 20:37:44.825476287 +0100
-@@ -260,7 +260,7 @@
+--- git_anki.orig/aqt/profiles.py	2014-08-09 23:27:25.471018383 +0200
++++ git_anki/aqt/profiles.py	2014-08-09 23:27:25.467018370 +0200
+@@ -305,7 +305,7 @@
          d.connect(d, SIGNAL("rejected()"), lambda: True)
          # default to the system language
          try:
