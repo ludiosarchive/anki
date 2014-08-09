@@ -53,7 +53,7 @@ class DialogManager(object):
     def open(self, name, *args):
         (creator, instance) = self._dialogs[name]
         if instance:
-            instance.setWindowState(Qt.WindowActive)
+            instance.setWindowState(instance.windowState() | Qt.WindowActive)
             instance.activateWindow()
             instance.raise_()
             return instance
@@ -189,6 +189,14 @@ def parseArgs(argv):
     return parser.parse_args(argv[1:])
 
 def run():
+    try:
+        _run()
+    except Exception, e:
+        QMessageBox.critical(None, "Startup Error",
+                             "Please notify support of this error:\n\n"+
+                             traceback.format_exc())
+
+def _run():
     global mw
 
     # parse args
@@ -246,6 +254,3 @@ environment points to a valid, writable folder.""")
     import aqt.main
     mw = aqt.main.AnkiQt(app, pm, args)
     app.exec_()
-
-if __name__ == "__main__":
-    run()

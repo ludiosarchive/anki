@@ -353,10 +353,15 @@ group by day order by day""" % (self._limit(), lim),
                 tot, period, unit))
         if total and tot:
             perMin = total / float(tot)
-            perMin = ngettext("%d card/minute", "%d cards/minute", perMin) % perMin
+            perMin = round(perMin, 1)
+            # don't round down to zero
+            if perMin < 0.1:
+                text = _("less than 0.1 cards/minute")
+            else:
+                text = _("%.01f cards/minute") % perMin
             self._line(
                 i, _("Average answer time"),
-                _("%(a)0.1fs (%(b)s)") % dict(a=(tot*60)/total, b=perMin))
+                _("%(a)0.1fs (%(b)s)") % dict(a=(tot*60)/total, b=text))
         return self._lineTbl(i), int(tot)
 
     def _splitRepData(self, data, spec):
@@ -655,7 +660,7 @@ group by hour having count() > 30 order by hour""" % lim,
             (_("Mature"), colMature),
             (_("Young+Learn"), colYoung),
             (_("Unseen"), colUnseen),
-            (_("Suspended"), colSusp))):
+            (_("Suspended+Buried"), colSusp))):
             d.append(dict(data=div[c], label="%s: %s" % (t, div[c]), color=col))
         # text data
         i = []

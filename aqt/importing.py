@@ -79,6 +79,9 @@ class ImportDialog(QDialog):
         self.updateDelimiterButtonText()
         self.frm.allowHTML.setChecked(self.mw.pm.profile.get('allowHTML', True))
         self.frm.importMode.setCurrentIndex(self.mw.pm.profile.get('importMode', 1))
+        # import button
+        b = QPushButton(_("Import"))
+        self.frm.buttonBox.addButton(b, QDialogButtonBox.AcceptRole)
         self.exec_()
 
     def setupOptions(self):
@@ -87,8 +90,6 @@ class ImportDialog(QDialog):
             self.mw, self.frm.modelArea, label=False)
         self.deck = aqt.deckchooser.DeckChooser(
             self.mw, self.frm.deckArea, label=False)
-        self.connect(self.frm.importButton, SIGNAL("clicked()"),
-                     self.doImport)
 
     def modelChanged(self):
         self.importer.model = self.mw.col.models.current()
@@ -138,8 +139,8 @@ you can enter it here. Use \\t to represent tab."""),
             d = `d`
         txt = _("Fields separated by: %s") % d
         self.frm.autoDetect.setText(txt)
-
-    def doImport(self, update=False):
+        
+    def accept(self):
         self.importer.mapping = self.mapping
         if not self.importer.mappingOk():
             showWarning(
@@ -249,7 +250,7 @@ you can enter it here. Use \\t to represent tab."""),
         QDialog.reject(self)
 
     def helpRequested(self):
-        openHelp("FileImport")
+        openHelp("importing")
 
 
 def showUnicodeWarning():
@@ -294,7 +295,7 @@ def importFile(mw, file):
             return
         except Exception, e:
             msg = repr(str(e))
-            if msg == "unknownFormat":
+            if msg == "'unknownFormat'":
                 if file.endswith(".anki2"):
                     showWarning(_("""\
 .anki2 files are not designed for importing. If you're trying to restore from a \
@@ -316,7 +317,7 @@ backup, please see the 'Backups' section of the user manual."""))
             try:
                 z.getinfo("collection.anki2")
             except:
-                showWarning(_("The provided file is not a valid .apkg file."))
+                showWarning(invalidZipMsg())
                 return
             # we need to ask whether to import/replace
             if not setupApkgImport(mw, importer):
@@ -325,12 +326,7 @@ backup, please see the 'Backups' section of the user manual."""))
         try:
             importer.run()
         except zipfile.BadZipfile:
-            msg = _("""\
-This file does not appear to be a valid .apkg file. If you're getting this \
-error from a file downloaded from AnkiWeb, chances are that your download \
-failed. Please try again, and if the problem persists, please try again \
-with a different browser.""")
-            showWarning(msg)
+            showWarning(invalidZipMsg())
         except Exception, e:
             err = repr(str(e))
             if "invalidFile" in err:
@@ -356,6 +352,13 @@ Unable to import from a read-only file."""))
             mw.progress.finish()
         mw.reset()
 
+def invalidZipMsg():
+    return _("""\
+This file does not appear to be a valid .apkg file. If you're getting this \
+error from a file downloaded from AnkiWeb, chances are that your download \
+failed. Please try again, and if the problem persists, please try again \
+with a different browser.""")
+
 def setupApkgImport(mw, importer):
     base = os.path.basename(importer.file).lower()
     full = (base == "collection.apkg") or re.match("backup-.*\\.apkg", base)
@@ -378,7 +381,11 @@ def replaceWithApkg(mw, file, backup):
     mw.unloadCollection()
     # overwrite collection
     z = zipfile.ZipFile(file)
-    z.extract("collection.anki2", mw.pm.profileFolder())
+    try:
+        z.extract("collection.anki2", mw.pm.profileFolder())
+    except:
+        showWarning(_("The provided file is not a valid .apkg file."))
+        return
     # because users don't have a backup of media, it's safer to import new
     # data and rely on them running a media db check to get rid of any
     # unwanted media. in the future we might also want to deduplicate this

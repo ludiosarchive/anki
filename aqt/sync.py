@@ -217,10 +217,10 @@ enter your details below.""") %
         vbox.addWidget(bb)
         d.setLayout(vbox)
         d.show()
-        d.exec_()
+        accepted = d.exec_()
         u = user.text()
         p = passwd.text()
-        if not u or not p:
+        if not accepted or not u or not p:
             return
         return (u, p)
 
@@ -404,9 +404,9 @@ class SyncThread(QThread):
     def _syncMedia(self):
         if not self.media:
             return
-        self.server = RemoteMediaServer(self.hkey, self.server.con)
+        self.server = RemoteMediaServer(self.col, self.hkey, self.server.con)
         self.client = MediaSyncer(self.col, self.server)
-        ret = self.client.sync(self.mediaUsn)
+        ret = self.client.sync()
         if ret == "noChanges":
             self.fireEvent("noMediaChanges")
         elif ret == "sanityCheckFailed":
