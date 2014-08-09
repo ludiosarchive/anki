@@ -1,3 +1,11 @@
+anki (2.0.28+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 2.0.28+dfsg (Closes: 757202)
+  * Add mplayer2 and lame to Suggests, they are used for the recording
+    and playback of cards with sound (Closes: 738463)
+
+ -- Andreas Bombe <aeb@debian.org>  Sat, 09 Aug 2014 23:58:48 +0200
+
 anki (2.0.26+dfsg-1) unstable; urgency=medium
 
   * Imported Upstream version 2.0.26+dfsg
