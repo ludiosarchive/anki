@@ -20,10 +20,12 @@ class Exporter(object):
         file.close()
 
     def escapeText(self, text):
-        "Escape newlines, tabs and CSS."
+        "Escape newlines, tabs, CSS and quotechar."
         text = text.replace("\n", "<br>")
         text = text.replace("\t", " " * 8)
         text = re.sub("(?i)<style>.*?</style>", "", text)
+        if "\"" in text:
+        	text = "\"" + text.replace("\"", "\"\"") + "\""
         return text
 
     def cardIds(self):
@@ -256,7 +258,10 @@ class AnkiPackageExporter(AnkiExporter):
                 media[c] = file
         # tidy up intermediate files
         os.unlink(colfile)
-        os.unlink(path.replace(".apkg", ".media.db"))
+        p = path.replace(".apkg", ".media.db2")
+        if os.path.exists(p):
+            os.unlink(p)
+        os.chdir(self.mediaDir)
         shutil.rmtree(path.replace(".apkg", ".media"))
         return media
 

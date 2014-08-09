@@ -106,14 +106,19 @@ class Reviewer(object):
     # Audio
     ##########################################################################
 
-    def replayAudio(self):
+    def replayAudio(self, previewer=None):
+        if previewer:
+            state = previewer._previewState
+            c = previewer.card
+        else:
+            state = self.state
+            c = self.card
         clearAudioQueue()
-        c = self.card
-        if self.state == "question":
+        if state == "question":
             playFromText(c.q())
-        elif self.state == "answer":
+        elif state == "answer":
             txt = ""
-            if self._replayq(c):
+            if self._replayq(c, previewer):
                 txt = c.q()
             txt += c.a()
             playFromText(txt)
@@ -122,7 +127,7 @@ class Reviewer(object):
     ##########################################################################
 
     _revHtml = """
-<img src="qrc:/icons/rating.png" class=marked>
+<img src="qrc:/icons/rating.png" id=star class=marked>
 <div id=qa></div>
 <script>
 var ankiPlatform = "desktop";
@@ -218,9 +223,10 @@ The front of this card is empty. Please run Tools>Empty Cards.""")
         return self.mw.col.decks.confForDid(
             card.odid or card.did)['autoplay']
 
-    def _replayq(self, card):
-        return self.mw.col.decks.confForDid(
-            self.card.odid or self.card.did).get('replayq', True)
+    def _replayq(self, card, previewer=None):
+        s = previewer if previewer else self
+        return s.mw.col.decks.confForDid(
+            s.card.odid or s.card.did).get('replayq', True)
 
     def _toggleStar(self):
         self.web.eval("_toggleStar(%s);" % json.dumps(

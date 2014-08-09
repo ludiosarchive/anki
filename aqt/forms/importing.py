@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/importing.ui'
 #
-# Created: Sun Mar 30 10:19:29 2014
+# Created: Mon May 12 15:34:54 2014
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -73,13 +73,6 @@ class Ui_ImportDialog(object):
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.gridLayout = QtGui.QGridLayout()
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
-        self.verticalLayout = QtGui.QVBoxLayout()
-        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
-        self.importButton = QtGui.QPushButton(self.mappingGroup)
-        self.importButton.setDefault(True)
-        self.importButton.setObjectName(_fromUtf8("importButton"))
-        self.verticalLayout.addWidget(self.importButton)
-        self.gridLayout.addLayout(self.verticalLayout, 0, 1, 1, 1)
         self.mappingArea = QtGui.QScrollArea(self.mappingGroup)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
@@ -91,7 +84,7 @@ class Ui_ImportDialog(object):
         self.mappingArea.setWidgetResizable(True)
         self.mappingArea.setObjectName(_fromUtf8("mappingArea"))
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 402, 206))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 529, 251))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self.mappingArea.setWidget(self.scrollAreaWidgetContents)
         self.gridLayout.addWidget(self.mappingArea, 0, 0, 1, 1)
@@ -107,7 +100,6 @@ class Ui_ImportDialog(object):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), ImportDialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), ImportDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(ImportDialog)
-        ImportDialog.setTabOrder(self.importButton, self.buttonBox)
 
     def retranslateUi(self, ImportDialog):
         ImportDialog.setWindowTitle(_("Import"))
@@ -119,5 +111,4 @@ class Ui_ImportDialog(object):
         self.importMode.setItemText(2, _("Import even if existing note has same first field"))
         self.allowHTML.setText(_("Allow HTML in fields"))
         self.mappingGroup.setTitle(_("Field mapping"))
-        self.importButton.setText(_("&Import"))
 

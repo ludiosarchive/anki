@@ -17,6 +17,7 @@ import sys
 import locale
 from hashlib import sha1
 import platform
+import traceback
 
 from anki.lang import _, ngettext
 
@@ -291,9 +292,10 @@ def tmpdir():
             shutil.rmtree(_tmpdir)
         import atexit
         atexit.register(cleanup)
-        _tmpdir = unicode(os.path.join(tempfile.gettempdir(), "anki_temp"), sys.getfilesystemencoding())
-        if not os.path.exists(_tmpdir):
-            os.mkdir(_tmpdir)
+        _tmpdir = unicode(os.path.join(tempfile.gettempdir(), "anki_temp"), \
+                sys.getfilesystemencoding())
+    if not os.path.exists(_tmpdir):
+        os.mkdir(_tmpdir)
     return _tmpdir
 
 def tmpfile(prefix="", suffix=""):
@@ -384,3 +386,15 @@ def platDesc():
         except:
             continue
     return theos
+
+# Debugging
+##############################################################################
+
+class TimedLog(object):
+    def __init__(self):
+        self._last = time.time()
+    def log(self, s):
+        path, num, fn, y = traceback.extract_stack(limit=2)[0]
+        sys.stderr.write("%5dms: %s(): %s\n" % ((time.time() - self._last)*1000, fn, s))
+        self._last = time.time()
+
