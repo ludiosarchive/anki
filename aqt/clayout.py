@@ -120,9 +120,9 @@ class CardLayout(QDialog):
                 self.model, joinFields(self.note.fields)))
             for g in pform.groupBox, pform.groupBox_2:
                 g.setTitle(g.title() + _(" (1 of %d)") % max(cnt, 1))
-        pform.frontWeb = AnkiWebView(True)
+        pform.frontWeb = AnkiWebView()
         pform.frontPrevBox.addWidget(pform.frontWeb)
-        pform.backWeb = AnkiWebView(True)
+        pform.backWeb = AnkiWebView()
         pform.backPrevBox.addWidget(pform.backWeb)
         for wig in pform.frontWeb, pform.backWeb:
             wig.page().setLinkDelegationPolicy(
@@ -204,6 +204,12 @@ Please create a new card type first."""))
         self.tab['tform'].front.setPlainText(t['qfmt'])
         self.tab['tform'].css.setPlainText(self.model['css'])
         self.tab['tform'].back.setPlainText(t['afmt'])
+        self.tab['tform'].front.setAcceptRichText(False)
+        self.tab['tform'].css.setAcceptRichText(False)
+        self.tab['tform'].back.setAcceptRichText(False)
+        self.tab['tform'].front.setTabStopWidth(30)
+        self.tab['tform'].css.setTabStopWidth(30)
+        self.tab['tform'].back.setTabStopWidth(30)
         self.redrawing = False
 
     def saveCard(self):

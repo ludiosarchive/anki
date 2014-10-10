@@ -41,6 +41,7 @@ class ExportDialog(QDialog):
     def exporterChanged(self, idx):
         self.exporter = exporters()[idx][1](self.col)
         self.isApkg = hasattr(self.exporter, "includeSched")
+        self.isTextNote = hasattr(self.exporter, "includeTags")
         self.hideTags = hasattr(self.exporter, "hideTags")
         self.frm.includeSched.setVisible(self.isApkg)
         self.frm.includeMedia.setVisible(self.isApkg)
@@ -63,13 +64,20 @@ class ExportDialog(QDialog):
             self.exporter.did):
             verbatim = True
             # it's a verbatim apkg export, so place on desktop instead of
-            # choosing file
+            # choosing file; use homedir if no desktop
+            usingHomedir = False
             file = os.path.join(QDesktopServices.storageLocation(
                 QDesktopServices.DesktopLocation), "collection.apkg")
+            if not os.path.exists(os.path.dirname(file)):
+                usingHomedir = True
+                file = os.path.join(QDesktopServices.storageLocation(
+                    QDesktopServices.HomeLocation), "collection.apkg")
             if os.path.exists(file):
-                if not askUser(
-                    _("%s already exists on your desktop. Overwrite it?")%
-                    "collection.apkg"):
+                if usingHomedir:
+                    question = _("%s already exists in your home directory. Overwrite it?")
+                else:
+                    question = _("%s already exists on your desktop. Overwrite it?")
+                if not askUser(question % "collection.apkg"):
                     return
         else:
             verbatim = False
@@ -99,12 +107,20 @@ class ExportDialog(QDialog):
                 os.unlink(file)
                 self.exporter.exportInto(file)
                 if verbatim:
-                    msg = _("A file called collection.apkg was saved on your desktop.")
+                    if usingHomedir:
+                        msg = _("A file called %s was saved in your home directory.")
+                    else:
+                        msg = _("A file called %s was saved on your desktop.")
+                    msg = msg % "collection.apkg"
                     period = 5000
                 else:
                     period = 3000
-                    msg = ngettext("%d card exported.", "%d cards exported.", \
-                                self.exporter.count) % self.exporter.count
+                    if self.isTextNote:
+                        msg = ngettext("%d note exported.", "%d notes exported.",
+                                    self.exporter.count) % self.exporter.count
+                    else:
+                        msg = ngettext("%d card exported.", "%d cards exported.",
+                                    self.exporter.count) % self.exporter.count
                 tooltip(msg, period=period)
             finally:
                 self.mw.progress.finish()
