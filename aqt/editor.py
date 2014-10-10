@@ -450,8 +450,7 @@ class Editor(object):
             # misbehaving apps may include a null byte in the text
             txt = txt.replace("\x00", "")
             # reverse the url quoting we added to get images to display
-            txt = unicode(urllib2.unquote(
-                txt.encode("utf8")), "utf8", "replace")
+            txt = self.mw.col.media.escapeImages(txt, unescape=True)
             self.note.fields[self.currentField] = txt
             if not self.addMode:
                 self.note.flush()
@@ -988,7 +987,7 @@ to a cloze type first, via Edit>Change Note Type."""))
 class EditorWebView(AnkiWebView):
 
     def __init__(self, parent, editor):
-        AnkiWebView.__init__(self, canFocus=True)
+        AnkiWebView.__init__(self)
         self.editor = editor
         self.strip = self.editor.mw.pm.profile['stripHTML']
 
