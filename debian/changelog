@@ -1,3 +1,11 @@
+anki (2.0.29+dfsg-1) unstable; urgency=medium
+
+  * Imported Upstream version 2.0.29+dfsg
+  * Remove patch fix-traceback-import, has been fixed differently in
+    upstream for a few versions already
+
+ -- Andreas Bombe <aeb@debian.org>  Mon, 13 Oct 2014 23:43:52 +0200
+
 anki (2.0.28+dfsg-1) unstable; urgency=medium
 
   * New upstream version 2.0.28+dfsg (Closes: 757202)
