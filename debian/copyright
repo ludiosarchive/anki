@@ -10,9 +10,9 @@ Files: debian/*
 Copyright: 2008-2013 Andreas Bombe <aeb@debian.org>
 License: GPL-2+
 
-Files: anki.xpm anki.png anki.svg anki-logo*.svg anki-logo*.png
+Files: anki.xpm designer/icons/anki.* designer/icons/anki-logo*
 Copyright: Alex Fraser
-License: AGPL-3 with logo permissions
+License: AGPL-3 with logo exception
 
 Files: anki/template/* oldanki/template/*
 Copyright: 2009 Chris Wanstrath
@@ -24,15 +24,15 @@ License: GPL-3+
 
 Files: anki/importing/pauker.py
 Copyright: Andreas Klauer <Andreas.Klauer@metamorpher.de>
-License: BSD-3-clause (generic)
+License: BSD-3-clause
 
 Files: locale/*
 Copyright: Damien Elmes <anki@ichi2.net>
-License: BSD-3-clause (generic)
+License: BSD-3-clause
 
 Files: thirdparty/send2trash/*
 Copyright: 2010 Hardcoded Software (http://www.hardcoded.net)
-License: BSD-3-clause (send2trash)
+License: BSD-3-clause-send2trash
 
 Files: anki/js.py
 Copyright: 2010, Rafael Lima
@@ -724,7 +724,7 @@ License: AGPL-3
  <http://www.gnu.org/licenses/>.
 
 
-License: AGPL-3 with logo permissions
+License: AGPL-3 with logo exception
  Anki's logo is copyright Alex Fraser, and is licensed under the AGPL3
  like the rest of Anki's code, but with extra provisions to allow more
  liberal use of the logo under limited conditions.
@@ -784,7 +784,7 @@ License: GPL-3+
  version 3 can be found in the file `/usr/share/common-licenses/GPL-3'.
 
 
-License: BSD-3-clause (generic)
+License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  .
@@ -811,7 +811,7 @@ License: BSD-3-clause (generic)
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-License: BSD-3-clause (send2trash)
+License: BSD-3-clause-send2trash
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  .
