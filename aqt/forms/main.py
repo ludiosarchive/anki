@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/main.ui'
 #
-# Created: Sun Mar 30 10:19:29 2014
+# Created: Mon Sep 22 13:04:13 2014
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -46,7 +46,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 412, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 412, 27))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuHelp = QtGui.QMenu(self.menubar)
         self.menuHelp.setObjectName(_fromUtf8("menuHelp"))
@@ -168,5 +168,6 @@ class Ui_MainWindow(object):
         self.actionCreateFiltered.setText(_("Create Filtered Deck..."))
         self.actionCreateFiltered.setShortcut(_("F"))
         self.actionNoteTypes.setText(_("Manage Note Types..."))
+        self.actionNoteTypes.setShortcut(_("Ctrl+Shift+N"))
 
 import icons_rc
