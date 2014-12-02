@@ -1,3 +1,12 @@
+anki (2.0.31+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 2.0.31+dfsg
+    - Having a current version fixes Anki server refusing to sync
+      (Closes: 768398)
+  * Add README.Debian with some info about why network syncing may fail
+
+ -- Andreas Bombe <aeb@debian.org>  Tue, 02 Dec 2014 01:54:04 +0100
+
 anki (2.0.30+dfsg-1) unstable; urgency=medium
 
   * New upstream version 2.0.30+dfsg
