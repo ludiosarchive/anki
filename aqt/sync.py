@@ -367,8 +367,6 @@ class SyncThread(QThread):
             return self.fireEvent("clockOff")
         elif ret == "basicCheckFailed" or ret == "sanityCheckFailed":
             return self.fireEvent("checkFailed")
-        # note mediaUSN for later
-        self.mediaUsn = self.client.mediaUsn
         # full sync?
         if ret == "fullSync":
             return self._fullSync()
@@ -378,7 +376,7 @@ class SyncThread(QThread):
         elif ret == "success":
             self.fireEvent("success")
         elif ret == "serverAbort":
-            self.fireEvent("error", self.client.syncMsg)
+            pass
         else:
             self.fireEvent("error", "Unknown sync return code.")
         self.syncMsg = self.client.syncMsg
