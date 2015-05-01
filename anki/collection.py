@@ -171,7 +171,7 @@ crt=?, mod=?, scm=?, dty=?, usn=?, ls=?, conf=?""",
         self.load()
         self.lock()
 
-    def modSchema(self, check=True):
+    def modSchema(self, check):
         "Mark schema modified. Call this first so user can abort if necessary."
         if not self.schemaChanged():
             if check and not runFilter("modSchema", True):
@@ -197,7 +197,7 @@ crt=?, mod=?, scm=?, dty=?, usn=?, ls=?, conf=?""",
         self.models.beforeUpload()
         self.tags.beforeUpload()
         self.decks.beforeUpload()
-        self.modSchema()
+        self.modSchema(check=False)
         self.ls = self.scm
         # ensure db is compacted before upload
         self.db.execute("vacuum")
@@ -498,6 +498,7 @@ where c.nid = n.id and c.id in %s group by nid""" % ids2str(cids)):
         fields['Tags'] = data[5].strip()
         fields['Type'] = model['name']
         fields['Deck'] = self.decks.name(data[3])
+        fields['Subdeck'] = fields['Deck'].split('::')[-1]
         if model['type'] == MODEL_STD:
             template = model['tmpls'][data[4]]
         else:
