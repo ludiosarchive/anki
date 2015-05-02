@@ -1,3 +1,10 @@
+anki (2.0.32+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 2.0.32+dfsg
+  * Add dh-python to Build-Depends-Indep
+
+ -- Andreas Bombe <aeb@debian.org>  Sat, 02 May 2015 03:00:18 +0200
+
 anki (2.0.31+dfsg-1) unstable; urgency=medium
 
   * New upstream version 2.0.31+dfsg
