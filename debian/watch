@@ -1,4 +1,7 @@
 version=3
 
 opts=dversionmangle=s/\+dfsg// \
-http://ankisrs.net/download/mirror/anki-(.+)\.tgz
+ https://apps.ankiweb.net .*/anki-([0-9.]+)-source\.tgz
+
+opts=dversionmangle=s/\+dfsg// \
+ https://apps.ankiweb.net/downloads/archive/ anki-([0-9.]+)\.tgz
