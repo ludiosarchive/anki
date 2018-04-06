@@ -1,3 +1,9 @@
+anki (2.0.51-1) unstable; urgency=medium
+
+  * See https://web.archive.org/web/20180406171025/https://apps.ankiweb.net/docs/changes.html
+
+ -- Ivan Kozik <ivan@ludios.org>  Fri, 06 Apr 2018 17:11:00 +0000
+
 anki (2.0.32+dfsg-1) unstable; urgency=medium
 
   * New upstream version 2.0.32+dfsg
