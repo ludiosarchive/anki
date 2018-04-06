@@ -15,7 +15,7 @@ import re
 from aqt.qt import *
 from anki.db import DB
 from anki.utils import isMac, isWin, intTime, checksum
-from anki.lang import langs
+import anki.lang
 from aqt.utils import showWarning
 from aqt import appHelpSite
 import aqt.forms
@@ -69,6 +69,7 @@ class ProfileManager(object):
             self.base = os.path.abspath(base)
         else:
             self.base = self._defaultBase()
+            self.maybeMigrateFolder()
         self.ensureBaseExists()
         # load metadata
         self.firstRun = self._loadMeta()
@@ -94,6 +95,17 @@ read-only and you have permission to write to it. If you cannot fix this \
 issue, please see the documentation for information on running Anki from \
 a flash drive.""" % self.base)
             raise
+
+    # Folder migration
+    ######################################################################
+
+    def maybeMigrateFolder(self):
+        if not isMac:
+            return
+        oldBase = os.path.expanduser("~/Documents/Anki")
+        if not os.path.exists(self.base) and os.path.exists(oldBase):
+            os.rename(oldBase, self.base)
+            os.symlink(self.base, oldBase)
 
     # Profile load/save
     ######################################################################
@@ -217,7 +229,7 @@ and no other programs are accessing your profile folders, then try again."""))
                 loc = QDesktopServices.storageLocation(QDesktopServices.DocumentsLocation)
             return os.path.join(loc, "Anki")
         elif isMac:
-            return os.path.expanduser("~/Documents/Anki")
+            return os.path.expanduser("~/Library/Application Support/Anki2")
         else:
             # use Documents/Anki on new installs, ~/Anki on existing ones
             p = os.path.expanduser("~/Anki")
@@ -322,7 +334,7 @@ please see:
         # find index
         idx = None
         en = None
-        for c, (name, code) in enumerate(langs):
+        for c, (name, code) in enumerate(anki.lang.langs):
             if code == "en":
                 en = c
             if code == lang:
@@ -331,13 +343,13 @@ please see:
         if idx is None:
             idx = en
         # update list
-        f.lang.addItems([x[0] for x in langs])
+        f.lang.addItems([x[0] for x in anki.lang.langs])
         f.lang.setCurrentRow(idx)
         d.exec_()
 
     def _onLangSelected(self):
         f = self.langForm
-        obj = langs[f.lang.currentRow()]
+        obj = anki.lang.langs[f.lang.currentRow()]
         code = obj[1]
         name = obj[0]
         en = "Are you sure you wish to display Anki's interface in %s?"
@@ -346,7 +358,11 @@ please see:
             QMessageBox.No)
         if r != QMessageBox.Yes:
             return self._setDefaultLang()
+        self.setLang(code)
+
+    def setLang(self, code):
         self.meta['defaultLang'] = code
         sql = "update profiles set data = ? where name = ?"
         self.db.execute(sql, cPickle.dumps(self.meta), "_global")
         self.db.commit()
+        anki.lang.setLang(code, local=False)

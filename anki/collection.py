@@ -304,12 +304,15 @@ crt=?, mod=?, scm=?, dty=?, usn=?, ls=?, conf=?""",
         snids = ids2str(nids)
         have = {}
         dids = {}
-        for id, nid, ord, did in self.db.execute(
-            "select id, nid, ord, did from cards where nid in "+snids):
+        for id, nid, ord, did, odid in self.db.execute(
+            "select id, nid, ord, did, odid from cards where nid in "+snids):
             # existing cards
             if nid not in have:
                 have[nid] = {}
             have[nid][ord] = id
+            # if in a filtered deck, add new cards to original deck
+            if odid != 0:
+                did = odid
             # and their dids
             if nid in dids:
                 if dids[nid] and dids[nid] != did:
@@ -379,7 +382,11 @@ insert into cards values (?,?,?,?,?,?,0,0,?,0,0,0,0,0,0,0,0,"")""",
         card = anki.cards.Card(self)
         card.nid = note.id
         card.ord = template['ord']
-        card.did = template['did'] or note.model()['did']
+        # Use template did (deck override) if valid, otherwise model did
+        if template['did'] and unicode(template['did']) in self.decks.decks:
+            card.did = template['did']
+        else:
+            card.did = note.model()['did']
         # if invalid did, use default instead
         deck = self.decks.get(card.did)
         if deck['dyn']:

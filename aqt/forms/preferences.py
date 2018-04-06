@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/preferences.ui'
 #
-# Created: Sun Mar 30 10:19:29 2014
+# Created: Thu Dec 22 13:02:40 2016
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_Preferences(object):
     def setupUi(self, Preferences):
         Preferences.setObjectName(_fromUtf8("Preferences"))
-        Preferences.resize(405, 450)
+        Preferences.resize(405, 455)
         self.verticalLayout_2 = QtGui.QVBoxLayout(Preferences)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.tabWidget = QtGui.QTabWidget(Preferences)
@@ -37,6 +37,20 @@ class Ui_Preferences(object):
         self.verticalLayout = QtGui.QVBoxLayout(self.tab_1)
         self.verticalLayout.setSpacing(12)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.horizontalLayout_2 = QtGui.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
+        self.label = QtGui.QLabel(self.tab_1)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.horizontalLayout_2.addWidget(self.label)
+        self.lang = QtGui.QComboBox(self.tab_1)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lang.sizePolicy().hasHeightForWidth())
+        self.lang.setSizePolicy(sizePolicy)
+        self.lang.setObjectName(_fromUtf8("lang"))
+        self.horizontalLayout_2.addWidget(self.lang)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.showEstimates = QtGui.QCheckBox(self.tab_1)
         self.showEstimates.setObjectName(_fromUtf8("showEstimates"))
         self.verticalLayout.addWidget(self.showEstimates)
@@ -195,6 +209,7 @@ class Ui_Preferences(object):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), Preferences.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), Preferences.reject)
         QtCore.QMetaObject.connectSlotsByName(Preferences)
+        Preferences.setTabOrder(self.lang, self.showEstimates)
         Preferences.setTabOrder(self.showEstimates, self.showProgress)
         Preferences.setTabOrder(self.showProgress, self.stripHTML)
         Preferences.setTabOrder(self.stripHTML, self.pastePNG)
@@ -210,9 +225,12 @@ class Ui_Preferences(object):
         Preferences.setTabOrder(self.syncDeauth, self.numBackups)
         Preferences.setTabOrder(self.numBackups, self.buttonBox)
         Preferences.setTabOrder(self.buttonBox, self.tabWidget)
+        Preferences.setTabOrder(self.tabWidget, self.fullSync)
+        Preferences.setTabOrder(self.fullSync, self.compressBackups)
 
     def retranslateUi(self, Preferences):
         Preferences.setWindowTitle(_("Preferences"))
+        self.label.setText(_("Interface language:"))
         self.showEstimates.setText(_("Show next review time above answer buttons"))
         self.showProgress.setText(_("Show remaining card count during review"))
         self.stripHTML.setText(_("Strip HTML when pasting text"))

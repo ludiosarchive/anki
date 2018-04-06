@@ -47,7 +47,10 @@ def httpCon():
                 os.path.dirname(os.path.abspath(sys.argv[0])),
                 "../Resources/ankiweb.certs")
         else:
-            assert 0, "Your distro has not packaged Anki correctly."
+            certs = os.path.abspath(os.path.join(
+                os.path.dirname(certs), "..", "ankiweb.certs"))
+            if not os.path.exists(certs):
+                assert 0, "Your distro has not packaged Anki correctly."
     return httplib2.Http(
         timeout=HTTP_TIMEOUT, ca_certs=certs,
         proxy_info=HTTP_PROXY,
@@ -607,7 +610,7 @@ class RemoteServer(HttpSyncer):
         HttpSyncer.__init__(self, hkey)
 
     def syncURL(self):
-        if os.getenv("DEV"):
+        if os.getenv("ANKIDEV"):
             return "https://l1.ankiweb.net/sync/"
         return SYNC_BASE + "sync/"
 
@@ -673,7 +676,7 @@ class FullSyncer(HttpSyncer):
         self.col = col
 
     def syncURL(self):
-        if os.getenv("DEV"):
+        if os.getenv("ANKIDEV"):
             return "https://l1.ankiweb.net/sync/"
         return SYNC_BASE + "sync/"
 
@@ -857,7 +860,7 @@ class RemoteMediaServer(HttpSyncer):
         HttpSyncer.__init__(self, hkey, con)
 
     def syncURL(self):
-        if os.getenv("DEV"):
+        if os.getenv("ANKIDEV"):
             return "https://l1.ankiweb.net/msync/"
         return SYNC_MEDIA_BASE
 

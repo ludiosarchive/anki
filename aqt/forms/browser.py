@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'designer/browser.ui'
 #
-# Created: Sun Mar 30 10:19:27 2014
+# Created: Thu Dec 22 13:02:38 2016
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -302,6 +302,7 @@ class Ui_Dialog(object):
         self.actionCardList.setShortcut(_("Ctrl+Shift+L"))
         self.actionFindDuplicates.setText(_("Find &Duplicates..."))
         self.actionReposition.setText(_("Reposition..."))
+        self.actionReposition.setShortcut(_("Ctrl+Shift+S"))
         self.actionFirstCard.setText(_("First Card"))
         self.actionFirstCard.setShortcut(_("Home"))
         self.actionLastCard.setText(_("Last Card"))
