@@ -1,15 +1,21 @@
-Author: Andreas Bombe <aeb@debian.org>
-Description: Set file paths to the installed locations
- Currently only the locale files are diverted from the upstream location. The
- directory for the gettext files is simply set to /usr/share/locale, the
- directory for the Qt .qm files is kept as /usr/share/anki/locale.
- are installed to. 
-Forwarded: not-needed
+From 16ba0252c6c5d2061d2487f55bbe1ce2ae363997 Mon Sep 17 00:00:00 2001
+From: Andreas Bombe <aeb@debian.org>
+Date: Fri, 6 Apr 2018 17:15:55 +0000
+Subject: [PATCH] Set file paths to the installed locations  Currently only the
+ locale files are diverted from the upstream location. The  directory for the
+ gettext files is simply set to /usr/share/locale, the  directory for the Qt
+ .qm files is kept as /usr/share/anki/locale.  are installed to.
 
-Index: git_anki/anki/lang.py
-===================================================================
---- git_anki.orig/anki/lang.py	2013-11-04 22:32:03.867086600 +0100
-+++ git_anki/anki/lang.py	2013-11-04 22:32:03.862086592 +0100
+---
+ anki/lang.py    | 12 ++----------
+ aqt/__init__.py |  2 +-
+ oldanki/lang.py |  7 +------
+ 3 files changed, 4 insertions(+), 17 deletions(-)
+
+diff --git a/anki/lang.py b/anki/lang.py
+index 8dd52fa..da2f3e2 100644
+--- a/anki/lang.py
++++ b/anki/lang.py
 @@ -2,7 +2,7 @@
  # Copyright: Damien Elmes <anki@ichi2.net>
  # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
@@ -19,7 +25,7 @@ Index: git_anki/anki/lang.py
  import gettext
  import threading
  
-@@ -71,13 +71,7 @@
+@@ -71,15 +71,7 @@ def ngettext(single, plural, n):
      return localTranslation().ungettext(single, plural, n)
  
  def langDir():
@@ -29,16 +35,31 @@ Index: git_anki/anki/lang.py
 -        dir = os.path.join(os.path.dirname(sys.argv[0]), "locale")
 -    if not os.path.isdir(dir):
 -        dir = "/usr/share/anki/locale"
+-    if not os.path.isdir(dir):
+-        dir = "/usr/local/share/anki/bin/locale"
 -    return dir
 +    return "/usr/share/locale"
  
  def setLang(lang, local=True):
      trans = gettext.translation(
-Index: git_anki/oldanki/lang.py
-===================================================================
---- git_anki.orig/oldanki/lang.py	2013-11-04 22:32:03.867086600 +0100
-+++ git_anki/oldanki/lang.py	2013-11-04 22:32:03.862086592 +0100
-@@ -8,7 +8,6 @@
+diff --git a/aqt/__init__.py b/aqt/__init__.py
+index c5de6ee..2d7e87c 100644
+--- a/aqt/__init__.py
++++ b/aqt/__init__.py
+@@ -107,7 +107,7 @@ def setupLang(pm, app, force=None):
+         app.setLayoutDirection(Qt.LeftToRight)
+     # qt
+     _qtrans = QTranslator()
+-    if _qtrans.load("qt_" + lang, dir):
++    if _qtrans.load("qt_" + lang, "/usr/share/qt4/translations"):
+         app.installTranslator(_qtrans)
+ 
+ # App initialisation
+diff --git a/oldanki/lang.py b/oldanki/lang.py
+index 578b6ee..df55086 100644
+--- a/oldanki/lang.py
++++ b/oldanki/lang.py
+@@ -8,7 +8,6 @@ Internationalisation
  """
  __docformat__ = 'restructuredtext'
  
@@ -46,7 +67,7 @@ Index: git_anki/oldanki/lang.py
  import gettext
  import threading
  
-@@ -32,11 +31,7 @@
+@@ -32,11 +31,7 @@ def ngettext(single, plural, n):
      return localTranslation().ungettext(single, plural, n)
  
  def setLang(lang, local=True):
@@ -59,16 +80,6 @@ Index: git_anki/oldanki/lang.py
      trans = gettext.translation('libanki', localeDir,
                                  languages=[lang],
                                  fallback=True)
-Index: git_anki/aqt/__init__.py
-===================================================================
---- git_anki.orig/aqt/__init__.py	2013-11-04 22:32:03.867086600 +0100
-+++ git_anki/aqt/__init__.py	2013-11-04 22:32:03.863086594 +0100
-@@ -107,7 +107,7 @@
-         app.setLayoutDirection(Qt.LeftToRight)
-     # qt
-     _qtrans = QTranslator()
--    if _qtrans.load("qt_" + lang, dir):
-+    if _qtrans.load("qt_" + lang, "/usr/share/qt4/translations"):
-         app.installTranslator(_qtrans)
- 
- # App initialisation
+-- 
+2.11.0
+
